@@ -100,6 +100,10 @@ app.set("io", io);
 // MongoDB Connection
 const connectDB = async () => {
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error("MONGODB_URI is not defined");
+    }
+
     await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
@@ -107,6 +111,7 @@ const connectDB = async () => {
       minPoolSize: 2,
     });
   } catch (err) {
+    console.error("Failed to start backend:", err.message);
     process.exit(1);
   }
 };

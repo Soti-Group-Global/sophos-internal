@@ -1,0 +1,94 @@
+.layout-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Allow appt-page horizontal scroll to reach the scrollbar */
+.layout-content:has(.appt-page) {
+  overflow-x: hidden;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+.layout-main {
+  flex: 1;
+  min-width: 0;               /* allow shrinking below content width */
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease;
+  margin-left: 0;
+  overflow: hidden;            /* contain children horizontally */
+  background: #ffffff;         /* same as sidebar so outer corner is seamless */
+}
+
+.layout-content {
+  flex: 1;
+  min-width: 0;               /* propagate shrink to children */
+  overflow-y: auto;
+  background: #f5f6f8;
+  border-top-left-radius: 20px;
+  border-left: 1px solid #e8eef6;
+  border-top: 1px solid #e8eef6;
+}
+
+/* Remove layout padding when a full-bleed page (e.g. appointment details) is rendered */
+.layout-content:has(.adp-page) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.layout-content:has(.pt-page) {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Mobile styles */
+@media (max-width: 1024px) {
+  .sidebar.mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.mobile.open {
+    transform: translateX(0);
+  }
+  
+  .sidebar-backdrop {
+    display: block;
+  }
+  
+  .layout-main {
+    margin-left: 0 !important;
+  }
+
+  .layout-content {
+    padding: 0;
+    overflow-x: hidden;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1025px) {
+  .layout-main.collapsed {
+    /* margin-left: 80px; Width of collapsed sidebar */
+  }
+  
+  .layout-main.expanded {
+    /* margin-left: 250px; Width of expanded sidebar */
+  }
+}

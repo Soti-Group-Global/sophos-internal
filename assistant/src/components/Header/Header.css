@@ -1,0 +1,307 @@
+
+/* ─── Design tokens ──────────────────────────────────────────────────── */
+:root {
+  --hdr-brand:      #0A2E5D;
+  --hdr-brand-lt:   #1a4a8a;
+  --hdr-bg:         #ffffff;
+  --hdr-border:     #e8eef6;
+  --hdr-text:       #1e293b;
+  --hdr-muted:      #64748b;
+  --hdr-hover:      rgba(10, 46, 93, 0.07);
+  --hdr-radius:     10px;
+  --hdr-h:          64px;
+  --hdr-btn:        38px;
+  --hdr-font:       'Inter Tight', sans-serif;
+}
+
+/* ─── Shell ──────────────────────────────────────────────────────────── */
+.hdr__bar {
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--hdr-h);
+  padding: 0 24px;
+  gap: 12px;
+  background: var(--hdr-bg);
+  font-family: var(--hdr-font);
+  /* no overflow:hidden — prevents right side from being clipped */
+  overflow: visible;
+}
+
+body.modal-open .hdr__bar {
+  z-index: -1 !important;
+}
+
+/* ─── Left — identity ────────────────────────────────────────────────── */
+.hdr__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* grows to fill slack; overflow:hidden clips text, NOT the sibling */
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hdr__avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(10, 46, 93, 0.14);
+  box-shadow: 0 2px 6px rgba(10, 46, 93, 0.10);
+  background: #f1f5f9;
+}
+
+.hdr__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hdr__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hdr__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--hdr-brand);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.hdr__location {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--hdr-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+/* ─── Right — actions (NEVER shrinks, NEVER clips) ──────────────────── */
+.hdr__right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  /* rigid: won't grow OR shrink; always fully visible */
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* ─── Icon buttons ───────────────────────────────────────────────────── */
+.hdr__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hdr-btn);
+  height: var(--hdr-btn);
+  border: none;
+  background: transparent;
+  border-radius: var(--hdr-radius);
+  color: var(--hdr-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.hdr__btn:hover {
+  background: var(--hdr-hover);
+  color: var(--hdr-brand);
+}
+
+.hdr__icon {
+  font-size: 18px;
+  color: inherit;
+  display: block;
+}
+
+/* Hamburger — hidden on desktop, visible when isMobile prop is true */
+.hdr__btn--menu {
+  display: none;
+  color: var(--hdr-brand);
+  flex-shrink: 0;
+}
+
+.hdr__menu-icon {
+  font-size: 20px;
+  color: inherit;
+}
+
+/* Logout accent on hover */
+.hdr__btn--logout:hover .hdr__icon {
+  color: #dc2626;
+}
+
+/* ─── Language switcher ──────────────────────────────────────────────── */
+.hdr__lang-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.hdr-lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--hdr-btn);
+  padding: 0 12px;
+  background: #f8fafc;
+  border: 1px solid var(--hdr-border);
+  border-radius: var(--hdr-radius);
+  font-family: var(--hdr-font);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--hdr-text);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.hdr-lang-toggle:hover,
+.hdr-lang-toggle.open {
+  background: #eef2f8;
+  border-color: rgba(10, 46, 93, 0.22);
+}
+
+.hdr-lang-name {
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+}
+
+.hdr-lang-arrow {
+  color: var(--hdr-muted);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.hdr-lang-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.hdr-lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 168px;
+  background: #fff;
+  border: 1px solid var(--hdr-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(10, 46, 93, 0.12);
+  z-index: 1100;
+  overflow: hidden;
+  animation: hdr-fade-in 0.14s ease-out;
+}
+
+.hdr-lang-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 11px 14px;
+  gap: 10px;
+  background: none;
+  border: none;
+  font-family: var(--hdr-font);
+  font-size: 13.5px;
+  color: var(--hdr-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.13s;
+}
+
+.hdr-lang-item:hover { background: #f8fafc; }
+
+.hdr-lang-item.active {
+  background: #eef4ff;
+  color: var(--hdr-brand);
+  font-weight: 600;
+}
+
+.hdr-lang-check {
+  margin-left: auto;
+  color: var(--hdr-brand);
+  flex-shrink: 0;
+}
+
+/* ─── Hamburger: show on tablet & mobile ────────────────────────────── */
+@media (max-width: 1024px) {
+  .hdr__btn--menu { display: flex; }
+}
+
+/* ─── Animation ──────────────────────────────────────────────────────── */
+@keyframes hdr-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Small & Medium Devices
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Tablet  (≤ 1024px) ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  :root { --hdr-h: 60px; --hdr-btn: 36px; }
+
+  .hdr__bar     { padding: 0 18px; }
+  .hdr__location { display: none; }
+
+  .hdr-lang-name {
+    max-width: 56px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ─── Mobile  (≤ 768px) ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root { --hdr-h: 56px; --hdr-btn: 36px; }
+
+  .hdr__bar  { padding: 0 12px; gap: 8px; }
+
+  /* Left only has the hamburger — stop it growing so right section stays on-screen */
+  .hdr__left { flex: 0 0 auto; overflow: visible; }
+
+  /* Hide avatar and user text on mobile */
+  .hdr__avatar { display: none; }
+  .hdr__info   { display: none; }
+
+  /* Right: tighten gap; never clip */
+  .hdr__right  { gap: 2px; }
+
+  /* Language: flag only */
+  .hdr-lang-name,
+  .hdr-lang-arrow { display: none; }
+  .hdr-lang-toggle { padding: 0 9px; }
+
+  .hdr__icon      { font-size: 16px; }
+  .hdr__menu-icon { font-size: 20px; }
+}
+
+/* ─── Small Mobile  (≤ 480px) ────────────────────────────────────────── */
+@media (max-width: 480px) {
+  :root { --hdr-h: 52px; --hdr-btn: 32px; }
+
+  .hdr__bar    { padding: 0 10px; gap: 6px; }
+  .hdr__avatar { display: none; }
+
+  .hdr-lang-toggle  { padding: 0 8px; }
+  .hdr__icon        { font-size: 15px; }
+  .hdr__menu-icon   { font-size: 18px; }
+}
+ 

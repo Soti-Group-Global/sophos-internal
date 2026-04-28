@@ -1,0 +1,301 @@
+/* ============================================================
+   MedicalHistoryTab — Compact Design
+   ============================================================ */
+
+.mht-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Summary bar ── */
+.mht-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.mht-summary-bar strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* ── 2-column grid ── */
+.mht-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 1024px) {
+  .mht-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Card ── */
+.mht-card {
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.mht-card--clickable {
+  cursor: pointer;
+}
+
+.mht-card--clickable:hover {
+  box-shadow: 0 2px 10px rgba(12, 56, 112, 0.12);
+  border-color: #c5d3e8;
+}
+
+.mht-card--current {
+  border-color: #2d5fa3;
+  border-left: 3px solid #0c3870;
+  background: #f5f8fd;
+}
+
+/* ── Header ── */
+.mht-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.mht-card-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mht-card-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mht-card-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mht-card-date-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #6b7280;
+  padding-left: 30px;
+}
+
+.mht-card-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.mht-card--current .mht-card-icon {
+  background: #eef2f9;
+  color: #0c3870;
+}
+
+.mht-app-id {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mht-card--current .mht-app-id {
+  color: #0c3870;
+}
+
+.mht-current-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #0c3870;
+  background: #eef2f9;
+  border: 1px solid #2d5fa3;
+  padding: 1px 5px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mht-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mht-status--confirmed   { background: #e8f5e9; color: #1b5e20; }
+.mht-status--upcoming    { background: #fffde7; color: #f57f17; }
+.mht-status--unconfirmed { background: #fff3e0; color: #e65100; }
+.mht-status--cancelled   { background: #fce4ec; color: #b71c1c; }
+.mht-status--default     { background: #f3f4f6; color: #374151; }
+
+.mht-divider {
+  width: 1px;
+  height: 10px;
+  background: #e4e7ec;
+  flex-shrink: 0;
+}
+
+.mht-info-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mht-has-notes {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #059669;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mht-card-chevron {
+  color: #d1d5db;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.mht-card-chevron--open {
+  transform: rotate(180deg);
+  color: #9ca3af;
+}
+
+/* ── Body ── */
+.mht-card-body {
+  border-top: 1px solid #f3f4f6;
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Doctor pill */
+.mht-doctor-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #374151;
+  background: #f9fafb;
+  border: 1px solid #e4e7ec;
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+.mht-doctor-row svg {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.mht-doctor-specialty {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: auto;
+}
+
+/* ── Form sections ── */
+.mht-form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mht-form-section {
+  border-left: 3px solid #e4e7ec;
+  border-radius: 0 4px 4px 0;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.mht-card--current .mht-form-section {
+  border-left-color: #2d5fa3;
+}
+
+.mht-form-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 4px 10px;
+  background: #f3f4f6;
+}
+
+.mht-form-section-content {
+  padding: 6px 10px 8px;
+  font-size: 12.5px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.mht-form-section-content p  { margin: 0 0 2px; }
+.mht-form-section-content ul,
+.mht-form-section-content ol { margin: 0 0 2px; padding-left: 18px; }
+
+.mht-no-notes {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* ── Empty state ── */
+.adp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+
+
+.mht-summary-bar strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+/* ── Card ── */

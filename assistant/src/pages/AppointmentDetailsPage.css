@@ -1,0 +1,2090 @@
+/* =========================================================
+   AppointmentDetailsPage – medical-record-style layout
+   ========================================================= */
+
+.adp-page {
+  display: flex;
+  flex-direction: column;
+  height: 82vh;
+  overflow: hidden;
+  background: #f5f6f8;
+  font-family: inherit;
+}
+
+/* ── Top Header ── */
+.adp-top-header {
+  flex-shrink: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #fff;
+  padding: 14px 28px;
+  border-bottom: 1px solid #e4e7ec;
+}
+
+.adp-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 0;
+  white-space: nowrap;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+.adp-back-btn:hover { color: #111; }
+
+.adp-header-divider {
+  width: 1px;
+  height: 36px;
+  background: #e4e7ec;
+  margin: 0 20px;
+  flex-shrink: 0;
+}
+
+.adp-header-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.adp-header-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adp-patient-title {
+  font-size: 16px;
+  font-weight: 400;
+  margin: 0;
+  color: #111827;
+}
+.adp-patient-title strong { font-weight: 700; }
+
+.adp-status-badge-header {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #d1fae5;
+  color: #065f46;
+  letter-spacing: 0.02em;
+}
+
+.adp-added-date {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.adp-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.adp-dob-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+.adp-dob-label {
+  font-size: 10px;
+  color: #9ca3af;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Tab Bar ── */
+.adp-tab-bar {
+  flex-shrink: 0;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid #e4e7ec;
+  padding: 0 24px;
+  overflow-x: auto;
+  gap: 2px;
+  scrollbar-width: none;
+}
+.adp-tab-bar::-webkit-scrollbar { display: none; }
+
+.adp-tab {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 16px 18px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9ca3af;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease;
+  border-bottom: 3px solid transparent;
+  top: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.adp-tab-icon {
+  display: flex;
+  align-items: center;
+}
+
+.adp-tab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #0c3870, #2d5fa3);
+  border-radius: 3px 3px 0 0;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.adp-tab:hover {
+  color: #374151;
+}
+
+.adp-tab:hover::after {
+  transform: translateX(-50%) scaleX(0.5);
+  background: linear-gradient(90deg, #c5d3e8, #d4dff0);
+}
+
+.adp-tab.active {
+  color: #0c3870;
+  font-weight: 600;
+}
+
+.adp-tab.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* ── Two-column body ── */
+.adp-body {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Patient Appointments Sidebar ── */
+.adp-app-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e4e7ec;
+  padding: 16px 10px 64px;
+  overflow-y: auto;
+}
+
+.adp-app-sidebar-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  text-transform: uppercase;
+  padding: 0 4px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 10px;
+}
+
+.adp-app-sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adp-app-sidebar-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.adp-app-card {
+  width: 100%;
+  text-align: left;
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.adp-app-card:hover {
+  background: #f0f4ff;
+  border-color: #bfcfea;
+  box-shadow: 0 2px 6px rgba(12, 56, 112, 0.07);
+}
+.adp-app-card--active {
+  background: #eef2ff;
+  border-color: #0c3870;
+  box-shadow: 0 2px 8px rgba(12, 56, 112, 0.12);
+  cursor: default;
+}
+
+.adp-app-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.adp-app-card-id {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0c3870;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.adp-app-card-status {
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  border-radius: 20px;
+  white-space: nowrap;
+  width: fit-content;
+}
+.adp-app-card-status--confirmed  { background: #e8f5e9; color: #1b5e20; }
+.adp-app-card-status--upcoming   { background: #fffde7; color: #f57f17; }
+.adp-app-card-status--unconfirmed { background: #fff3e0; color: #e65100; }
+.adp-app-card-status--cancelled  { background: #fce4ec; color: #b71c1c; }
+.adp-app-card-status--default    { background: #f3f4f6; color: #374151; }
+
+.adp-app-card-date {
+  font-size: 11px;
+  color: #374151;
+  font-weight: 500;
+}
+.adp-app-card-doctor {
+  font-size: 10px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.adp-app-card-current-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #0c3870;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Sidebar scrollbar */
+.adp-app-sidebar::-webkit-scrollbar { width: 4px; }
+.adp-app-sidebar::-webkit-scrollbar-track { background: transparent; }
+.adp-app-sidebar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+
+/* ── Content scroll wrapper ── */
+.adp-content-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* ── Content loading overlay (appointment switch) ── */
+.adp-content-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(245, 246, 248, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  backdrop-filter: blur(1px);
+}
+
+.adp-content-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e4e7ec;
+  border-top-color: #0A2E5D;
+  border-radius: 50%;
+  animation: adp-spin 0.7s linear infinite;
+}
+
+@keyframes adp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.adp-content {
+  margin: 0;
+  padding: 24px 28px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Record header */
+.adp-record-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.adp-record-title {
+  font-size: 14px;
+  color: #374151;
+}
+.adp-record-title strong { font-weight: 700; }
+
+.adp-record-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Seal button group */
+.adp-seal-btn-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.adp-seal-btn {
+  background: #fff;
+  border: none;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #374151;
+  transition: background 0.15s;
+}
+.adp-seal-btn:hover { background: #f9fafb; }
+.adp-seal-caret {
+  background: #fff;
+  border: none;
+  border-left: 1px solid #d1d5db;
+  padding: 7px 8px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.adp-seal-caret:hover { background: #f9fafb; }
+
+/* Save button */
+.adp-save-btn {
+  background: #0c3870;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.adp-save-btn:hover { background: #c84d20; }
+.adp-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.adp-save-btn.outline {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+.adp-save-btn.outline:hover { background: #f3f4f6; }
+
+/* Attachment links row */
+.adp-links-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.adp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #0c3870;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.adp-link:hover { opacity: 0.75; }
+.adp-attach-count { font-weight: 600; }
+
+/* ── Collapsible Sections ── */
+.adp-section {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #eaecf0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  overflow: visible;
+  transition: box-shadow 0.2s;
+}
+.adp-section:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.09);
+}
+
+.adp-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+  border-radius: 14px 14px 0 0;
+}
+.adp-section-header:hover { background: #fafafa; }
+
+/* Right-side cluster: action icons + chevron */
+.adp-section-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.adp-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+
+/* Edit pencil button */
+.adp-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  padding: 5px 7px;
+  border-radius: 7px;
+  transition: color 0.2s, background 0.15s;
+}
+.adp-edit-btn:hover { color: #374151; background: #f3f4f6; }
+
+/* Header save / cancel icon buttons — premium square style */
+.adp-header-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.adp-header-action-btn:active { transform: scale(0.94); }
+.adp-header-save-btn {
+  background: #0c3870;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(224,93,46,0.35);
+}
+.adp-header-save-btn:hover { background: #c94d22; }
+.adp-header-cancel-btn {
+  background: #fff;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+.adp-header-cancel-btn:hover { background: #f9fafb; color: #374151; }
+
+.adp-collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+.adp-collapse-btn:hover { color: #374151; background: #f3f4f6; }
+
+.adp-section-body {
+  padding: 20px 24px 24px;
+  border-top: 1px solid #f0f2f5;
+}
+
+/* ── Patient Card (Basic Data) ── */
+.adp-patient-card {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.adp-avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.adp-avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8edf5 0%, #d4dce8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8fa3bd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+.adp-patient-id {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+.adp-patient-info-col {
+  flex: 1;
+}
+.adp-patient-fullname {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px;
+}
+.adp-patient-meta-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.adp-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #374151;
+}
+.adp-category-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Appointment Info Grid ── */
+.adp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 24px;
+}
+.adp-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.adp-info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.adp-info-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 500;
+}
+
+/* Status badges */
+.adp-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.adp-status-badge.status-confirmed   { background: #e8f5e9; color: #1b5e20; }
+.adp-status-badge.status-upcoming    { background: #fffde7; color: #f57f17; }
+.adp-status-badge.status-unconfirmed { background: #fff3e0; color: #e65100; }
+.adp-status-badge.status-cancelled   { background: #fce4ec; color: #b71c1c; }
+.adp-status-badge.status-completed   { background: #eff6ff; color: #1e40af; }
+
+/* ── Contacts ── */
+.adp-contacts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.adp-contact-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.adp-contact-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #6b7280;
+  min-width: 100px;
+}
+.adp-contact-value {
+  font-size: 13px;
+  color: #111827;
+  font-weight: 500;
+}
+
+/* ── Contacts form layout (new) ── */
+.adp-contacts-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adp-contact-form-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.adp-contact-form-row-top {
+  align-items: flex-start;
+}
+.adp-contact-form-label {
+  font-size: 13px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.adp-contact-input {
+  max-width: 320px;
+}
+
+/* ── react-phone-input-2 overrides ── */
+.adp-phone-input-container {
+  max-width: 320px;
+  width: 100% !important;
+}
+.adp-phone-input-container .flag-dropdown {
+  border: 1px solid #d1d5db !important;
+  border-right: none !important;
+  border-radius: 6px 0 0 6px !important;
+  background: #f9fafb !important;
+}
+.adp-phone-input-container .flag-dropdown.open {
+  border-color: #0c3870 !important;
+}
+.adp-phone-input-field {
+  width: 100% !important;
+  height: auto !important;
+  padding: 7px 10px 7px 48px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  color: #111827 !important;
+  background: #fff !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s !important;
+}
+.adp-phone-input-field:focus {
+  border-color: #0c3870 !important;
+  box-shadow: 0 0 0 2px rgba(224, 93, 46, 0.12) !important;
+}
+.adp-contact-input-pair .adp-phone-input-container {
+  flex: 1;
+  max-width: none;
+}
+
+.adp-contact-input-pair {
+  display: flex;
+  gap: 8px;
+}
+.adp-contact-input-pair .adp-text-input {
+  flex: 1;
+}
+.adp-contact-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adp-contact-checkboxes .adp-newsletter-label {
+  align-items: flex-start;
+  cursor: pointer;
+}
+.adp-help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #9ca3af;
+  font-size: 10px;
+  color: #9ca3af;
+  cursor: help;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Social networks */
+.adp-social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.adp-social-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adp-social-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.adp-social-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
+.adp-social-vk        { background: #4680c2; }
+.adp-social-fb        { background: #1877f2; }
+.adp-social-ok        { background: #f7931e; }
+.adp-social-input {
+  flex: 1;
+}
+.adp-contact-view-value {
+  font-size: 13px;
+  color: #111827;
+  font-weight: 500;
+}
+.adp-social-link {
+  font-size: 13px;
+  color: #3b82f6;
+  text-decoration: none;
+  word-break: break-all;
+}
+.adp-social-link:hover { text-decoration: underline; }
+
+/* Newsletter checkbox */
+.adp-newsletter-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: default;
+}
+
+/* Radio group (Disability section) */
+.adp-radio-group {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 4px 0;
+}
+.adp-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+.adp-radio-label input[type="radio"] {
+  accent-color: #0c3870;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Disability period row */
+.adp-disability-period {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.adp-disability-period-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adp-period-label {
+  font-size: 13px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.adp-period-input {
+  width: 140px !important;
+  max-width: 140px;
+}
+.adp-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  flex-shrink: 0;
+}
+.adp-checkbox.checked {
+  background: #0c3870;
+  border-color: #0c3870;
+  color: #fff;
+}
+
+/* ── Medical History ── */
+.adp-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.adp-history-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+}
+.adp-history-date {
+  font-size: 12px;
+  color: #9ca3af;
+  min-width: 80px;
+}
+.adp-history-desc {
+  flex: 1;
+  font-size: 13px;
+  color: #374151;
+}
+
+/* Empty state */
+.adp-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  padding: 32px 0;
+}
+
+/* Error state */
+.adp-error {
+  padding: 40px;
+  text-align: center;
+  color: #ef4444;
+  font-size: 16px;
+}
+
+/* ── Bottom Action Bar ── */
+
+/* ── Field display (GeneralInformationTab) ── */
+.adp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.adp-field-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.adp-field-value {
+  font-size: 13px;
+  color: #111827;
+}
+.adp-field-full {
+  grid-column: 1 / -1;
+}
+
+/* Gender pills (view mode) */
+.adp-gender-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.adp-gender-pill {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  background: #fff;
+  cursor: default;
+}
+.adp-gender-pill.active {
+  background: #0c3870;
+  border-color: #0c3870;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Gender segmented toggle (edit mode) */
+.adp-gender-toggle {
+  display: flex;
+  width: 100%;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #f9fafb;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+.adp-gender-toggle-btn {
+  border: none;
+  background: none;
+  flex: 1;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  text-align: center;
+}
+.adp-gender-toggle-btn:not(:last-child) {
+  border-right: 1.5px solid #e5e7eb;
+}
+.adp-gender-toggle-btn.active {
+  background: #0c3870;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(224,93,46,0.30);
+}
+.adp-gender-toggle-btn:not(.active):hover {
+  background: #f0f2f5;
+  color: #374151;
+}
+
+/* Basic data grid inside patient card */
+.adp-basic-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+/* Subsection title inside a section body */
+.adp-subsection-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Documents subsection title inside contacts-form layout */
+.adp-doc-subsection-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 14px 0 8px;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 4px;
+  grid-column: 1 / -1;
+}
+
+/* ── New document form (premium labeled-input style) ── */
+.adp-doc-subsection-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5b8fa8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f2f5;
+  margin-bottom: 4px;
+}
+
+.adp-doc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 3:1 ratio row (policy + date, org code + snils) */
+.adp-doc-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+.adp-doc-row--3-1 {
+  display: grid;
+  grid-template-columns: 3fr 1.4fr;
+  gap: 12px;
+  align-items: flex-end;
+}
+.adp-doc-row--half {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* Select styled like text input */
+.adp-select {
+  appearance: auto;
+  cursor: pointer;
+  background: #fff;
+}
+
+/* Bottom save button */
+.adp-doc-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid #f0f2f5;
+}
+.adp-doc-save-btn {
+  background: #0c3870;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(224,93,46,0.30);
+  transition: background 0.15s, transform 0.1s;
+}
+.adp-doc-save-btn:hover { background: #c94d22; }
+.adp-doc-save-btn:active { transform: scale(0.97); }
+
+/* Empty state message */
+.adp-empty-msg {
+  font-size: 13px;
+  color: #9ca3af;
+  padding: 8px 0;
+  margin: 0;
+}
+
+/* Add link button */
+.adp-add-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #0c3870;
+  font-weight: 500;
+  padding: 0;
+}
+.adp-add-link:hover { text-decoration: underline; }
+
+/* ── Address Section ── */
+.adp-addr-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.adp-addr-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 0 20px;
+  border-bottom: 1px solid #f0f2f5;
+}
+.adp-addr-group:last-child { border-bottom: none; }
+.adp-addr-view-group {
+  padding: 14px 0 16px;
+  border-bottom: 1px solid #f0f2f5;
+}
+.adp-addr-view-group:last-child { border-bottom: none; }
+.adp-addr-group-title {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.adp-addr-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff3ee;
+  color: #0c3870;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+/* Icon-prefixed input */
+.adp-addr-icon-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.adp-addr-icon {
+  position: absolute;
+  left: 11px;
+  color: #9ca3af;
+  display: flex;
+  pointer-events: none;
+}
+.adp-addr-inner {
+  padding-left: 32px !important;
+}
+
+/* ── Legal Representative Section ── */
+.adp-rep-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.adp-rep-edit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 0 20px;
+}
+.adp-rep-edit-card--divided {
+  border-top: 2px dashed #e5e7eb;
+  padding-top: 20px;
+}
+.adp-rep-edit-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.adp-rep-edit-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+.adp-remove-rep-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid #fca5a5;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.adp-remove-rep-btn:hover {
+  background: #fef2f2;
+}
+.adp-rep-checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+.adp-rep-checkbox-row input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: #0c3870;
+  cursor: pointer;
+}
+.adp-rep-subsection {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-top: 4px;
+  border-top: 1px solid #f0f2f5;
+}
+.adp-rep-view-divider {
+  border-top: 2px dashed #e5e7eb;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+
+/* ── Diagnosis / Disease inline row layout ── */
+.adp-diag-header-row,
+.adp-diag-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+}
+
+/* Diseases: 5 equal cols + action btns */
+.adp-diag-row--diseases {
+  grid-template-columns: 1fr 1fr 1.6fr 0.8fr 1.2fr 72px;
+}
+
+/* Final diagnosis: 7 cols + action btns */
+.adp-diag-row--final {
+  grid-template-columns: 0.9fr 1.4fr 0.7fr 0.5fr 1.2fr 1fr 1fr 72px;
+}
+
+/* Radiation doses: No. + 4 cols + action btns */
+.adp-diag-row--radiation {
+  grid-template-columns: 32px 1fr 1.6fr 1fr 1.4fr 72px;
+}
+
+.adp-diag-header-row {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f2f5;
+  margin-bottom: 2px;
+}
+
+.adp-diag-row + .adp-diag-row {
+  border-top: 1px solid #f7f8fa;
+}
+
+.adp-diag-input {
+  padding: 7px 10px !important;
+  font-size: 12px !important;
+  min-width: 0;
+}
+
+.adp-diag-cell {
+  font-size: 13px;
+  color: #374151;
+  padding: 2px 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-diag-confirm-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: #0c3870;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(224,93,46,0.30);
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.adp-diag-confirm-btn:hover { background: #c94d22; }
+
+.adp-diag-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.adp-diag-delete-btn:hover { color: #ef4444; background: #fef2f2; }
+
+/* Row action buttons container (edit + delete side by side) */
+.adp-diag-row-btns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  justify-content: flex-end;
+}
+
+/* Per-row edit icon button */
+.adp-diag-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.adp-diag-edit-btn:hover { color: #3b82f6; background: #eff6ff; }
+
+/* Per-row save/confirm button */
+.adp-diag-save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.adp-diag-save-btn:hover { color: #16a34a; background: #f0fdf4; }
+
+/* Autocomplete dropdown */
+.adp-autocomplete-wrap {
+  position: relative;
+  min-width: 0;
+}
+.adp-autocomplete-dropdown {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 9999;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.adp-autocomplete-item {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.adp-autocomplete-item:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+/* ── Personal Data 2-column layout ── */
+.adp-pd-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+.adp-pd-left {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adp-pd-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-left: 1px solid #f0f2f5;
+  padding-left: 24px;
+}
+.adp-pd-right-field {
+  padding: 10px 0;
+  border-bottom: 1px solid #f7f8fa;
+}
+.adp-pd-right-field:last-child { border-bottom: none; }
+.adp-pd-right-field .adp-input-label {
+  color: #0c3870;
+  margin-bottom: 6px;
+  display: block;
+}
+.adp-pd-inline-input {
+  position: relative;
+}
+
+
+/* Empty state (icon + message) */
+.adp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+.adp-empty-state svg { opacity: 0.4; }
+.adp-empty-state p { margin: 0; font-size: 15px; text-align: center; }
+.adp-empty-sub { font-size: 13px; color: #d1d5db; }
+
+/* Medical history card */
+.adp-history-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adp-history-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.adp-history-icon-col {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fef3ee;
+  color: #0c3870;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.adp-history-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.adp-history-date,
+.adp-history-doctor {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.adp-history-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.adp-history-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.adp-history-value {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+/* ── Basic Data: view mode meta row ── */
+.adp-patient-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.adp-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ── Basic Data: edit mode layout ── */
+.adp-basic-edit {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  padding: 4px 0;
+}
+.adp-basic-edit-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Three-column name inputs: LAST NAME | FIRST NAME | MIDDLE NAME */
+.adp-name-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* DOB + Gender side-by-side — equal width */
+.adp-dob-gender-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* Labeled input: label on top, input below */
+.adp-labeled-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.adp-labeled-input--wide {
+  flex: 1;
+}
+.adp-input-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5b8fa8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Change photo button */
+.adp-change-photo-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: #0c3870;
+  font-weight: 600;
+  padding: 0;
+  margin-top: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.adp-change-photo-btn:hover { text-decoration: underline; }
+
+/* Full-width textarea */
+.adp-textarea--full {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Label + control row (kept for other sections) */
+.adp-edit-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.adp-edit-row-top {
+  align-items: flex-start;
+}
+.adp-edit-row-label {
+  font-size: 13px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* Text inputs */
+.adp-text-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.adp-text-input:focus {
+  border-color: #0c3870;
+  box-shadow: 0 0 0 3px rgba(224, 93, 46, 0.10);
+}
+.adp-text-input::placeholder { color: #c4c9d4; }
+
+/* DOB input */
+.adp-dob-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adp-dob-input {
+  max-width: 180px;
+}
+
+/* Textarea */
+.adp-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  line-height: 1.55;
+}
+.adp-textarea:focus {
+  border-color: #0c3870;
+  box-shadow: 0 0 0 3px rgba(224, 93, 46, 0.10);
+}
+.adp-textarea::placeholder { color: #c4c9d4; }
+.adp-textarea:focus {
+  border-color: #0c3870;
+  box-shadow: 0 0 0 2px rgba(224, 93, 46, 0.12);
+}
+
+/* Clickable gender pills in edit mode */
+.adp-gender-pill[type="button"] {
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #6b7280;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.adp-gender-pill[type="button"]:hover {
+  border-color: #0c3870;
+  color: #0c3870;
+}
+.adp-gender-pill[type="button"].active {
+  background: #0c3870;
+  border-color: #0c3870;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Edit action buttons */
+.adp-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.adp-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 18px;
+  background: #0c3870;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.adp-btn-save:hover { background: #c94d22; }
+.adp-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.adp-btn-cancel:hover { background: #e5e7eb; }
+
+/* Edit btn active state (while editing) */
+.adp-edit-btn.active {
+  color: #0c3870;
+  background: #fef3ee;
+  border-radius: 4px;
+}
+
+/* ── Sticky Footer ── */
+.adp-sticky-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 32px;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.adp-footer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+  border: none;
+  white-space: nowrap;
+}
+.adp-footer-btn:active { transform: scale(0.97); }
+.adp-footer-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.adp-footer-save-btn {
+  background: #fff;
+  color: #0c3870;
+  border: 1.5px solid #0c3870;
+}
+.adp-footer-save-btn:hover:not(:disabled) {
+  background: #e8eef6;
+}
+
+.adp-footer-save-close-btn {
+  background: #0c3870;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(12, 56, 112, 0.28);
+}
+.adp-footer-save-close-btn:hover:not(:disabled) {
+  background: #1a4a8a;
+}
+
+/* ── Responsive ── */
+
+/* ── Mobile sidebar toggle button (hidden on desktop) ── */
+.adp-sidebar-toggle-bar { display: none; }
+
+.adp-sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1.5px solid #e4e7ec;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.adp-sidebar-toggle-btn:hover {
+  background: #f0f4ff;
+  border-color: #bfcfea;
+}
+
+/* Close chevron inside sidebar title (hidden on desktop) */
+.adp-sidebar-close-btn { display: none; }
+
+/* Tablet (≤ 1024px) */
+@media (max-width: 1024px) {
+  .adp-top-header {
+    padding: 12px 18px;
+    gap: 0;
+  }
+
+  .adp-header-divider { margin: 0 14px; }
+
+  .adp-patient-title { font-size: 14px; }
+
+  .adp-dob-value  { font-size: 17px; }
+
+  .adp-tab-bar  { padding: 0 16px; }
+  .adp-content  { padding: 0 16px 80px; }
+
+  /* ── General Information tab – tablet ── */
+
+  /* Section body padding */
+  .adp-section-body { padding: 16px 18px 20px; }
+  .adp-section-header { padding: 14px 18px; }
+
+  /* Patient card – stack avatar above info */
+  .adp-patient-card { flex-direction: column; gap: 14px; }
+
+  /* Basic edit – stack avatar above fields */
+  .adp-basic-edit { flex-direction: column; gap: 16px; }
+  .adp-basic-edit-fields { width: 100%; flex: unset; }
+  .adp-avatar-col { flex-direction: row; align-items: center; gap: 14px; }
+
+  /* Name inputs – 2 cols instead of 3 */
+  .adp-name-inputs-row { grid-template-columns: 1fr 1fr; }
+
+  /* DOB+Gender already 1fr 1fr – fine */
+
+  /* Contact form label column narrower */
+  .adp-contact-form-row { grid-template-columns: 140px 1fr; }
+
+  /* Social grid – single column */
+  .adp-social-grid { grid-template-columns: 1fr; }
+
+  /* Doc rows – 3:1 collapses to single column; half-rows stay 2 cols */
+  .adp-doc-row--3-1,
+  .adp-addr-form .adp-doc-row--3-1 {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .adp-doc-row--half { grid-template-columns: 1fr 1fr; }
+
+  /* Diagnosis table – horizontal scroll */
+  .adp-diag-header-row,
+  .adp-diag-row {
+    min-width: 600px;
+  }
+  .adp-section-body:has(.adp-diag-header-row) {
+    overflow-x: auto;
+  }
+
+  /* Personal data grid – stack */
+  .adp-pd-grid { grid-template-columns: 1fr; gap: 0; }
+  .adp-pd-right { border-left: none; padding-left: 0; border-top: 1px solid #f0f2f5; padding-top: 14px; margin-top: 14px; }
+
+  /* Info grid narrower min */
+  .adp-info-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+
+  /* Show the toggle bar */
+  .adp-sidebar-toggle-bar {
+    display: flex;
+    align-items: center;
+    padding: 8px 14px;
+    background: #f5f6f8;
+    border-bottom: 1px solid #e4e7ec;
+  }
+
+  /* Sidebar floats as overlay, slides in from left */
+  .adp-app-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100%;
+    z-index: 10;
+    border-right: 1px solid #e4e7ec;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.10);
+    padding: 16px 10px;
+    overflow-y: auto;
+    /* slide out to the left */
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.28s ease, visibility 0.28s ease;
+  }
+
+  .adp-app-sidebar--open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  /* Show close chevron inside title */
+  .adp-app-sidebar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .adp-sidebar-close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .adp-sidebar-close-btn:hover { color: #0c3870; }
+}
+
+/* Mobile (≤ 768px) */
+@media (max-width: 768px) {
+  .adp-top-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 14px;
+    gap: 6px;
+  }
+
+  /* Hide vertical divider — not needed in column layout */
+  .adp-header-divider { display: none; }
+
+  /* Each block stacks full width */
+  .adp-back-btn    { order: 1; }
+  .adp-header-center {
+    order: 2;
+    flex: unset;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* DOB row: sits below, horizontal layout */
+  .adp-header-right {
+    order: 3;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin-left: 0;
+    width: 100%;
+    padding: 6px 0 0;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .adp-dob-value  { font-size: 14px; font-weight: 700; }
+  .adp-dob-label  { font-size: 10px; }
+
+  /* Allow added-date to wrap naturally */
+  .adp-added-date {
+    font-size: 10.5px;
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .adp-header-name-row { flex-wrap: wrap; gap: 6px; }
+  .adp-patient-title   { font-size: 13.5px; }
+
+  .adp-tab-bar { padding: 0 10px; }
+  .adp-tab     { padding: 10px 10px; font-size: 12px; }
+
+  .adp-content       { padding: 0 10px 80px; }
+  .adp-info-grid     { grid-template-columns: 1fr; }
+  .adp-bottom-bar    { padding: 10px 14px; }
+  .adp-sticky-footer { padding: 10px 14px; }
+
+  /* ── Basic Data section – mobile ── */
+  .adp-basic-edit { flex-direction: column; gap: 12px; }
+  .adp-basic-edit-fields { width: 100%; flex: unset; }
+
+  /* Avatar row compact */
+  .adp-avatar-col { flex-direction: row; align-items: center; gap: 12px; }
+  .adp-avatar-circle { width: 56px; height: 56px; flex-shrink: 0; }
+
+  /* Name inputs – single column */
+  .adp-name-inputs-row { grid-template-columns: 1fr; }
+  .adp-name-inputs-row .adp-labeled-input,
+  .adp-name-inputs-row .adp-labeled-input--wide { width: 100%; flex: unset; }
+
+  /* DOB + Gender – side by side (both fit on mobile) */
+  .adp-dob-gender-row { grid-template-columns: 1fr 1fr; }
+
+  /* Textarea full width */
+  .adp-textarea--full { width: 100%; box-sizing: border-box; }
+
+  /* Contact form – label above value */
+  .adp-contact-form-row {
+    grid-template-columns: 1fr;
+  }
+  .adp-contact-form-label { font-size: 12px; color: #9ca3af; }
+
+  /* Phone input full width */
+  .adp-phone-input-container { max-width: 100%; }
+  .adp-contact-input { max-width: 100%; }
+
+  /* Contact input pair – stack */
+  .adp-contact-input-pair { flex-direction: column; gap: 6px; }
+
+  /* Doc rows – ALL variants collapse to full-width single column */
+  .adp-doc-row,
+  .adp-doc-row--3-1,
+  .adp-doc-row--half,
+  .adp-addr-form .adp-doc-row--half,
+  .adp-addr-form .adp-doc-row--3-1 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px;
+  }
+  /* Each labeled-input inside takes full width */
+  .adp-doc-row > .adp-labeled-input,
+  .adp-doc-row--3-1 > .adp-labeled-input,
+  .adp-doc-row--half > .adp-labeled-input,
+  .adp-doc-row > .adp-labeled-input--wide,
+  .adp-doc-row--3-1 > .adp-labeled-input--wide,
+  .adp-doc-row--half > .adp-labeled-input--wide {
+    width: 100%;
+    flex: unset;
+  }
+
+  /* Diagnosis rows – scroll */
+  .adp-diag-header-row { display: none; }
+  .adp-diag-row--diseases,
+  .adp-diag-row--final,
+  .adp-diag-row--radiation {
+    grid-template-columns: 1fr;
+    border: 1px solid #f0f2f5;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #fafafa;
+    gap: 6px;
+    min-width: unset;
+  }
+  .adp-diag-row + .adp-diag-row { border-top: none; margin-top: 6px; }
+  .adp-diag-cell { white-space: normal; font-size: 12px; }
+  .adp-diag-confirm-btn,
+  .adp-diag-delete-btn { margin-left: auto; }
+
+  /* Personal data – single column */
+  .adp-pd-grid { grid-template-columns: 1fr; }
+  .adp-pd-right { border-left: none; padding-left: 0; border-top: 1px solid #f0f2f5; padding-top: 12px; margin-top: 12px; }
+}
+
+/* Small Mobile (≤ 480px) */
+@media (max-width: 480px) {
+  .adp-top-header  { padding: 8px 12px; gap: 4px; }
+
+  .adp-back-btn    { font-size: 12px; }
+  .adp-patient-title { font-size: 12.5px; }
+  .adp-added-date  { font-size: 10px; }
+
+  .adp-dob-value   { font-size: 13px; }
+  .adp-dob-label   { font-size: 9.5px; }
+
+  .adp-tab-bar { padding: 0 6px; gap: 0; }
+  .adp-tab     { padding: 10px 8px; font-size: 11.5px; }
+
+  .adp-content { padding: 0 8px 80px; }
+
+  /* ── General Information tab – small mobile ── */
+  .adp-section-body   { padding: 10px 12px 14px; }
+  .adp-section-header { padding: 10px 12px; }
+
+  /* Address half rows – also stack */
+  .adp-addr-form .adp-doc-row--half { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+
+  /* Patient card meta items – stack */
+  .adp-patient-meta-row { flex-direction: column; gap: 4px; }
+
+  /* Section title smaller */
+  .adp-section-title { font-size: 13px; }
+}

@@ -1,0 +1,745 @@
+/* SuppliersTab.css */
+.suppliersTab-container {
+    padding: 0;
+    background: #f8fafc;
+}
+
+/* Header Styles */
+.suppliersTab-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem;
+    margin-bottom: 0;
+}
+
+.suppliersTab-headerContent {
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suppliersTab-titleSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.suppliersTab-iconWrapper {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    padding: 0.75rem;
+    border-radius: 12px;
+    color: white;
+}
+
+.suppliersTab-titleSection h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.suppliersTab-titleSection p {
+    margin: 0.25rem 0 0 0;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+/* Content Section */
+.suppliersTab-content {
+    padding: 1.5rem;
+    margin: 0 auto;
+}
+
+.suppliersTab-sectionHeader {
+    margin-bottom: 1.5rem;
+}
+
+.suppliersTab-sectionHeader h3 {
+    margin: 0 0 0.25rem 0;
+    color: #1a202c;
+    font-size: 1.5rem;
+}
+
+.suppliersTab-subtitle {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+/* Table Styles */
+.suppliersTab-tableContainer {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.suppliersTab-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.suppliersTab-table th {
+    background: #f7fafc;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.suppliersTab-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4a5568;
+}
+
+.suppliersTab-tableRow:hover {
+    background: #f7fafc;
+}
+
+/* Supplier Info Styles */
+.suppliersTab-supplierName {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.suppliersTab-supplierName strong {
+    color: #1a202c;
+}
+
+.suppliersTab-addressLine {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.suppliersTab-phone,
+.suppliersTab-email {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a5568;
+}
+
+/* Products Count */
+.suppliersTab-productsCount {
+    display: flex;
+    align-items: center;
+}
+
+.suppliersTab-countBadge {
+    background: #edf2f7;
+    color: #4a5568;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+
+/* Action Buttons */
+.suppliersTab-actionButtons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.suppliersTab-viewBtn,
+.suppliersTab-editBtn,
+.suppliersTab-deleteBtn {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suppliersTab-viewBtn {
+    background: #f0fff4;
+    color: #38a169;
+}
+
+.suppliersTab-viewBtn:hover:not(:disabled) {
+    background: #c6f6d5;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-viewBtn:disabled {
+    background: #f7fafc;
+    color: #cbd5e0;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.suppliersTab-editBtn {
+    background: #ebf8ff;
+    color: #3182ce;
+}
+
+.suppliersTab-editBtn:hover {
+    background: #bee3f8;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-deleteBtn {
+    background: #fff5f5;
+    color: #e53e3e;
+}
+
+.suppliersTab-deleteBtn:hover {
+    background: #fed7d7;
+    transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.suppliersTab-modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.suppliersTab-modal {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.suppliersTab-productsModal {
+    max-width: 800px;
+}
+
+.suppliersTab-modalHeader {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suppliersTab-modalHeader h3 {
+    margin: 0;
+    color: #1a202c;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.suppliersTab-modalIcon {
+    color: #ed8936;
+}
+
+.suppliersTab-closeBtn {
+    background: none;
+    border: none;
+    color: #718096;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.suppliersTab-closeBtn:hover {
+    background: #f7fafc;
+    color: #4a5568;
+}
+
+/* Modal Content */
+.suppliersTab-modalContent {
+    padding: 0;
+}
+
+.suppliersTab-addProductSection {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.suppliersTab-addProductSection h4 {
+    margin: 0 0 1rem 0;
+    color: #1a202c;
+    font-size: 1.1rem;
+}
+
+.suppliersTab-addProductForm {
+    width: 100%;
+}
+
+.suppliersTab-addProductGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.suppliersTab-noItemsText {
+    color: #718096;
+    font-size: 0.9rem;
+    margin: 0.5rem 0 0 0;
+    font-style: italic;
+}
+
+/* Products List */
+.suppliersTab-productsList {
+    padding: 1.5rem 2rem;
+}
+
+.suppliersTab-productsList h4 {
+    margin: 0 0 1rem 0;
+    color: #1a202c;
+    font-size: 1.1rem;
+}
+
+.suppliersTab-emptyProducts {
+    text-align: center;
+    padding: 2rem;
+    color: #718096;
+}
+
+.suppliersTab-emptyProducts p {
+    margin: 0.5rem 0 0 0;
+}
+
+.suppliersTab-productsTable {
+    background: #f7fafc;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.suppliersTab-productsTable table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.suppliersTab-productsTable th {
+    background: #edf2f7;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.suppliersTab-productsTable td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+}
+
+.suppliersTab-productRow:hover {
+    background: #f7fafc;
+}
+
+.suppliersTab-productName {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.suppliersTab-productName strong {
+    color: #1a202c;
+    font-size: 0.9rem;
+}
+
+.suppliersTab-productDescription {
+    font-size: 0.8rem;
+    color: #718096;
+    line-height: 1.3;
+}
+
+.suppliersTab-productPrice {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* Category Badges */
+.suppliersTab-categoryBadge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.suppliersTab-category-medicine {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.suppliersTab-category-consumable {
+    background: #feebc8;
+    color: #d69e2e;
+}
+
+.suppliersTab-category-equipment {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.suppliersTab-category-lab-supply {
+    background: #bee3f8;
+    color: #2c5aa0;
+}
+
+.suppliersTab-category-other {
+    background: #e9d8fd;
+    color: #6b46c1;
+}
+
+/* Form Styles */
+.suppliersTab-form {
+    padding: 2rem;
+}
+
+.suppliersTab-formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.suppliersTab-formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.suppliersTab-fullWidth {
+    grid-column: 1 / -1;
+}
+
+.suppliersTab-formGroup label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.suppliersTab-formGroup input,
+.suppliersTab-formGroup select,
+.suppliersTab-formGroup textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.suppliersTab-formGroup input:focus,
+.suppliersTab-formGroup select:focus,
+.suppliersTab-formGroup textarea:focus {
+    outline: none;
+    border-color: #ed8936;
+    box-shadow: 0 0 0 3px rgba(237, 137, 54, 0.1);
+}
+
+.suppliersTab-formActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Button Styles */
+.suppliersTab-addBtn {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suppliersTab-addBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+}
+
+.suppliersTab-primaryBtn {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.suppliersTab-saveBtn {
+    background: #48bb78;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.suppliersTab-saveBtn:hover {
+    background: #38a169;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-smallBtn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+}
+
+.suppliersTab-cancelBtn {
+    background: #e2e8f0;
+    color: #4a5568;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suppliersTab-cancelBtn:hover {
+    background: #cbd5e0;
+}
+
+/* Empty State */
+.suppliersTab-emptyState {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.suppliersTab-emptyState h4 {
+    margin: 1rem 0 0.5rem;
+    color: #1a202c;
+}
+
+.suppliersTab-emptyState p {
+    color: #718096;
+    margin-bottom: 2rem;
+}
+
+/* Loading State */
+.suppliersTab-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    color: #718096;
+}
+
+.suppliersTab-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-left: 4px solid #ed8936;
+    border-radius: 50%;
+    animation: suppliersTab-spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes suppliersTab-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Supplier Product Row Styles */
+.suppliersTab-productRow {
+    transition: all 0.2s;
+}
+
+.suppliersTab-productRow:hover {
+    background-color: #f8fafc;
+}
+
+.suppliersTab-productPrice {
+    font-weight: 600;
+    color: #059669;
+}
+
+.suppliersTab-editPrice {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.suppliersTab-priceInput {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    width: 120px;
+    padding-left: 1.5rem;
+}
+
+.suppliersTab-currency {
+    position: absolute;
+    left: 0.5rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+
+/* Action Buttons for Products */
+.suppliersTab-actionButtons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.suppliersTab-smallBtn {
+    padding: 0.4rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.suppliersTab-editBtn {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.suppliersTab-editBtn:hover {
+    background: #bfdbfe;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-saveBtn.suppliersTab-smallBtn {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.suppliersTab-saveBtn.suppliersTab-smallBtn:hover {
+    background: #a7f3d0;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-cancelBtn.suppliersTab-smallBtn {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.suppliersTab-cancelBtn.suppliersTab-smallBtn:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-deleteBtn {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.suppliersTab-deleteBtn:hover {
+    background: #fecaca;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .suppliersTab-actionButtons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .suppliersTab-smallBtn {
+        width: 100%;
+        height: 36px;
+    }
+
+    .suppliersTab-priceInput {
+        width: 100px;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+
+    .suppliersTab-header,
+    .suppliersTab-content {
+        padding: 1rem;
+    }
+
+    .suppliersTab-headerContent {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .suppliersTab-addProductGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .suppliersTab-formGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .suppliersTab-modal {
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+
+    .suppliersTab-form {
+        padding: 1rem;
+    }
+
+    .suppliersTab-modalHeader,
+    .suppliersTab-addProductSection,
+    .suppliersTab-productsList {
+        padding: 1rem 1.5rem;
+    }
+
+    .suppliersTab-tableContainer {
+        overflow-x: auto;
+    }
+
+    .suppliersTab-table {
+        min-width: 800px;
+    }
+
+    .suppliersTab-actionButtons {
+        flex-direction: column;
+    }
+}

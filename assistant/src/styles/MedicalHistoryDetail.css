@@ -1,0 +1,217 @@
+/* Main Container */
+.medical-history-detail-container {
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Inter Tight', sans-serif;
+    color: #333;
+  }
+  
+  /* Loading and Error States */
+  .loading-container, .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    text-align: center;
+  }
+  
+  .loading-spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  
+  .error-icon {
+    background-color: #ffebee;
+    color: #d32f2f;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Back Button */
+  .back-button {
+    background: none;
+    border: none;
+    color: #2c7be5;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+  }
+  
+  .back-button:hover {
+    background-color: #f0f5ff;
+  }
+  
+  /* Header Section */
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .detail-header h2 {
+    margin: 0;
+    color: #2c3e50;
+  }
+  
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  
+  .status-badge[data-status="completed"] {
+    background-color: #e6f7ee;
+    color: #00a854;
+  }
+  
+  .status-badge[data-status="cancelled"] {
+    background-color: #fff2f0;
+    color: #f5222d;
+  }
+  
+  .status-badge[data-status="scheduled"] {
+    background-color: #e6f7ff;
+    color: #1890ff;
+  }
+  
+  /* Grid Layout */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+  }
+  
+  /* Section Styling */
+  .detail-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .detail-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 18px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+  }
+  
+  /* Detail Items */
+  .detail-item {
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  
+  .detail-item strong {
+    display: inline-block;
+    min-width: 100px;
+    color: #666;
+  }
+  
+  /* Mode Tag */
+  .mode-tag {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  
+  .mode-tag.online {
+    background-color: #e6f7ff;
+    color: #1890ff;
+  }
+  
+  .mode-tag.offline {
+    background-color: #f6ffed;
+    color: #52c41a;
+  }
+  
+  /* Payment Status */
+  .payment-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  
+  .payment-status.paid {
+    background-color: #e6f7ee;
+    color: #00a854;
+  }
+  
+  .payment-status.pending {
+    background-color: #fff7e6;
+    color: #fa8c16;
+  }
+  
+  .payment-status.failed {
+    background-color: #fff2f0;
+    color: #f5222d;
+  }
+  
+  /* Text Content */
+  .text-content {
+    background-color: #f9f9f9;
+    padding: 12px;
+    border-radius: 4px;
+    margin-top: 5px;
+    white-space: pre-wrap;
+  }
+  
+  /* Comments */
+  .comment-item {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+  }
+  
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  
+  .comment-date {
+    color: #888;
+  }
+  
+  .comment-text {
+    line-height: 1.5;
+  }
