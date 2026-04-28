@@ -1,0 +1,594 @@
+/* ========================================
+   PROJECT SIDEBAR - COMPLETE REDESIGN
+   Clean, Modern, Minimal Design System
+   ======================================== */
+
+/* Main Container */
+.ps-sidebar-wrapper {
+    width: 360px;
+    height: 100vh;
+    background: #fafbfc;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ========================================
+   HEADER SECTION
+   ======================================== */
+.ps-header-container {
+    padding: 24px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ps-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.ps-title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ps-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ps-icon-header {
+    color: #6b7280;
+    width: 20px;
+    height: 20px;
+}
+
+.ps-title-section h1 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.ps-count-badge {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.ps-subtitle {
+    display: none;
+}
+
+/* Create Button */
+.ps-create-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ps-create-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.ps-create-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ========================================
+   SEARCH SECTION
+   ======================================== */
+.ps-search-wrapper {
+    margin-top: 16px;
+}
+
+.ps-search-box {
+    position: relative;
+}
+
+.ps-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+
+.ps-search-input {
+    width: 100%;
+    padding: 9px 36px 9px 36px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 0.875rem;
+    transition: all 0.15s ease;
+}
+
+.ps-search-input::placeholder {
+    color: #9ca3af;
+}
+
+.ps-search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ps-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.ps-clear-btn:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* ========================================
+   VIEW TOGGLE
+   ======================================== */
+.ps-toggle-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.ps-toggle-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ps-toggle-btn:hover:not(.ps-active) {
+    background: #f9fafb;
+}
+
+.ps-toggle-btn.ps-active {
+    background: #ffffff;
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.ps-toggle-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ========================================
+   PROJECTS LIST
+   ======================================== */
+.ps-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    background: #fafbfc;
+}
+
+.ps-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ps-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ps-list-container::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.ps-list-container::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Category Headers */
+.ps-category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 12px 8px 12px;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ps-category-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Project List */
+.ps-project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ========================================
+   PROJECT CARDS
+   ======================================== */
+.ps-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ps-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ps-card.ps-card-active {
+    background: #f9fafb;
+    border-color: #3b82f6;
+}
+
+.ps-card::before {
+    display: none;
+}
+
+/* Card Layout */
+.ps-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ps-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+}
+
+.ps-active-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+}
+
+@keyframes ps-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Card Info */
+.ps-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ps-card-name {
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+}
+
+.ps-card-desc {
+    color: #6b7280;
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+/* Members Badge */
+.ps-members-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: none;
+    margin-top: 8px;
+}
+
+.ps-members-badge svg {
+    width: 12px;
+    height: 12px;
+    color: #6b7280;
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.ps-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.ps-empty-icon {
+    margin-bottom: 16px;
+    color: #d1d5db;
+}
+
+.ps-empty-title {
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 8px 0;
+    font-size: 1.125rem;
+}
+
+.ps-empty-text {
+    color: #6b7280;
+    margin: 0 0 24px 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* ========================================
+   MODAL STYLES
+   ======================================== */
+.ps-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: ps-fadeIn 0.2s ease;
+}
+
+body:has(.ps-modal-overlay) .sidebar,
+body:has(.ps-modal-overlay) .header,
+body:has(.ps-modal-overlay) .sidebar *,
+body:has(.ps-modal-overlay) .header *,
+body:has(.ps-modal-overlay) .layout-top-bar {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+@keyframes ps-fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.ps-modal-wrapper {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 480px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: ps-slideUp 0.3s ease;
+}
+
+@keyframes ps-slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.ps-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.ps-modal-title-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.ps-modal-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #3b82f6;
+}
+
+.ps-modal-title-wrap h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.ps-modal-title-wrap p {
+    margin: 4px 0 0 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.ps-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    color: #6b7280;
+}
+
+.ps-modal-close:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.ps-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ps-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ps-form-label {
+    font-weight: 500;
+    color: #111827;
+    font-size: 0.875rem;
+}
+
+.ps-required {
+    color: #ef4444;
+}
+
+.ps-optional {
+    color: #9ca3af;
+    font-weight: 400;
+    font-size: 0.75rem;
+}
+
+.ps-form-input,
+.ps-form-textarea {
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    color: #111827;
+}
+
+.ps-form-input:focus,
+.ps-form-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ps-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.ps-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.ps-modal-actions button {
+    flex: 1;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ps-btn-submit {
+    background: #3b82f6;
+    color: #ffffff;
+    border: none;
+}
+
+.ps-btn-submit:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.ps-btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ps-btn-cancel {
+    background: #ffffff;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+}
+
+.ps-btn-cancel:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}

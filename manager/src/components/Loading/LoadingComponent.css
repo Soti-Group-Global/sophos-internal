@@ -1,0 +1,189 @@
+/* ═══════════════════════════════════════════════
+   LoadingComponent — modern orbit + ECG design
+   ═══════════════════════════════════════════════ */
+
+.lc-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  min-height: 90vh;
+  width: 100%;
+  background: linear-gradient(145deg, #f0f4ff 0%, #e8f0fe 50%, #f5f0ff 100%);
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+/* ── Scene ── */
+.lc-scene {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Concentric rotating rings ── */
+.lc-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+}
+
+.lc-ring--outer {
+  width: 140px;
+  height: 140px;
+  border-top-color: #0c3870;
+  border-right-color: rgba(12, 56, 112, 0.25);
+  border-bottom-color: rgba(12, 56, 112, 0.1);
+  border-left-color: rgba(12, 56, 112, 0.25);
+  animation: lc-spin 1.8s linear infinite;
+}
+
+.lc-ring--mid {
+  width: 108px;
+  height: 108px;
+  border-top-color: transparent;
+  border-right-color: #6366f1;
+  border-bottom-color: rgba(99, 102, 241, 0.25);
+  border-left-color: transparent;
+  animation: lc-spin-rev 1.3s linear infinite;
+}
+
+.lc-ring--inner {
+  width: 76px;
+  height: 76px;
+  border-top-color: #0ea5e9;
+  border-right-color: transparent;
+  border-bottom-color: rgba(14, 165, 233, 0.3);
+  border-left-color: rgba(14, 165, 233, 0.3);
+  animation: lc-spin 0.9s linear infinite;
+}
+
+/* ── Centre pulse circle ── */
+.lc-pulse {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0c3870 0%, #1e40af 100%);
+  box-shadow:
+    0 0 0 6px rgba(12, 56, 112, 0.12),
+    0 0 24px rgba(12, 56, 112, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: lc-pulse 2s ease-in-out infinite;
+  z-index: 2;
+}
+
+.lc-ecg {
+  width: 36px;
+  height: 18px;
+  overflow: visible;
+}
+
+.lc-ecg polyline {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: lc-draw 1.6s ease-in-out infinite;
+}
+
+/* ── Orbit tick bars ── */
+.lc-bar {
+  position: absolute;
+  width: 3px;
+  height: 10px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #0c3870, #6366f1);
+  top: 50%;
+  left: 50%;
+  margin-left: -1.5px;
+  margin-top: -5px;
+  transform-origin: center 54px;
+  animation: lc-bar-pulse 1.2s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+/* ── Text shimmer ── */
+.lc-text {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #0c3870 0%, #6366f1 40%, #0ea5e9 70%, #0c3870 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: lc-shimmer 2.4s linear infinite;
+  margin: 0;
+}
+
+/* ── Skeleton bars ── */
+.lc-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 180px;
+}
+
+.lc-skeleton-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
+  background-size: 200% auto;
+  animation: lc-shimmer-bar 1.6s linear infinite;
+  align-self: center;
+}
+
+/* ══ Animations ══════════════════════════════════ */
+
+@keyframes lc-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes lc-spin-rev {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes lc-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 6px rgba(12,56,112,0.12), 0 0 24px rgba(12,56,112,0.35); }
+  50%       { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(12,56,112,0.07), 0 0 36px rgba(12,56,112,0.5); }
+}
+
+@keyframes lc-draw {
+  0%   { stroke-dashoffset: 120; opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { stroke-dashoffset: 0; opacity: 1; }
+  80%  { stroke-dashoffset: 0; opacity: 0.6; }
+  100% { stroke-dashoffset: -120; opacity: 0; }
+}
+
+@keyframes lc-bar-pulse {
+  0%, 100% { opacity: 0.3; transform-origin: center 54px; transform: rotate(var(--r, 0deg)) scaleY(0.6); }
+  50%       { opacity: 1;   transform: rotate(var(--r, 0deg)) scaleY(1.2); }
+}
+
+@keyframes lc-shimmer {
+  to { background-position: 200% center; }
+}
+
+@keyframes lc-shimmer-bar {
+  to { background-position: -200% center; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .lc-scene { width: 110px; height: 110px; }
+  .lc-ring--outer { width: 110px; height: 110px; }
+  .lc-ring--mid   { width: 84px;  height: 84px; }
+  .lc-ring--inner { width: 58px;  height: 58px; }
+  .lc-pulse       { width: 40px;  height: 40px; }
+  .lc-ecg         { width: 28px;  height: 14px; }
+  .lc-bar { transform-origin: center 42px; margin-top: -5px; }
+}

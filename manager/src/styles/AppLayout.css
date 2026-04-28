@@ -1,0 +1,157 @@
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Default state: Sidebar expanded (280px) */
+.layout-top-bar {
+  display: flex;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 280px;
+  right: 0;
+  height: 70px;
+  padding-left: 0;
+  padding-right: 32px; /* Prevent right-side icon cutoff */
+  margin: 0;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  z-index: 200;
+}
+
+/* Minimized state: Sidebar minimized (72px) */
+.layout-top-bar.sidebar-minimized {
+  left: 72px;
+}
+
+/* Default state: Sidebar expanded (280px) */
+.layout-content {
+  display: flex;
+  flex: 1;
+  position: fixed;
+  top: 70px;
+  left: 280px;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Minimized state: Sidebar minimized (72px) */
+.layout-content.sidebar-minimized {
+  left: 72px;
+}
+
+.layout-main {
+  flex: 1;
+  background-color: #f8f9fa;
+  border-top-left-radius: 24px;
+  border: 1px solid rgba(215, 218, 221, 0.8);
+  transition: all 0.3s ease;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+
+.layout-main.mobile-sidebar-open {
+  transform: translateX(250px);
+}
+
+/* Mobile overlay */
+.mobile-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  /* z-index: 998; */
+  display: none;
+}
+
+/* Desktop: Ensure proper behavior on larger screens */
+@media (min-width: 768px) {
+  .layout-top-bar {
+    left: 280px;
+  }
+
+  .layout-top-bar.sidebar-minimized {
+    left: 72px;
+  }
+
+  .layout-content {
+    left: 280px;
+  }
+
+  .layout-content.sidebar-minimized {
+    left: 72px;
+  }
+
+  /* Reset mobile transforms */
+  .layout-main.mobile-sidebar-open {
+    transform: none !important;
+  }
+
+  .mobile-sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* Mobile: Override desktop margins */
+@media (max-width: 767px) {
+  .layout-top-bar,
+  .layout-top-bar.sidebar-minimized {
+    left: 0 !important;
+  }
+
+  .layout-content,
+  .layout-content.sidebar-minimized {
+    left: 0 !important;
+  }
+
+  .layout-main {
+    margin-left: 0;
+  }
+
+  .layout-main.mobile-sidebar-open {
+    transform: translateX(250px);
+  }
+
+  .mobile-sidebar-overlay.active {
+    display: block;
+  }
+}
+
+
+
+/* Ensure proper scrolling */
+.layout-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.layout-main::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.layout-main::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.layout-main::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

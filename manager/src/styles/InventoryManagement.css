@@ -1,0 +1,48 @@
+.inventory-container {
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.inventory-header {
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.inventory-tabs {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.inventory-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--color-card, white);
+    border: 2px solid var(--color-border, #e2e8f0);
+    border-radius: 12px;
+    color: var(--color-text-secondary, #64748b);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.inventory-tab.active {
+    background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+    border-color: transparent;
+    color: var(--color-text-inverse, white);
+    box-shadow: 0 4px 12px rgba(10, 46, 93, 0.25);
+
+}
+
+.inventory-tab:hover {
+    border-color: var(--color-primary, #0A2E5D);
+    background: var(--color-card-hover, #F1F5F9);
+}
+
+.inventory-content {
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    padding-top: 15px;
+}

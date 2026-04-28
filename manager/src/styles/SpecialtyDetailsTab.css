@@ -1,0 +1,86 @@
+/* Modern Single-Column Specialty Details */
+.specialty-details-container {
+  margin: 0 auto;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Specialty Header */
+.specialty-header-modern {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+.specialty-name-modern {
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.specialty-meta-modern {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  color: #666;
+}
+
+/* Detail List */
+.detail-list-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-row-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.detail-label-modern {
+  font-weight: 500;
+  color: #666;
+  min-width: 160px;
+}
+
+.detail-value-modern {
+  font-weight: 500;
+  color: #1a1a1a;
+  text-align: right;
+  flex-grow: 1;
+  max-width: 400px;
+}
+
+.detail-value-modern.highlight {
+  color: #4a6fa5;
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .specialty-details-container {
+    padding: 20px;
+  }
+
+  .detail-row-modern {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .detail-value-modern {
+    text-align: left;
+    width: 100%;
+  }
+
+  .specialty-meta-modern {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

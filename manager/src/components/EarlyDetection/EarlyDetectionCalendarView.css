@@ -1,0 +1,567 @@
+/* ══════════════════════════════════════════════
+   EarlyDetectionCalendarView — matches ApplicationsList CalendarView design
+   ══════════════════════════════════════════════ */
+
+/* Layout */
+.edcv2-layout {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  background: #f8f9fa;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* ══════════════════════════════════════════════
+   LEFT SIDEBAR
+   ══════════════════════════════════════════════ */
+.edcv2-sidebar {
+  width: 260px;
+  background: #2d3748;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+  padding: 16px 12px;
+}
+
+/* Current date chip */
+.edcv2-current-date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #1a202c;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.edcv2-current-date span { flex: 1; }
+.edcv2-collapse-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  padding: 2px;
+  opacity: 0.7;
+}
+.edcv2-collapse-btn:hover { opacity: 1; }
+
+/* Mini Calendar card */
+.edcv2-mini-cal {
+  background: #1a202c;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+/* Header row */
+.edcv2-mini-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.edcv2-nav-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.edcv2-nav-btn:hover { opacity: 1; }
+
+/* Month + Year selectors */
+.edcv2-month-year {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.edcv2-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.edcv2-selector-label {
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.edcv2-selector-label:hover { background: rgba(255,255,255,0.1); }
+.edcv2-chev {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.edcv2-chev:hover { opacity: 1; }
+
+/* Dropdowns */
+.edcv2-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #1a202c;
+  border: 1px solid #4a5568;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  z-index: 200;
+  min-width: 150px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.edcv2-dropdown--year { min-width: 90px; }
+.edcv2-dropdown-item {
+  padding: 9px 14px;
+  font-size: 13px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.edcv2-dropdown-item:hover  { background: #374151; }
+.edcv2-dropdown-item.selected {
+  background: #0c3870;
+  font-weight: 600;
+}
+
+/* Scrollbar for dropdown */
+.edcv2-dropdown::-webkit-scrollbar { width: 5px; }
+.edcv2-dropdown::-webkit-scrollbar-track { background: #1a202c; }
+.edcv2-dropdown::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
+
+/* Weekday row */
+.edcv2-weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.edcv2-weekday-lbl {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #9ca3af;
+  letter-spacing: 0.04em;
+  padding: 3px 0;
+  text-transform: uppercase;
+}
+
+/* Days grid */
+.edcv2-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.edcv2-day {
+  aspect-ratio: 1;
+  border: none;
+  background: transparent;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background 0.15s;
+}
+.edcv2-day:hover   { background: #374151; }
+.edcv2-day--other  { color: #6b7280; }
+.edcv2-day--today  { background: #0c3870; color: white; font-weight: 700; border-radius: 50%; }
+.edcv2-day--selected { background: #3b82f6; color: white; font-weight: 700; border-radius: 50%; }
+
+.edcv2-day-count {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 2px;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Today button */
+.edcv2-today-btn {
+  width: 100%;
+  padding: 9px;
+  background: #374151;
+  border: 1px solid #4a5568;
+  border-radius: 6px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 16px;
+}
+.edcv2-today-btn:hover { background: #4a5568; }
+
+/* Legend */
+.edcv2-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #1a202c;
+  border-radius: 8px;
+}
+.edcv2-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #d1d5db;
+}
+.edcv2-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Sidebar scrollbar */
+.edcv2-sidebar::-webkit-scrollbar { width: 6px; }
+.edcv2-sidebar::-webkit-scrollbar-track { background: #1a202c; }
+.edcv2-sidebar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
+
+/* ══════════════════════════════════════════════
+   MAIN CONTENT
+   ══════════════════════════════════════════════ */
+.edcv2-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white;
+  min-height: 0;
+}
+
+/* Scroll wrapper — single scroll container for header + body */
+.edcv2-scroll-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* Column header — see .edcv2-col-header below (in body section) for full styles */
+.edcv2-sidebar-toggle { display: none; }
+.edcv2-clock-icon { display: block; }
+.edcv2-time-col-hdr {
+  width: 80px;
+  padding: 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a202b;
+  border-right: 1px solid #2d3748;
+  color: #a0aec0;
+  flex-shrink: 0;
+}
+.edcv2-booking-col-hdr {
+  flex: 1;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Weekly day column headers */
+.edcv2-week-col-hdr {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 4px;
+  gap: 6px;
+  cursor: pointer;
+  border-right: 1px solid #2d3748;
+  transition: background 0.15s;
+}
+.edcv2-week-col-hdr:hover { background: rgba(255,255,255,0.08); }
+.edcv2-week-col-hdr--selected { background: rgba(59,130,246,0.15); }
+.edcv2-week-col-hdr:last-child { border-right: none; }
+.edcv2-week-day-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #a0aec0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.edcv2-week-day-num {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.edcv2-week-day-num--today {
+  background: #3b82f6;
+  color: white;
+}
+.edcv2-week-day-num--selected {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.edcv2-col-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  text-transform: capitalize;
+}
+.edcv2-col-count {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 20px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+
+/* Body — time grid */
+.edcv2-body {
+  display: flex;
+}
+
+/* Match scrollbar gutter in header so columns align */
+.edcv2-col-header {
+  display: flex;
+  background: #1a202b;
+  border-bottom: 2px solid #2d3748;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Time labels */
+.edcv2-time-col {
+  width: 80px;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+.edcv2-time-slot {
+  height: 36px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  border-bottom: 1px solid #f3f4f6;
+  padding-top: 2px;
+}
+.edcv2-time-slot.half { border-bottom: 1px solid #e5e7eb; }
+.edcv2-time-lbl {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+  padding: 0 6px;
+}
+
+/* Slots column */
+.edcv2-slots-col {
+  flex: 1;
+  position: relative;
+  border-right: 1px solid #e5e7eb;
+}
+.edcv2-slots-col:last-child { border-right: none; }
+.edcv2-slot {
+  height: 36px;
+  border-bottom: 1px solid #f3f4f6;
+  position: relative;
+  transition: background 0.15s;
+}
+.edcv2-slot:hover  { background: #f9fafb; }
+.edcv2-slot.half   { border-bottom: 1px solid #e5e7eb; }
+.edcv2-slot--hover-span { background: rgba(12, 56, 112, 0.05); }
+
+.edcv2-create-hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 144px;
+  background: linear-gradient(135deg, rgba(12, 56, 112, 0.08), rgba(12, 56, 112, 0.14));
+  border: 2px dashed #0a2e5d;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.edcv2-create-icon {
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  color: #0a2e5d;
+}
+
+.edcv2-create-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a2e5d;
+  text-align: center;
+}
+
+.edcv2-create-time {
+  font-size: 12px;
+  font-weight: 500;
+  color: #0a2e5d;
+  text-align: center;
+}
+
+/* Booking block */
+.edcv2-booking-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 2px;
+  min-height: 68px;   /* 2 slots */
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  z-index: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+.edcv2-booking-block:hover {
+  transform: translateX(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+  z-index: 2;
+}
+.edcv2-block-time {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+.edcv2-block-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.edcv2-block-pkg {
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.edcv2-block-pay {
+  font-size: 10px;
+  background: rgba(0,0,0,0.2);
+  color: rgba(255,255,255,0.9);
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+/* ── Current-time indicator ──────────────────────────────────────────────── */
+.cal-now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ef4444;
+  z-index: 20;
+  pointer-events: none;
+}
+.cal-now-dot {
+  position: absolute;
+  left: 74px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+/* Scrollbar for body */
+.edcv2-body::-webkit-scrollbar { width: 8px; }
+.edcv2-body::-webkit-scrollbar-track { background: #f9fafb; }
+.edcv2-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+.edcv2-body::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .edcv2-layout { position: relative; }
+  .edcv2-sidebar {
+    position: absolute;
+    left: -260px;
+    top: 0;
+    height: 100%;
+    z-index: 150;
+    transition: left 0.3s ease;
+  }
+  .edcv2-sidebar--open { left: 0; }
+  .edcv2-collapse-btn {
+    display: flex;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 4px;
+    opacity: 1;
+  }
+  .edcv2-collapse-btn:hover { background: rgba(255,255,255,0.25); }
+  .edcv2-sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #0A2E5D;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .edcv2-sidebar-toggle:hover { background: #0a2648; }
+  .edcv2-clock-icon { display: none; }
+}
+
+@media (max-width: 768px) {
+  .edcv2-sidebar { width: 220px; }
+  .edcv2-col-date { font-size: 13px; }
+}

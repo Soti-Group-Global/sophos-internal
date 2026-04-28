@@ -1,0 +1,721 @@
+/* Health Direct Edit Patient - Premium Design System */
+:root {
+  /* Health Direct Brand Colors */
+  --hd-primary: var(--color-primary, #0A2E5D);
+  --hd-primary-dark: var(--color-primary-hover, #0f2138);
+  --hd-primary-ultra-light: rgba(152, 195, 250, 0.1);
+  --hd-secondary: #16A34A;
+  --hd-accent: #40E0D0;
+  --hd-success: var(--color-success, #16A34A);
+  --hd-warning: var(--color-warning, #F59E0B);
+  --hd-danger: var(--color-error, #DC2626);
+  --hd-info: #17A2B8;
+
+  /* Health Direct Gradients */
+  --hd-gradient-primary: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+  --hd-gradient-secondary: linear-gradient(135deg, #16A34A 0%, #40E0D0 100%);
+  --hd-gradient-glass: linear-gradient(135deg, rgba(10, 46, 93, 0.1) 0%, rgba(15, 33, 56, 0.1) 100%);
+  --hd-gradient-overlay: linear-gradient(135deg, rgba(10, 46, 93, 0.9) 0%, rgba(15, 33, 56, 0.8) 100%);
+
+  /* Premium Backgrounds */
+  --hd-bg-primary: var(--color-card, #FFFFFF);
+  --hd-bg-secondary: var(--color-bg, #F8FAFC);
+  --hd-bg-tertiary: var(--color-card-hover, #F1F5F9);
+  --hd-bg-glass: rgba(255, 255, 255, 0.85);
+  --hd-bg-overlay: rgba(0, 0, 0, 0.6);
+  --hd-bg-surface: #fdfdfd;
+
+  /* Text Colors */
+  --hd-text-primary: var(--color-text-primary, #000000);
+  --hd-text-secondary: var(--color-text-secondary, #475569);
+  --hd-text-tertiary: #4a5568;
+  --hd-text-muted: #718096;
+  --hd-text-accent: var(--color-primary, #0A2E5D);
+  --hd-text-inverse: var(--color-text-inverse, #FFFFFF);
+
+  /* Border & Dividers */
+  --hd-border-light: var(--color-border, #E2E8F0);
+  --hd-border-medium: #c7d2e1;
+  --hd-border-strong: #a0aec0;
+  --hd-divider: rgba(10, 46, 93, 0.1);
+
+  /* Premium Radius */
+  --hd-radius-xs: 4px;
+  --hd-radius-sm: var(--radius-sm, 6px);
+  --hd-radius-md: var(--radius-md, 10px);
+  --hd-radius-lg: var(--radius-lg, 16px);
+  --hd-radius-xl: 20px;
+  --hd-radius-2xl: 24px;
+  --hd-radius-3xl: 32px;
+
+  /* Premium Shadows */
+  --hd-shadow-xs: 0 1px 2px rgba(10, 46, 93, 0.05);
+  --hd-shadow-sm: var(--shadow-card, 0 2px 6px rgba(0, 0, 0, 0.05)), 0 1px 2px rgba(10, 46, 93, 0.03);
+  --hd-shadow-md: 0 4px 12px rgba(10, 46, 93, 0.12), 0 2px 6px rgba(10, 46, 93, 0.04);
+  --hd-shadow-lg: 0 8px 20px rgba(10, 46, 93, 0.15), 0 4px 8px rgba(10, 46, 93, 0.06);
+  --hd-shadow-xl: 0 12px 32px rgba(10, 46, 93, 0.18), 0 6px 12px rgba(10, 46, 93, 0.08);
+  --hd-shadow-glow: 0 0 20px rgba(64, 224, 208, 0.3);
+  --hd-shadow-premium: 0 20px 40px rgba(10, 46, 93, 0.1), 0 8px 24px rgba(10, 46, 93, 0.06);
+
+  /* Smooth Transitions */
+  --hd-transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --hd-transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --hd-transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --hd-transition-bounce: 600ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Main Container */
+.modern-form-container {
+  margin: 0 auto;
+  background: var(--hd-bg-secondary);
+  min-height: 100vh;
+  position: relative;
+}
+
+
+/* Premium Header */
+.header-patient-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 36px;
+  background: var(--hd-gradient-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--hd-border-light);
+  position: relative;
+}
+
+.header-patient-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--hd-gradient-primary);
+  border-radius: var(--hd-radius-2xl) var(--hd-radius-2xl) 0 0;
+}
+
+.form-title {
+  font-weight: 700;
+  color: var(--hd-text-primary);
+  margin: 0;
+  background: var(--hd-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.patient-form-cancel-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--hd-radius-lg);
+  background: var(--hd-bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid var(--hd-border-light);
+  color: var(--hd-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--hd-transition-base);
+  box-shadow: var(--hd-shadow-xs);
+}
+
+.patient-form-cancel-btn:hover:not(:disabled) {
+  background: var(--hd-danger);
+  border-color: var(--hd-danger);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: var(--hd-shadow-sm);
+}
+
+.patient-form-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-btn-icon {
+}
+
+/* Premium Photo Upload Section */
+.form-section {
+  padding: 32px 36px;
+}
+
+.photo-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.photo-upload-circle {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--hd-gradient-primary);
+  cursor: pointer;
+  transition: all var(--hd-transition-base);
+  overflow: hidden;
+  border: 4px solid var(--hd-border-light);
+  box-shadow: var(--hd-shadow-md);
+}
+
+.photo-upload-circle::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: var(--hd-gradient-primary);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity var(--hd-transition-base);
+}
+
+.photo-upload-circle:hover:not(:has(.photo-upload-input:disabled)) {
+  transform: scale(1.05);
+  border-color: var(--hd-primary);
+  box-shadow: var(--hd-shadow-xl), var(--hd-shadow-glow);
+}
+
+.photo-upload-circle:hover::before {
+  opacity: 0.2;
+}
+
+.profile-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.photo-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: white;
+  gap: 8px;
+}
+
+.camera-icon-svg {
+  width: 36px;
+  height: 36px;
+  opacity: 0.95;
+  transition: transform var(--hd-transition-base);
+}
+
+.photo-upload-circle:hover .camera-icon-svg {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.photo-upload-text {
+  font-weight: 600;
+  text-align: center;
+  max-width: 85px;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.photo-upload-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.photo-upload-input:disabled {
+  cursor: not-allowed;
+}
+
+.photo-upload-circle:has(.photo-upload-input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.photo-upload-error {
+  margin-top: 12px;
+  color: var(--hd-danger);
+  text-align: center;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(239, 68, 68, 0.05));
+  padding: 8px 16px;
+  border-radius: var(--hd-radius-lg);
+  border: 2px solid rgba(220, 38, 38, 0.2);
+}
+
+/* Loading state */
+.photo-upload-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--hd-bg-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.photo-upload-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid transparent;
+  border-top: 3px solid white;
+  border-right: 3px solid white;
+  border-radius: 50%;
+  animation: hd-spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes hd-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Premium Form Styling */
+.modern-form {
+  margin-top: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-field label {
+  font-weight: 600;
+  color: var(--hd-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.required-asterisk {
+  color: var(--hd-danger);
+  font-weight: 700;
+}
+
+.form-field input[type="text"],
+.form-field input[type="email"],
+.form-field textarea {
+  padding: 12px 16px;
+  border: 2px solid var(--hd-border-light);
+  border-radius: var(--hd-radius-lg);
+  transition: all var(--hd-transition-base);
+  background: var(--hd-bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--hd-text-primary);
+  font-weight: 500;
+  box-shadow: var(--hd-shadow-xs);
+  font-family: inherit;
+}
+
+.form-field input[type="text"]:focus,
+.form-field input[type="email"]:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: var(--hd-primary);
+  box-shadow: 0 0 0 4px rgba(10, 46, 93, 0.15), var(--hd-shadow-sm);
+  background: var(--hd-bg-primary);
+  transform: translateY(-1px);
+}
+
+.form-field input.error,
+.form-field textarea.error {
+  border-color: var(--hd-danger);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05), rgba(239, 68, 68, 0.02));
+}
+
+.form-field input:disabled,
+.form-field textarea:disabled {
+  background: var(--hd-primary-ultra-light);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.field-error {
+  color: var(--hd-danger);
+  font-weight: 600;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Gender Select Styling */
+.gender-select .react-select__control {
+  border: 2px solid var(--hd-border-light);
+  border-radius: var(--hd-radius-lg);
+  padding: 6px 8px;
+  transition: all var(--hd-transition-base);
+  min-height: 48px;
+  background: var(--hd-bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--hd-shadow-xs);
+}
+
+.gender-select .react-select__control:hover {
+  border-color: var(--hd-border-medium);
+}
+
+.gender-select .react-select__control--is-focused {
+  border-color: var(--hd-primary);
+  box-shadow: 0 0 0 4px rgba(10, 46, 93, 0.15), var(--hd-shadow-sm);
+  background: var(--hd-bg-primary);
+}
+
+.gender-select.error .react-select__control {
+  border-color: var(--hd-danger);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05), rgba(239, 68, 68, 0.02));
+}
+
+.gender-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+}
+
+.gender-icon {
+}
+
+/* Date Picker Styling */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--hd-border-light);
+  border-radius: var(--hd-radius-lg);
+  transition: all var(--hd-transition-base);
+  background: var(--hd-bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--hd-text-primary);
+  font-weight: 500;
+  box-shadow: var(--hd-shadow-xs);
+  cursor: pointer;
+}
+
+.react-datepicker__input-container input:focus {
+  outline: none;
+  border-color: var(--hd-primary);
+  box-shadow: 0 0 0 4px rgba(10, 46, 93, 0.15), var(--hd-shadow-sm);
+  background: var(--hd-bg-primary);
+  transform: translateY(-1px);
+}
+
+.react-datepicker__input-container input.error {
+  border-color: var(--hd-danger);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05), rgba(239, 68, 68, 0.02));
+}
+
+.react-datepicker__input-container input:disabled {
+  background: var(--hd-primary-ultra-light);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Phone Input Styling */
+.phone-input-container .react-tel-input .form-control {
+  width: 100%;
+  padding: 12px 16px 12px 56px;
+  border: 2px solid var(--hd-border-light);
+  border-radius: var(--hd-radius-lg);
+  transition: all var(--hd-transition-base);
+  background: var(--hd-bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--hd-text-primary);
+  font-weight: 500;
+  box-shadow: var(--hd-shadow-xs);
+  height: 48px;
+}
+
+.phone-input-container .react-tel-input .form-control:focus {
+  outline: none;
+  border-color: var(--hd-primary);
+  box-shadow: 0 0 0 4px rgba(10, 46, 93, 0.15), var(--hd-shadow-sm);
+  background: var(--hd-bg-primary);
+}
+
+.phone-input-container .react-tel-input .form-control.phone-input-error {
+  border-color: var(--hd-danger);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05), rgba(239, 68, 68, 0.02));
+}
+
+.phone-input-container .react-tel-input .flag-dropdown {
+  border: 2px solid var(--hd-border-light);
+  border-right: none;
+  border-radius: var(--hd-radius-lg) 0 0 var(--hd-radius-lg);
+  background: var(--hd-bg-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all var(--hd-transition-base);
+}
+
+.phone-input-container .react-tel-input .flag-dropdown:hover {
+  background: var(--hd-bg-primary);
+}
+
+.phone-input-container .react-tel-input .flag-dropdown.phone-button-error {
+  border-color: var(--hd-danger);
+}
+
+/* Submit Button */
+.save-changes-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: var(--hd-radius-lg);
+  background: var(--hd-primary);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--hd-transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--hd-shadow-sm);
+}
+
+.save-changes-btn:hover:not(:disabled) {
+  background: var(--hd-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--hd-shadow-lg);
+}
+
+.save-changes-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.save-changes-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--hd-text-muted);
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--hd-border-light);
+  border-top: 4px solid var(--hd-primary);
+  border-radius: 50%;
+  animation: hd-spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modern-form-container {
+    padding: 16px;
+  }
+
+  .modern-form-card {
+    border-radius: var(--hd-radius-xl);
+  }
+
+  .header-patient-form {
+    padding: 20px 24px;
+  }
+
+  .form-title {
+  }
+
+  .form-section {
+    padding: 24px 20px;
+  }
+
+  .photo-upload-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .camera-icon-svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .photo-upload-text {
+    max-width: 75px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-form-cancel-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .cancel-btn-icon {
+  }
+}
+@media (max-width: 480px) {
+  .form-title {
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .photo-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+
+  .form-grid {
+    gap: 1rem;
+  }
+
+  .form-input,
+  .form-textarea {
+    padding: 0.75rem;
+  }
+}
+
+/* Phone Input Styles */
+.phone-input-container {
+  width: 100%;
+}
+
+.phone-input-container .form-control {
+  width: 100% !important;
+  height: 48px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding-left: 52px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.phone-input-container .form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+.phone-input-container .form-control:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.phone-input-container .flag-dropdown {
+  border: 2px solid #e2e8f0;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  background: white;
+}
+
+.phone-input-container .flag-dropdown:disabled {
+  background-color: #f8f9fa;
+}
+
+.phone-input-container .flag-dropdown.open {
+  background: white;
+}
+
+.phone-input-container .selected-flag {
+  border-radius: 8px 0 0 8px;
+}
+
+.phone-input-container .country-list {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Error states for phone input */
+.phone-input-error .form-control {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.phone-button-error .flag-dropdown {
+  border-color: #e53e3e;
+}
+
+/* Responsive design for phone inputs */
+@media (max-width: 768px) {
+  .phone-input-container .form-control {
+    height: 44px;
+    /* Prevents zoom on iOS */
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-field {
+    width: 100% !important;
+  }
+}
+
+/* Ensure proper spacing with phone inputs */
+.form-field .phone-input-container {
+  margin-top: 4px;
+}

@@ -1,0 +1,95 @@
+/* NetworkGuard.css */
+.network-guard-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #f8f9fa;
+    color: #212529;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 9999;
+    font-family: 'Inter Tight', sans-serif;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .network-guard-icon {
+    font-size: 72px;
+    margin-bottom: 20px;
+    color: #6c757d;
+  }
+  
+  .network-guard-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  
+  .network-guard-message {
+    font-size: 16px;
+    margin-bottom: 30px;
+    max-width: 500px;
+    line-height: 1.5;
+  }
+  
+  .network-guard-button {
+    background-color: rgba(10, 46, 93, 0.1);
+    color: #0A2E5D;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+  }
+  
+  .network-guard-button:hover {
+    background-color: #0b5ed7;
+  }
+  
+  .network-guard-reconnecting {
+    margin-top: 20px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .network-guard-spinner {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .network-guard-icon {
+    font-size: 52px;
+    margin-bottom: 14px;
+  }
+
+  .network-guard-title {
+    font-size: 18px;
+  }
+
+  .network-guard-message {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .network-guard-button {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+}

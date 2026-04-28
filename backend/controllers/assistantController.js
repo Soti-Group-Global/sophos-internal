@@ -1,0 +1,1085 @@
+const mongoose = require("mongoose");
+const nodemailer = require("nodemailer");
+const { Readable } = require("stream");
+const { validationResult } = require("express-validator");
+const Assistant = require("../models/Assistant");
+const HeadAssistant = require("../models/HeadAssistant");
+const User = require("../models/User");
+const DoctorsProfile = require("../models/DoctorsProfile");
+const { getGfs } = require("../gridfs");
+const { getIO } = require("../socket");
+const { generateHashedPassword } = require("../utils/passwordUtils");
+
+// Calculate age from dateOfBirth
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+  return age;
+};
+
+// Configure nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+  tls: {
+    // Do not fail on invalid certs
+    rejectUnauthorized: false,
+  },
+});
+
+// Function to send account creation email
+const sendAccountCreationEmail = async (email, password, fullName, notificationLanguage = 'en') => {
+  try {
+    const loginLink = 'https://assistant.health-direct.ru/';
+
+    const templates = {
+      en: {
+        subject: 'Your Assistant Account Has Been Created',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
+              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
+              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
+              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+              .login-button:hover { background: #1e3a8a; }
+              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Welcome to SOPHOS</h1>
+              </div>
+              <div class="content">
+                <p>Dear ${fullName},</p>
+                <p>Your <strong>Assistant (Ассистент)</strong> account has been successfully created. Below are your login credentials:</p>
+
+                <div class="credentials">
+                  <div class="credential-label">Email:</div>
+                  <div class="credential-value">${email}</div>
+                  <div class="credential-label">Password:</div>
+                  <div class="credential-value">${password}</div>
+                </div>
+
+                <p>Click the button below to log in to your account:</p>
+                <div style="text-align: center;">
+                  <a href="${loginLink}" class="login-button">Log In Now</a>
+                </div>
+                <p style="color: #64748b; font-size: 14px;">Or copy and paste this link: ${loginLink}</p>
+
+                <p style="color: #ef4444; font-weight: bold;">Important: Please change your password after your first login for security purposes.</p>
+
+                <div class="footer">
+                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      },
+      ru: {
+        subject: 'Ваш аккаунт ассистента создан',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
+              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
+              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
+              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
+              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+              .login-button:hover { background: #1e3a8a; }
+              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Добро пожаловать в СОФОС</h1>
+              </div>
+              <div class="content">
+                <p>Уважаемый(-ая) ${fullName},</p>
+                <p>Ваш аккаунт <strong>Ассистента</strong> был успешно создан. Ниже указаны ваши учетные данные для входа:</p>
+
+                <div class="credentials">
+                  <div class="credential-label">Электронная почта:</div>
+                  <div class="credential-value">${email}</div>
+                  <div class="credential-label">Пароль:</div>
+                  <div class="credential-value">${password}</div>
+                </div>
+
+                <p>Нажмите на кнопку ниже, чтобы войти в свой аккаунт:</p>
+                <div style="text-align: center;">
+                  <a href="${loginLink}" class="login-button">Войти</a>
+                </div>
+                <p style="color: #64748b; font-size: 14px;">Или скопируйте и вставьте эту ссылку: ${loginLink}</p>
+
+                <p style="color: #ef4444; font-weight: bold;">Важно: Пожалуйста, смените пароль после первого входа в систему из соображений безопасности.</p>
+
+                <div class="footer">
+                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      }
+    };
+
+    const template = templates[notificationLanguage] || templates['ru'];
+
+    const mailOptions = {
+      from: `"Медицинский центр СОФОС" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: template.subject,
+      html: template.html,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Helper to check overlap between assignments
+const hasOverlap = (assignments, accessId, start, end) => {
+  return assignments.some((assignment) => {
+    if (assignment._id.toString() === accessId) return false;
+    const existingStart = new Date(assignment.startDateTime);
+    const existingEnd = new Date(assignment.endDateTime);
+    return (
+      (start >= existingStart && start < existingEnd) ||
+      (end > existingStart && end <= existingEnd) ||
+      (start <= existingStart && end >= existingEnd)
+    );
+  });
+};
+
+// Helper to read a profile picture from GridFS as base64
+const readProfilePicture = async (profileFileId) => {
+  if (!profileFileId) return null;
+  const gfs = getGfs();
+  const file = await gfs
+    .find({ _id: new mongoose.Types.ObjectId(profileFileId) })
+    .toArray();
+  if (file.length === 0) return null;
+  const readStream = gfs.openDownloadStream(file[0]._id);
+  const chunks = [];
+  return new Promise((resolve, reject) => {
+    readStream.on("data", (chunk) => chunks.push(chunk));
+    readStream.on("end", () => {
+      resolve(Buffer.concat(chunks).toString("base64"));
+    });
+    readStream.on("error", reject);
+  });
+};
+
+// Create assistant
+const createAssistant = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {
+      firstName,
+      middleName,
+      lastName,
+      dateOfBirth,
+      gender,
+      email,
+      phoneNumber,
+      specialty,
+      branches,
+      notificationLanguage = 'en',
+    } = req.body;
+
+    // Ensure notificationLanguage is valid
+    const validLanguages = ['en', 'ru'];
+    const sanitizedLanguage = validLanguages.includes(notificationLanguage) ? notificationLanguage : 'en';
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    let age = null;
+    if (dateOfBirth) {
+      age = calculateAge(dateOfBirth);
+      if (age < 18) {
+        return res
+          .status(400)
+          .json({ message: "Assistant must be at least 18 years old" });
+      }
+    }
+
+    let branchList = [];
+    if (branches) {
+      if (Array.isArray(branches)) {
+        branchList = branches.map((b) => b.trim()).filter((b) => b);
+      } else if (typeof branches === "string") {
+        branchList = branches
+          .split(",")
+          .map((b) => b.trim())
+          .filter((b) => b);
+      }
+    }
+
+    const assistant = new Assistant({
+      firstName,
+      middleName: middleName || "",
+      lastName,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+      gender,
+      age,
+      email,
+      phoneNumber,
+      specialty: specialty || "",
+      branches: branchList,
+      notificationLanguage: sanitizedLanguage,
+      profileCompleted: true,
+    });
+
+    if (req.file) {
+      const gfs = getGfs();
+      const readablePhotoStream = new Readable();
+      readablePhotoStream.push(req.file.buffer);
+      readablePhotoStream.push(null);
+
+      const uploadStream = gfs.openUploadStream(req.file.originalname, {
+        contentType: req.file.mimetype,
+      });
+      readablePhotoStream.pipe(uploadStream);
+
+      const fileId = await new Promise((resolve, reject) => {
+        uploadStream.on("finish", () => resolve(uploadStream.id));
+        uploadStream.on("error", reject);
+      });
+      assistant.profileFileId = fileId;
+    }
+
+    const { plainPassword, hashedPassword } = await generateHashedPassword(
+      email
+    );
+
+    const user = new User({
+      email,
+      password: hashedPassword,
+      role: "assistant",
+      profileCompleted: true,
+      notificationLanguage: sanitizedLanguage,
+    });
+
+    // Format full name as lastName firstName middleName
+    const fullName = [lastName, firstName, middleName]
+      .filter(Boolean)
+      .join(' ') || 'Assistant';
+
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        await assistant.save({ session });
+        await user.save({ session });
+        await sendAccountCreationEmail(email, plainPassword, fullName, sanitizedLanguage);
+      });
+    } catch (error) {
+      throw error;
+    } finally {
+      session.endSession();
+    }
+
+    const profilePicture = await readProfilePicture(assistant.profileFileId);
+
+    const assistantResponse = {
+      _id: assistant._id,
+      firstName: assistant.firstName,
+      middleName: assistant.middleName,
+      lastName: assistant.lastName,
+      dateOfBirth: assistant.dateOfBirth,
+      gender: assistant.gender,
+      age: assistant.age,
+      email: assistant.email,
+      phoneNumber: assistant.phoneNumber,
+      specialty: assistant.specialty,
+      branches: assistant.branches,
+      profilePicture,
+      doctors: assistant.doctors,
+    };
+
+    // Emit socket event for real-time updates
+    try {
+      const io = getIO();
+      io.emit('employee-created', {
+        employeeType: 'assistant',
+        employeeData: assistantResponse,
+        timestamp: new Date()
+      });
+    } catch (socketError) {
+    }
+
+    res.status(201).json({
+      message: "Assistant created successfully",
+      assistant: assistantResponse,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all assistants (both regular and head assistants)
+const getAssistantsList = async (req, res) => {
+  try {
+    const [assistants, headAssistants] = await Promise.all([
+      Assistant.find().select("firstName middleName lastName email role"),
+      HeadAssistant.find().select("firstName middleName lastName email role"),
+    ]);
+
+    const allAssistants = [
+      ...assistants.map((a) => ({
+        ...a._doc,
+        role: a.role || "assistant",
+      })),
+      ...headAssistants.map((h) => ({
+        ...h._doc,
+        role: h.role || "head_assistant",
+      })),
+    ];
+
+    res.status(200).json({ assistants: allAssistants });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all assistants (optionally filtered by branch name)
+const getAllAssistants = async (req, res) => {
+  try {
+    const { branch } = req.query;
+
+    // If ?branch=All or no branch given -> return all assistants
+    const filter =
+      !branch || branch.toLowerCase() === "all"
+        ? {}
+        : { branches: { $regex: new RegExp(`^${branch}$`, "i") } };
+
+    const assistants = await Assistant.find(filter);
+    const gfs = getGfs();
+
+    const assistantsWithImages = await Promise.all(
+      assistants.map(async (assistant) => {
+        let profilePicture = null;
+
+        // Load GridFS profile picture
+        if (assistant.profileFileId) {
+          try {
+            const file = await gfs
+              .find({
+                _id: new mongoose.Types.ObjectId(assistant.profileFileId),
+              })
+              .toArray();
+
+            if (file.length > 0) {
+              const readStream = gfs.openDownloadStream(file[0]._id);
+              const chunks = [];
+              await new Promise((resolve, reject) => {
+                readStream.on("data", (chunk) => chunks.push(chunk));
+                readStream.on("end", () => {
+                  profilePicture = Buffer.concat(chunks).toString("base64");
+                  resolve();
+                });
+                readStream.on("error", reject);
+              });
+            }
+          } catch (err) {
+          }
+        }
+
+        // Normalize branches array
+        let branches = [];
+        if (assistant.branches) {
+          if (Array.isArray(assistant.branches)) {
+            branches = assistant.branches.map((b) =>
+              typeof b === "string"
+                ? b.replace(/[\[\]"]+/g, "").trim()
+                : String(b).trim()
+            );
+          } else if (typeof assistant.branches === "string") {
+            try {
+              const parsed = JSON.parse(assistant.branches);
+              branches = Array.isArray(parsed)
+                ? parsed.map((b) => b.trim())
+                : [assistant.branches.trim()];
+            } catch {
+              branches = assistant.branches
+                .split(",")
+                .map((b) => b.trim())
+                .filter(Boolean);
+            }
+          }
+        }
+
+        // Construct normalized assistant object
+        return {
+          _id: assistant._id,
+          firstName: assistant.firstName,
+          middleName: assistant.middleName,
+          lastName: assistant.lastName,
+          email: assistant.email,
+          phoneNumber: assistant.phoneNumber,
+          specialty: assistant.specialty,
+          dateOfBirth: assistant.dateOfBirth,
+          gender: assistant.gender,
+          age: assistant.age,
+          doctors: assistant.doctors,
+          branches,
+          profilePicture,
+        };
+      })
+    );
+
+    res.json({ assistants: assistantsWithImages });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get assistant by ID
+const getAssistantById = async (req, res) => {
+  try {
+    const assistant = await Assistant.findById(req.params.id);
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+    const profilePicture = await readProfilePicture(assistant.profileFileId);
+    res.json({
+      assistant: {
+        _id: assistant._id,
+        firstName: assistant.firstName,
+        middleName: assistant.middleName,
+        lastName: assistant.lastName,
+        email: assistant.email,
+        phoneNumber: assistant.phoneNumber,
+        specialty: assistant.specialty,
+        dateOfBirth: assistant.dateOfBirth,
+        gender: assistant.gender,
+        age: assistant.age,
+        profilePicture,
+        doctors: assistant.doctors,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Update assistant
+const updateAssistant = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {
+      firstName,
+      middleName,
+      lastName,
+      dateOfBirth,
+      gender,
+      email,
+      phoneNumber,
+      specialty,
+      branches,
+    } = req.body;
+
+    const assistant = await Assistant.findById(req.params.id);
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+
+    // Update main fields
+    assistant.firstName = firstName;
+    assistant.middleName = middleName || "";
+    assistant.lastName = lastName;
+    assistant.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+    assistant.age = dateOfBirth ? calculateAge(dateOfBirth) : null;
+
+    if (assistant.age && assistant.age < 18) {
+      return res
+        .status(400)
+        .json({ message: "Assistant must be at least 18 years old" });
+    }
+
+    assistant.gender = gender || assistant.gender;
+    assistant.email = email;
+    assistant.phoneNumber = phoneNumber;
+    assistant.specialty = specialty || "";
+    assistant.profileCompleted = true;
+
+    // Parse branches (array or comma-separated string)
+    let branchList = [];
+    if (branches) {
+      if (Array.isArray(branches)) {
+        branchList = branches.map((b) => b.trim()).filter((b) => b);
+      } else if (typeof branches === "string") {
+        branchList = branches
+          .split(",")
+          .map((b) => b.trim())
+          .filter((b) => b);
+      }
+    }
+    assistant.branches = branchList;
+
+    // Handle profile image replacement
+    if (req.file) {
+
+      const gfs = getGfs();
+
+      // Delete old image if exists
+      if (assistant.profileFileId) {
+        try {
+          await gfs.delete(
+            new mongoose.Types.ObjectId(assistant.profileFileId)
+          );
+        } catch (err) {
+
+        }
+      }
+
+      // Upload new image
+      const writeStream = gfs.openUploadStream(req.file.originalname, {
+        contentType: req.file.mimetype,
+      });
+      writeStream.end(req.file.buffer);
+      const fileId = await new Promise((resolve, reject) => {
+        writeStream.on("finish", () => resolve(writeStream.id));
+        writeStream.on("error", reject);
+      });
+      assistant.profileFileId = fileId;
+    }
+
+    await assistant.save();
+
+    // Emit socket event for real-time UI
+    getIO().emit("assistantUpdated", assistant);
+
+    // Retrieve profile picture as Base64 for frontend display
+    const profilePicture = await readProfilePicture(assistant.profileFileId);
+
+    const assistantResponse = {
+      _id: assistant._id,
+      firstName: assistant.firstName,
+      middleName: assistant.middleName,
+      lastName: assistant.lastName,
+      email: assistant.email,
+      phoneNumber: assistant.phoneNumber,
+      specialty: assistant.specialty,
+      dateOfBirth: assistant.dateOfBirth,
+      gender: assistant.gender,
+      age: assistant.age,
+      branches: assistant.branches,
+      profilePicture,
+      doctors: assistant.doctors,
+    };
+
+    // Emit socket event for real-time updates
+    try {
+      const io = getIO();
+      io.emit('employee-updated', {
+        employeeId: assistant._id,
+        employeeType: 'assistant',
+        updatedData: assistantResponse,
+        timestamp: new Date()
+      });
+    } catch (socketError) {
+    }
+
+    res.json({
+      message: "Assistant updated successfully",
+      assistant: assistantResponse,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete assistant
+const deleteAssistant = async (req, res) => {
+  try {
+    const assistant = await Assistant.findById(req.params.id);
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+    if (assistant.profileFileId) {
+      const gfs = getGfs();
+      try {
+        const file = await gfs
+          .find({ _id: new mongoose.Types.ObjectId(assistant.profileFileId) })
+          .toArray();
+        if (file.length > 0) {
+          await gfs.delete(
+            new mongoose.Types.ObjectId(assistant.profileFileId)
+          );
+        }
+      } catch (err) {
+      }
+    }
+    await User.deleteOne({ email: assistant.email });
+    await assistant.deleteOne();
+
+    // Emit socket event for real-time updates
+    try {
+      const io = getIO();
+      io.emit('employee-deleted', {
+        employeeId: req.params.id,
+        employeeType: 'assistant',
+        timestamp: new Date()
+      });
+    } catch (socketError) {
+    }
+
+    res.json({ message: "Assistant deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Assign doctor to assistant
+const assignDoctor = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { assistantEmail, doctorEmail, startDateTime, endDateTime } =
+      req.body;
+
+    const assistant = await Assistant.findOne({ email: assistantEmail });
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+
+    const doctor = await DoctorsProfile.findOne({ email: doctorEmail });
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+
+    if (isNaN(start) || isNaN(end)) {
+      return res.status(400).json({ message: "Invalid date format" });
+    }
+
+    if (start >= end) {
+      return res
+        .status(400)
+        .json({ message: "End date-time must be after start date-time" });
+    }
+
+    const overlappingAssignment = assistant.doctors.find((assignment) => {
+      // Skip revoked assignments -- they no longer block new assignments
+      if (assignment.status === "Access Revoked") return false;
+      const existingStart = new Date(assignment.startDateTime);
+      const existingEnd = new Date(assignment.endDateTime);
+      return (
+        (start >= existingStart && start < existingEnd) ||
+        (end > existingStart && end <= existingEnd) ||
+        (start <= existingStart && end >= existingEnd)
+      );
+    });
+
+    if (overlappingAssignment) {
+      return res
+        .status(400)
+        .json({ message: "Assignment overlaps with an existing assignment" });
+    }
+
+    assistant.doctors.push({
+      doctorEmail,
+      startDateTime: start,
+      endDateTime: end,
+      status: "Access Granted",
+    });
+
+    await assistant.save();
+
+    res.json({
+      success: true,
+      message: "Doctor assigned successfully",
+      assistant: {
+        _id: assistant._id,
+        firstName: assistant.firstName,
+        middleName: assistant.middleName,
+        lastName: assistant.lastName,
+        email: assistant.email,
+        doctors: assistant.doctors,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Remove doctor assignment from assistant
+const removeDoctorAssignment = async (req, res) => {
+  try {
+    const assistant = await Assistant.findById(req.params.id);
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+    const initialLength = assistant.doctors.length;
+    assistant.doctors = assistant.doctors.filter(
+      (assignment) => assignment.doctorEmail !== req.params.doctorEmail
+    );
+    if (assistant.doctors.length === initialLength) {
+      return res
+        .status(404)
+        .json({ message: "No assignment found for this doctor" });
+    }
+    await assistant.save();
+    res.json({
+      message: "Doctor assignment removed",
+      assistant: {
+        _id: assistant._id,
+        firstName: assistant.firstName,
+        middleName: assistant.middleName,
+        lastName: assistant.lastName,
+        doctors: assistant.doctors,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get assistants assigned to a doctor
+const getAssistantsByDoctor = async (req, res) => {
+  try {
+    const { startDateTime, endDateTime } = req.query;
+    const query = {
+      "doctors.doctorEmail": req.params.doctorEmail,
+    };
+    if (startDateTime && endDateTime) {
+      query["doctors.startDateTime"] = { $lte: new Date(endDateTime) };
+      query["doctors.endDateTime"] = { $gte: new Date(startDateTime) };
+    }
+    const assistants = await Assistant.find(query).select(
+      "firstName lastName email specialty profileFileId doctors"
+    );
+    const assistantsWithImages = await Promise.all(
+      assistants.map(async (assistant) => {
+        let profilePicture = null;
+        if (assistant.profileFileId) {
+          const gfs = getGfs();
+          const file = await gfs
+            .find({ _id: new mongoose.Types.ObjectId(assistant.profileFileId) })
+            .toArray();
+          if (file.length > 0) {
+            const readStream = gfs.openDownloadStream(file[0]._id);
+            const chunks = [];
+            await new Promise((resolve, reject) => {
+              readStream.on("data", (chunk) => chunks.push(chunk));
+              readStream.on("end", () => {
+                profilePicture = Buffer.concat(chunks).toString("base64");
+                resolve();
+              });
+              readStream.on("error", reject);
+            });
+          }
+        }
+        return {
+          _id: assistant._id,
+          firstName: assistant.firstName,
+          middleName: assistant.middleName,
+          lastName: assistant.lastName,
+          email: assistant.email,
+          specialty: assistant.specialty,
+          profilePicture,
+          doctors: assistant.doctors
+            .filter((d) => d.doctorEmail === req.params.doctorEmail)
+            .map((d) => ({
+              _id: d._id,
+              doctorEmail: d.doctorEmail,
+              startDateTime: d.startDateTime,
+              endDateTime: d.endDateTime,
+              status: d.status,
+            })),
+        };
+      })
+    );
+    res.json({ assistants: assistantsWithImages });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get assistant by email
+const getAssistantByEmail = async (req, res) => {
+  try {
+    const assistant = await Assistant.findOne({ email: req.params.email });
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+    const profilePicture = await readProfilePicture(assistant.profileFileId);
+    res.json({
+      assistant: {
+        _id: assistant._id,
+        firstName: assistant.firstName,
+        middleName: assistant.middleName,
+        lastName: assistant.lastName,
+        email: assistant.email,
+        phoneNumber: assistant.phoneNumber,
+        specialty: assistant.specialty,
+        dateOfBirth: assistant.dateOfBirth,
+        gender: assistant.gender,
+        age: assistant.age,
+        profilePicture,
+        doctors: assistant.doctors,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get profile image by file ID
+const getProfileImage = async (req, res) => {
+  try {
+    const gfs = getGfs();
+    const file = await gfs
+      .find({ _id: new mongoose.Types.ObjectId(req.params.fileId) })
+      .toArray();
+    if (!file || file.length === 0) {
+      return res.status(404).json({ message: "Image not found" });
+    }
+    res.set("Content-Type", file[0].contentType);
+    const readStream = gfs.openDownloadStream(file[0]._id);
+    readStream.pipe(res);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Grant access to doctor
+const grantAccess = async (req, res) => {
+  try {
+    const {
+      assistantEmail,
+      accessId,
+      doctorEmail,
+      startDateTime,
+      endDateTime,
+    } = req.body;
+
+    if (
+      !assistantEmail ||
+      !accessId ||
+      !doctorEmail ||
+      !startDateTime ||
+      !endDateTime
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const assistant = await Assistant.findOne({ email: assistantEmail });
+    if (!assistant)
+      return res.status(404).json({ message: "Assistant not found" });
+
+    const doctorAccess = assistant.doctors.find(
+      (entry) =>
+        entry._id.toString() === accessId && entry.doctorEmail === doctorEmail
+    );
+    if (!doctorAccess)
+      return res.status(404).json({ message: "Access entry not found" });
+
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+    if (isNaN(start) || isNaN(end))
+      return res.status(400).json({ message: "Invalid date format" });
+    if (start >= end)
+      return res
+        .status(400)
+        .json({ message: "End time must be after start time" });
+
+    if (hasOverlap(assistant.doctors, accessId, start, end))
+      return res
+        .status(400)
+        .json({ message: "Assignment overlaps with another" });
+
+    doctorAccess.status = "Access Granted";
+    doctorAccess.startDateTime = start;
+    doctorAccess.endDateTime = end;
+
+    await assistant.save();
+
+    return res.json({
+      success: true,
+      message: "Access granted successfully",
+      assistant,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Revoke access to doctor
+const revokeAccess = async (req, res) => {
+  try {
+    const {
+      assistantEmail,
+      accessId,
+      doctorEmail,
+      startDateTime,
+      endDateTime,
+    } = req.body;
+
+    if (
+      !assistantEmail ||
+      !accessId ||
+      !doctorEmail ||
+      !startDateTime ||
+      !endDateTime
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const assistant = await Assistant.findOne({ email: assistantEmail });
+    if (!assistant)
+      return res.status(404).json({ message: "Assistant not found" });
+
+    const doctorAccess = assistant.doctors.find(
+      (entry) =>
+        entry._id.toString() === accessId && entry.doctorEmail === doctorEmail
+    );
+    if (!doctorAccess)
+      return res.status(404).json({ message: "Access entry not found" });
+
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+    if (isNaN(start) || isNaN(end))
+      return res.status(400).json({ message: "Invalid date format" });
+    if (start >= end)
+      return res
+        .status(400)
+        .json({ message: "End time must be after start time" });
+
+    doctorAccess.status = "Access Revoked";
+    doctorAccess.startDateTime = start;
+    doctorAccess.endDateTime = end;
+
+    await assistant.save();
+
+    return res.json({
+      success: true,
+      message: "Access revoked successfully",
+      assistant,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Update access time for doctor
+const updateAccessTime = async (req, res) => {
+  try {
+    const {
+      assistantEmail,
+      accessId,
+      doctorEmail,
+      startDateTime,
+      endDateTime,
+    } = req.body;
+
+    if (
+      !assistantEmail ||
+      !accessId ||
+      !doctorEmail ||
+      !startDateTime ||
+      !endDateTime
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const assistant = await Assistant.findOne({ email: assistantEmail });
+    if (!assistant)
+      return res.status(404).json({ message: "Assistant not found" });
+
+    const doctorAccess = assistant.doctors.find(
+      (entry) =>
+        entry._id.toString() === accessId && entry.doctorEmail === doctorEmail
+    );
+    if (!doctorAccess)
+      return res.status(404).json({ message: "Access entry not found" });
+
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+    if (isNaN(start) || isNaN(end))
+      return res.status(400).json({ message: "Invalid date format" });
+    if (start >= end)
+      return res
+        .status(400)
+        .json({ message: "End time must be after start time" });
+
+    if (hasOverlap(assistant.doctors, accessId, start, end))
+      return res
+        .status(400)
+        .json({ message: "Assignment overlaps with another" });
+
+    doctorAccess.startDateTime = start;
+    doctorAccess.endDateTime = end;
+
+    await assistant.save();
+
+    return res.json({
+      success: true,
+      message: "Access time updated successfully",
+      assistant,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+module.exports = {
+  createAssistant,
+  getAssistantsList,
+  getAllAssistants,
+  getAssistantById,
+  updateAssistant,
+  deleteAssistant,
+  assignDoctor,
+  removeDoctorAssignment,
+  getAssistantsByDoctor,
+  getAssistantByEmail,
+  getProfileImage,
+  grantAccess,
+  revokeAccess,
+  updateAccessTime,
+};

@@ -1,0 +1,11 @@
+import React from 'react'
+import { useTranslation } from 'react-i18next'
+
+const Dashboard = () => {
+  const { t } = useTranslation()
+  return (
+    <div>{t("common.dashboard")}</div>
+  )
+}
+
+export default Dashboard

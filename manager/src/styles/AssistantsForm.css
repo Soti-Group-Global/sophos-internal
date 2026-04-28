@@ -1,0 +1,264 @@
+/* Photo Section Styles */
+.assistant-photo-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.assistant-photo-circle {
+  position: relative;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  border: 6px solid #e1e1e1;
+  background-color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.assistant-photo-circle:hover {
+  background-color: #5a6268;
+}
+
+.assistant-profile-image-select {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.assistant-photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+}
+
+.assistant-camera-icon {
+  margin-bottom: 8px;
+  width: 2rem;
+  height: 2rem;
+}
+
+.assistant-photo-text {
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.assistant-photo-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Existing Form Styles */
+.assistant-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.assistant-form-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  position: relative;
+}
+
+.assistant-cancel-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.assistant-cancel-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.assistant-cancel-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: #4b5563;
+}
+
+.assistant-form-section {
+  padding: 2rem;
+}
+
+@media (min-width: 768px) {
+  .assistant-form-section {
+    padding-right: 6rem;
+    padding-left: 6rem;
+  }
+}
+
+.assistant-form-title {
+  font-weight: bold;
+  color: #0d557c;
+  margin-bottom: 32px;
+}
+
+.assistant-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.assistant-form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .assistant-form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.assistant-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.assistant-form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.assistant-form-field label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.assistant-required-asterisk {
+  color: #ef4444;
+}
+
+.assistant-form-field input,
+.assistant-form-field select {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.assistant-form-field input:focus,
+.assistant-form-field select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.assistant-form-field .error {
+  border-color: #ef4444;
+}
+
+.assistant-field-error {
+  color: #ef4444;
+  margin-top: 4px;
+}
+
+.assistant-save-changes-btn {
+  background-color: #2563eb;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 16px;
+}
+
+.assistant-save-changes-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.form-field.full-width {
+  flex: 100%;
+}
+
+.required-asterisk {
+  color: #dc2626;
+}
+
+.field-error {
+  color: #dc2626;
+  margin-top: 4px;
+}
+
+.react-select__control {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.react-select__control.error {
+  border-color: #dc2626;
+}
+
+.modern-form input {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.modern-form input.error {
+  border-color: #dc2626;
+}
+
+@media (max-width: 640px) {
+  .assistant-form-container {
+    padding: 16px;
+  }
+
+  .assistant-form-section {
+    padding: 0.6rem;
+  }
+
+  .assistant-photo-circle {
+    width: 8rem;
+    height: 8rem;
+  }
+
+  .assistant-form-title {
+  }
+}

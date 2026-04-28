@@ -1,0 +1,19 @@
+.hover-popup {
+  position: absolute;
+  z-index: 1002;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  width: 260px;
+  max-width: 260px;
+  color: #333333;
+  transition: opacity 0.2s ease;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.hover-popup[aria-hidden="true"] {
+  opacity: 0;
+  display: none;
+}

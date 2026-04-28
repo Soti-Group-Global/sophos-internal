@@ -1,0 +1,239 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.specialty-form-container,
+.vendor-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.specialty-form-card,
+.vendor-form-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  position: relative;
+}
+
+.specialty-cancel-btn,
+.vendor-cancel-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.specialty-cancel-btn:hover,
+.vendor-cancel-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.specialty-cancel-btn svg,
+.vendor-cancel-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: #4b5563;
+}
+
+.specialty-form-title,
+.vendor-form-title {
+  font-weight: bold;
+  color: #0d557c;
+  margin-bottom: 32px;
+}
+
+.specialty-form,
+.vendor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.specialty-test-field,
+.vendor-service-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.service-input-group,
+.test-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.specialty-test-field input,
+.vendor-service-field input,
+.vendor-service-field .react-select__control,
+.vendor-form textarea {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  flex: 1;
+}
+
+.vendor-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.specialty-test-field input:focus,
+.vendor-service-field input:focus,
+.vendor-form textarea:focus,
+.vendor-service-field .react-select__control--is-focused {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.specialty-test-field .error,
+.vendor-service-field .error,
+.vendor-service-field .react-select__control.error,
+.vendor-form textarea.error,
+.vendor-form input.error {
+  border-color: #ef4444;
+}
+
+.specialty-remove-test-icon,
+.vendor-remove-service-icon {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.specialty-remove-test-icon:hover,
+.vendor-remove-service-icon:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.specialty-remove-test-icon svg,
+.vendor-remove-service-icon svg {
+  stroke: #ef4444;
+  stroke-width: 2;
+}
+
+.specialty-remove-test-icon:hover svg,
+.vendor-remove-service-icon:hover svg {
+  stroke: #dc2626;
+}
+
+.specialty-add-test-btn,
+.vendor-add-service-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  margin-top: 8px;
+}
+
+.specialty-add-test-btn:hover,
+.vendor-add-service-btn:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+}
+
+.specialty-save-btn,
+.vendor-save-btn {
+  background-color: #2563eb;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 16px;
+}
+
+.specialty-save-btn:hover,
+.vendor-save-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.required-asterisk {
+  color: #ef4444;
+}
+
+.field-error {
+  color: #ef4444;
+  margin-top: 4px;
+}
+
+.vendor-profile-pic-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.vendor-profile-pic-label {
+  cursor: pointer;
+  display: inline-block;
+}
+
+.vendor-profile-pic {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  transition: opacity 0.2s;
+}
+
+.vendor-profile-pic-label:hover .vendor-profile-pic {
+  opacity: 0.8;
+}
+
+.readonly {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .specialty-form-container,
+  .vendor-form-container {
+    padding: 16px;
+  }
+
+  .form-section {
+    padding: 0.6rem;
+  }
+
+  .specialty-form-title,
+  .vendor-form-title {
+  }
+
+  .service-input-group,
+  .test-input-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .specialty-remove-test-icon,
+  .vendor-remove-service-icon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+
+  .vendor-profile-pic {
+    width: 96px;
+    height: 96px;
+  }
+}

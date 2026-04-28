@@ -1,0 +1,771 @@
+/* SuppliersTab.css */
+.suppliersTab-container {
+    padding: 0;
+    background: var(--color-bg, #f8fafc);
+}
+
+/* Header Styles */
+.suppliersTab-header {
+    background: var(--color-card, white);
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+    padding: 1rem;
+    margin-bottom: 0;
+}
+
+.suppliersTab-headerContent {
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suppliersTab-titleSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.suppliersTab-iconWrapper {
+    background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+    padding: 0.75rem;
+    border-radius: 12px;
+    color: var(--color-text-inverse, white);
+}
+
+.suppliersTab-titleSection h1 {
+    margin: 0;
+    font-weight: 700;
+    color: var(--color-text-primary, #1a202c);
+}
+
+.suppliersTab-titleSection p {
+    margin: 0.25rem 0 0 0;
+    color: var(--color-text-secondary, #718096);
+}
+
+/* Content Section */
+.suppliersTab-content {
+    padding: 1.5rem;
+    margin: 0 auto;
+}
+
+.suppliersTab-sectionHeader {
+    margin-bottom: 1.5rem;
+}
+
+.suppliersTab-sectionHeader h3 {
+    margin: 0 0 0.25rem 0;
+    color: var(--color-text-primary, #1a202c);
+}
+
+.suppliersTab-subtitle {
+    color: var(--color-text-secondary, #718096);
+}
+
+/* Table Styles */
+.suppliersTab-tableContainer {
+    background: var(--color-card, white);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border, #e2e8f0);
+    overflow: scroll;
+}
+
+.suppliersTab-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.suppliersTab-table th {
+    background: var(--color-card-hover, #f7fafc);
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-secondary, #4a5568);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.suppliersTab-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+    color: var(--color-text-secondary, #4a5568);
+}
+
+.suppliersTab-tableRow:hover {
+    background: var(--color-card-hover, #f7fafc);
+}
+
+/* Supplier Info Styles */
+.suppliersTab-supplierName {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.suppliersTab-supplierName strong {
+    color: #1a202c;
+}
+
+.suppliersTab-addressLine {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #718096;
+}
+
+.suppliersTab-phone,
+.suppliersTab-email {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a5568;
+}
+
+/* Products Count */
+.suppliersTab-productsCount {
+    display: flex;
+    align-items: center;
+}
+
+.suppliersTab-countBadge {
+    background: #edf2f7;
+    color: #4a5568;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+
+/* Action Buttons */
+.suppliersTab-actionButtons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.suppliersTab-viewBtn,
+.suppliersTab-editBtn,
+.suppliersTab-deleteBtn {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suppliersTab-viewBtn {
+    background: rgba(10, 46, 93, 0.1);
+    color: var(--color-primary, #0A2E5D);
+}
+
+.suppliersTab-viewBtn:hover:not(:disabled) {
+    background: rgba(10, 46, 93, 0.2);
+    transform: translateY(-1px);
+}
+
+.suppliersTab-viewBtn:disabled {
+    background: var(--color-card-hover, #f7fafc);
+    color: var(--color-border, #cbd5e0);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.suppliersTab-editBtn {
+    background: rgba(10, 46, 93, 0.1);
+    color: var(--color-primary, #0A2E5D);
+}
+
+.suppliersTab-editBtn:hover {
+    background: rgba(10, 46, 93, 0.2);
+    transform: translateY(-1px);
+}
+
+.suppliersTab-deleteBtn {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--color-error, #e53e3e);
+}
+
+.suppliersTab-deleteBtn:hover {
+    background: rgba(220, 38, 38, 0.2);
+    transform: translateY(-1px);
+}
+
+
+/* Prevent table cells from breaking into multiple lines */
+.suppliersTab-table td,
+.suppliersTab-table th {
+    white-space: nowrap;
+    /* Keep content in one line */
+    overflow: hidden;
+    /* Hide overflowing text */
+    text-overflow: ellipsis;
+    /* Add "..." if text is too long */
+    vertical-align: middle;
+    /* Vertically align content */
+}
+
+/* Make sure flex containers in cells stay inline */
+.suppliersTab-supplierName,
+.suppliersTab-phone,
+.suppliersTab-email,
+.suppliersTab-productsCount,
+.suppliersTab-actionButtons {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+/* Fix supplier name/address alignment */
+.suppliersTab-supplierName {
+    display: inline-flex;
+    flex-direction: column;
+}
+
+
+/* Modal Styles */
+.suppliersTab-modalOverlay {
+    position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999 !important;
+  padding: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.suppliersTab-modal {
+    background: var(--color-card, white);
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.suppliersTab-productsModal {
+    max-width: 800px;
+}
+
+.suppliersTab-modalHeader {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suppliersTab-modalHeader h3 {
+    margin: 0;
+    color: var(--color-text-primary, #1a202c);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.suppliersTab-modalIcon {
+    color: var(--color-primary, #0A2E5D);
+}
+
+.suppliersTab-closeBtn {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary, #718096);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.suppliersTab-closeBtn:hover {
+    background: var(--color-card-hover, #f7fafc);
+    color: var(--color-text-secondary, #4a5568);
+}
+
+/* Modal Content */
+.suppliersTab-modalContent {
+    padding: 0;
+}
+
+.suppliersTab-addProductSection {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.suppliersTab-addProductSection h4 {
+    margin: 0 0 1rem 0;
+    color: var(--color-text-primary, #1a202c);
+}
+
+.suppliersTab-addProductForm {
+    width: 100%;
+}
+
+.suppliersTab-addProductGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.suppliersTab-noItemsText {
+    color: #718096;
+    margin: 0.5rem 0 0 0;
+    font-style: italic;
+}
+
+/* Products List */
+.suppliersTab-productsList {
+    padding: 1.5rem 2rem;
+}
+
+.suppliersTab-productsList h4 {
+    margin: 0 0 1rem 0;
+    color: var(--color-text-primary, #1a202c);
+}
+
+.suppliersTab-emptyProducts {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-text-secondary, #718096);
+}
+
+.suppliersTab-emptyProducts p {
+    margin: 0.5rem 0 0 0;
+}
+
+.suppliersTab-productsTable {
+    background: var(--color-card-hover, #f7fafc);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.suppliersTab-productsTable table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.suppliersTab-productsTable th {
+    background: var(--color-card-hover, #edf2f7);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-secondary, #4a5568);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.suppliersTab-productsTable td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+    background: var(--color-card, white);
+}
+
+.suppliersTab-productRow:hover {
+    background: var(--color-card-hover, #f7fafc);
+}
+
+.suppliersTab-productName {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.suppliersTab-productName strong {
+    color: var(--color-text-primary, #1a202c);
+}
+
+.suppliersTab-productDescription {
+    color: var(--color-text-secondary, #718096);
+    line-height: 1.3;
+}
+
+.suppliersTab-productPrice {
+    font-weight: 600;
+    color: var(--color-text-primary, #2d3748);
+}
+
+/* Category Badges */
+.suppliersTab-categoryBadge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.suppliersTab-category-medicine {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.suppliersTab-category-consumable {
+    background: #feebc8;
+    color: #d69e2e;
+}
+
+.suppliersTab-category-equipment {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.suppliersTab-category-lab-supply {
+    background: #bee3f8;
+    color: #2c5aa0;
+}
+
+.suppliersTab-category-other {
+    background: #e9d8fd;
+    color: #6b46c1;
+}
+
+/* Form Styles */
+.suppliersTab-form {
+    padding: 2rem;
+}
+
+.suppliersTab-formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.suppliersTab-formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.suppliersTab-fullWidth {
+    grid-column: 1 / -1;
+}
+
+.suppliersTab-formGroup label {
+    font-weight: 600;
+    color: var(--color-text-secondary, #4a5568);
+}
+
+.suppliersTab-formGroup input,
+.suppliersTab-formGroup select,
+.suppliersTab-formGroup textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 8px;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.suppliersTab-formGroup input:focus,
+.suppliersTab-formGroup select:focus,
+.suppliersTab-formGroup textarea:focus {
+    outline: none;
+    border-color: var(--color-primary, #0A2E5D);
+    box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1);
+}
+
+.suppliersTab-formActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+/* Button Styles */
+.suppliersTab-addBtn {
+    background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+    color: var(--color-text-inverse, white);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suppliersTab-primaryBtnn {
+    background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+    color: var(--color-text-inverse, white);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suppliersTab-addBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(10, 46, 93, 0.3);
+}
+
+.suppliersTab-primaryBtn {
+    background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+}
+
+.suppliersTab-saveBtn {
+    background: var(--color-success, #48bb78);
+    color: var(--color-text-inverse, white);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.suppliersTab-saveBtn:hover {
+    background: #38a169;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-smallBtn {
+    padding: 0.75rem 1rem;
+}
+
+.suppliersTab-cancelBtn {
+    background: var(--color-border, #e2e8f0);
+    color: var(--color-text-secondary, #4a5568);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suppliersTab-cancelBtn:hover {
+    background: var(--color-card-hover, #cbd5e0);
+}
+
+/* Empty State */
+.suppliersTab-emptyState {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--color-card, white);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.suppliersTab-emptyState h4 {
+    margin: 1rem 0 0.5rem;
+    color: var(--color-text-primary, #1a202c);
+}
+
+.suppliersTab-emptyState p {
+    color: var(--color-text-secondary, #718096);
+    margin-bottom: 2rem;
+}
+
+/* Loading State */
+.suppliersTab-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    color: var(--color-text-secondary, #718096);
+}
+
+.suppliersTab-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--color-border, #e2e8f0);
+    border-left: 4px solid var(--color-primary, #0A2E5D);
+    border-radius: 50%;
+    animation: suppliersTab-spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes suppliersTab-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Supplier Product Row Styles */
+.suppliersTab-productRow {
+    transition: all 0.2s;
+}
+
+.suppliersTab-productRow:hover {
+    background-color: #f8fafc;
+}
+
+.suppliersTab-productPrice {
+    font-weight: 600;
+    color: #059669;
+}
+
+.suppliersTab-editPrice {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.suppliersTab-priceInput {
+    padding: 0.5rem;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 6px;
+    width: 120px;
+    padding-left: 1.5rem;
+}
+
+.suppliersTab-currency {
+    position: absolute;
+    left: 0.5rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+
+/* Action Buttons for Products */
+.suppliersTab-actionButtons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.suppliersTab-smallBtn {
+    padding: 0.4rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+.suppliersTab-editBtn {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.suppliersTab-editBtn:hover {
+    background: #bfdbfe;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-saveBtn.suppliersTab-smallBtn {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.suppliersTab-saveBtn.suppliersTab-smallBtn:hover {
+    background: #a7f3d0;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-cancelBtn.suppliersTab-smallBtn {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.suppliersTab-cancelBtn.suppliersTab-smallBtn:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.suppliersTab-deleteBtn {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.suppliersTab-deleteBtn:hover {
+    background: #fecaca;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .suppliersTab-actionButtons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .suppliersTab-smallBtn {
+        width: 100%;
+        height: 36px;
+    }
+
+    .suppliersTab-priceInput {
+        width: 100px;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+
+    .suppliersTab-header,
+    .suppliersTab-content {
+        padding: 1rem;
+    }
+
+    .suppliersTab-headerContent {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .suppliersTab-addProductGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .suppliersTab-formGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .suppliersTab-modal {
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+
+    .suppliersTab-form {
+        padding: 1rem;
+    }
+
+    .suppliersTab-modalHeader,
+    .suppliersTab-addProductSection,
+    .suppliersTab-productsList {
+        padding: 1rem 1.5rem;
+    }
+
+    .suppliersTab-tableContainer {
+        overflow-x: auto;
+    }
+
+    .suppliersTab-table {
+        min-width: 800px;
+    }
+
+    .suppliersTab-actionButtons {
+        flex-direction: column;
+    }
+}

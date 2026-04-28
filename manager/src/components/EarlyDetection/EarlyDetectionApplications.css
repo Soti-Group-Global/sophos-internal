@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+
+
+.early-detection-apps-wrapper {
+  margin: 0 auto;
+}
+
+.early-detect-container {
+  padding: 20px 30px;
+}
+
+.early-detect-heading {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 24px 0;
+}
+
+.early-detect-loading,
+.early-detect-empty {
+  font-size: 16px;
+  color: #718096;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.early-detect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .early-detect-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .early-detect-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .content-area {
+    padding: 16px;
+  }
+}
+
+.early-detect-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  max-width: 400px;
+}
+
+.early-detect-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.early-detect-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.early-detect-id {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+}
+
+.early-detect-status-badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.status-confirmed {
+  background-color: #10b981;
+  color: white;
+}
+
+.status-unconfirmed {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.status-cancelled {
+  background-color: #ef4444;
+  color: white;
+}
+
+.status-default {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.status-upcoming {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.status-completed {
+  background-color: #10b981;
+  color: white;
+}
+
+.early-detect-card-body {
+  padding-top: 16px;
+}
+
+.early-detect-patient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.early-detect-avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #eff6ff;
+  color: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.early-detect-patient-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ec4899;
+  margin-bottom: 2px;
+}
+
+.early-detect-patient-email {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.appointment-detail-item {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.appointment-detail-item p {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #1a202c;
+}
+
+.appointment-detail-item span {
+  color: #6b7280;
+}
+
+.early-detect-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.early-detect-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.early-detect-item p {
+  font-weight: bold;
+  color: #1a202c;
+  margin-bottom: 3px;
+}
+
+.early-detect-item span {
+  color: #6b7280;
+}

@@ -1,0 +1,105 @@
+/* ── CalendarSelect: custom dropdown for mini-calendar headers ── */
+
+.cal-select {
+  position: relative;
+  display: inline-block;
+}
+
+/* trigger button */
+.cal-select__trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.cal-select__trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cal-select__trigger:focus {
+  outline: none;
+}
+
+/* chevron */
+.cal-select__arrow {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: transform 0.2s ease, color 0.15s;
+}
+
+.cal-select__trigger:hover .cal-select__arrow {
+  color: #e2e8f0;
+}
+
+.cal-select__arrow--open {
+  transform: rotate(180deg);
+}
+
+/* dropdown popup */
+.cal-select__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a2537;
+  border-radius: 10px;
+  padding: 4px;
+  margin: 0;
+  list-style: none;
+  z-index: 9999;
+  min-width: 120px;
+  max-height: 210px;
+  overflow-y: auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* options */
+.cal-select__item {
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #cbd5e1;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+}
+
+.cal-select__item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f1f5f9;
+}
+
+.cal-select__item--active {
+  background: #0a2e5d;
+  color: #fff;
+  font-weight: 600;
+}
+
+.cal-select__item--active:hover {
+  background: #0f3a73;
+}
+
+/* scrollbar */
+.cal-select__list::-webkit-scrollbar {
+  width: 4px;
+}
+.cal-select__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cal-select__list::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 2px;
+}
+.cal-select__list::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

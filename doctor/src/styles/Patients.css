@@ -1,0 +1,477 @@
+.patients-grid-container {
+    padding: 24px;
+    background-color: #f0f2f5;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Inter Tight', sans-serif;
+  }
+  
+  /* HEADER */
+  .patients-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .patients-header-controlers{
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .exportcsv{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: #0A2E5D;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .exportcsv:hover {
+    background: #0d3b7a;
+  }
+
+  .header-left {
+    flex: 1 1 100%;
+  }
+
+  .patient-title-container{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .patient-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  .patients-count-badge {
+    background-color: #1e3a5f;
+    color: white;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 2px 9px;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  
+  .page-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+  }
+  
+  /* GRID */
+
+/* Search input — matches /appointments design */
+.searchinput {
+  width: 280px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  font-size: 14px;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.searchinput:focus {
+  border-color: #0A2E5D;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.08);
+}
+
+@media (max-width: 768px) {
+  .searchinput {
+    width: 100%;
+  }
+}
+
+/* table layout */
+  .patients-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    font-size: 14px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .patients-table th,
+  .patients-table td {
+    padding: 14px 20px;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .patients-table thead tr {
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .patients-table th {
+    background-color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: #94a3b8;
+  }
+
+  .patients-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .patients-table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .clickable-row {
+    cursor: pointer;
+  }
+
+  .patient-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .patient-cell .avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background-color: #1e3a5f;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .patient-cell .info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .patient-cell .name {
+    font-weight: 600;
+    color: #111827;
+    font-size: 14px;
+  }
+
+  .patient-cell .email {
+    font-size: 13px;
+    color: #9ca3af;
+    margin-top: 2px;
+  }
+
+  .contact-cell {
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .dob-cell {
+    color: #111827;
+    font-size: 14px;
+  }
+
+  .dob-cell .age-text {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 3px;
+  }
+
+  .appointment-cell {
+    color: #111827;
+    font-size: 14px;
+  }
+
+  .appointment-cell .app-id {
+    font-size: 12px;
+    color: #3b82f6;
+    margin-top: 3px;
+  }
+
+  /* service badge colors */
+  .service-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-telemedicine {
+    background-color: #e0f2fe;
+    color: #0369a1;
+  }
+
+  .badge-consultation {
+    background-color: #dcfce7;
+    color: #15803d;
+  }
+
+  .badge-followup {
+    background-color: #fef9c3;
+    color: #a16207;
+  }
+
+  .badge-emergency {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+
+  .badge-lab {
+    background-color: #f3e8ff;
+    color: #7c3aed;
+  }
+
+  .badge-default {
+    background-color: #f1f5f9;
+    color: #475569;
+  }
+
+  @media (max-width: 768px) {
+    .patients-table th,
+    .patients-table td {
+      padding: 10px 12px;
+    }
+
+    .patient-cell {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .patient-cell .avatar {
+      margin-bottom: 4px;
+    }
+
+    .patients-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  
+  /* CARD */
+.patient-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .patient-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .patient-card-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  
+
+  
+  .patient-name,
+  .patient-name-sub {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ec4899;
+  }
+  
+  .patient-icon-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .patient-icon {
+    width: 32px;
+    height: 32px;
+    background-color: rgba(10, 46, 93, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0A2E5D;
+    font-size: 18px;
+  }
+  
+  .patient-age {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .patient-age.male {
+    color: #ff0000;
+  }
+  
+  .patient-age.female {
+    color: #0000ff;
+  }
+  
+  /* BODY */
+  .patient-card-body{
+    margin-top: 10px;
+  }
+  
+  .service-info {
+    margin-bottom: 10px;
+  }
+  
+  .service-label {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .service-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+
+  
+  .appointment-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .appointment-item {
+    flex: 1 1 120px;
+  }
+  
+  .appointment-label {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 5px;
+  }
+  
+  .appointment-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .appl-no {
+    font-size: 14px;
+  }
+  
+  .appl-label {
+    color: #666;
+  }
+  
+  .appl-value {
+    color: #0A2E5D;
+    font-weight: 500;
+  }
+  
+  /* FOOTER */
+  .card-footer {
+    display: flex;
+    justify-content: flex-start;
+  }
+  
+  .view-report-btn {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background-color: rgba(10, 46, 93, 0.1);
+    color: #0A2E5D;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .view-report-btn:hover {
+    background-color: rgba(10, 46, 93, 0.1);
+  }
+  .results-count{
+    margin-top: 10px;
+  }
+
+  @media (max-width: 750px) {
+    .patients-grid-container {
+      padding: 10px;
+    }
+  }
+
+  /* On mobile: show only Patient (1st) and Last Appointment (4th) columns */
+  @media (max-width: 768px) {
+    .patients-table th:nth-child(2),
+    .patients-table td:nth-child(2),
+    .patients-table th:nth-child(3),
+    .patients-table td:nth-child(3),
+    .patients-table th:nth-child(5),
+    .patients-table td:nth-child(5) {
+      display: none;
+    }
+
+    .patients-table {
+      font-size: 13px;
+    }
+
+    .patient-cell {
+      flex-wrap: nowrap;
+    }
+  }
+  
+  /* MEDIA QUERIES */
+  @media (max-width: 480px) {
+
+    .card-body{
+        flex-direction: column;
+    }
+  
+    .view-report-btn {
+      font-size: 13px;
+      padding: 10px;
+    }
+  
+    .page-title {
+      font-size: 20px;
+    }
+  
+    .appointment-row {
+      flex-direction: column;
+    }
+  }
+  

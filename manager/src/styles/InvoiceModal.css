@@ -1,0 +1,1055 @@
+/* Modern Modal Styles with #033672 color scheme */
+
+/* Invoice Modal Overlay */
+.invoice-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999 !important;
+  padding: 2rem;
+}
+
+.invoice-modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Modern Invoice Modal */
+.modern-invoice-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  padding: 24px;
+  display: none;
+  border-top: 4px solid #033672;
+  animation: slideUp 0.3s ease;
+}
+
+.modern-invoice-modal.open {
+  display: block;
+}
+
+.modern-invoice-modal.split-view {
+  width: 50%;
+}
+
+/* Form Viewer Split */
+.form-viewer-split {
+  position: fixed;
+  top: 50%;
+  left: 75%;
+  width: 40%;
+  height: 90%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  overflow: auto;
+  border-radius: 10px;
+  margin-left: 20px;
+}
+
+/* Document Modal Overlay */
+.document-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(3, 54, 114, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* PDF Preview Overlay */
+.pdf-preview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+/* PDF Preview Modal */
+.pdf-preview-modal {
+  position: relative;
+  background: white;
+  padding: 20px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: auto;
+}
+
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pdf-header-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 600px;
+  border: 1px solid #ccc;
+}
+
+.download-contract-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.download-contract-button:hover {
+  background-color: #218838;
+}
+
+.close-pdf-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+}
+
+.close-pdf-button:hover {
+  color: #033672;
+}
+
+/* Contract Preview Wrapper */
+.contract-preview-wrapper {
+  margin-top: 1rem;
+  display: flex;
+  gap: 10px;
+}
+
+.view-contract-button {
+  padding: 8px 16px;
+  background-color: #0366d6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.view-contract-button:hover {
+  background-color: #005bb5;
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  font-weight: 600;
+  color: #033672;
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #033672;
+}
+
+/* Section Cards */
+.section-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.section-title {
+  font-weight: 600;
+  color: #033672;
+  margin: 0 0 16px 0;
+}
+
+/* User Info Section */
+.user-info-section {
+  margin-bottom: 20px;
+}
+
+.user-email {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #033672;
+  font-weight: 500;
+}
+
+.user-div {
+  display: flex;
+}
+
+/* Modern Select */
+.modern-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  color: #374151;
+  transition: all 0.2s;
+  border-color: #033672;
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: #033672;
+  box-shadow: 0 0 0 2px rgba(3, 54, 114, 0.1);
+}
+
+/* Items Grid */
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.items-table th {
+  background: #f8fafc;
+  text-align: left;
+  padding: 10px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.items-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.items-table tr:last-child td {
+  border-bottom: none;
+}
+
+.modern-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: #033672;
+  box-shadow: 0 0 0 2px rgba(3, 54, 114, 0.1);
+}
+
+.item-name-input {
+  flex: 2;
+}
+
+.quantity-input {
+  width: 60px;
+}
+
+.amount-input {
+  width: 100px;
+}
+
+.currency-select {
+  width: 90px;
+}
+
+.delete-item-button {
+  background: #fee2e2;
+  border: none;
+  color: #dc2626;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.item-actions-cell {
+  text-align: center;
+  width: 90px;
+}
+
+.delete-item-button:hover {
+  background: #fecaca;
+}
+
+/* Action Buttons */
+.add-item-button,
+.toggle-form-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-item-button {
+  background: #e0e7ff;
+  color: #033672;
+  border: 1px solid #033672;
+}
+
+.add-item-button:hover {
+  background: #d1dbf9;
+}
+
+.toggle-form-button {
+  background: #f0f4ff;
+  color: #033672;
+  border: 1px solid #033672;
+}
+
+.toggle-form-button:hover {
+  background: #e0e7ff;
+}
+
+/* Total Section */
+.total-section {
+  background: #f0f4ff;
+  border-color: #d1dbff;
+}
+
+.amount-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.amount-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.total-row {
+  font-weight: 600;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.total-amount {
+  color: #033672;
+}
+
+/* Action Buttons Container */
+.action-buttons-container {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.primary-generate-button,
+.secondary-cancel-button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  justify-content: center;
+}
+
+.primary-generate-button {
+  background: #033672;
+  color: white;
+}
+
+.primary-generate-button:hover {
+  background: #022a5c;
+  transform: translateY(-1px);
+}
+
+.primary-generate-button:disabled {
+  background: #5a7eb7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondary-cancel-button {
+  background: #e0e7ff;
+  color: #033672;
+  border: 1px solid #033672;
+}
+
+.secondary-cancel-button:hover {
+  background: #d1dbf9;
+  transform: translateY(-1px);
+}
+
+.secondary-cancel-button:disabled {
+  background: #e0e7ff;
+  color: #5a7eb7;
+  border-color: #5a7eb7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Payment Link Section */
+.payment-link-section {
+  background: #f0f4ff;
+  border-color: #d1dbff;
+}
+
+.link-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.payment-link {
+  flex: 1;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #033672;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-link-button {
+  background: #d1dbff;
+  border: none;
+  color: #033672;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: auto;
+}
+
+.copy-link-button:hover {
+  background: #b8c7fa;
+}
+
+.send-options {
+  display: flex;
+  gap: 12px;
+}
+
+.send-email-button {
+  background: #e0e7ff;
+  color: #033672;
+  border: 1px solid #033672;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.send-email-button:hover {
+  background: #d1dbf9;
+}
+
+.send-whatsapp-button {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #166534;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.send-whatsapp-button:hover {
+  background: #bbf7d0;
+}
+
+/* Free Access Section */
+.free-access-section {
+  width: 100%;
+}
+
+.invoice-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.invoice-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.invoice-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.invoice-toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+  background-color: #ccc;
+  border-radius: 24px;
+  transition: .4s;
+}
+
+.invoice-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .4s;
+}
+
+.invoice-toggle-input:checked + .invoice-toggle-slider {
+  background-color: #4CAF50;
+}
+
+.invoice-toggle-input:checked + .invoice-toggle-slider:before {
+  transform: translateX(26px);
+}
+
+.invoice-toggle-label {
+  width: 100%;
+}
+
+.free-access-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background-color: #e8f5e9;
+  border-radius: 16px;
+  color: #2e7d32;
+}
+
+/* Payment History */
+.payment-history-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.payment-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.invoice-number {
+  font-weight: 600;
+  color: #033672;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-badge.paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.packages-list {
+  margin-bottom: 12px;
+}
+
+.package-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.package-name {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.package-details {
+  color: #6b7280;
+}
+
+.payment-details {
+  margin: 12px 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.detail-row span:first-child {
+  color: #6b7280;
+}
+
+/* Unique Button Styles */
+.document-akt-button,
+.document-contract-button,
+.document-offline-contract-button,
+.document-online-contract-button,
+.resend-mark-paid-button,
+.resend-whatsapp-button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.document-akt-button {
+  background-color: #4a6fa5;
+  color: white;
+  border: 1px solid #3a5a8a;
+}
+
+.document-akt-button:not(.payment-disabled):hover {
+  background-color: #3a5a8a;
+}
+
+.document-contract-button {
+  background-color: #5a8a5a;
+  color: white;
+  border: 1px solid #4a7a4a;
+}
+
+.document-contract-button:not(.payment-disabled):hover {
+  background-color: #4a7a4a;
+}
+
+.document-offline-contract-button {
+  background-color: #5a8a5a;
+  color: white;
+  border: 1px solid #4a7a4a;
+}
+
+.document-offline-contract-button:not(.payment-disabled):hover {
+  background-color: #4a7a4a;
+}
+
+.document-online-contract-button {
+  background-color: #5a8a5a;
+  color: white;
+  border: 1px solid #4a7a4a;
+}
+
+.document-online-contract-button:not(.payment-disabled):hover {
+  background-color: #4a7a4a;
+}
+
+.resend-mark-paid-button {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  border: 1px solid #d2e3fc;
+}
+
+.resend-mark-paid-button:not(.payment-disabled):hover {
+  background-color: #d2e3fc;
+}
+
+.resend-whatsapp-button {
+  background-color: #e5f8ed;
+  color: #25d366;
+  border: 1px solid #c8f0d6;
+}
+
+.resend-whatsapp-button:not(.payment-disabled):hover {
+  background-color: #c8f0d6;
+}
+
+.payment-disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Layout Styles */
+.payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.document-actions,
+.resend-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #6b7280;
+  text-align: center;
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+  color: #d1d5db;
+}
+
+/* Success Popup */
+.success-popup {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #033672;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1100;
+}
+
+.status-switches {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  background-color: #f8f6f6;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+/* Wrapper */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  gap: 8px;
+ 
+}
+
+/* Hide default checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Slider */
+.slider {
+  position: relative;
+  width: 42px;
+  height: 22px;
+  background-color: #ccc;
+  border-radius: 50px;
+  transition: background 0.3s ease;
+}
+
+/* Circle knob */
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 3px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+/* Checked styles */
+.switch input:checked + .slider.paid {
+  background-color: rgb(14, 58, 107, 1); /* green */
+}
+
+.switch input:checked + .slider.free {
+  background-color: rgba(3, 54, 114, 1); /* teal */
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+/* Disabled */
+.switch input:disabled + .slider {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.label-text {
+  color: #444;
+}
+
+
+/* Base invoice modal */
+.invoice-modal-overlay {
+  z-index: 999999 !important;
+}
+
+/* Document popups must be on top of invoice overlay */
+.document-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.pdf-preview-modal {
+  position: relative;
+  background: #fff;
+  width: min(1000px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+}
+
+.pdf-header {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.pdf-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.close-pdf-button,
+.download-contract-button {
+  appearance: none;
+  border: none;
+  background: #f4f5f7;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+.close-pdf-button:hover,
+.download-contract-button:hover {
+  background: #e9ebef;
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .modern-invoice-modal,
+  .modern-invoice-modal.split-view {
+    width: 95%;
+    padding: 16px;
+    margin: 0 auto;
+  }
+
+  .form-viewer-split {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+    padding: 16px;
+    overflow-y: auto;
+    z-index: 1002;
+    background-color: rgba(3, 54, 114, 0.6);
+    backdrop-filter: blur(5px);
+  }
+
+  .action-buttons-container,
+  .send-options {
+    flex-direction: column;
+  }
+
+  .item-details {
+    flex-wrap: wrap;
+  }
+
+  .quantity-input,
+  .amount-input,
+  .currency-select {
+    width: 100%;
+  }
+
+  .payment-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .document-actions,
+  .resend-actions {
+    flex-direction: column;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .document-akt-button,
+  .document-contract-button,
+  .document-offline-contract-button,
+  .document-online-contract-button,
+  .resend-mark-paid-button,
+  .resend-whatsapp-button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .user-div {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .invoice-toggle-wrapper {
+    gap: 0.5rem;
+  }
+
+  .invoice-toggle-slider {
+    width: 40px;
+    height: 20px;
+  }
+
+  .invoice-toggle-slider:before {
+    height: 14px;
+    width: 14px;
+  }
+
+  .invoice-toggle-label,
+  .free-access-badge {
+  }
+
+  .document-akt-button,
+  .document-contract-button,
+  .document-offline-contract-button,
+  .document-online-contract-button,
+  .resend-mark-paid-button,
+  .resend-whatsapp-button {
+    padding: 0.5rem;
+  }
+}

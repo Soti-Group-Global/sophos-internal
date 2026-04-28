@@ -1,0 +1,479 @@
+/* InventoryTab.css */
+.inventoryTab-container {
+  padding: 0;
+  background: var(--color-bg, #f8fafc);
+}
+
+/* Header Styles */
+.inventoryTab-header {
+  background: var(--color-card, white);
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  padding: 1rem;
+  margin-bottom: 0;
+}
+
+.inventoryTab-headerContent {
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inventoryTab-titleSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.inventoryTab-iconWrapper {
+  background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+  padding: 0.75rem;
+  border-radius: 12px;
+  color: var(--color-text-inverse, white);
+}
+
+.inventoryTab-titleSection h1 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-text-primary, #1a202c);
+}
+
+.inventoryTab-titleSection p {
+  margin: 0.25rem 0 0 0;
+  color: var(--color-text-secondary, #718096);
+}
+
+/* Search and Filter Section */
+.inventoryTab-searchSection {
+  background: var(--color-card, white);
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.inventoryTab-searchBox {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.inventoryTab-searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+}
+
+.inventoryTab-searchBox input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.inventoryTab-searchBox input:focus {
+  outline: none;
+  border-color: var(--color-primary, #0A2E5D);
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1);
+}
+
+.inventoryTab-categoryFilter {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--color-card, white);
+  min-width: 150px;
+}
+
+/* Modal Styles */
+.inventoryTab-modalOverlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999 !important;
+  padding: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.inventoryTab-modal {
+  background: var(--color-card, white);
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.inventoryTab-modalHeader {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inventoryTab-modalHeader h3 {
+  margin: 0;
+  color: var(--color-text-primary, #1a202c);
+  font-weight: 600;
+}
+
+.inventoryTab-closeBtn {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.inventoryTab-closeBtn:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+/* Form Styles */
+.inventoryTab-form {
+  padding: 2rem;
+}
+
+.inventoryTab-formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.inventoryTab-formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inventoryTab-fullWidth {
+  grid-column: 1 / -1;
+}
+
+.inventoryTab-formGroup label {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.inventoryTab-formGroup input,
+.inventoryTab-formGroup select,
+.inventoryTab-formGroup textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.inventoryTab-formGroup input:focus,
+.inventoryTab-formGroup select:focus,
+.inventoryTab-formGroup textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #0A2E5D);
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1);
+}
+
+.inventoryTab-formActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+/* Button Styles */
+.inventoryTab-addBtn {
+  background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+  color: var(--color-text-inverse, white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.inventoryTab-addBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 46, 93, 0.3);
+}
+
+.inventoryTab-primaryBtn {
+  background: linear-gradient(135deg, var(--color-primary, #0A2E5D) 0%, var(--color-primary-hover, #0f2138) 100%);
+}
+
+.inventoryTab-saveBtn {
+  background: var(--color-success, #48bb78);
+  color: var(--color-text-inverse, white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inventoryTab-saveBtn:hover {
+  background: #38a169;
+  transform: translateY(-1px);
+}
+
+.inventoryTab-cancelBtn {
+  background: var(--color-border, #e2e8f0);
+  color: var(--color-text-secondary, #4a5568);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inventoryTab-cancelBtn:hover {
+  background: #cbd5e0;
+}
+
+/* Products Section */
+.inventoryTab-productsSection {
+  padding: 2rem;
+  margin: 0 auto;
+}
+
+.inventoryTab-sectionHeader {
+  margin-bottom: 1.5rem;
+}
+
+.inventoryTab-sectionHeader h3 {
+  margin: 0 0 0.25rem 0;
+  color: #1a202c;
+}
+
+.inventoryTab-subtitle {
+  color: #718096;
+}
+
+/* Table Styles */
+.inventoryTab-tableContainer {
+  background: var(--color-card, white);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border, #e2e8f0);
+  overflow: hidden;
+}
+
+.inventoryTab-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventoryTab-table th {
+  background: var(--color-card-hover, #f7fafc);
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-secondary, #4a5568);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.inventoryTab-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  color: var(--color-text-secondary, #4a5568);
+}
+
+.inventoryTab-tableRow:hover {
+  background: var(--color-card-hover, #f7fafc);
+}
+
+/* Badge Styles */
+.inventoryTab-categoryBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inventoryTab-category-medicine { background: #fed7d7; color: #c53030; }
+.inventoryTab-category-consumable { background: #feebc8; color: #d69e2e; }
+.inventoryTab-category-equipment { background: #c6f6d5; color: #276749; }
+.inventoryTab-category-lab-supply { background: #bee3f8; color: #2c5aa0; }
+.inventoryTab-category-other { background: #e9d8fd; color: #6b46c1; }
+
+.inventoryTab-unitBadge {
+  background: #edf2f7;
+  color: #4a5568;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Product Name Cell */
+.inventoryTab-productName {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.inventoryTab-productName strong {
+  color: #1a202c;
+}
+
+.inventoryTab-productDescription {
+  color: #718096;
+  line-height: 1.3;
+}
+
+/* Action Buttons */
+.inventoryTab-actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inventoryTab-editBtn,
+.inventoryTab-deleteBtn {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inventoryTab-editBtn {
+  background: rgba(10, 46, 93, 0.1);
+  color: var(--color-primary, #0A2E5D);
+}
+
+.inventoryTab-editBtn:hover {
+  background: rgba(10, 46, 93, 0.2);
+  transform: translateY(-1px);
+}
+
+.inventoryTab-deleteBtn {
+  background: var(--color-error-bg, #fff5f5);
+  color: var(--color-error, #e53e3e);
+}
+
+.inventoryTab-deleteBtn:hover {
+  background: #fed7d7;
+  transform: translateY(-1px);
+}
+
+/* Empty State */
+.inventoryTab-emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--color-card, white);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.inventoryTab-emptyState h4 {
+  margin: 1rem 0 0.5rem;
+  color: var(--color-text-primary, #1a202c);
+}
+
+.inventoryTab-emptyState p {
+  color: var(--color-text-secondary, #718096);
+  margin-bottom: 2rem;
+}
+
+/* Loading State */
+.inventoryTab-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: #718096;
+}
+
+.inventoryTab-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--color-border, #e2e8f0);
+  border-left: 4px solid var(--color-primary, #0A2E5D);
+  border-radius: 50%;
+  animation: inventoryTab-spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes inventoryTab-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .inventoryTab-header,
+  .inventoryTab-searchSection,
+  .inventoryTab-productsSection {
+    padding: 1rem;
+  }
+  
+  .inventoryTab-headerContent {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .inventoryTab-searchSection {
+    flex-direction: column;
+  }
+  
+  .inventoryTab-searchBox {
+    max-width: none;
+  }
+  
+  .inventoryTab-formGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .inventoryTab-modal {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+  }
+  
+  .inventoryTab-form {
+    padding: 1rem;
+  }
+  
+  .inventoryTab-tableContainer {
+    overflow-x: auto;
+  }
+  
+  .inventoryTab-table {
+    min-width: 800px;
+  }
+  
+  .inventoryTab-modalHeader {
+    padding: 1rem 1.5rem;
+  }
+}

@@ -1,0 +1,279 @@
+/* General Styles */
+
+.bilingual-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: 'Times New Roman', serif;
+    line-height: 1.5;
+  }
+  
+  .header-rows, .content-rows, .section-rows {
+    display: flex;
+  }
+  .content-rows, .section-rows{
+    padding: 1px;
+    gap: 5px;
+  } 
+  
+  .column {
+    width: 50%;
+    padding: 2px;
+    box-sizing: border-box;
+  }
+  
+  .document-title {
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .document-date {
+    text-align: center;
+  }
+  
+  .section-titles {
+    font-weight: bold;
+    margin-bottom: 3px;
+    text-align: center;
+  }
+  
+  .paragraph {
+    margin-bottom: 0px;
+    text-align: justify;
+    text-indent: 20px;
+  }
+  .para{
+    text-align: justify;
+  }
+
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+  
+
+.container {
+    margin: 0;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #000;
+    box-sizing: border-box;
+}
+
+/* Table Styles */
+.border-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: auto;
+}
+
+.border-table th, .border-table td {
+    border: 2px solid #000;
+    padding: 5px;
+    text-align: left;
+}
+
+/* Header Styling */
+.heading {
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+/* Info Table Styling */
+.info-table {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.info-table td {
+    padding: 10px;
+    vertical-align: top;
+}
+
+/* Signature Section */
+.signature-box {
+    width: 100%;
+    height: 60px;
+    border-bottom: 2px solid #000;
+    margin-top: 10px;
+}
+
+/* Button Styling */
+.actions {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+    border-radius: 4px;
+}
+
+.btn:hover {
+    background-color: #45a049;
+}
+
+/* Popup Styling */
+.akt-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.akt-popup {
+    background: white;
+    padding: 30px;
+    width: 80%;
+    max-height: 90%;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    position: relative;
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: #000;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.close-btn:hover {
+    color: red;
+}
+
+/* Styling for HR */
+hr {
+    height: 2px;
+    color: #000;
+    background: #000;
+    margin: 15px 0;
+}
+
+/* Signature Table */
+.signature-table {
+    width: 100%;
+    margin-top: 30px;
+}
+
+.signature-table td {
+    padding: 10px;
+    vertical-align: bottom;
+}
+
+.signature-table .signature-line {
+    border-bottom: 2px solid #000;
+    height: 60px;
+}
+
+/* Form Styling */
+.akt-form-container{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #f9f9f9;
+    margin-bottom: 20px;
+}
+
+.akt-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.akt-form label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.akt-form input, .akt-form select, .akt-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+.akt-form input:focus, .akt-form select:focus, .akt-form textarea:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Edit and PDF Buttons */
+.edit-btn {
+    background: #007bff;
+    color: white;
+    transition: 0.3s;
+}
+
+.edit-btn:hover {
+    background: #0056b3;
+}
+
+.pdf-btn {
+    background: #28a745;
+    color: white;
+    transition: 0.3s;
+}
+
+.pdf-btn:hover {
+    background: #218838;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .akt-popup {
+        width: 95%;
+        padding: 20px;
+    }
+
+    form {
+        grid-template-columns: 1fr;
+    }
+
+    .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .akt-popup {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .form-container {
+        padding: 15px;
+    }
+
+    form label, form input {
+    }
+}

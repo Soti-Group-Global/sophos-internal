@@ -1,0 +1,242 @@
+/* ─── Medical History Tab ─────────────────────────────────────────────────── */
+
+.mht-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.mht-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mht-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.mht-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.mht-stat-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a2e5d;
+}
+.mht-stat-lbl {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.mht-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mht-filter {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.mht-filter:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+.mht-filter.active {
+  background: #0a2e5d;
+  color: #fff;
+  border-color: #0a2e5d;
+}
+
+/* ─── Card list ───────────────────────────────────────────────────────────── */
+
+.mht-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.mht-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+}
+.mht-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mht-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mht-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mht-app-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mht-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mht-badge {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  background: #f1f5f9;
+  color: #64748b;
+}
+.mht-service-consultation { background: #dbeafe; color: #2563eb; }
+.mht-service-procedure { background: #dcfce7; color: #16a34a; }
+.mht-service-follow-up { background: #fef3c7; color: #d97706; }
+.mht-mode-online { background: #dcfce7; color: #16a34a; }
+.mht-mode-offline { background: #dbeafe; color: #1d4ed8; }
+
+/* ─── Status ──────────────────────────────────────────────────────────────── */
+
+.mht-status {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: capitalize;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.mht-status-new { background: #dbeafe; color: #1d4ed8; }
+.mht-status-process { background: #fef3c7; color: #d97706; }
+.mht-status-done { background: #dcfce7; color: #16a34a; }
+.mht-status-cancelled { background: #fee2e2; color: #dc2626; }
+.mht-status-default { background: #f1f5f9; color: #64748b; }
+
+/* ─── Card body ───────────────────────────────────────────────────────────── */
+
+.mht-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+  flex: 1;
+}
+
+.mht-info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #475569;
+}
+.mht-info-row svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* ─── Card action ─────────────────────────────────────────────────────────── */
+
+.mht-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #0a2e5d;
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+
+.mht-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+  color: #94a3b8;
+  gap: 8px;
+}
+.mht-empty h4 {
+  margin: 4px 0 0;
+  font-size: 15px;
+  color: #475569;
+}
+.mht-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .mht-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .mht-list {
+    grid-template-columns: 1fr;
+  }
+  .mht-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .mht-stats {
+    justify-content: center;
+  }
+  .mht-filters {
+    justify-content: center;
+  }
+  .mht-card-top {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,218 @@
+/* ─── Patient Details Tab — General Info ──────────────────────────────────── */
+
+.pdt-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── Section ─────────────────────────────────────────────────────────────── */
+
+.pdt-section {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.pdt-section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: background 0.15s;
+}
+.pdt-section-hdr:hover {
+  background: #f9fafb;
+}
+
+.pdt-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.pdt-section-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+}
+
+.pdt-section-edit {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.pdt-section-body {
+  padding: 18px;
+  border-top: 1px solid #f0f2f5;
+}
+
+/* ─── Grid & Fields ───────────────────────────────────────────────────────── */
+
+.pdt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  column-gap: 20px;
+  row-gap: 10px;
+}
+
+.pdt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.pdt-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pdt-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  word-break: break-word;
+}
+
+.pdt-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 20px;
+}
+
+/* Basic patient card */
+.pdt-patient-card {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.pdt-avatar-col {
+  flex-shrink: 0;
+}
+
+.pdt-avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8edf5 0%, #d4dce8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8fa3bd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pdt-patient-info-col {
+  flex: 1;
+}
+
+.pdt-patient-fullname {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 10px;
+}
+
+.pdt-patient-meta-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.pdt-meta-item {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  padding: 5px 10px;
+  border-radius: 16px;
+  background: #f3f4f6;
+}
+
+/* ─── Notes block ─────────────────────────────────────────────────────────── */
+
+.pdt-notes {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+.pdt-notes .pdt-label {
+  margin-bottom: 4px;
+}
+.pdt-notes p {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+/* ─── Subheading ──────────────────────────────────────────────────────────── */
+
+.pdt-subheading {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 18px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+/* ─── Array items (diseases, diagnoses, etc.) ─────────────────────────────── */
+
+.pdt-array-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pdt-array-card {
+  padding: 12px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+.pdt-array-card:last-child {
+  border-bottom: none;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .pdt-grid {
+    grid-template-columns: 1fr;
+  }
+  .pdt-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .pdt-patient-card {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pdt-section-body {
+    padding: 14px;
+  }
+}

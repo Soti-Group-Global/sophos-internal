@@ -1,0 +1,200 @@
+.show-appointment-container {
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    position: relative;
+    color: #333;
+    font-family: 'Inter Tight', sans-serif;
+
+  }
+  
+  .show-appointment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      
+     margin-bottom: 8px;
+    margin-top: 2rem;
+  }
+  
+  
+  .show-appointment-title {
+    font-weight: 700;
+    font-size: 2rem;
+    color: #c84ba0; /* Pinkish-purple name */
+  
+  }
+  
+  .show-appointment-icon {
+      background-color: #007fdd;
+      border-radius: 50%;
+      color: white;
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      padding: 0.5rem;
+     
+  }
+  
+  
+  .show-appointment-info {
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+  }
+  .show-appointment-info-title {
+    font-size: 1rem;
+    color: gray;
+    
+  }
+  
+  .show-appointment-info:nth-child(3) {
+    margin-top: 8px;
+  }
+  
+  .show-appointment-service-no {
+    color: #0A2E5D;
+    font-size: 1.2rem;
+    margin-top: 14px;
+    margin-bottom: 12px;
+  }
+  
+  .show-btn-view,
+  .show-btn-delete {
+    width: 100%;
+    padding: 0.5rem;
+    font-weight: 600;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 0.8rem;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  
+  .show-btn-view {
+    background-color: #2b5c87;
+    
+    color: #ffffff;
+  }
+  
+  .show-btn-delete {
+    background-color: #d35e33;
+    color: #ffffff;
+  }
+  
+  .show-appointment-colors {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  
+  .show-dot {
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    border-radius: 20%;
+    color: white;
+  }
+  
+  .show-dot-green {
+    background-color: #3bb34a;
+  }
+  
+  .show-dot-pink {
+    background-color: #d082bc;
+  }
+  
+  .show-dot-darkgreen {
+    background-color: #156e36;
+  }
+  
+  .show-dot-blue {
+    background-color: #0099e5;
+  }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE — ShowAppointment
+   ══════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .show-appointment-container {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  .show-appointment-title {
+    font-size: 1.5rem;
+  }
+  .show-appointment-info {
+    font-size: 1rem;
+  }
+  .show-appointment-service-no {
+    font-size: 1rem;
+    margin-top: 10px;
+  }
+  .show-btn-view,
+  .show-btn-delete {
+    font-size: 1rem;
+    padding: 0.45rem;
+    border-radius: 0.6rem;
+  }
+  .show-dot {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .show-appointment-container {
+    padding: 12px;
+    border-radius: 10px;
+  }
+  .show-appointment-header {
+    gap: 6px;
+    margin-top: 1rem;
+    margin-bottom: 6px;
+  }
+  .show-appointment-title {
+    font-size: 1.2rem;
+  }
+  .show-appointment-icon {
+    font-size: 1.1rem;
+    padding: 0.35rem;
+  }
+  .show-appointment-info {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+  .show-appointment-info-title {
+    font-size: 0.85rem;
+  }
+  .show-appointment-service-no {
+    font-size: 0.9rem;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+  .show-btn-view,
+  .show-btn-delete {
+    font-size: 0.9rem;
+    padding: 0.4rem;
+    border-radius: 0.5rem;
+    margin-bottom: 8px;
+  }
+  .show-dot {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.2rem;
+    border-radius: 15%;
+  }
+  .show-appointment-colors {
+    gap: 6px;
+    margin-top: 6px;
+  }
+}

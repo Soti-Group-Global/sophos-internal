@@ -1,0 +1,37 @@
+/* Assistant Details Container */
+.assistant-details-container {
+  padding: 20px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  color: #666;
+}
+
+.breadcrumb-back {
+  cursor: pointer;
+  color: #4a6fa5;
+}
+
+.breadcrumb-back:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  margin: 0 8px;
+}
+
+.breadcrumb-current {
+  color: #1a1a1a;
+}
+
+/* Loading and Error States */
+.loading,
+.error {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}

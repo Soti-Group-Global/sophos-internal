@@ -1,0 +1,265 @@
+/* ─── Patient Statistics Tab ──────────────────────────────────────────────── */
+
+.pst-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Summary cards ───────────────────────────────────────────────────────── */
+
+.pst-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.pst-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.pst-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pst-card-total .pst-card-icon { background: #dbeafe; color: #2563eb; }
+.pst-card-upcoming .pst-card-icon { background: #fef3c7; color: #d97706; }
+.pst-card-completed .pst-card-icon { background: #dcfce7; color: #16a34a; }
+.pst-card-cancelled .pst-card-icon { background: #fee2e2; color: #dc2626; }
+
+.pst-card-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.pst-card-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.pst-card-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ─── Section ─────────────────────────────────────────────────────────────── */
+
+.pst-section {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+}
+
+.pst-section-hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a2e5d;
+  margin-bottom: 14px;
+}
+
+.pst-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pst-section-half {
+  min-width: 0;
+}
+
+/* ─── Bar chart ───────────────────────────────────────────────────────────── */
+
+.pst-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+}
+
+.pst-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+}
+
+.pst-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.pst-bar {
+  width: 70%;
+  max-width: 28px;
+  min-height: 2px;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+}
+
+.pst-bar-val {
+  font-size: 10px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.pst-bar-lbl {
+  font-size: 9px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* ─── Breakdown bars ──────────────────────────────────────────────────────── */
+
+.pst-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pst-bk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pst-bk-label {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+  min-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pst-bk-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pst-bk-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  border-radius: 3px;
+  min-width: 2px;
+  transition: width 0.3s ease;
+}
+
+.pst-bk-bar-status {
+  background: linear-gradient(90deg, #0a2e5d, #1a4a8a);
+}
+
+.pst-bk-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  min-width: 20px;
+  text-align: right;
+}
+
+/* ─── Early detection stats ───────────────────────────────────────────────── */
+
+.pst-ed-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.pst-ed-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+}
+
+.pst-ed-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pst-ed-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.pst-ed-paid { border-color: #dcfce7; }
+.pst-ed-paid .pst-ed-num { color: #16a34a; }
+.pst-ed-pending { border-color: #fef3c7; }
+.pst-ed-pending .pst-ed-num { color: #d97706; }
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+
+.pst-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+  color: #94a3b8;
+  gap: 8px;
+}
+.pst-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .pst-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pst-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .pst-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pst-chart {
+    height: 80px;
+  }
+  .pst-ed-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

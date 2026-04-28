@@ -1,0 +1,254 @@
+/* Shared Styles */
+.applications-container {
+  padding: 24px;
+}
+
+.applications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.applications-title h2 {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.applications-title p {
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.view-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.view-controls button {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #f3f4f6;
+  color: #374151;
+  transition: all 0.2s ease;
+  height: 40px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-controls button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.view-controls button:hover {
+  background: #e5e7eb;
+}
+
+.view-controls button.active:hover {
+  background: #2563eb;
+}
+
+.view-controls .add-doctor-btn {
+  background: #3b82f6;
+  color: white;
+  padding: 12px 24px;
+  height: 40px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-controls .add-doctor-btn:hover {
+  background: #2563eb;
+}
+
+.service-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.service-type-badge.online {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.service-type-badge.offline {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.doctor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.edit-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.schedule-btn {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.schedule-btn:hover {
+  background: #bae6fd;
+  color: #0369a1;
+}
+
+.delete-btn {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+body:has(.delete-modal-overlay) .sidebar,
+body:has(.delete-modal-overlay) .header,
+body:has(.delete-modal-overlay) .sidebar *,
+body:has(.delete-modal-overlay) .header *,
+body:has(.delete-modal-overlay) .layout-top-bar {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+.delete-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.delete-modal-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.delete-modal-message {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.delete-modal-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-modal-cancel:hover {
+  background: #e5e7eb;
+}
+
+.delete-modal-confirm {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-modal-confirm:hover {
+  background: #b91c1c;
+}
+
+.cancel-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.cancel-btn:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+.cancel-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: #dc2626;
+  stroke-width: 2.5;
+}
+
+@media (max-width: 768px) {
+  .delete-modal {
+    max-width: 90%;
+    padding: 20px;
+  }
+}

@@ -1,0 +1,416 @@
+
+:root {
+  --auth-backdrop: rgba(171, 57, 184, 0.2); /* Light purple backdrop color */
+}
+/* Adjust auth container to account for navbar */
+.auth-container {
+  min-height: calc(100vh - 70px);
+}
+/* Scope the overflow styles to the auth-container */
+.auth-container {
+  width: 100vw;
+  min-height: 100vh; /* Changed from height to min-height */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Center on small screens */
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter Tight', sans-serif;
+}
+
+/* Layered Background Effects */
+.auth-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* Dark overlay */
+  z-index: 0;
+}
+
+/* New light purple backdrop layer */
+.auth-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--auth-backdrop);
+  z-index: 0;
+  mix-blend-mode: lighten;
+}
+
+  
+  .auth-box {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1;
+    margin-left: 80px;
+    margin: auto;
+  }
+
+  
+  .auth-logo {
+    width: 150px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .auth-box h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #333;
+  }
+  
+  .input-group {
+    margin-bottom: 20px;
+  }
+  
+  .input-field {
+    margin-bottom: 15px;
+    text-align: left;
+  }
+  
+  .input-field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 400;
+    color: #666;
+    margin-bottom: 5px;
+  }
+  
+  .input-wrapper {
+    position: relative;
+    width: 100%;
+  }
+  
+  .input-element {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 40px 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #333;
+    background: #f5f5f5;
+  }
+  
+  .input-element::placeholder {
+    color: #999;
+  }
+  
+  .toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #00285D;
+    transition: color 0.2s;
+  }
+  
+  .toggle-password:hover {
+    color: #001a3e;
+  }
+  
+  .options {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 25px;
+    font-size: 14px;
+    font-weight: 400;
+  }
+  
+  .options label {
+    color: #585858;
+    display: flex;
+    align-items: center;
+  }
+  
+  .options label input {
+    margin-right: 5px;
+  }
+  
+  .checkbox-label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  .checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .custom-checkbox {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #00285D;
+    border-radius: 3px;
+    margin-right: 8px;
+    position: relative;
+    background-color: transparent;
+    transition: background-color 0.2s;
+  }
+  
+  .checkbox-input:checked + .custom-checkbox {
+    background-color: #00285D;
+  }
+  
+  .checkbox-input:checked + .custom-checkbox::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  
+  .auth-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #00285D;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  
+  .auth-button:hover:not(:disabled) {
+    background-color: #001a3e;
+  }
+  
+  .auth-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .auth-box p {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #555;
+  }
+
+
+
+  /* Forgot Password Styles */
+.forgot-password-link {
+  background: none;
+  border: none;
+  color: #0A2E5D;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: auto;
+}
+
+.forgot-password-link:hover {
+  color: #0A2E5D;
+}
+
+.forgot-password-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.auth-button.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  flex: 1;
+}
+
+.auth-button.secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.auth-button.primary {
+  background: rgba(10, 46, 93, 0.1);
+  color: #0A2E5D;
+  flex: 1;
+}
+
+.auth-button.primary:hover:not(:disabled) {
+  background: rgba(10, 46, 93, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 46, 93, 0.4);
+}
+
+.forgot-password-success {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.success-icon {
+  width: 48px;
+  height: 48px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 auto 1rem;
+}
+
+.success-message {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.success-note {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.4;
+}
+
+.auth-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkmark {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.checkbox-input:checked ~ .checkmark {
+  background: rgba(10, 46, 93, 0.1);
+  border-color: #0A2E5D;
+}
+
+.checkbox-input:checked ~ .checkmark::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-label {
+  font-weight: 500;
+}
+.auth-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auth-button.primary {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.auth-button.primary:hover:not(:disabled) {
+  background-color: #4338ca;
+}
+
+.auth-button.primary:disabled {
+  background-color: #9ca3af;
+  color: #e5e7eb;
+  cursor: not-allowed;
+  transform: none;
+}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container,
+  .auth-container {
+    padding: 20px 16px;
+  }
+
+  .login-card,
+  .auth-card {
+    padding: 24px 20px;
+    max-width: 100%;
+  }
+
+  .login-title,
+  .auth-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .forgot-password-buttons {
+    flex-direction: column;
+  }
+  
+  .auth-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .forgot-password-link {
+    margin-left: 0;
+  }
+}

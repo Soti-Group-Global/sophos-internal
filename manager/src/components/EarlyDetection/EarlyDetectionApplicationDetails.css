@@ -1,0 +1,139 @@
+/* Early Detection Application Details Container */
+.early-detection-app-container {
+    background: var(--app-detail-background);
+}
+
+/* Modern Header */
+.early-detection-app-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 16px 24px;
+}
+
+.early-detection-app-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.early-detection-app-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.early-detection-app-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.early-detection-app-back-btn:hover {
+    background: #f1f5f9;
+    color: #4eccc4;
+    border-color: #4eccc4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(78, 204, 196, 0.15);
+}
+
+.early-detection-app-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.early-detection-app-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.early-detection-app-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.early-detection-app-breadcrumb-item {
+    transition: color 0.3s ease;
+}
+
+.early-detection-app-breadcrumb-item.active {
+    color: #4eccc4;
+    font-weight: 500;
+}
+
+.early-detection-app-breadcrumb-separator {
+    color: #cbd5e1;
+}
+
+/* Modern Tab Navigation */
+.early-detection-app-tab-nav {
+    display: flex;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.early-detection-app-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 16px 24px;
+    font-size: 14px;
+    border-bottom: 2px solid transparent;
+}
+
+.early-detection-app-tab:hover {
+    color: #4eccc4;
+    background: #f8fafc;
+}
+
+.early-detection-app-tab.active {
+    color: #4eccc4;
+    border-bottom-color: #4eccc4;
+    background: #f0fdfa;
+}
+
+.early-detection-app-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #4eccc4, #3bb4ad);
+    border-radius: 2px 2px 0 0;
+}
+
+/* Tab Content */
+.early-detection-app-content {
+    flex: 1;
+    margin: 0 auto;
+    width: 100%;
+}

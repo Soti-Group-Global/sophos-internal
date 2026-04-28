@@ -1,0 +1,701 @@
+﻿/* DoctorAppointmentsCalendar â€” extra styles on top of CalendarView.css */
+/* Give the layout a fixed viewport height so internal flex/overflow scrolling works */
+.calendar-view-layout {
+  height: calc(100vh - 70px);
+}
+/* Doctor action menu (three-dots) */
+.dac-doctor-menu-wrap {
+  position: relative;
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dac-doctor-menu-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dac-doctor-menu-btn:hover {
+  background: #e2e8f0;
+  color: #0c3870;
+}
+
+.dac-action-dropdown {
+  position: absolute;
+  top: 34px;
+  right: 0;
+  left: auto;
+  z-index: 200;
+  min-width: 200px;
+}
+
+/* Break modal date selector */
+.break-date-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.break-date-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background: #f8fafc;
+  cursor: pointer;
+  outline: none;
+}
+
+.break-date-select:focus {
+  border-color: #0c3870;
+  background: #fff;
+}
+
+/* Break cell overlay in calendar grid */
+.dac-break-cell {
+  background: repeating-linear-gradient(
+    45deg,
+    #fef3c7,
+    #fef3c7 4px,
+    #fffbeb 4px,
+    #fffbeb 10px
+  ) !important;
+  cursor: not-allowed !important;
+  position: relative;
+}
+
+.dac-break-cell:hover {
+  background: repeating-linear-gradient(
+    45deg,
+    #fde68a,
+    #fde68a 4px,
+    #fef3c7 4px,
+    #fef3c7 10px
+  ) !important;
+}
+
+.dac-break-label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #b45309;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Leave (day-off) cell overlay in calendar grid */
+.dac-leave-cell {
+  background: repeating-linear-gradient(
+    45deg,
+    #fee2e2,
+    #fee2e2 4px,
+    #fff1f2 4px,
+    #fff1f2 10px
+  ) !important;
+  cursor: not-allowed !important;
+  position: relative;
+}
+.dac-leave-cell:hover {
+  background: repeating-linear-gradient(
+    45deg,
+    #fecaca,
+    #fecaca 4px,
+    #fee2e2 4px,
+    #fee2e2 10px
+  ) !important;
+}
+.dac-leave-label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #dc2626;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Cancel working day — confirmation dialog */
+.dac-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dac-confirm-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+.dac-confirm-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+.dac-confirm-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 10px;
+}
+.dac-confirm-message {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+.dac-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.dac-confirm-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, transform 0.1s;
+}
+.dac-confirm-btn:active {
+  transform: scale(0.97);
+}
+.dac-confirm-no {
+  background: #f1f5f9;
+  color: #475569;
+}
+.dac-confirm-no:hover {
+  background: #e2e8f0;
+}
+.dac-confirm-yes {
+  background: #dc2626;
+  color: #fff;
+}
+.dac-confirm-yes:hover {
+  background: #b91c1c;
+}
+
+/* Back button + doctor info above sidebar mini-calendar */
+.dac-header {
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+}
+
+.dac-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 0.85rem;
+  padding: 0;
+  transition: color 0.15s;
+}
+.dac-back-btn:hover {
+  color: #111827;
+}
+
+/* Doctor selector wrapper */
+.dac-doctor-selector {
+  position: relative;
+}
+
+.dac-doctor-trigger {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  transition: background 0.15s;
+}
+.dac-doctor-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dac-chevron {
+  flex-shrink: 0;
+  color: #a0aec0;
+  transition: transform 0.2s;
+  margin-left: auto;
+}
+.dac-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Custom dropdown */
+.dac-doctor-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dac-dropdown-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #9ca3af;
+}
+.dac-dropdown-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.8rem;
+  color: #111827;
+  background: transparent;
+}
+.dac-dropdown-search input::placeholder {
+  color: #9ca3af;
+}
+
+.dac-dropdown-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.dac-dropdown-list::-webkit-scrollbar {
+  width: 4px;
+}
+.dac-dropdown-list::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 2px;
+}
+
+.dac-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.dac-dropdown-item:hover {
+  background: #f3f4f6;
+}
+.dac-dropdown-item.active {
+  background: #eef2ff;
+}
+
+.dac-dropdown-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #0c3870;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dac-dropdown-info {
+  min-width: 0;
+}
+.dac-dropdown-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dac-dropdown-specialty {
+  font-size: 0.7rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dac-dropdown-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.dac-doctor-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dac-doctor-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #2d3748;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dac-doctor-details {
+  min-width: 0;
+}
+
+.dac-doctor-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dac-doctor-specialty {
+  font-size: 0.75rem;
+  color: #a0aec0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Top navigation bar inside calendar-main-content */
+.dac-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.dac-date-label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dac-nav-btn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+.dac-nav-btn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.dac-today-btn {
+  background: #0c3870;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 5px 12px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.dac-today-btn:hover {
+  background: #0a2f5e;
+}
+
+/* â”€â”€ Mode toggle (Doctor / All) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.dac-mode-toggle {
+  display: flex;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.dac-mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #9ca3af;
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.dac-mode-btn.active {
+  background: #0c3870;
+  color: #ffffff;
+}
+.dac-mode-btn:not(.active):hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
+}
+
+/* â”€â”€ Week row selection in mini calendar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.dac-week-rows {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dac-week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 1px 2px;
+  transition: background 0.12s;
+}
+.dac-week-row:hover,
+.dac-week-row.hovered {
+  background: rgba(12, 56, 112, 0.1);
+}
+.dac-week-row.selected {
+  background: rgba(12, 56, 112, 0.22);
+}
+.dac-week-row.selected .calendar-day {
+  color: #e0e7ff;
+  font-weight: 600;
+}
+.dac-week-row.selected .calendar-day.today {
+  background: #0c3870;
+  color: #ffffff;
+}
+
+/* â”€â”€ Day column headers in week view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.dac-day-col-header {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 10px 4px !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+.dac-day-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.dac-day-number {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.dac-day-number.today {
+  background: #0c3870;
+  color: #ffffff;
+}
+
+.dac-today-col .dac-day-label {
+  color: #2d5fa3;
+}
+.dac-today-col {
+  background: rgba(12, 56, 112, 0.04);
+}
+
+/* â”€â”€ Empty states â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.dac-no-doctors {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 20px;
+  font-style: italic;
+}
+
+.dac-empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 40px 20px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* â”€â”€ Content frame (wraps calendar-header + calendar-body) â”€â”€â”€â”€â”€â”€â”€â”€ */
+.dac-content-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* All mode: handled below in the dedicated block */
+.dac-all-hscroll {
+  flex: 1;
+  min-height: 0;
+  /* Both X and Y scroll live here so sticky children use this as anchor */
+  overflow: auto;
+}
+
+/* Scrollbar styling */
+.dac-all-hscroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dac-all-hscroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.dac-all-hscroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.dac-all-hscroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/*
+ * Inner wrapper: forces header AND body to share the same computed width.
+ * min-width: max-content expands to fit all doctor columns;
+ * min-height: 100% ensures the scroll container can scroll vertically too.
+ */
+/* Inner wrapper for Doctor mode — maintains the flex chain so .calendar-body can scroll */
+.dac-doctor-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dac-all-inner {
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+  min-height: 100%;
+}
+
+/* Header sticky at the top of the scroll container */
+.dac-all-hscroll .calendar-header {
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  /* width is inherited from dac-all-inner â€” no need to set explicitly */
+}
+
+/* Body does NOT create its own scroll context â€” outer wrapper handles it */
+.dac-all-hscroll .calendar-body {
+  overflow: visible;
+  flex: 1;
+}
+
+/* Every doctor column (header + body) is the same fixed width */
+.dac-all-col-header,
+.dac-all-col-body {
+  flex: 0 0 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}
+
+/* Compact avatar for All-mode columns */
+.dac-all-col-header .doctor-avatar {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Truncate doctor name and specialty inside the fixed-width column */
+.dac-all-col-header .doctor-name,
+.dac-all-col-header .doctor-specialty {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.dac-all-col-header .doctor-name {
+  font-size: 13px;
+}
+
+.dac-all-col-header .doctor-specialty {
+  font-size: 10px;
+}
+
+/* Sticky time-label column â€” stays locked to the left while scrolling X */
+.dac-all-hscroll .time-column-header {
+  position: sticky;
+  left: 0;
+  z-index: 12;
+  background: #f9fafb;
+}
+
+.dac-all-hscroll .time-slots-column {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  background: #f9fafb;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
+}
+

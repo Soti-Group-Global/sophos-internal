@@ -1,0 +1,212 @@
+/* ══════════════════════════════════════════════════════════
+   AddPaymentModal.css
+   ══════════════════════════════════════════════════════════ */
+
+.apm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.apm-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.apm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+.apm-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0c3870;
+  margin: 0;
+}
+.apm-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.apm-close:hover { color: #111827; }
+
+/* ── Body ── */
+.apm-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Label ── */
+.apm-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+/* ── Items ── */
+.apm-items { display: flex; flex-direction: column; gap: 8px; }
+
+.apm-item-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.apm-input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #fff;
+}
+.apm-input:focus { border-color: #0c3870; box-shadow: 0 0 0 2px rgba(12, 56, 112, 0.08); }
+
+.apm-input--name   { flex: 1; min-width: 0; }
+.apm-input--amount { width: 110px; flex-shrink: 0; }
+.apm-input--discount { width: 110px; text-align: right; }
+
+.apm-remove-item {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.apm-remove-item:hover { color: #ef4444; }
+
+.apm-add-item-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0c3870;
+  background: none;
+  border: 1px dashed #93c5fd;
+  border-radius: 7px;
+  padding: 5px 12px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.15s;
+}
+.apm-add-item-btn:hover { background: #eff6ff; }
+
+/* ── Totals ── */
+.apm-totals {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.apm-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #374151;
+}
+.apm-total-row--final {
+  border-top: 1px solid #d1d5db;
+  padding-top: 10px;
+  margin-top: 2px;
+  font-size: 14px;
+  color: #111827;
+}
+.apm-final-amount { color: #059669; font-size: 16px; }
+
+/* ── Fields row ── */
+.apm-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.apm-field { display: flex; flex-direction: column; }
+.apm-select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.apm-select:focus { border-color: #0c3870; }
+
+/* ── Notes ── */
+.apm-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+.apm-note--gateway { background: #eff6ff; color: #1d4ed8; }
+.apm-note--free    { background: #ecfdf5; color: #065f46; }
+.apm-note--cash    { background: #fffbeb; color: #92400e; }
+
+/* ── Footer ── */
+.apm-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid #f3f4f6;
+}
+.apm-btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+.apm-btn--cancel         { background: #f3f4f6; color: #374151; }
+.apm-btn--cancel:hover   { background: #e5e7eb; }
+.apm-btn--submit         { background: #0c3870; color: #fff; }
+.apm-btn--submit:hover:not(:disabled) { background: #0a2d5e; }
+.apm-btn--submit:disabled { opacity: 0.5; cursor: not-allowed; }

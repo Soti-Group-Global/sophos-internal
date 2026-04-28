@@ -1,0 +1,367 @@
+/* Assistants List View Styles */
+.assistant-applications-container {
+  padding: 24px;
+}
+
+.assistant-applications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.assistant-applications-title h2 {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.assistant-applications-title p {
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.assistant-view-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.assistant-view-controls button {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #f3f4f6;
+  color: #374151;
+  transition: all 0.2s ease;
+  height: 40px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assistant-view-controls button.assistant-active {
+  background: #3b82f6;
+  color: white;
+}
+
+.assistant-view-controls button:hover {
+  background: #e5e7eb;
+}
+
+.assistant-view-controls button.assistant-active:hover {
+  background: #2563eb;
+}
+
+.assistant-view-controls .assistant-add-btn {
+  background: #3b82f6;
+  color: white;
+  padding: 12px 24px;
+  height: 40px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assistant-view-controls .assistant-add-btn:hover {
+  background: #2563eb;
+}
+
+.assistant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.assistant-list .assistant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.assistant-list .assistant-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.assistant-list .assistant-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.assistant-list .assistant-name-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assistant-list .assistant-profile-pic {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.assistant-list .assistant-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.assistant-list .assistant-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.assistant-list .assistant-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.assistant-list .assistant-field-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.assistant-list .assistant-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+}
+
+.assistant-list .assistant-field-label {
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.assistant-list .assistant-field-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.assistant-list .assistant-assignment-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  margin-right: 8px;
+  margin-bottom: 4px;
+  background-color: #10b981;
+  color: white;
+}
+
+.assistant-list .assistant-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.assistant-list .assistant-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.assistant-list .assistant-action-btn:hover {
+  opacity: 0.8;
+}
+
+.assistant-list .assistant-action-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.assistant-list .assistant-edit-btn {
+  color: #6b7280;
+}
+
+.assistant-list .assistant-assign-btn {
+  color: #3b82f6;
+}
+
+.assistant-list .assistant-delete-btn {
+  color: #ef4444;
+}
+
+.assistant-delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.assistant-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.assistant-delete-modal-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.assistant-delete-modal-message {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.assistant-delete-modal-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.assistant-delete-modal-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.assistant-delete-modal-cancel:hover {
+  background: #e5e7eb;
+}
+
+.assistant-delete-modal-confirm {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.assistant-delete-modal-confirm:hover {
+  background: #b91c1c;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.form-field.full-width {
+  flex: 100%;
+}
+
+.required-asterisk {
+  color: #dc2626;
+}
+
+.field-error {
+  color: #dc2626;
+  margin-top: 4px;
+}
+
+.react-select__control {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.react-select__control.error {
+  border-color: #dc2626;
+}
+
+.modern-form input {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.modern-form input.error {
+  border-color: #dc2626;
+}
+
+@media (max-width: 768px) {
+  .assistant-list .assistant-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .assistant-list .assistant-info {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .assistant-list .assistant-actions {
+    align-self: flex-end;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .assistant-list .assistant-field-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .assistant-list .assistant-field {
+    min-width: 100%;
+  }
+
+  
+  .assistant-modal {
+    max-width: 90%;
+    padding: 20px;
+  }
+}

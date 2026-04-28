@@ -1,0 +1,944 @@
+/* Job Posts Applications Management Styles */
+.hd-applications-management {
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 24px;
+  font-size: var(--font-size-secondary-text);
+}
+
+/* Header Styles */
+.hd-applications-header {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.hd-applications-header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.hd-applications-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  color: #475569;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-applications-back-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.hd-applications-title-section {
+  flex: 1;
+}
+
+.hd-applications-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.hd-applications-subtitle {
+  font-size: var(--font-size-secondary-text);
+  color: #64748b;
+  margin: 0;
+}
+
+/* Stats Overview */
+.hd-applications-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.hd-application-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.hd-application-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.hd-application-stat-primary { background: #dbeafe; color: #1d4ed8; }
+.hd-application-stat-success { background: #dcfce7; color: #16a34a; }
+.hd-application-stat-warning { background: #fef3c7; color: #d97706; }
+.hd-application-stat-danger { background: #fee2e2; color: #dc2626; }
+.hd-application-stat-info { background: #e0f2fe; color: #0284c7; }
+
+.hd-application-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.hd-application-stat-count {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.hd-application-stat-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Filters */
+.hd-applications-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.hd-applications-search {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.hd-applications-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.hd-applications-search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.hd-applications-search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.hd-applications-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.hd-applications-filter-select {
+  border: none;
+  background: none;
+  color: #374151;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Applications List */
+.hd-applications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hd-application-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.hd-application-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.hd-application-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.hd-application-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.hd-application-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.hd-application-details {
+  flex: 1;
+}
+
+.hd-application-name {
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.hd-application-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hd-application-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+}
+
+.hd-application-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hd-application-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hd-application-status-warning { background: #fef3c7; color: #d97706; }
+.hd-application-status-info { background: #e0f2fe; color: #0284c7; }
+.hd-application-status-primary { background: #dbeafe; color: #1d4ed8; }
+.hd-application-status-danger { background: #fee2e2; color: #dc2626; }
+.hd-application-status-success { background: #dcfce7; color: #16a34a; }
+
+.hd-application-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hd-application-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-application-action-btn:hover {
+  background: #e2e8f0;
+  color: #374151;
+}
+
+.hd-application-action-view:hover { background: #dbeafe; color: #1d4ed8; }
+.hd-application-action-download:hover { background: #dcfce7; color: #16a34a; }
+.hd-application-action-more:hover { background: #e2e8f0; color: #374151; }
+
+/* Expanded Actions */
+.hd-application-expanded-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.hd-application-expanded-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-application-expanded-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.hd-application-expanded-status:hover { color: #1d4ed8; border-color: #dbeafe; }
+.hd-application-expanded-contact:hover { color: #dc2626; border-color: #fee2e2; }
+.hd-application-expanded-call:hover { color: #16a34a; border-color: #dcfce7; }
+
+/* Application Meta */
+.hd-application-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hd-application-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+}
+
+.hd-application-notes-preview {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Empty State */
+.hd-applications-empty {
+  text-align: center;
+  padding: 80px 24px;
+  background: white;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+}
+
+.hd-applications-empty-icon {
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.hd-applications-empty-title {
+  font-weight: 600;
+  color: #475569;
+  margin: 0 0 8px 0;
+}
+
+.hd-applications-empty-description {
+  color: #64748b;
+  margin: 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Loading State */
+.hd-applications-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+}
+
+.hd-applications-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-left: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: hd-spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.hd-applications-loading-text {
+  color: #64748b;
+}
+
+@keyframes hd-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modal Styles */
+.hd-application-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+body:has(.hd-application-modal-overlay) .sidebar,
+body:has(.hd-application-modal-overlay) .header,
+body:has(.hd-application-modal-overlay) .sidebar *,
+body:has(.hd-application-modal-overlay) .header *,
+body:has(.hd-application-modal-overlay) .layout-top-bar {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+.hd-application-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.hd-application-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.hd-application-modal-title {
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.hd-application-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f8fafc;
+  border-radius: 6px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-application-modal-close:hover {
+  background: #e2e8f0;
+  color: #374151;
+}
+
+.hd-application-modal-body {
+  padding: 24px;
+}
+
+.hd-application-detail-section {
+  margin-bottom: 24px;
+}
+
+.hd-application-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.hd-application-detail-section-title {
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+}
+
+.hd-application-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.hd-application-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hd-application-detail-field label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.hd-application-detail-field p {
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Status and button fields should fit their content */
+.hd-application-detail-field .hd-application-status,
+.hd-application-detail-field .hd-contact-status {
+  width: fit-content;
+}
+
+.hd-application-detail-field button {
+  width: fit-content;
+}
+
+.hd-application-notes {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.hd-application-download-btn,
+.hd-application-detail-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  color: #16a34a;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-application-download-btn:hover,
+.hd-application-detail-download-btn:hover {
+  background: #bbf7d0;
+  border-color: #86efac;
+}
+
+.hd-application-download-btn:disabled,
+.hd-application-detail-download-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Status Form */
+.hd-application-status-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hd-application-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hd-application-form-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.hd-application-form-select,
+.hd-application-form-textarea {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.hd-application-form-select:focus,
+.hd-application-form-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.hd-application-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Modal Actions */
+.hd-application-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.hd-application-modal-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-application-modal-secondary {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.hd-application-modal-secondary:hover {
+  background: #e2e8f0;
+  color: #374151;
+}
+
+.hd-application-modal-primary {
+  background: #3b82f6;
+  color: white;
+  border: 1px solid #3b82f6;
+}
+
+.hd-application-modal-primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hd-applications-management {
+    padding: 16px;
+  }
+
+  .hd-applications-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hd-applications-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .hd-applications-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hd-applications-search {
+    max-width: none;
+  }
+
+  .hd-application-card-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .hd-application-actions {
+    justify-content: space-between;
+  }
+
+  .hd-application-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hd-application-modal-content {
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+
+  .hd-application-modal-actions {
+    flex-direction: column;
+  }
+}
+
+
+/* Tabs */
+.hd-applications-tabs {
+  display: flex;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+}
+
+.hd-applications-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-applications-tab:hover {
+  background-color: #f9fafb;
+  color: #4b5563;
+}
+
+.hd-applications-tab-active {
+  background-color: #f3f4f6;
+  color: #111827;
+  border-bottom: 2px solid #4f46e5;
+}
+
+.hd-applications-tab-count {
+  background-color: #e5e7eb;
+  color: #4b5563;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.hd-applications-tab-active .hd-applications-tab-count {
+  background-color: #4f46e5;
+  color: white;
+}
+
+/* Contact Cards */
+.hd-contact-card {
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s;
+}
+
+.hd-contact-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.hd-contact-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.hd-contact-info {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.hd-contact-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: #e0e7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4f46e5;
+  flex-shrink: 0;
+}
+
+.hd-contact-details {
+  flex: 1;
+}
+
+.hd-contact-name {
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.hd-contact-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  color: #6b7280;
+}
+
+.hd-contact-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.hd-contact-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.hd-contact-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.hd-contact-status-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.hd-contact-status-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.hd-contact-status-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.hd-contact-status-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.hd-contact-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hd-contact-action-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-contact-action-btn:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  color: #4b5563;
+}
+
+.hd-contact-action-call:hover {
+  background-color: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
+.hd-contact-expanded-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.hd-contact-expanded-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hd-contact-expanded-btn:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.hd-contact-expanded-status:hover {
+  background-color: #e0e7ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
+}
+
+.hd-contact-expanded-delete:hover {
+  background-color: #fee2e2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.hd-contact-notes-preview {
+  color: #6b7280;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Modal Button Variations */
+.hd-application-modal-call {
+  background-color: #10b981 !important;
+  color: white !important;
+  border-color: #10b981 !important;
+}
+
+.hd-application-modal-call:hover {
+  background-color: #059669 !important;
+  border-color: #059669 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hd-applications-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .hd-applications-tab {
+    justify-content: center;
+  }
+  
+  .hd-contact-card-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .hd-contact-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}

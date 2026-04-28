@@ -1,0 +1,712 @@
+/* Modern Schedule Styles */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --border-light: #e5e7eb;
+  --border-medium: #d1d5db;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --transition: all 0.2s ease-in-out;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  line-height: 1.5;
+}
+
+/* Loading */
+.modern-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.modern-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--bg-tertiary);
+  border-top: 3px solid var(--primary-gradient);
+  border-radius: 50%;
+  animation: modern-spin 1s linear infinite;
+}
+
+@keyframes modern-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Main Container */
+.modern-schedule-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header */
+.modern-schedule-header {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: 1rem;
+  margin: 2rem 0;
+  box-shadow: var(--shadow-md);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: start;
+}
+
+.modern-header-content {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.modern-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  width: fit-content;
+  height: fit-content;
+  margin: auto 0;
+}
+
+.modern-back-button:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-medium);
+}
+
+.modern-doctor-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.modern-doctor-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
+
+.modern-doctor-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-doctor-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modern-doctor-email {
+  color: var(--text-secondary);
+}
+
+.modern-header-stats {
+  display: flex;
+  gap: 2rem;
+}
+
+.modern-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.modern-stat-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+}
+
+.modern-stat-value {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modern-stat-label {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Schedule Grid */
+.modern-schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.modern-day-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+
+.modern-day-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.modern-day-card.modern-available {
+  border-left: 4px solid var(--success-color);
+}
+
+.modern-day-card.modern-unavailable {
+  border-left: 4px solid var(--border-medium);
+}
+
+.modern-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.modern-date-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-weekday {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.modern-date {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 0.25rem;
+}
+
+.modern-day-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Toggle Switch */
+.modern-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.modern-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.modern-toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: var(--border-medium);
+  border-radius: 24px;
+  transition: var(--transition);
+}
+
+.modern-toggle-slider:before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.modern-toggle input:checked + .modern-toggle-slider {
+  background-color: var(--success-color);
+}
+
+.modern-toggle input:checked + .modern-toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.modern-day-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modern-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.modern-copy-btn:hover {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+.modern-remove-btn:hover {
+  background: var(--danger-color);
+  color: white;
+}
+
+/* Time Slots */
+.modern-time-slots {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.modern-slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.modern-time-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modern-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.modern-time-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.modern-time-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modern-time-separator {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.modern-remove-slot-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.modern-remove-slot-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.modern-remove-slot-btn:disabled {
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}
+
+.modern-add-slot-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: #667eea;
+  border: 1px dashed #667eea;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  width: 100%;
+  justify-content: center;
+}
+
+.modern-add-slot-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-style: solid;
+}
+
+/* Save Section */
+.modern-save-section {
+  position: sticky;
+  bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  margin: 3rem 0;
+}
+
+.modern-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: #5570e9;
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-lg);
+}
+
+.modern-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Modal */
+.modern-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+body:has(.modern-modal-overlay) .sidebar,
+body:has(.modern-modal-overlay) .header,
+body:has(.modern-modal-overlay) .sidebar *,
+body:has(.modern-modal-overlay) .header *,
+body:has(.modern-modal-overlay) .layout-top-bar {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+.modern-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: modern-modal-appear 0.3s ease;
+}
+
+@keyframes modern-modal-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modern-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modern-modal-header h3 {
+  font-weight: 600;
+  margin: 0;
+}
+
+.modern-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(174, 176, 186, 0.3);
+  padding: 5px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.modern-close-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.modern-modal-content {
+  padding: 1.5rem;
+}
+
+.modern-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modern-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.modern-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.modern-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  position: relative;
+  transition: var(--transition);
+}
+
+.modern-option input:checked + .modern-checkbox {
+  background: #667eea;
+  border-color: #667eea;
+}
+
+.modern-option input:checked + .modern-checkbox:after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.modern-option-text {
+  color: var(--text-primary);
+}
+
+.modern-custom-days {
+  margin-top: 1.5rem;
+}
+
+.modern-option-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.modern-day-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.modern-day-pill {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.modern-day-pill.modern-selected {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.modern-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.modern-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  flex: 1;
+  justify-content: center;
+}
+
+.modern-cancel-btn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+}
+
+.modern-cancel-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.modern-apply-btn {
+  background: var(--success-color);
+  color: white;
+}
+
+.modern-apply-btn:hover {
+  background: #059669;
+}
+
+.modern-remove-btn {
+  background: var(--danger-color);
+  color: white;
+}
+
+.modern-remove-btn:hover {
+  background: #dc2626;
+}
+
+/* Icons */
+.modern-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modern-schedule-header {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .modern-header-content {
+    align-items: center;
+  }
+
+  .modern-header-stats {
+    justify-content: center;
+  }
+
+  .modern-schedule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-day-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .modern-day-controls {
+    justify-content: space-between;
+  }
+
+  .modern-modal-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-schedule-container {
+    padding: 0 0.5rem;
+  }
+
+  .modern-schedule-header {
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .modern-doctor-info {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .modern-header-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .modern-time-slot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .modern-time-inputs {
+    order: 1;
+  }
+
+  .modern-remove-slot-btn {
+    order: 2;
+    align-self: flex-end;
+    width: 100%;
+  }
+}

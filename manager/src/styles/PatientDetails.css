@@ -1,0 +1,220 @@
+/* ─── Patient Details — Main Layout ───────────────────────────────────────── */
+
+.pd-container {
+  background: #f8fafc;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.pd-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pd-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.pd-back:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.pd-patient-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pd-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0a2e5d, #1a4a8a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.pd-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pd-avatar span {
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.pd-identity {
+  min-width: 0;
+}
+
+.pd-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pd-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pd-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #f1f5f9;
+  color: #64748b;
+}
+.pd-badge-gender {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+.pd-badge-age {
+  background: #dbeafe;
+  color: #2563eb;
+}
+.pd-badge-phone {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.pd-badge-email {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.pd-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.pd-edit-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+/* ─── Tabs ────────────────────────────────────────────────────────────────── */
+
+.pd-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pd-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.pd-tab:hover {
+  color: #1e293b;
+}
+.pd-tab.active {
+  color: #0a2e5d;
+  font-weight: 600;
+}
+.pd-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #0a2e5d;
+  border-radius: 2px 2px 0 0;
+}
+
+/* ─── Content ─────────────────────────────────────────────────────────────── */
+
+.pd-content {
+  padding: 20px 24px;
+}
+
+/* ─── Error ───────────────────────────────────────────────────────────────── */
+
+.pd-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .pd-header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+  .pd-badges {
+    display: none;
+  }
+  .pd-tabs {
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+  .pd-content {
+    padding: 16px;
+  }
+  .pd-edit-btn span {
+    display: none;
+  }
+  .pd-edit-btn {
+    padding: 8px;
+  }
+}

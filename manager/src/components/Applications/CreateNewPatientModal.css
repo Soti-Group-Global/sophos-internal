@@ -1,0 +1,219 @@
+.cnpm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  padding: 16px;
+}
+
+.cnpm-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.cnpm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #0a2e5d;
+  color: #fff;
+  flex-shrink: 0;
+  border-radius: 12px 12px 0 0;
+}
+
+.cnpm-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: #fff;
+}
+
+.cnpm-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.cnpm-close:hover {
+  color: #fff;
+}
+
+.cnpm-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cnpm-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cnpm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cnpm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cnpm-req {
+  color: #ef4444;
+}
+
+.cnpm-input {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cnpm-input:focus {
+  border-color: #0a2e5d;
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1);
+}
+
+.cnpm-input--error {
+  border-color: #ef4444;
+}
+
+.cnpm-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.cnpm-error {
+  font-size: 11px;
+  color: #ef4444;
+}
+
+.cnpm-calendar .react-datepicker-wrapper,
+.cnpm-calendar .react-datepicker__input-container,
+.cnpm-calendar .react-datepicker__input-container input {
+  width: 100%;
+}
+
+.cnpm-calendar .react-datepicker__input-container input {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.cnpm-calendar .react-datepicker__input-container input:focus {
+  border-color: #0a2e5d;
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1);
+}
+
+.cnpm-phone-container {
+  width: 100% !important;
+}
+
+.cnpm-phone-container .cnpm-phone-input {
+  width: 100% !important;
+  height: 38px !important;
+  font-size: 13px !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  padding-left: 48px !important;
+  outline: none !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+.cnpm-phone-container .cnpm-phone-input:focus {
+  border-color: #0a2e5d !important;
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1) !important;
+}
+
+.cnpm-phone--error .cnpm-phone-input {
+  border-color: #ef4444 !important;
+}
+
+.cnpm-phone-container .cnpm-phone-btn {
+  border: 1px solid #d1d5db !important;
+  border-right: none !important;
+  border-radius: 8px 0 0 8px !important;
+  background: #f9fafb !important;
+}
+
+.cnpm-phone-container .cnpm-phone-btn:hover,
+.cnpm-phone-container .cnpm-phone-btn.open {
+  background: #f3f4f6 !important;
+}
+
+.cnpm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 4px;
+}
+
+.cnpm-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.cnpm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cnpm-btn--cancel {
+  background: none;
+  border: 1px solid #d1d5db;
+  color: #6b7280;
+}
+
+.cnpm-btn--cancel:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.cnpm-btn--submit {
+  background: #0a2e5d;
+  color: #fff;
+}
+
+.cnpm-btn--submit:hover:not(:disabled) {
+  background: #0d3870;
+}

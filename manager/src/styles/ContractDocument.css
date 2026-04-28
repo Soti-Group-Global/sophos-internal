@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap');
+
+.contract-offline-modal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 700px;
+  margin: auto;
+  position: relative;
+}
+
+
+.top-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .top-table th, .top-table td {
+    text-align: left;
+    border: 1px solid #ccc; 
+  }
+
+  /* Column width styling */
+  .col-1 { width: 70%; }
+  .col-2 { width: 10%; }
+  .col-3 { width: 20%; }
+
+  /* First row bottom dotted border */
+  .top-table tr:first-child td {
+    border-bottom: 2px dotted #888;
+  }
+
+  /* Third row with split first column */
+  .row-3 {
+    display: flex;
+  }
+  .row-3 div {
+    border-right: 1px solid #ccc; /* Regular border between sub-columns */
+  }
+  
+  .row-3 div:last-child {
+    border-right: none;  /* Remove border for last sub-column */
+  }
+
+  /* Third row dotted right border for col-1 and col-3 */
+  .top-table tr:nth-child(3)  .top-table td:first-child {
+    border-right: 2px dotted #888;
+  }
+  
+  .top-table tr:nth-child(3)  .top-table td:last-child {
+    border-right: 2px dotted #888;
+  }
+  /* Info Table Styling */
+.information-table {
+    width: 100%;
+}
+
+.information-table td {
+    vertical-align: top;
+}
+
+/* Signature Section */
+.signature-box {
+    width: 100%;
+    height: 60px;
+    border-bottom: 2px solid #000;
+    margin-top: 10px;
+}
+.contract-popup-overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+  }
+  
+  .contract-popup {
+    position: relative;
+    background: white;
+    padding: 20px;
+    width: 80%;
+    height: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow-y: auto;
+    height: 80%;
+  }
+  .contract-close-btn{
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .contract-close-btn:hover{
+    color: red;
+  }
+  /* Form Styling */
+.contract-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 25px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #f9f9f9;
+    margin-bottom: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.contract-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contract-form label {
+    font-weight: bold;
+    color: #555;
+}
+
+.contract-form input, 
+.contract-form select, 
+.contract-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+.contract-form input:focus, 
+.contract-form select:focus, 
+.contract-form textarea:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+.stamp_image{
+  z-index: 100000;
+}

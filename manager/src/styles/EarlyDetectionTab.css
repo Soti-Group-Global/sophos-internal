@@ -1,0 +1,154 @@
+/* ─── Early Detection Tab ─────────────────────────────────────────────────── */
+
+.edt-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────────── */
+
+.edt-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.edt-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  padding: 4px 12px;
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+/* ─── Card list ───────────────────────────────────────────────────────────── */
+
+.edt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edt-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  transition: all 0.15s;
+}
+.edt-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* ─── Card top ────────────────────────────────────────────────────────────── */
+
+.edt-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.edt-card-title h4 {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.edt-date {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.edt-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.edt-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Status badges */
+.edt-pending    { background: #fef3c7; color: #d97706; }
+.edt-confirmed  { background: #dbeafe; color: #2563eb; }
+.edt-completed  { background: #dcfce7; color: #16a34a; }
+.edt-cancelled  { background: #fee2e2; color: #dc2626; }
+.edt-default    { background: #f1f5f9; color: #64748b; }
+
+/* Payment badges */
+.edt-pay-pending { background: #fef3c7; color: #d97706; }
+.edt-pay-paid    { background: #dcfce7; color: #16a34a; }
+.edt-pay-failed  { background: #fee2e2; color: #dc2626; }
+.edt-pay-default { background: #f1f5f9; color: #64748b; }
+
+/* ─── Card body ───────────────────────────────────────────────────────────── */
+
+.edt-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edt-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.edt-info-row svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.edt-info-label {
+  color: #64748b;
+  font-weight: 500;
+  min-width: 100px;
+}
+.edt-info-value {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+
+.edt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+  color: #94a3b8;
+  gap: 8px;
+}
+.edt-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .edt-card-top {
+    flex-direction: column;
+  }
+  .edt-info-row {
+    flex-wrap: wrap;
+  }
+  .edt-info-label {
+    min-width: auto;
+  }
+}
