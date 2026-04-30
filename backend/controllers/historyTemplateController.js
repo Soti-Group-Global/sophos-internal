@@ -1,4 +1,5 @@
 ﻿const HistoryTemplate = require("../models/HistoryTemplate");
+const Application = require("../models/Application");
 
 /* Helper: resolve the target doctor email.
    Admins / managers can pass ?doctorEmail=x or body.doctorEmail to operate on any doctor.
@@ -19,24 +20,51 @@ const resolveDocEmail = (req) => {
  */
 const getTemplates = async (req, res) => {
   try {
-    const doctorEmail = resolveDocEmail(req);
-    const { fieldKey } = req.query;
+    const doctorEmail = req.user.email;
+    const { fieldKey, isDefault } = req.query;
 
-    const doctorFilter  = { doctorEmail };
-    const defaultFilter = { isDefault: true, doctorEmail: null };
-    if (fieldKey) {
-      doctorFilter.fieldKey  = fieldKey.trim();
-      defaultFilter.fieldKey = fieldKey.trim();
+    let filter = {};
+
+    if (isDefault === "true") {
+      // only defaults requested – ignore doctorEmail entirely
+      filter.isDefault = true;
+    } else if (isDefault === "false") {
+      // explicitly asking for non‑default templates but we still want
+      // default items to surface automatically, so include them in the
+      // OR-clause rather than restricting to doctorEmail alone.
+      filter = {
+        $or: [
+          { doctorEmail },
+          { isDefault: true }
+        ]
+      };
+    } else {
+      // no explicit preference – return all of the doctor's own
+      // templates plus any defaults, regardless of who created them
+      filter = {
+        $or: [
+          { doctorEmail },
+          { isDefault: true }
+        ]
+      };
     }
 
-    const [doctorTemplates, defaultTemplates] = await Promise.all([
-      HistoryTemplate.find(doctorFilter).sort({ createdAt: -1 }).lean(),
-      HistoryTemplate.find(defaultFilter).sort({ createdAt: -1 }).lean(),
-    ]);
+    if (fieldKey) {
+      filter.fieldKey = fieldKey.trim();
+    }
 
-    res.json([...doctorTemplates, ...defaultTemplates]);
+    const templates = await HistoryTemplate.find(filter)
+      .sort({ isDefault: -1, createdAt: -1 })
+      .lean();
+
+    res.json(templates);
+
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch templates", error: err.message });
+    console.error("getTemplates error:", err);
+    res.status(500).json({
+      message: "Failed to fetch templates",
+      error: err.message
+    });
   }
 };
 
@@ -48,7 +76,7 @@ const getTemplates = async (req, res) => {
 const createTemplate = async (req, res) => {
   try {
     const { fieldKey, name, content, isDefault } = req.body;
-
+    
     if (!fieldKey || !name) {
       return res.status(400).json({ message: "fieldKey and name are required" });
     }

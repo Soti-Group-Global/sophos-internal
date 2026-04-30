@@ -12,6 +12,7 @@ const {
   getAllTests,
   getSpecialtyByName,
 } = require('../controllers/specialtiesController');
+const { getOrdersByApplication } = require('../controllers/orderController');
 const router = express.Router();
 
 router.post(
@@ -23,8 +24,11 @@ router.post(
   createSpecialty
 );
 router.get('/', auth, getAllSpecialties);
+router.get('/all', auth, getAllSpecialties);
+router.get('/all-tests', auth, getAllTests);
 router.get('/tests', auth, getAllTests);
 router.get('/name/:name', auth, getSpecialtyByName);
+router.get('/orders/:applicationId', auth, getOrdersByApplication);
 router.get('/:id', auth, getSpecialtyById);
 router.put(
   '/:id',

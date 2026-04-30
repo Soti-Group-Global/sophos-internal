@@ -1187,7 +1187,8 @@ export const getPatientByEmail = async (email) => {
     const res = await api.get(`/patients/email/${encodedEmail}`, {
       headers: {},
     });
-    return res.data;
+    // Backend may wrap the patient in { patient: {...} } or return the patient directly.
+    return res.data && res.data.patient ? res.data.patient : res.data;
   } catch (error) {
     throw {
       status: error.response?.status || 500,

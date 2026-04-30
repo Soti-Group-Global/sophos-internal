@@ -23,8 +23,9 @@ const EarlyDetectionMedicalHistory = ({ patientEmail }) => {
 
       try {
         const data = await getMedicalHistoryByEmail(patientEmail);
-        setMedicalHistory(data.data);
-        setFilteredHistory(data.data); // Initialize filtered data with all records
+        const history = Array.isArray(data.data) ? data.data : [];
+        setMedicalHistory(history);
+        setFilteredHistory(history); // Initialize filtered data with all records
       } catch (err) {
         console.error("Failed to fetch medical history:", err);
         setError("Failed to load appointment history");
@@ -38,22 +39,24 @@ const EarlyDetectionMedicalHistory = ({ patientEmail }) => {
 
   // Apply filtering whenever activeFilter or medicalHistory changes
   useEffect(() => {
+    const history = Array.isArray(medicalHistory) ? medicalHistory : [];
+
     if (activeFilter === "all") {
-      setFilteredHistory(medicalHistory);
+      setFilteredHistory(history);
     } else if (activeFilter === "upcoming") {
-      const upcoming = medicalHistory.filter(
+      const upcoming = history.filter(
         (appt) => new Date(appt.date) > new Date()
       );
       setFilteredHistory(upcoming);
     } else if (activeFilter === "completed") {
-      const completed = medicalHistory.filter(
+      const completed = history.filter(
         (appt) =>
           new Date(appt.date) <= new Date() &&
           appt.appointmentStatus !== "Cancelled"
       );
       setFilteredHistory(completed);
     } else if (activeFilter === "cancelled") {
-      const cancelled = medicalHistory.filter(
+      const cancelled = history.filter(
         (appt) => appt.appointmentStatus === "Cancelled"
       );
       setFilteredHistory(cancelled);
@@ -144,7 +147,7 @@ const EarlyDetectionMedicalHistory = ({ patientEmail }) => {
             <span>{t("appointmentHistory.history.upcoming")}</span>
             <strong>
               {
-                medicalHistory.filter((a) => new Date(a.date) > new Date())
+                (Array.isArray(medicalHistory) ? medicalHistory : []).filter((a) => new Date(a.date) > new Date())
                   .length
               }
             </strong>

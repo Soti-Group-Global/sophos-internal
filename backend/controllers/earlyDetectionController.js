@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const EarlyDetectionBooking = require('../models/EarlyDetectionBooking');
 const Patient = require('../models/Patient');
+const DoctorsProfile = require('../models/DoctorsProfile');
 const EarlyDetectionLaboratoryTest = require('../models/EarlyDetectionLaboratoryTest');
 const EarlyDetectionInstrumentalAnalysis = require('../models/EarlyDetectionInstrumentalAnalysis');
 const telegramBot = require('../services/telegramBot');
@@ -1430,6 +1431,124 @@ exports.getBookingById = async (req, res) => {
     });
   }
 };
+
+const getWeeklyBookingsOnCalendar = async (req, res) => {
+  try {
+    const doctorEmail = req.query.doctorEmail || req.user?.email;
+    let query = {};
+
+    console.log("[CALENDAR] === getWeeklyBookingsOnCalendar START ===");
+    console.log("[CALENDAR] doctorEmail:", doctorEmail);
+
+    // If doctor email provided, find their profile and filter by that
+    if (doctorEmail) {
+      const doctor = await DoctorsProfile.findOne({ email: doctorEmail });
+      console.log("[CALENDAR] Doctor found:", !!doctor, doctor?._id);
+      if (doctor) {
+        // Find bookings where this doctor is assigned to specialist consultations
+        query["schedule.specialistConsultations.doctor"] = doctor._id;
+        console.log("[CALENDAR] Query filter:", JSON.stringify(query));
+      }
+    }
+
+    let bookings = await EarlyDetectionBooking.find(query)
+      .populate("patient");
+    
+    console.log("[CALENDAR] Bookings found:", bookings.length);
+
+    // Manually populate doctor refs in specialist consultations for all bookings
+    for (let b of bookings) {
+      if (b.schedule && b.schedule.specialistConsultations) {
+        for (let i = 0; i < b.schedule.specialistConsultations.length; i++) {
+          const spec = b.schedule.specialistConsultations[i];
+          if (spec.doctor && mongoose.Types.ObjectId.isValid(spec.doctor)) {
+            spec.doctor = await DoctorsProfile.findById(spec.doctor);
+          }
+        }
+      }
+    }
+
+    // Transform bookings to match expected frontend format
+    const transformedBookings = bookings.flatMap((booking) => {
+      const results = [];
+      
+      console.log("[CALENDAR] Processing booking:", booking._id, booking.bookingNumber);
+      console.log("[CALENDAR] - Patient:", booking.patient?._id, booking.patient?.email);
+      console.log("[CALENDAR] - Schedule specialistConsultations length:", booking.schedule?.specialistConsultations?.length);
+      
+      if (booking.schedule && booking.schedule.specialistConsultations && booking.schedule.specialistConsultations.length > 0) {
+        // Create one result entry per specialist consultation
+        booking.schedule.specialistConsultations.forEach((consultation, idx) => {
+          const transformed = {
+            _id: booking._id,
+            bookingId: booking._id,
+            bookingNumber: booking.bookingNumber,
+            invoiceNumber: booking.invoiceNumber,
+            applicationId: booking.bookingNumber, // Use bookingNumber as applicationId for legacy compatibility
+            patientId: booking.patient?._id,
+            patientEmail: booking.patient?.email || null,
+            patientName: booking.patient?.firstName || booking.patient?.name || "Unknown",
+            appointmentStatus: booking.status, // 'pending', 'confirmed', 'completed', 'cancelled'
+            date: consultation.date,
+            startTime: consultation.startTime,
+            endTime: consultation.endTime,
+            specialistTitle: consultation.title,
+            doctorId: consultation.doctor?._id,
+            doctorEmail: consultation.doctor?.email,
+            doctorName: consultation.doctor?.firstName || consultation.doctor?.name,
+            serviceType: "specialist-consultation", // or could be derived from title
+            totalAmount: booking.totalAmount || 0,
+            paymentStatus: booking.payment?.status || "pending",
+          };
+          results.push(transformed);
+          
+          console.log(`[CALENDAR] - Specialist ${idx} (${consultation.title}):`, {
+            date: consultation.date,
+            startTime: consultation.startTime,
+            doctorEmail: consultation.doctor?.email,
+          });
+        });
+      } else {
+        // If no consultations, still create base entry
+        const transformed = {
+          _id: booking._id,
+          bookingId: booking._id,
+          bookingNumber: booking.bookingNumber,
+          invoiceNumber: booking.invoiceNumber,
+          applicationId: booking.bookingNumber,
+          patientId: booking.patient?._id,
+          patientEmail: booking.patient?.email || null,
+          patientName: booking.patient?.firstName || booking.patient?.name || "Unknown",
+          appointmentStatus: booking.status,
+          date: null,
+          startTime: null,
+          endTime: null,
+          specialistTitle: null,
+          doctorId: null,
+          doctorEmail: null,
+          doctorName: null,
+          serviceType: "booking",
+          totalAmount: booking.totalAmount || 0,
+          paymentStatus: booking.payment?.status || "pending",
+        };
+        results.push(transformed);
+        console.log("[CALENDAR] - No specialist consultations found");
+      }
+      
+      return results;
+    });
+
+    console.log("[CALENDAR] Transformed results count:", transformedBookings.length);
+    console.log("[CALENDAR] === getWeeklyBookingsOnCalendar END ===");
+
+    res.json(transformedBookings);
+  } catch (error) {
+    console.error("Error fetching bookings for calendar:", error);
+    res.status(500).json({ message: "Failed to fetch bookings for calendar", error: error.message });
+  }
+};
+
+exports.getWeeklyBookingsOnCalendar = getWeeklyBookingsOnCalendar;
 
 // @desc    Get invoice by number
 // @route   GET /api/early-detection/invoice/:invoiceNumber
@@ -3034,6 +3153,22 @@ exports.validatePaymentLink = async (req, res) => {
     });
   }
 };
+
+const getInternalNotes = async (req, res) => {
+  try {
+    const bookingId = req.params.bookingId || req.params.id;
+    const booking = await findBooking(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    res.json({ internalNotes: booking.internalNotes || [] });
+  } catch (error) {
+    console.error("Error fetching internal notes:", error);
+    res.status(500).json({ message: "Failed to fetch internal notes", error: error.message });
+  }
+};
+
+exports.getInternalNotes = getInternalNotes;
 
 // Add internal note to booking
 exports.addInternalNote = async (req, res) => {

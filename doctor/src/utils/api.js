@@ -560,7 +560,7 @@ export const getPatientsByDoctor = async (
       params: { doctorEmail, page, limit, search },
       headers: {}
     });
-    return response.data;
+    return response.data?.patients ?? response.data ?? [];
   } catch (error) {
     console.error("Get Patients Error:", error.response?.data || error.message);
     throw error;
@@ -855,7 +855,7 @@ export const getAllPatients = async () => {
     const response = await api.get("/patients/all", {
       headers: {}
     });
-    return response.data;
+    return response.data?.patients ?? response.data ?? [];
   } catch (error) {
     console.error(
       "Get All Patients Error:",
@@ -1016,11 +1016,11 @@ export const getOrdersByIds = async (orderIds) => {
 // Get assistants by doctor email
 export const getAssistantsByDoctor = async (doctorEmail) => {
   try {
-    const res = await api.get(`/doctors/assistants/by-doctor-email`, {
-      params: { email: doctorEmail },
+    const res = await api.get(`/assistants/doctors/${encodeURIComponent(doctorEmail)}/assistants`, {
       headers: {}
     });
-    return res.data?.data || [];
+    // Handle response structure: { assistants: [...] } or direct array
+    return Array.isArray(res.data) ? res.data : res.data?.assistants || res.data?.data || [];
   } catch (error) {
     console.error("Error fetching assistants:", error);
     throw error;
@@ -1035,7 +1035,7 @@ export const grantAccess = async ({
   startDateTime,
   endDateTime,
 }) => {
-  return api.patch(`/doctors/assistants/grant-access`, {
+  return api.patch(`/assistants/grant-access`, {
     assistantEmail,
     accessId,
     doctorEmail,
@@ -1053,7 +1053,7 @@ export const revokeAccess = async ({
   startDateTime,
   endDateTime,
 }) => {
-  return api.patch(`/doctors/assistants/revoke-access`, {
+  return api.patch(`/assistants/revoke-access`, {
     assistantEmail,
     accessId,
     doctorEmail,
@@ -1065,14 +1065,10 @@ export const revokeAccess = async ({
 };
 
 export const removeAssistantFromDoctor = async ({
-  assistantEmail,
+  assistantId,
   doctorEmail,
 }) => {
-  return api.delete(`/doctors/assistants/remove-assistant`, {
-    data: {
-      assistantEmail,
-      doctorEmail,
-    },
+  return api.delete(`/assistants/${assistantId}/assign-doctor/${encodeURIComponent(doctorEmail)}`, {
     headers: {},
   });
 };
@@ -1085,7 +1081,7 @@ export const updateAccessTime = async ({
   endDateTime,
 }) => {
   try {
-    const response = await api.patch(`/doctors/assistants/update-access-time`, {
+    const response = await api.patch(`/assistants/update-access-time`, {
       assistantEmail,
       accessId,
       doctorEmail,
@@ -1108,7 +1104,7 @@ export const requestAssistantAccess = async ({
   endDateTime,
 }) => {
   return api.post(
-    `/doctors/assistants/request-access`,
+    `/assistants/assign-doctor`,
     {
       assistantEmail,
       doctorEmail,
@@ -1269,7 +1265,8 @@ export const getPatientByEmail = async (email) => {
     const res = await api.get(`/patients/email/${encodedEmail}`, {
       headers: {}
     });
-    return res.data;
+    // Normalize response: backend may return { patient: {...} } or patient directly
+    return res.data && res.data.patient ? res.data.patient : res.data;
   } catch (error) {
     throw {
       status: error.response?.status || 500,
@@ -1638,21 +1635,21 @@ export const getDoctorBranches = async () => {
 // Get all assistants (assistant + head_assistant)
 export const getAssistantsData = async () => {
   try {
-    const [assistantRes, headAssistantRes] = await Promise.allSettled([
-      api.get("/assistants/all"), // assistants
-      api.get("/head-assistants/all"), // head assistants
+     const [assistantRes, headAssistantRes] = await Promise.allSettled([
+       api.get("/assistants"), // all assistants
+       api.get("/head-assistants"), // all head assistants
     ]);
 
     const assistants =
       assistantRes.status === "fulfilled"
-        ? assistantRes.value.data?.assistants || []
+        ? (Array.isArray(assistantRes.value.data) ? assistantRes.value.data : assistantRes.value.data?.assistants || [])
         : assistantRes.reason?.response?.status === 404
           ? []
           : null;
 
     const headAssistants =
       headAssistantRes.status === "fulfilled"
-        ? headAssistantRes.value.data?.headAssistants || []
+        ? (Array.isArray(headAssistantRes.value.data) ? headAssistantRes.value.data : headAssistantRes.value.data?.headAssistants || [])
         : headAssistantRes.reason?.response?.status === 404
           ? []
           : null;
@@ -1745,7 +1742,7 @@ export const getProjectMembers = async (projectId) => {
 //Update patient basic Data
 export const updatePatientBasicData = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}`, data);
+    const response = await api.put(`/patients/${patientId}`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient basic data:", error);
@@ -1756,7 +1753,7 @@ export const updatePatientBasicData = async(patientId, data)=>{
 //Update Patient legal representative
 export const updateLegalRepresentative = async(patientId, legalRepId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/legal-representative/${legalRepId}`, data);
+    const response = await api.put(`/patients/${patientId}/legal-representative/${legalRepId}`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating legal representative:", error);
@@ -1767,7 +1764,7 @@ export const updateLegalRepresentative = async(patientId, legalRepId, data)=>{
 //Create Patient legal representative
 export const createLegalRepresentative = async(patientId, data)=>{
   try {
-    const response = await api.post(`/doctors/patients/${patientId}/legal-representative`, data);
+    const response = await api.post(`/patients/${patientId}/legal-representative`, data);
     return response.data;
   } catch (error) {
     console.error("Error creating legal representative:", error);
@@ -1778,7 +1775,7 @@ export const createLegalRepresentative = async(patientId, data)=>{
 //Update patient contact person
 export const updateContactPerson = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/contact-person`, data);
+    const response = await api.put(`/patients/${patientId}/contact-person`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating contact person:", error);
@@ -1789,7 +1786,7 @@ export const updateContactPerson = async(patientId, data)=>{
 //Update Patient Documents
 export const updatePatientDocuments = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/documents`, data);
+    const response = await api.put(`/patients/${patientId}/documents`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient documents:", error);
@@ -1800,7 +1797,7 @@ export const updatePatientDocuments = async(patientId, data)=>{
 //Update Patient Address
 export const updatePatientAddress = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/address`, data);
+    const response = await api.put(`/patients/${patientId}/address`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient address:", error);
@@ -1811,7 +1808,7 @@ export const updatePatientAddress = async(patientId, data)=>{
 //Update Patient Disease Information
 export const updatePatientDiseaseInfo = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/disease-info`, data);
+    const response = await api.put(`/patients/${patientId}/disease-info`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient disease information:", error);
@@ -1822,7 +1819,7 @@ export const updatePatientDiseaseInfo = async(patientId, data)=>{
 //Update Patient Final Diagnosis
 export const updatePatientFinalDiagnosis = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/final-diagnosis`, data);
+    const response = await api.put(`/patients/${patientId}/final-diagnosis`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient final diagnosis:", error);
@@ -1833,7 +1830,7 @@ export const updatePatientFinalDiagnosis = async(patientId, data)=>{
 //Update Patient Personal Data
 export const updatePatientPersonalData = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/personal-data`, data);
+    const response = await api.put(`/patients/${patientId}/personal-data`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient personal data:", error);
@@ -1844,7 +1841,7 @@ export const updatePatientPersonalData = async(patientId, data)=>{
 //Update patient Disability
 export const updatePatientDisability = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/disability`, data);
+    const response = await api.put(`/patients/${patientId}/disability`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient disability:", error);
@@ -1855,7 +1852,7 @@ export const updatePatientDisability = async(patientId, data)=>{
 //Update Patient Anamnesis
 export const updatePatientAnamnesis = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/anamnesis`, data);
+    const response = await api.put(`/patients/${patientId}/anamnesis`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient anamnesis:", error);
@@ -1866,7 +1863,7 @@ export const updatePatientAnamnesis = async(patientId, data)=>{
 //Update Patient Radiation Doses
 export const updatePatientRadiationDoses = async(patientId, data)=>{
   try {
-    const response = await api.put(`/doctors/patients/${patientId}/radiation-doses`, data);
+    const response = await api.put(`/patients/${patientId}/radiation-doses`, data);
     return response.data;
   } catch (error) {
     console.error("Error updating patient radiation doses:", error);
@@ -1927,8 +1924,7 @@ export const deleteHistoryTemplate = async (id) => {
   }
 };
 
-// ========== Doctor Break APIs ==========
-
+// ========== Doctor Break APIs ========== //
 export const getDoctorBreaks = async (date) => {
   try {
     const params = {};

@@ -36,6 +36,24 @@ const {
   saveFollowUp,
   updateHistoryForm,
   verifyHistoryField,
+  // Doctor-related controllers
+  uploadDocumentForDoctors,
+  getDocumentByIdForDoctors,
+  getAllApplicationsForDoctors,
+  getApplicationByIdForDoctors,
+  getMedicalHistoryByEmailForDoctors,
+  updateCommentForDoctors,
+  addCommentForDoctors,
+  deleteCommentForDoctors,
+  addDescriptionForDoctors,
+  addConclusionForDoctors,
+  updateVerificationStatusForDoctors,
+  getAppointmentsByDoctorEmail,
+  uploadTestResult,
+  getTestResult,
+  addFollowUpAppointment,
+  getCalendarDataForDoctors,
+  updateHistoryFormForDoctor,
 } = require("../controllers/applicationController");
 
 // Multer setup
@@ -70,6 +88,9 @@ router.get(
   auth,
   getApplicationByAppointmentId,
 );
+
+// --- Calendar (doctors interface) - MUST be before /:id route ---
+router.get("/calender", auth, getCalendarDataForDoctors);
 
 // --- Media routes ---
 router.get("/media/:id/media", getMediaFile);
@@ -126,5 +147,23 @@ router.patch("/:id/follow-up", auth, saveFollowUp);
 // --- History form ---
 router.patch("/:id/history", auth, updateHistoryForm);
 router.patch("/:id/history/:fieldKey/verify", auth, verifyHistoryField);
+
+//----Doctor related routes---------//
+router.post("/appointments/:id/upload-document", auth, upload.single("file"), uploadDocumentForDoctors);
+router.get('/appointments/document-by-id/:id',auth,getDocumentByIdForDoctors);
+router.get("/",auth,getAllApplicationsForDoctors);
+router.get('/by-application-id/:id',auth,getApplicationByIdForDoctors);
+router.get('/medical-history/by-email/:email',auth,getMedicalHistoryByEmailForDoctors);
+router.put('/:appointmentId/comments/:commentId', auth, updateCommentForDoctors);
+router.put('/:id/comments',auth,addCommentForDoctors);
+router.delete('/:appointmentId/comments/:commentId',auth,deleteCommentForDoctors);
+router.put('/:id/prescription', auth, addDescriptionForDoctors);
+router.put('/:id/conclusion', auth, addConclusionForDoctors);
+router.put('/:id/update-verification',auth,updateVerificationStatusForDoctors);
+router.get('/doctor/:email',auth,getAppointmentsByDoctorEmail);
+router.post('/tests/upload-result',auth,uploadTestResult);
+router.get('/results/:id',auth,getTestResult);
+router.put('/:applicationId/follow-up',auth,addFollowUpAppointment);
+router.put('/:applicationId/history-form',auth,updateHistoryFormForDoctor);
 
 module.exports = router;

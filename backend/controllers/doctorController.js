@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const { Readable } = require('stream');
 
-const Doctor = require('../models/Doctor');
+const Doctor = require('../models/DoctorsProfile');
 const User = require('../models/User');
 const DoctorBreak = require('../models/DoctorBreak');
 const { getGfs } = require('../gridfs');
@@ -757,29 +757,27 @@ const getDoctorBreaks = async (req, res) => {
   }
 };
 
-// Update or create breaks for a doctor on a specific date
-const createOrUpdateBreaks = async (req, res) => {
+// Update or create breaks for the currently authenticated doctor (doctor interface)
+const createOrUpdateMyBreaks = async (req, res) => {
   try {
-    const { doctorEmail, date, breaks, comment } = req.body;
-
-    // Validate required fields
-    if (!doctorEmail || !date) {
-      return res.status(400).json({
-        message: 'Doctor email and date are required',
-      });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    // Validate breaks format
-    if (breaks && !Array.isArray(breaks)) {
-      return res.status(400).json({
-        message: 'Breaks must be an array',
-      });
+    const doctorEmail = req.user.email.toLowerCase();
+    const { date, breaks, comment } = req.body;
+
+    if (!date) {
+      return res.status(400).json({ message: 'Date is required' });
     }
 
-    // Validate each break slot
-    if (breaks) {
+    if (breaks !== undefined && !Array.isArray(breaks)) {
+      return res.status(400).json({ message: 'Breaks must be an array' });
+    }
+
+    if (Array.isArray(breaks)) {
       for (const breakSlot of breaks) {
-        if (!breakSlot.startTime || !breakSlot.endTime) {
+        if (!breakSlot?.startTime || !breakSlot?.endTime) {
           return res.status(400).json({
             message: 'Each break must have startTime and endTime',
           });
@@ -787,59 +785,196 @@ const createOrUpdateBreaks = async (req, res) => {
       }
     }
 
-    // Find existing break record or create new one
-    let doctorBreak = await DoctorBreak.findOne({
-      doctorEmail: doctorEmail.toLowerCase(),
-      date: date,
-    });
+    let doctorBreak = await DoctorBreak.findOne({ doctorEmail, date });
 
     if (doctorBreak) {
-      // Update existing record
-      doctorBreak.breaks = breaks || [];
-      doctorBreak.comment = comment || '';
+      doctorBreak.breaks = Array.isArray(breaks) ? breaks : doctorBreak.breaks;
+      if (comment !== undefined) doctorBreak.comment = comment || '';
       doctorBreak.updatedAt = new Date();
       await doctorBreak.save();
     } else {
-      // Create new record
       doctorBreak = new DoctorBreak({
-        doctorEmail: doctorEmail.toLowerCase(),
-        date: date,
-        breaks: breaks || [],
+        doctorEmail,
+        date,
+        breaks: Array.isArray(breaks) ? breaks : [],
         comment: comment || '',
       });
       await doctorBreak.save();
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Breaks updated successfully',
       data: doctorBreak,
     });
   } catch (error) {
+    console.error('Error updating my breaks:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Partial update of a break record by id for the currently authenticated doctor
+const updateMyBreakById = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const { breakId } = req.params;
+    const doctorEmail = req.user.email.toLowerCase();
+    const { date, breaks, comment } = req.body || {};
+
+    const doctorBreak = await DoctorBreak.findById(breakId);
+    if (!doctorBreak) {
+      return res.status(404).json({ message: 'Break record not found' });
+    }
+
+    if (doctorBreak.doctorEmail !== doctorEmail) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (breaks !== undefined && !Array.isArray(breaks)) {
+      return res.status(400).json({ message: 'Breaks must be an array' });
+    }
+
+    if (Array.isArray(breaks)) {
+      for (const breakSlot of breaks) {
+        if (!breakSlot?.startTime || !breakSlot?.endTime) {
+          return res.status(400).json({
+            message: 'Each break must have startTime and endTime',
+          });
+        }
+      }
+      doctorBreak.breaks = breaks;
+    }
+
+    if (date !== undefined) doctorBreak.date = date;
+    if (comment !== undefined) doctorBreak.comment = comment || '';
+
+    doctorBreak.updatedAt = new Date();
+    await doctorBreak.save();
+
+    return res.status(200).json({
+      message: 'Breaks updated successfully',
+      data: doctorBreak,
+    });
+  } catch (error) {
+    console.error('Error updating break by id:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Delete a break record by id for the currently authenticated doctor
+const deleteMyBreakById = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const { breakId } = req.params;
+    const doctorEmail = req.user.email.toLowerCase();
+
+    const doctorBreak = await DoctorBreak.findById(breakId);
+    if (!doctorBreak) {
+      return res.status(404).json({ message: 'Break record not found' });
+    }
+
+    if (doctorBreak.doctorEmail !== doctorEmail) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    await DoctorBreak.deleteOne({ _id: doctorBreak._id });
+
+    return res.json({ message: 'Breaks deleted successfully', data: doctorBreak });
+  } catch (error) {
+    console.error('Error deleting break by id:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+
+// Get current authenticated doctor's profile
+const getMe = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    // Fetch doctor profile using authenticated user's email
+    const doctor = await Doctor.findOne({ email: req.user.email });
+    
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor profile not found' });
+    }
+
+    // Get profile picture if exists
+    let profilePicture = null;
+    if (doctor.profileFileId) {
+      const gfs = getGfs();
+      try {
+        const file = await gfs.find({ _id: new mongoose.Types.ObjectId(doctor.profileFileId) }).toArray();
+        if (file.length > 0) {
+          const readStream = gfs.openDownloadStream(file[0]._id);
+          const chunks = [];
+          await new Promise((resolve, reject) => {
+            readStream.on('data', (chunk) => chunks.push(chunk));
+            readStream.on('end', () => {
+              profilePicture = Buffer.concat(chunks).toString('base64');
+              resolve();
+            });
+            readStream.on('error', reject);
+          });
+        }
+      } catch (fileError) {
+        console.error('Error fetching profile picture:', fileError);
+        // Continue without profile picture
+      }
+    }
+
+    res.json({
+      doctor: { ...doctor.toObject(), profilePicture }
+    });
+  } catch (error) {
+    console.error('Error fetching doctor profile:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// Delete breaks for a doctor on a specific date
-const deleteBreaks = async (req, res) => {
+// Get current doctor's breaks for a specific date (optional)
+const getMyBreaks = async (req, res) => {
   try {
-    const { doctorEmail, date } = req.params;
-
-    const result = await DoctorBreak.findOneAndDelete({
-      doctorEmail: doctorEmail.toLowerCase(),
-      date: date,
-    });
-
-    if (!result) {
-      return res.status(404).json({
-        message: 'No breaks found for this doctor on this date',
-      });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    res.json({
-      message: 'Breaks deleted successfully',
-      data: result,
+    const doctorEmail = req.user.email.toLowerCase();
+    const { date } = req.query;
+
+    const query = { doctorEmail };
+    if (date) query.date = date;
+
+    const breakDocs = await DoctorBreak.find(query).sort({ date: 1 }).lean();
+
+    // Frontend expects an array of DoctorBreak documents under `breaks`
+    return res.json({
+      doctorEmail,
+      breaks: breakDocs,
     });
   } catch (error) {
+    console.error('Error fetching doctor breaks:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get list of all branches
+const getDoctorBranchesList = async (req, res) => {
+  try {
+    // For DoctorsProfile model, branches might be embedded differently
+    // Let's just return an empty array or a default branch list
+    const branches = ['Main Branch', 'Secondary Branch', 'Online'];
+    res.json({ branches });
+  } catch (error) {
+    console.error('Error fetching doctor branches:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -854,6 +989,10 @@ module.exports = {
   deleteDoctor,
   getDoctorByEmail,
   getDoctorBreaks,
-  createOrUpdateBreaks,
-  deleteBreaks,
+  createOrUpdateMyBreaks,
+  updateMyBreakById,
+  deleteMyBreakById,
+  getMe,
+  getMyBreaks,
+  getDoctorBranchesList,
 };

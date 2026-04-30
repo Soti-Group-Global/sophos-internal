@@ -357,7 +357,8 @@ const AppointmentTab = ({ appointmentId, currentUser, patient }) => {
 
     try {
       // Optimistic update: Remove from local state first
-      const updatedComments = appointment.comments.filter(
+      const currentComments = Array.isArray(appointment.comments) ? appointment.comments : [];
+      const updatedComments = currentComments.filter(
         (comment) => comment._id !== commentId
       );
 
@@ -373,7 +374,7 @@ const AppointmentTab = ({ appointmentId, currentUser, patient }) => {
       console.error("Error deleting comment:", err);
       setAppointment((prev) => ({
         ...prev,
-        comments: appointment.comments, // Restore original comments
+        comments: currentComments, // Restore original comments
       }));
       setError("Failed to delete comment. Please try again.");
     }

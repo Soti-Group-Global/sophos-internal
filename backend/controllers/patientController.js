@@ -44,6 +44,10 @@ function parseJsonArray(value) {
   }
 }
 
+function getPatientId(req) {
+  return req.params.id || req.params.patientId;
+}
+
 // Get all patients (with optional doctorEmail query)
 const getAllPatients = async (req, res) => {
   try {
@@ -267,183 +271,396 @@ const addPatient = async (req, res) => {
   }
 };
 
+//Create Legal Representative
+const createLegalRepresentative = async (req, res) => {
+  try{
+    const patientId = getPatientId(req);
+    const legalRepData = req.body;
+    const patient = await Patient.findById(patientId);
+    if(!patient){
+        return res.status(404).json({ message: "Patient not found" });
+    }
+    patient.legalRepresentatives.push(legalRepData);
+    await patient.save();
+    res.status(201).json({ message: "Legal representative added successfully", legalRepresentatives: patient.legalRepresentatives });
+  }
+  catch(error){
+    console.log("Error creating legal representative:", error);
+    res.status(500).json({ message: "Error creating legal representative" });
+  }
+};
+
+// Update Legal Representative (update existing or create new)
+const updateLegalRepresentative = async (req, res) => {
+  try{
+    const patientId = getPatientId(req);
+    const { legalRepId } = req.params;
+        const legalRepData = req.body;
+        const patient = await Patient.findById(patientId);
+        if(!patient){
+            return res.status(404).json({ message: "Patient not found" });
+        }
+
+        // If legalRepId is "new" or "undefined", create a new legal representative
+        if (!legalRepId || legalRepId === "new" || legalRepId === "undefined") {
+            patient.legalRepresentatives.push(legalRepData);
+            await patient.save();
+            return res.status(201).json({ message: "Legal representative added successfully", legalRepresentatives: patient.legalRepresentatives });
+        }
+
+        const legalRepIndex = patient.legalRepresentatives.findIndex(rep => rep._id.toString() === legalRepId);
+        if(legalRepIndex === -1){
+            return res.status(404).json({ message: "Legal representative not found" });
+        }
+        patient.legalRepresentatives[legalRepIndex] = { ...patient.legalRepresentatives[legalRepIndex].toObject(), ...legalRepData };
+        await patient.save();
+        res.status(200).json({ message: "Legal representative updated successfully", legalRepresentatives: patient.legalRepresentatives });
+    }
+    catch(error){
+        console.log("Error updating legal representative:", error);
+        res.status(500).json({ message: "Error updating legal representative" });
+    }
+}
+
+//Update Contact Person
+const updateContact = async (req, res) => {
+    try {
+    const patientId = getPatientId(req);
+
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+
+        const fields = [
+            "phoneNumber",
+            "additionalPhone",
+            "maxId",
+            "telegramNickname",
+            "telegramId",
+            "newsletter",
+            "egisz",
+            "instagram",
+            "vk",
+            "facebook",
+            "ok",
+            "contactPerson",
+            "contactPersonPhone"
+        ];
+
+        fields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                patient[field] = req.body[field];
+            }
+        });
+
+        await patient.save();
+
+        res.status(200).json({
+            message: "Contacts updated successfully",
+            data: patient
+        });
+
+    } catch (error) {
+        console.error("Error updating contacts:", error);
+        res.status(500).json({ message: "Error updating contacts" });
+    }
+};
+
+//Update Documents
+const updateDocument = async (req,res) => {
+  try {
+  const patientId = getPatientId(req);
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        const documentFields = [
+            "cmip",
+            "cmipDate",
+            "cmipOrgCode",
+            "snils",
+            "medInsuranceOrg",
+            "socialSupportCode",
+            "citizenship",
+            "documentType",
+            "documentSeries",
+            "documentNumber",
+            "documentIssuedDate",
+            "departmentCode",
+            "documentIssuedBy",
+            "inn"
+        ];
+
+        documentFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                patient[field] = req.body[field];
+            }
+        });
+        await patient.save();
+        res.status(200).json({ message: "Documents updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating documents:", error);
+        res.status(500).json({ message: "Error updating documents" });
+    } 
+}
+
+//Update address
+const updateAddress = async(req,res) => {
+  try {
+  const patientId = getPatientId(req);
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        const addressFields = [
+            "addressType",
+            "region",
+            "district",
+            "city",
+            "settlement",
+            "street",
+            "house",
+            "terrain",
+            "apartment",
+            "postcode"
+        ];
+        addressFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                patient[field] = req.body[field];
+            }
+        });
+        await patient.save();
+        res.status(200).json({ message: "Address updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating address:", error);
+        res.status(500).json({ message: "Error updating address" });
+    }
+}
+
+//Update Disease Information
+const updateDiseaseInfo = async (req, res) => {
+  try {
+  const patientId = getPatientId(req);
+        const patient = await
+            Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        // Accept full array replacement: { diseases: [...] }
+        if (Array.isArray(req.body.diseases)) {
+            patient.diseases = req.body.diseases;
+        } else {
+            // Legacy: flat fields update first entry
+            const diseaseFields = ["startDate", "endDate", "diagnosis", "icdCode", "doctor"];
+            diseaseFields.forEach(field => {
+                if (req.body[field] !== undefined) {
+                    patient.diseases = patient.diseases || [];
+                    if (patient.diseases.length === 0) {
+                        patient.diseases.push({});
+                    }
+                    patient.diseases[0][field] = req.body[field];
+                }
+            });
+        }
+        await patient.save();
+        res.status(200).json({ message: "Disease information updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating disease information:", error);
+        res.status(500).json({ message: "Error updating disease information" });
+    }
+}
+
+// Update Recording sheet of final diagnosis
+const updateFinalDiagnosis = async(req,res)=>{
+  try {
+  const patientId = getPatientId(req);
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        // Accept full array replacement: { finalDiagnoses: [...] }
+        if (Array.isArray(req.body.finalDiagnoses)) {
+            patient.finalDiagnoses = req.body.finalDiagnoses;
+        } else {
+            // Legacy: flat fields update first entry
+            const finalDiagnosisFields = ["date", "diagnosis", "icdCode", "primary", "doctorName", "jobTitle", "speciality"];
+            finalDiagnosisFields.forEach(field => {
+                if (req.body[field] !== undefined) {
+                    patient.finalDiagnoses = patient.finalDiagnoses || [];
+                    if (patient.finalDiagnoses.length === 0) {
+                        patient.finalDiagnoses.push({});
+                    }
+                    patient.finalDiagnoses[0][field] = req.body[field];
+                }
+            });
+        }
+        await patient.save();
+        res.status(200).json({ message: "Final diagnosis updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating final diagnosis:", error);
+        res.status(500).json({ message: "Error updating final diagnosis" });
+    }
+}
+
+// Update Personal Data
+const updatePersonalData = async(req,res)=> {
+  try {
+  const patientId = getPatientId(req);
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        const personalDataFields = [
+            "maritalStatus",
+            "education",
+            "employment",
+            "placeOfWork",
+            "workSpecialty",
+            "changePlaceOfWork",
+            "changeOfPosition"
+        ];
+        personalDataFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                patient[field] = req.body[field];
+            }
+        });
+        await patient.save();
+        res.status(200).json({ message: "Personal data updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating personal data:", error);
+        res.status(500).json({ message: "Error updating personal data" });
+    }
+}
+
+//Update Disability
+const updateDisability = async(req,res) => {
+  try {
+  const patientId = getPatientId(req);
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        const disabilityFields = [
+            "disability",
+            "disabilityFrom",
+            "disabilityTo",
+            "disabilityIndefinitely",
+            "invalidGroup",
+            "disabilityType",
+            "disabilityPrimaryRepeated"
+        ];
+        disabilityFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                patient[field] = req.body[field];
+            }
+        });
+        await patient.save();
+        res.status(200).json({ message: "Disability information updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating disability information:", error);
+        res.status(500).json({ message: "Error updating disability information" });
+    }
+};
+
+// Update Anamnesis
+const updateAnamnesis = async(req,res) => {
+  try {
+  const patientId = getPatientId(req);
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        const anamnesisFields = [
+            "anamnesisDisability",
+            "bloodGroup",
+            "rhFactor",
+            "kellAntigen",
+            "otherBloodInfo",
+            "allergies"
+        ];
+        anamnesisFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                patient[field] = req.body[field];
+            }
+        }
+        );
+        await patient.save();
+        res.status(200).json({ message: "Anamnesis updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating anamnesis:", error);
+        res.status(500).json({ message: "Error updating anamnesis" });
+    }
+}
+
+//Update Radiation Doses
+const updateRadiationDoses = async(req,res)=> {
+  try {
+  const patientId = getPatientId(req);
+        const patient = await Patient.findById(patientId);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+        // Accept full array replacement: { radiationDoses: [...] }
+        if (Array.isArray(req.body.radiationDoses)) {
+            patient.radiationDoses = req.body.radiationDoses;
+        } else {
+            // Legacy: flat fields update first entry
+            const radiationDoseFields = ["date", "researchType", "effectiveDose", "note"];
+            radiationDoseFields.forEach(field => {
+                if (req.body[field] !== undefined) {
+                    patient.radiationDoses = patient.radiationDoses || [];
+                    if (patient.radiationDoses.length === 0) {
+                        patient.radiationDoses.push({});
+                    }
+                    patient.radiationDoses[0][field] = req.body[field];
+                }
+            });
+        }
+        await patient.save();
+        res.status(200).json({ message: "Radiation doses updated successfully", data: patient });
+    }
+    catch (error) {
+        console.error("Error updating radiation doses:", error);
+        res.status(500).json({ message: "Error updating radiation doses" });
+    }
+}
+
 // Update a patient
 const updatePatient = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ message: 'Validation errors', errors: errors.array() });
-  }
-
   try {
-    const {
-      // Basic
-      firstName, middleName, lastName, gender, dateOfBirth, notes,
-      // Contacts
-      phoneNumber, additionalPhone, email,
-      maxId, telegramNickname, telegramId,
-      newsletter, egisz,
-      instagram, vk, facebook, ok,
-      contactPerson, contactPersonPhone,
-      // Documents
-      cmip, cmipDate, cmipOrgCode, snils, medInsuranceOrg,
-      socialSupportCode, citizenship,
-      documentType, documentSeries, documentNumber,
-      documentIssuedDate, departmentCode, documentIssuedBy, inn,
-      // Address
-      addressType, region, district, city, settlement, street,
-      house, terrain, apartment, postcode, geocoordinates, registrationChange,
-      // Personal
-      maritalStatus, education, employment, placeOfWork,
-      workSpecialty, changePlaceOfWork, changeOfPosition,
-      // Disability
-      disability, disabilityFrom, disabilityTo, disabilityIndefinitely,
-      invalidGroup, disabilityType, disabilityPrimaryRepeated,
-      // Anamnesis
-      anamnesisDisability, bloodGroup, rhFactor, kellAntigen,
-      otherBloodInfo, allergies,
-      // Arrays
-      diseases, finalDiagnoses, radiationDoses, legalRepresentatives,
-      // System
-      comments, notificationLanguage,
-    } = req.body;
+        const { id } = req.params;
+        const { email, firstName, middleName, lastName, dateOfBirth, gender, notes } = req.body;
+        const updatedPatient = await Patient.findByIdAndUpdate(
+            id,
+            {
+                email,
+                firstName,
+                middleName,
+                lastName,
+                dateOfBirth,
+                gender,
+                notes
+            },
+            { new: true }
+        );
 
-    // Parse array fields — sent as JSON strings from FormData
-    const parsedDiseases = parseJsonArray(diseases);
-    const parsedFinalDiagnoses = parseJsonArray(finalDiagnoses);
-    const parsedRadiationDoses = parseJsonArray(radiationDoses);
-    const parsedLegalRepresentatives = parseJsonArray(legalRepresentatives);
-
-    const patient = await Patient.findById(req.params.id);
-    if (!patient) {
-      return res.status(404).json({ message: 'Patient not found' });
-    }
-
-    // Check if email is changed and already exists
-    if (email !== patient.email) {
-      const existingPatient = await Patient.findOne({ email });
-      if (existingPatient) {
-        return res.status(400).json({ message: 'Patient with this email already exists' });
-      }
-    }
-
-    // Normalize date to midnight UTC
-    const normalizedDate = new Date(dateOfBirth);
-    normalizedDate.setUTCHours(0, 0, 0, 0);
-
-    // Basic
-    patient.firstName = firstName;
-    patient.middleName = middleName || '';
-    patient.lastName = lastName;
-    patient.gender = gender;
-    patient.dateOfBirth = normalizedDate;
-    patient.notes = notes || '';
-    // Contacts
-    patient.phoneNumber = phoneNumber;
-    patient.additionalPhone = additionalPhone || '';
-    patient.email = email;
-    patient.maxId = maxId || '';
-    patient.telegramNickname = telegramNickname || '';
-    patient.telegramId = telegramId || '';
-    patient.newsletter = newsletter === 'true' || newsletter === true;
-    patient.egisz = egisz === 'true' || egisz === true;
-    patient.instagram = instagram || '';
-    patient.vk = vk || '';
-    patient.facebook = facebook || '';
-    patient.ok = ok || '';
-    patient.contactPerson = contactPerson || '';
-    patient.contactPersonPhone = contactPersonPhone || '';
-    // Documents
-    patient.cmip = cmip || '';
-    patient.cmipDate = cmipDate || null;
-    patient.cmipOrgCode = cmipOrgCode || '';
-    patient.snils = snils || '';
-    patient.medInsuranceOrg = medInsuranceOrg || '';
-    patient.socialSupportCode = socialSupportCode || '';
-    patient.citizenship = citizenship || '';
-    patient.documentType = documentType || '';
-    patient.documentSeries = documentSeries || '';
-    patient.documentNumber = documentNumber || '';
-    patient.documentIssuedDate = documentIssuedDate || null;
-    patient.departmentCode = departmentCode || '';
-    patient.documentIssuedBy = documentIssuedBy || '';
-    patient.inn = inn || '';
-    // Address
-    patient.addressType = addressType || '';
-    patient.region = region || '';
-    patient.district = district || '';
-    patient.city = city || '';
-    patient.settlement = settlement || '';
-    patient.street = street || '';
-    patient.house = house || '';
-    patient.terrain = terrain || '';
-    patient.apartment = apartment || '';
-    patient.postcode = postcode || '';
-    patient.geocoordinates = geocoordinates || '';
-    patient.registrationChange = registrationChange || '';
-    // Personal
-    patient.maritalStatus = maritalStatus || '';
-    patient.education = education || '';
-    patient.employment = employment || '';
-    patient.placeOfWork = placeOfWork || '';
-    patient.workSpecialty = workSpecialty || '';
-    patient.changePlaceOfWork = changePlaceOfWork || '';
-    patient.changeOfPosition = changeOfPosition || '';
-    // Disability
-    patient.disability = disability || '';
-    patient.disabilityFrom = disabilityFrom || null;
-    patient.disabilityTo = disabilityTo || null;
-    patient.disabilityIndefinitely = disabilityIndefinitely === 'true' || disabilityIndefinitely === true;
-    patient.invalidGroup = invalidGroup || '';
-    patient.disabilityType = disabilityType || '';
-    patient.disabilityPrimaryRepeated = disabilityPrimaryRepeated || '';
-    // Anamnesis
-    patient.anamnesisDisability = anamnesisDisability || '';
-    patient.bloodGroup = bloodGroup || '';
-    patient.rhFactor = rhFactor || '';
-    patient.kellAntigen = kellAntigen || '';
-    patient.otherBloodInfo = otherBloodInfo || '';
-    patient.allergies = allergies || '';
-    // Arrays
-    patient.diseases = parsedDiseases;
-    patient.finalDiagnoses = parsedFinalDiagnoses;
-    patient.radiationDoses = parsedRadiationDoses;
-    patient.legalRepresentatives = parsedLegalRepresentatives;
-    // System
-    patient.comments = comments || '';
-    patient.notificationLanguage = notificationLanguage || 'en';
-
-    // Handle profile image
-    if (req.file) {
-      const gfs = getGfs();
-      if (patient.profileFileId) {
-        try {
-          await gfs.delete(new mongoose.Types.ObjectId(patient.profileFileId));
-        } catch (err) {
+        if (!updatedPatient) {
+            return res.status(404).json({ message: "Patient not found" });
         }
-      }
-      const writeStream = gfs.openUploadStream(req.file.originalname, {
-        contentType: req.file.mimetype,
-      });
-      writeStream.end(req.file.buffer);
-      const fileId = await new Promise((resolve, reject) => {
-        writeStream.on('finish', () => resolve(writeStream.id));
-        writeStream.on('error', (err) => {
-          reject(err);
-        });
-      });
-      patient.profileFileId = fileId;
-    }
 
-    await patient.save();
-
-    // Return response
-    res.status(200).json({
-      message: 'Patient updated successfully',
-      patient,
-    });
-  } catch (error) {
-    res.status(400).json({ message: 'Failed to update patient', error: error.message });
-  }
+        res.status(200).json({ message: "Patient updated successfully", patient: updatedPatient });
+     } catch (error) {
+        console.log("Error updating patient:", error);
+        res.status(500).json({ message: "Error updating patient" });
+     }
 };
 
 // Patch a patient – partial update for GeneralInformationTab fields
@@ -587,6 +804,17 @@ module.exports = {
   getPatientById,
   getPatientByEmail,
   addPatient,
+  createLegalRepresentative,
+  updateLegalRepresentative,
+  updateContact,
+  updateDocument,
+  updateAddress,
+  updateDiseaseInfo,
+  updateFinalDiagnosis,
+  updatePersonalData,
+  updateDisability,
+  updateAnamnesis,
+  updateRadiationDoses,
   updatePatient,
   patchPatient,
   deletePatient,

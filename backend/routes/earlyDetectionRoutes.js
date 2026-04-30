@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const auth = require("../middleware/auth");
 const upload = multer({ storage: multer.memoryStorage() });
 const {
   submitBooking,
@@ -8,7 +9,6 @@ const {
   tbankPaymentWebhook,
   checkPaymentStatus,
   getBookings,
-  getBookingById,
   getUserBookings,
   cancelUnpaidBooking,
   getInvoiceByNumber,
@@ -17,11 +17,7 @@ const {
   updatePaymentStatus,
   markAsPaid,
   cancelBooking,
-  updateBooking,
   createManualBooking,
-  addInternalNote,
-  updateInternalNote,
-  deleteInternalNote,
   deleteBooking,
   generatePaymentLink,
   getManagedTests,
@@ -30,7 +26,14 @@ const {
   deleteManagedTest,
   uploadScheduleSectionFile,
   getScheduleFile,
-  saveSpecialistHistoryForm,
+  addInternalNote,
+  getInternalNotes,
+  updateInternalNote,
+  deleteInternalNote,
+  getWeeklyBookingsOnCalendar,
+  getBookingById,
+  updateBooking,
+  saveSpecialistHistoryForm
 } = require("../controllers/earlyDetectionController");
 
 // Public routes
@@ -72,5 +75,27 @@ router.post(
 );
 router.get("/bookings/files/:fileId", getScheduleFile);
 router.put("/bookings/:id/specialist/:idx", saveSpecialistHistoryForm);
+
+// === Early Detection Booking Routes ===
+router.get('/doctor', auth, getWeeklyBookingsOnCalendar);
+router.get('/bookings/calendar',auth,getWeeklyBookingsOnCalendar);
+router.get('/bookings/:bookingId',auth,getBookingById);
+router.put('/bookings/:bookingId', auth, updateBooking);
+router.put('/bookings/:bookingId/specialist-consultations/:specialistIndex/history-form', auth, saveSpecialistHistoryForm);
+router.post('/bookings/:id/internal-notes', auth, addInternalNote);
+router.get('/bookings/:id/internal-notes', auth, getInternalNotes);
+router.put('/bookings/:id/internal-notes/:noteId', auth, updateInternalNote);
+router.delete('/bookings/:id/internal-notes/:noteId', auth, deleteInternalNote);
+
+
+
+
+
+
+
+
+
+
+
 
 module.exports = router;

@@ -271,11 +271,13 @@ const AppointmentDetails = () => {
           const response = await getMedicalHistoryByEmail(
             appointment.patientEmail,
           );
-          const filteredAppointments =
-            response?.data.filter(
-              (record) => record.applicationId !== appointment.applicationId,
-            ) || [];
-          setPastAppointments(filteredAppointments);
+              const historyArray = Array.isArray(response?.data)
+                ? response.data
+                : [];
+              const filteredAppointments = historyArray.filter(
+                (record) => record.applicationId !== appointment.applicationId,
+              );
+              setPastAppointments(filteredAppointments);
         } catch (err) {
           console.error("Failed to fetch medical history:", err);
           toast.error(

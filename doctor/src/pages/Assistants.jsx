@@ -125,14 +125,14 @@ const Assistants = () => {
       `${assistant.firstName} ${assistant.middleName || ''} ${assistant.lastName}`,
       assistant.email,
       t("assistants.assistant_role"),
-      assistant.recentAccess?.startDateTime 
-        ? formatDateTime(assistant.recentAccess.startDateTime, i18n.language)
+      assistant.doctors && assistant.doctors.length > 0
+        ? formatDateTime(assistant.doctors[0].startDateTime, i18n.language)
         : t("common.not_set"),
-      assistant.recentAccess?.endDateTime 
-        ? formatDateTime(assistant.recentAccess.endDateTime, i18n.language)
+      assistant.doctors && assistant.doctors.length > 0
+        ? formatDateTime(assistant.doctors[0].endDateTime, i18n.language)
         : t("common.not_set"),
-      assistant.recentAccess?.status 
-        ? getTranslatedStatus(assistant.recentAccess.status)
+      assistant.doctors && assistant.doctors.length > 0
+        ? getTranslatedStatus(assistant.doctors[0].status)
         : t("status.unknown")
     ]);
     
@@ -350,12 +350,12 @@ const Assistants = () => {
   };
 
   const confirmRemoveAssistant = async () => {
-    if (!selectedAssistant?.email || isRemovingAssistant) return;
+    if (!selectedAssistant?._id || isRemovingAssistant) return;
 
     setIsRemovingAssistant(true);
     try {
       await removeAssistantFromDoctor({
-        assistantEmail: selectedAssistant.email,
+        assistantId: selectedAssistant._id,
         doctorEmail,
       });
 
@@ -563,32 +563,34 @@ const Assistants = () => {
                       {t("assistants.recent_access")}
                     </h4>
                     <div className="access-details">
-                      <div className="access-row">
-                        <span className="access-label">
-                          {t("assistants.start_time")}
-                        </span>
-                        <span className="access-value">
-                          {assistant.recentAccess?.startDateTime
-                            ? formatDateTime(
-                                assistant.recentAccess.startDateTime,
+                      {assistant.doctors && assistant.doctors.length > 0 ? (
+                        <>
+                          <div className="access-row">
+                            <span className="access-label">
+                              {t("assistants.start_time")}
+                            </span>
+                            <span className="access-value">
+                              {formatDateTime(
+                                assistant.doctors[0].startDateTime,
                                 i18n.language
-                              )
-                            : t("common.not_set")}
-                        </span>
-                      </div>
-                      <div className="access-row">
-                        <span className="access-label">
-                          {t("assistants.end_time")}
-                        </span>
-                        <span className="access-value">
-                          {assistant.recentAccess?.endDateTime
-                            ? formatDateTime(
-                                assistant.recentAccess.endDateTime,
+                              )}
+                            </span>
+                          </div>
+                          <div className="access-row">
+                            <span className="access-label">
+                              {t("assistants.end_time")}
+                            </span>
+                            <span className="access-value">
+                              {formatDateTime(
+                                assistant.doctors[0].endDateTime,
                                 i18n.language
-                              )
-                            : t("common.not_set")}
-                        </span>
-                      </div>
+                              )}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <p>{t("common.not_set")}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -651,9 +653,9 @@ const Assistants = () => {
             </div>
 
             <div className="modal-body">
-              {selectedAssistant.accessHistory?.length ? (
+              {selectedAssistant.doctors?.length ? (
                 <div className="history-list">
-                  {selectedAssistant.accessHistory.map((entry, idx) => {
+                  {selectedAssistant.doctors.map((entry, idx) => {
                     const isEditing = editingEntry === entry._id;
                     const timeEntry = timeEdits[entry._id] || {
                       startDateTime: entry.startDateTime
