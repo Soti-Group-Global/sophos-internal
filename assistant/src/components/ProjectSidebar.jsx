@@ -241,7 +241,13 @@ function ProjectSidebar({
                   <div className="project-info">
                     <h4 className="project-name">{project.name}</h4>
                     <p className="project-name-description">
-                      {project.description || "No description"}
+                      {project.description ? (
+                        <span
+                          dangerouslySetInnerHTML={{ __html: project.description }}
+                        />
+                      ) : (
+                        "No description"
+                      )}
                     </p>
                   </div>
 

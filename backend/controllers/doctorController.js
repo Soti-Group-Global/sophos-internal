@@ -4,7 +4,11 @@ const { Readable } = require('stream');
 
 const Doctor = require('../models/DoctorsProfile');
 const User = require('../models/User');
+const Assistant = require('../models/Assistant');
+const HeadAssistant = require('../models/HeadAssistant');
 const DoctorBreak = require('../models/DoctorBreak');
+const DoctorMessage = require('../models/DoctorMessage');
+const { ObjectId } = mongoose.Types;
 const { getGfs } = require('../gridfs');
 const { getIO } = require('../socket');
 const { generateHashedPassword } = require('../utils/passwordUtils');
@@ -979,6 +983,173 @@ const getDoctorBranchesList = async (req, res) => {
   }
 };
 
+// GET /api/doctors/messages
+const getMessage = async (req, res) => {
+  try {
+    const docMsg = await DoctorMessage.findOne({ email: req.user.email });
+    res.json({ messages: docMsg ? docMsg.messages : [] });
+  } catch (err) {
+    console.error('Fetch messages error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+// DELETE /api/doctors/messages/:messageId
+const deleteMessage = async (req, res) => {
+  const { messageId } = req.params;
+  try {
+    const docMsg = await DoctorMessage.findOne({ email: req.user.email });
+    if (!docMsg) return res.status(404).json({ message: 'Message list not found' });
+    const before = docMsg.messages.length;
+    docMsg.messages = docMsg.messages.filter((m) => m._id.toString() !== messageId);
+    const after = docMsg.messages.length;
+    if (before === after) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    await docMsg.save();
+    res.status(200).json({ message: 'Message deleted successfully' });
+  } catch (err) {
+    console.error('Delete message error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+// POST /api/doctors/messages/upload
+const uploadMessageFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    const bucket = req.app.locals.messageBucket;
+    const filename = `${Date.now()}_${req.file.originalname}`;
+    const uploadStream = bucket.openUploadStream(filename, {
+      contentType: req.file.mimetype,
+      metadata: { uploadedBy: req.user.id, originalName: req.file.originalname },
+    });
+    const fileId = uploadStream.id;
+    uploadStream.end(req.file.buffer);
+    uploadStream.on('finish', () => {
+      res.status(200).json({
+        success: true,
+        fileId,
+        fileUrl: `/api/doctors/file-by-id/${fileId}`,
+        fileType: req.file.mimetype.startsWith('image/') ? 'image' : 'document',
+        fileName: req.file.originalname,
+      });
+    });
+    uploadStream.on('error', (err) => {
+      console.error('Upload stream error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: 'File upload failed', error: err.message });
+      }
+    });
+  } catch (err) {
+    console.error('Upload processing error:', err);
+    res.status(500).json({ success: false, message: 'File processing failed', error: err.message });
+  }
+}
+// GET /api/doctors/lite
+const getDoctorsLite = async (req, res) => {
+  try {
+    console.log("[getDoctorsLite] starting...");
+    const doctors = await Doctor.find({}, { _id: 1, firstName: 1, middleName: 1, lastName: 1, email: 1 })
+      .lean();
+    console.log("[getDoctorsLite] found doctors count:", doctors.length);
+    
+    const formatted = doctors.map((d) => {
+      const pickLang = (field, lang) => {
+        if (!field) return '';
+        if (typeof field === 'string') return field;
+        if (typeof field === 'object') return field[lang] || '';
+        return '';
+      };
+      const buildName = (lang) =>
+        [pickLang(d.lastName, lang), pickLang(d.firstName, lang), pickLang(d.middleName, lang)]
+          .filter(Boolean).join(' ');
+      return {
+        _id: d._id,
+        name: {
+          ru: buildName('ru') || buildName('en') || 'N/A',
+          en: buildName('en') || buildName('ru') || 'N/A',
+        },
+        email: d.email,
+      };
+    });
+    console.log("[getDoctorsLite] formatted count:", formatted.length, "first:", formatted[0]);
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching doctors (lite):', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+// GET /api/doctors/messages/allDoctors
+const getAllDoctorsForMessages = async (req, res) => {
+   try {
+    const assistantModel = req.user.role === 'assistant' ? Assistant : HeadAssistant;
+    const assistant = await assistantModel.findOne({ email: req.user.email });
+    if (!assistant) {
+      return res.status(400).json({ message: 'Assistant not found' });
+    }
+    const doctors = await Doctor.find({ 'branches.en': { $in: assistant.branches } });
+    const doctorsWithImages = await Promise.all(
+      doctors.map(async (doctor) => {
+        let profilePicture = null;
+        if (doctor.profileFileId) {
+          const gfs = req.app.locals.profileBucket;
+          const file = await gfs
+            .find({ _id: new mongoose.Types.ObjectId(doctor.profileFileId) })
+            .toArray();
+          if (file.length > 0) {
+            const readStream = gfs.openDownloadStream(file[0]._id);
+            const chunks = [];
+            await new Promise((resolve, reject) => {
+              readStream.on('data', (chunk) => chunks.push(chunk));
+              readStream.on('end', () => {
+                profilePicture = Buffer.concat(chunks).toString('base64');
+                resolve();
+              });
+              readStream.on('error', reject);
+            });
+          }
+        }
+        return { ...doctor.toObject(), profilePicture };
+      })
+    );
+    res.json({ doctors: doctorsWithImages });
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+//------------- Assistant related functions -------------//
+//get doctors for particular assistant
+const getDoctorsForAssistant = async (req, res) => {
+  try {
+    const assistantEmail = req.query.assistantEmail;
+    if (!assistantEmail) {
+      return res.status(400).json({ message: 'assistantEmail is required' });
+    }
+    const assistantModel = req.user.role === 'head_assistant' ? HeadAssistant : Assistant;
+    const assistant = await assistantModel.findOne({ email: assistantEmail });
+    if (!assistant) {
+      return res.status(404).json({ message: 'Assistant not found' });
+    }
+    const now = new Date();
+    const activeDoctorEmails = assistant.doctors
+      .filter((d) => {
+        const start = new Date(d.startDateTime);
+        const end = new Date(d.endDateTime);
+        return start <= now && end >= now;
+      })
+      .map((d) => d.doctorEmail);
+    if (activeDoctorEmails.length === 0) {
+      return res.status(200).json({ doctors: [] });
+    }
+    const doctors = await Doctor.find({ email: { $in: activeDoctorEmails } });
+    res.status(200).json({ doctors });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+} 
 module.exports = {
   createDoctor,
   getDoctors,
@@ -995,4 +1166,10 @@ module.exports = {
   getMe,
   getMyBreaks,
   getDoctorBranchesList,
+  getDoctorsForAssistant,
+  getMessage,
+  deleteMessage,
+  uploadMessageFile,
+  getDoctorsLite,
+  getAllDoctorsForMessages
 };

@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const UserNotification = require("../models/UserNotificationSchema");
 const CommonNotification = require("../models/CommonNotification");
+const Assistant = require('../models/Assistant');
+const HeadAssistant = require('../models/HeadAssistant');
 const moment = require("moment-timezone");
 
 // PATCH /:id/read — Mark notification as read by role
@@ -252,6 +254,31 @@ const getPersonalNotifications = async (req, res) => {
   }
 };
 
+const markNotificationRead = async (req, res) => {
+  const { role } = req.body;
+
+  if (!['patient', 'doctor', 'manager', 'assistant'].includes(role)) {
+    return res.status(400).json({ message: 'Invalid role' });
+  }
+
+  try {
+    const notification = await UserNotification.findByIdAndUpdate(
+      req.params.id,
+      { $set: { [`isRead.${role}`]: true } },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    res.status(200).json({ message: 'Notification marked as read', notification });
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res.status(500).json({ message: 'Error marking as read' });
+  }
+}
+
 module.exports = {
   markAsReadByRole,
   getNotificationsByEmail,
@@ -261,4 +288,5 @@ module.exports = {
   getAllNotifications,
   getCommonNotifications,
   getPersonalNotifications,
+  markNotificationRead
 };

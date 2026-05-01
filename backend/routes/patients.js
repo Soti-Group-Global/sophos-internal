@@ -31,6 +31,13 @@ router.get('/by-email/:email', auth, patientController.getPatientByEmail);
 // Older frontend callers expect `/patients/email/:email` — support that path too
 router.get('/email/:email', auth, patientController.getPatientByEmail);
 
+// Assistant-specific patient endpoints
+// Get patients accessible to a particular assistant (query: assistantEmail, page, limit, search)
+router.get('/assistant', auth, patientController.getAssistantpatients);
+// Get a simple list of all patients (id, name, email) for assistant selection
+router.get('/assistant/all', auth, patientController.getAssistantAllPatients);
+// Quick create patient endpoint used by assistants (returns temp password)
+router.post('/assistant/create', auth, patientController.createPatient);
 // Get a single patient by ID
 router.get('/:id', auth, patientController.getPatientById);
 

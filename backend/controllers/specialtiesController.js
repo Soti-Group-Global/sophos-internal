@@ -215,6 +215,76 @@ const getSpecialtyByName = async (req, res) => {
   }
 };
 
+const addMultipleTest = async (req,res)=> {
+  try {
+    const { tests } = req.body;
+
+    const appointment = await Application.findOne({ applicationId: req.params.id });
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    if (!Array.isArray(tests) || tests.length === 0) {
+      return res.status(400).json({ message: 'No tests provided' });
+    }
+
+    const orderPromises = tests.map(async (test) => {
+      const newOrder = new Order({
+        orderId: null,
+        applicationId: appointment.applicationId,
+        testId: test.testId,
+        testName: test.testName,
+        vendorId: null,
+        vendorName: test.vendorName,
+        status: 'Waiting for Assign',
+      });
+      await newOrder.save();
+      return newOrder._id;
+    });
+
+    const orderIds = await Promise.all(orderPromises);
+
+    res.json({
+      message: 'Tests added successfully. Order ID will be assigned later.',
+      orderCount: orderIds.length,
+      orderIds,
+    });
+  } catch (error) {
+    console.error('Error saving tests to orders:', error);
+    res.status(500).json({ message: 'Server error while saving tests' });
+  }
+}
+
+const addTest = async (req,res)=> {
+  try {
+    const { test } = req.body;
+    const appointment = await Application.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    const existingTest = appointment.tests.find((t) => t.name === test.name);
+    if (existingTest) {
+      return res.status(400).json({ message: 'Test already exists in this appointment' });
+    }
+    appointment.tests.push(test);
+    const updatedAppointment = await appointment.save();
+    res.json(updatedAppointment);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+}
+
+const getOrdersByApplicationId = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const orders = await Order.find({ applicationId });
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ message: 'Server error while fetching orders' });
+  }
+}
+
 module.exports = {
   createSpecialty,
   getAllSpecialties,
@@ -225,4 +295,7 @@ module.exports = {
   deleteSpecialty,
   getAllTests,
   getSpecialtyByName,
+  addMultipleTest,
+  addTest,
+  getOrdersByApplicationId
 };

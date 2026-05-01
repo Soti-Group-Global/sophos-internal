@@ -6,7 +6,7 @@ export const WebSocketProvider = ({ children }) => {
   const wsRef = useRef(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:5001");
+    const ws = new WebSocket("ws://localhost:5002");
   
     ws.onopen = () => {};
   

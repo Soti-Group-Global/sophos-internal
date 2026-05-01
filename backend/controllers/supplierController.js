@@ -1,4 +1,5 @@
 ﻿const Supplier = require("../models/Inventory/Supplier");
+const HeadAssistant = require("../models/HeadAssistant");
 
 // Get all suppliers
 exports.getSuppliers = async (req, res) => {
@@ -9,6 +10,11 @@ exports.getSuppliers = async (req, res) => {
     if (!branch || branch.toLowerCase() === "all") {
       const suppliers = await Supplier.find();
       return res.json(suppliers);
+    }
+    
+    const headAssistant = await HeadAssistant.findOne({ email: req.user.email });
+    if(!headAssistant) {
+      return res.status(400).json({ message: 'Head assistant not found!' });
     }
 
     // Otherwise, case-insensitive match on branch name
@@ -37,6 +43,10 @@ exports.getSupplierById = async (req, res) => {
 // Create supplier
 exports.createSupplier = async (req, res) => {
   try {
+    const headAssistant = await HeadAssistant.findOne({ email: req.user.email });
+    if(!headAssistant) {
+      return res.status(400).json({ message: 'Head assistant not found!' });
+    }
     const supplier = new Supplier(req.body);
     await supplier.save();
     res.status(201).json(supplier);

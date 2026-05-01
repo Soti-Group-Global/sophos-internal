@@ -103,6 +103,8 @@ api.interceptors.response.use(
     if (
       originalRequest?.url?.includes("/auth/login") ||
       originalRequest?.url?.includes("/auth/signup") ||
+      originalRequest?.url?.includes("/auth/assistant-signin") ||
+      originalRequest?.url?.includes("/auth/assistant-logout") ||
       originalRequest?.url?.includes("/auth/reset") ||
       originalRequest?.url?.includes("/auth/refresh") ||
       originalRequest?.url?.includes("/auth/forgot-password") ||
@@ -215,7 +217,7 @@ export const safeFetch = async (...args) => {
 // Assistant login
 export const assistantSignin = async (data) => {
   try {
-    const response = await api.post("/auth/login", data);
+    const response = await api.post("/auth/assistant-signin", data);
     return response.data;
   } catch (error) {
     console.error(
@@ -1057,7 +1059,14 @@ export const getDoctorsLite = async () => {
     const response = await api.get("/doctors/lite", {
       headers: {},
     });
-    return response.data; // should be an array of doctors
+    // Handle different response formats: could be array directly or wrapped
+    console.log("[getDoctorsLite] full response:", response);
+    console.log("[getDoctorsLite] response.data:", response.data);
+    console.log("[getDoctorsLite] response.status:", response.status);
+    const data = response.data;
+    const result = Array.isArray(data) ? data : (data?.doctors || data?.data || []);
+    console.log("[getDoctorsLite] parsed result length:", result.length, "first item:", result[0]);
+    return result;
   } catch (error) {
     console.error("Get Doctors Error:", error.response?.data || error.message);
     throw error;
@@ -1751,9 +1760,21 @@ export const updateStockRequestItemStatus = async (requestId, itemId, data) => {
 
 // PROJECT APIs
 export const getProjects = async (email) => {
-  const response = await api.get(`/projects`, {
-    params: email ? { email } : {},
-  });
+  // Include role (required by backend) — prefer token payload, fallback to localStorage
+  let role = null;
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const decoded = jwtDecode(token);
+      role = decoded?.role || null;
+    }
+  } catch (e) {
+    // ignore
+  }
+  if (!role) role = localStorage.getItem("role") || null;
+
+  const params = { ...(email ? { email } : {}), role };
+  const response = await api.get(`/projects`, { params });
   return response.data.projects;
 };
 

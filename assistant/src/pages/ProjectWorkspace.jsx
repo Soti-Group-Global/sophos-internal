@@ -37,9 +37,10 @@ function ProjectWorkspace() {
                 <div className="project-info">
                   <h1 className="project-title">{selectedProject.name}</h1>
                   {selectedProject.description && (
-                    <p className="project-description">
-                      {selectedProject.description}
-                    </p>
+                    <p
+                      className="project-description"
+                      dangerouslySetInnerHTML={{ __html: selectedProject.description }}
+                    />
                   )}
                 </div>
               </div>

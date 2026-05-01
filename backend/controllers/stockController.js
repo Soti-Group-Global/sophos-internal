@@ -1,5 +1,7 @@
 ﻿const Stock = require("../models/Inventory/Stock");
 const InventoryItem = require("../models/Inventory/InventoryItem");
+const HeadAssistant = require("../models/HeadAssistant");
+
 
 // Get all stock
 exports.getAllStocks = async (req, res) => {
@@ -12,6 +14,11 @@ exports.getAllStocks = async (req, res) => {
     // Apply branch filter only if specified and not "All" (case-insensitive)
     if (branch && branch.toLowerCase() !== "all") {
       query.branch = { $regex: new RegExp(`^${branch}$`, "i") };
+    }
+    
+    const headAssistant = await HeadAssistant.findOne({ email: req.user.email });
+    if(!headAssistant) {
+      return res.status(400).json({ message: 'Head assistant not found!' });
     }
 
     const stocks = await Stock.find(query)
@@ -26,8 +33,6 @@ exports.getAllStocks = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-
 
 // Get stock by item
 exports.getStockByItem = async (req, res) => {

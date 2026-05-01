@@ -48,7 +48,21 @@ const {
   addDescriptionForDoctors,
   addConclusionForDoctors,
   updateVerificationStatusForDoctors,
+  getAppointmentsByAssistantEmail,
   getAppointmentsByDoctorEmail,
+  getCalendarApplications,
+  getByApplicationId,
+  getByPatientEmail,
+  getAssistantAppointments,
+  getCalendar,
+  patchApplication,
+  updateCommentAssistant,
+  addCommentAssistant,
+  deleteCommentAssistant,
+  updatePrescriptionAssistant,
+  updateConclusionAssistant,
+  getResultFile,
+  updateFollowUp,
   uploadTestResult,
   getTestResult,
   addFollowUpAppointment,
@@ -78,6 +92,8 @@ router.get("/by-patient-email/:email", auth, getApplicationsByPatientEmail);
 
 // --- Applications by date (calendar view) - MUST be before /:id route ---
 router.get("/applicationsByDate", auth, getApplicationsByDate);
+// --- Applications accessible by assistant (appointments for doctors assistant has access to) ---
+router.get("/assistant/:email", auth, getAppointmentsByAssistantEmail);
 
 // --- Application counts per day for a month (mini-calendar badges) ---
 router.get("/countsByMonth", auth, getApplicationCountsByMonth);
@@ -165,5 +181,28 @@ router.post('/tests/upload-result',auth,uploadTestResult);
 router.get('/results/:id',auth,getTestResult);
 router.put('/:applicationId/follow-up',auth,addFollowUpAppointment);
 router.put('/:applicationId/history-form',auth,updateHistoryFormForDoctor);
+
+// --- Assistant related routes --- //
+router.get('/', auth, getCalendarApplications);
+router.get('/by-application-id/:id', auth, getByApplicationId);
+router.get('/by-patient-email/:email', auth, getByPatientEmail);
+router.get('/assistant/:email', auth, getAssistantAppointments);
+router.get('/calendar', auth, getCalendar);
+router.patch('/by-application-id/:applicationId', auth, patchApplication);
+
+
+// Comments
+router.put('/:appointmentId/comments/:commentId',auth,updateCommentAssistant);
+router.put('/:id/comments', auth, addCommentAssistant);
+router.delete('/:appointmentId/comments/:commentId', auth, deleteCommentAssistant);
+
+// Clinical fields
+router.put('/:id/prescription', auth, updatePrescriptionAssistant);
+router.put('/:id/conclusion', auth, updateConclusionAssistant);
+
+router.get('/results/:id',auth,getResultFile);
+// Follow-up
+router.put('/:applicationId/follow-up', auth, updateFollowUp);
+
 
 module.exports = router;

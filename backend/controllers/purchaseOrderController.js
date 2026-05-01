@@ -1,19 +1,22 @@
 ﻿const PurchaseOrder = require("../models/Inventory/PurchaseOrder");
 const Stock = require("../models/Inventory/Stock");
 const Supplier = require("../models/Inventory/Supplier");
-
-
+const HeadAssistant = require("../models/HeadAssistant");
 const nodemailer = require('nodemailer');
 // Get all purchase orders
 exports.getPurchaseOrders = async (req, res) => {
   try {
     const { branch } = req.query;
-
     // Build query dynamically
     const query =
       !branch || branch.toLowerCase() === "all"
         ? {}
         : { branch: { $regex: new RegExp(`^${branch}$`, "i") } };
+    
+    const headAssistant = await HeadAssistant.findOne({ email: req.user.email });
+    if(!headAssistant) {
+      return res.status(400).json({ message: 'Head assistant not found!' });
+    }
 
     // Find orders (filtered if branch provided)
     const orders = await PurchaseOrder.find(query)
@@ -163,6 +166,10 @@ exports.receivePurchaseOrder = async (req, res) => {
 
 exports.createPurchaseOrderWithPDF = async (req, res) => {
   try {
+    const headAssistant = await HeadAssistant.findOne({ email: req.user.email });
+    if(!headAssistant) {
+      return res.status(400).json({ message: 'Head assistant not found!' });
+    }
     const {
       supplier,
       items,

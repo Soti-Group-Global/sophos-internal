@@ -506,9 +506,10 @@ function TaskBoard({ projectId, isPersonalProject, currentUserEmail }) {
                                           </h4>
                                           {task.description &&
                                             expandedTasks.has(task._id) && (
-                                              <p className="modern-task-description">
-                                                {task.description}
-                                              </p>
+                                              <p
+                                                className="modern-task-description"
+                                                dangerouslySetInnerHTML={{ __html: task.description }}
+                                              />
                                             )}
                                         </div>
                                       </div>

@@ -1,9 +1,12 @@
 const Application = require("../models/Application");
 const Media = require("../models/Media");
+const moment = require('moment-timezone');
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const DoctorsProfile = require("../models/DoctorsProfile");
 const User = require("../models/User");
+const Assistant = require('../models/Assistant');
+const HeadAssistant = require('../models/HeadAssistant');
 const Counter = require("../models/Counter");
 const Order = require("../models/Order");
 const multer = require("multer");
@@ -21,6 +24,9 @@ const tls = require("tls");
 
 // Pick a "primary" doctor email from an Application record.
 // Supports both Mongoose docs and `.lean()` plain objects.
+
+const ALLOWED_APPOINTMENT_STATUSES = ['Confirmed', 'Completed', 'Upcoming'];
+
 function getPrimaryDoctorEmail(application) {
   if (!application) return null;
   // Preferred: doctors array (current schema)
@@ -61,15 +67,15 @@ function invoiceHTML(payment, patient, appId) {
   const fmtD = (d) =>
     d
       ? new Date(d).toLocaleDateString("ru-RU", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
       : "—";
   const name = patient
     ? [patient.lastName, patient.firstName, patient.middleName]
-        .filter(Boolean)
-        .join(" ")
+      .filter(Boolean)
+      .join(" ")
     : "Не указан";
   const rows = (payment.items || [])
     .map(
@@ -107,15 +113,15 @@ function aktHTML(payment, patient, appId) {
   const fmtD = (d) =>
     d
       ? new Date(d).toLocaleDateString("ru-RU", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        })
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
       : "—";
   const name = patient
     ? [patient.lastName, patient.firstName, patient.middleName]
-        .filter(Boolean)
-        .join(" ")
+      .filter(Boolean)
+      .join(" ")
     : "Не указан";
   const rows = (payment.items || [])
     .map(
@@ -296,25 +302,25 @@ async function uploadDocumentFile(req, res) {
 async function uploadDocumentUrl(req, res) {
   try {
     const id = decodeURIComponent(req.params.id);
+
     await migrateHistoryFormLegacy(id);
+
+    if (!req.body?.url) {
+      return res.status(400).json({ message: "URL is required" });
+    }
 
     const application = await Application.findOne({ applicationId: id });
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    if (!req.body?.url) {
-      return res.status(400).json({ message: "URL is required" });
-    }
-
     const filename = req.body.filename || "Cloud Link";
-    const url = req.body.url.trim();
 
     application.documents.push({
       filename,
       fileId: null,
-      url,
-      verificationStatus: "Verified",
+      url: req.body.url.trim(),
+      verificationStatus: "Under Review", // or Verified (your choice)
       uploadedAt: new Date(),
     });
 
@@ -325,11 +331,52 @@ async function uploadDocumentUrl(req, res) {
       applicationId: application.applicationId,
       documents: application.documents,
     });
+
   } catch (error) {
+    console.error("URL Upload Error:", error);
     res.status(400).json({ message: error.message });
   }
 }
 
+// upload appointment documents
+async function uploadAppointmentDocument(req, res) {
+  try {
+    const appId = req.params.id;
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+      bucketName: 'media',
+    });
+    const uploadStream = bucket.openUploadStream(file.originalname, {
+      contentType: file.mimetype,
+    });
+    const fileId = uploadStream.id;
+    uploadStream.end(file.buffer);
+    uploadStream.on('finish', async () => {
+      const documentEntry = {
+        filename: file.originalname,
+        fileId,
+        uploadedAt: new Date(),
+        verificationStatus: 'Under Review',
+      };
+      const updatedApp = await Application.findByIdAndUpdate(
+        appId,
+        { $push: { documents: documentEntry } },
+        { new: true }
+      );
+      res.json(updatedApp);
+    });
+    uploadStream.on('error', (err) => {
+      console.error('GridFS upload error:', err);
+      res.status(500).json({ message: 'Upload failed' });
+    });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
 // Get user ID by email and role
 async function getUserIdByEmail(req, res) {
   try {
@@ -352,7 +399,7 @@ async function getUserIdByEmail(req, res) {
 
 
 //Get medical history by application ID (for medical history details view)
-async function getMedicalHistory(req,res){
+async function getMedicalHistory(req, res) {
   const email = req.params.email;
 
   try {
@@ -368,11 +415,32 @@ async function getMedicalHistory(req,res){
         email
       });
     }
-
-    res.json({
-      success: true,
-      data: applications
+    const doctorEmails = [
+      ...new Set(applications.flatMap((app) => (app.doctors || []).map((d) => d.doctorEmail)).filter(Boolean)),
+    ];
+    const doctors = await DoctorProfile.find(
+      { email: { $in: doctorEmails } },
+      'email firstName middleName lastName'
+    ).lean();
+    const doctorMap = Object.fromEntries(doctors.map((doc) => [doc.email, doc]));
+    const enrichedApplications = applications.map((app) => {
+      const enrichedDoctors = (app.doctors || []).map((d) => {
+        const profile = doctorMap[d.doctorEmail];
+        return {
+          ...d,
+          doctorName: profile
+            ? {
+              en: [profile.firstName?.en, profile.middleName?.en, profile.lastName?.en].filter(Boolean).join(' '),
+              ru: [profile.firstName?.ru, profile.middleName?.ru, profile.lastName?.ru].filter(Boolean).join(' '),
+            }
+            : d.doctorName || null,
+        };
+      });
+      return { ...app, doctors: enrichedDoctors };
     });
+
+    res.json({ success: true, data: enrichedApplications });
+
 
   } catch (error) {
     res.status(500).json({
@@ -806,10 +874,10 @@ async function getAllApplications(req, res) {
       const docEmail = app.doctorEmail || app.doctors?.[0]?.doctorEmail;
       app.doctor = docEmail
         ? await DoctorsProfile.findOne({ email: docEmail })
-            .select(
-              "firstName middleName lastName specialty email phoneNumber _id",
-            )
-            .lean()
+          .select(
+            "firstName middleName lastName specialty email phoneNumber _id",
+          )
+          .lean()
         : null;
     }
 
@@ -828,7 +896,7 @@ async function getMedicalHistoryByEmail(req, res) {
   try {
     const { email } = req.params;
 
-    const applications = await Application.find({ patientEmail: email , appointmentStatus: { $nin: ['Unconfirmed', 'Cancelled'] }})
+    const applications = await Application.find({ patientEmail: email, appointmentStatus: { $nin: ['Unconfirmed', 'Cancelled'] } })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -876,11 +944,11 @@ async function getMedicalHistoryByEmail(req, res) {
             const storedName = app.doctors?.[0]?.doctorName;
             app.doctor = storedName
               ? {
-                  firstName: storedName,
-                  middleName: "",
-                  lastName: "",
-                  email: docEmail,
-                }
+                firstName: storedName,
+                middleName: "",
+                lastName: "",
+                email: docEmail,
+              }
               : null;
           }
         } else {
@@ -904,7 +972,7 @@ async function getMedicalHistoryByEmail(req, res) {
 //-----------------Doctor related Functions------------------------//
 
 //Post Upload document for doctors interface
-async function uploadDocumentForDoctors(req,res){
+async function uploadDocumentForDoctors(req, res) {
   try {
     const appId = req.params.id;
     const file = req.file;
@@ -953,7 +1021,7 @@ async function uploadDocumentForDoctors(req,res){
 }
 
 //Get Document by ID for doctors interface
-async function getDocumentByIdForDoctors(req,res){
+async function getDocumentByIdForDoctors(req, res) {
   try {
     if (!ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: 'Invalid file ID format' });
@@ -990,8 +1058,8 @@ async function getDocumentByIdForDoctors(req,res){
 }
 
 // GET medical history by email - Doctors Interface
-async function getMedicalHistoryByEmailForDoctors(req,res){
-   const email = req.params.email;
+async function getMedicalHistoryByEmailForDoctors(req, res) {
+  const email = req.params.email;
 
   try {
     const applications = await Application.find({
@@ -1022,7 +1090,7 @@ async function getMedicalHistoryByEmailForDoctors(req,res){
 }
 
 //Get all application - Doctors Interface
-async function getAllApplicationsForDoctors(req,res){
+async function getAllApplicationsForDoctors(req, res) {
   try {
     const { doctorEmail, start, end } = req.query;
 
@@ -1058,7 +1126,7 @@ async function getAllApplicationsForDoctors(req,res){
 }
 
 //Get Application by id - Doctors Interface
-async function getApplicationByIdForDoctors(req,res){
+async function getApplicationByIdForDoctors(req, res) {
   const applicationId = req.params.id;
   try {
     const appointment = await Application.findOne({ applicationId });
@@ -1070,7 +1138,7 @@ async function getApplicationByIdForDoctors(req,res){
       });
     }
 
-   
+
     return res.json(appointment);
   } catch (error) {
     return res.status(500).json({
@@ -1081,95 +1149,95 @@ async function getApplicationByIdForDoctors(req,res){
 }
 
 //Update a comment- Doctors Interface
-async function updateCommentForDoctors(req,res){
-    const { appointmentId, commentId } = req.params;
-    const { text, edited, editTimestamp } = req.body;
-    try {
-      // Find by custom ID
-      const appointment = await Application.findOne({ applicationId: appointmentId });
-      if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
-  
-      const comment = appointment.comments.id(commentId);
-      if (!comment) return res.status(404).json({ error: 'Comment not found' });
-  
-      // Update fields
-      comment.text = text;
-      comment.edited = edited;
-      comment.editTimestamp = editTimestamp;
-  
-      await appointment.save();
-      res.json(comment);
-    } catch (err) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
+async function updateCommentForDoctors(req, res) {
+  const { appointmentId, commentId } = req.params;
+  const { text, edited, editTimestamp } = req.body;
+  try {
+    // Find by custom ID
+    const appointment = await Application.findOne({ applicationId: appointmentId });
+    if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+
+    const comment = appointment.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+
+    // Update fields
+    comment.text = text;
+    comment.edited = edited;
+    comment.editTimestamp = editTimestamp;
+
+    await appointment.save();
+    res.json(comment);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 //Add a comment - Doctors Interface
-async function addCommentForDoctors(req,res){
-    const appointmentId = decodeURIComponent(req.params.id); // e.g., APP/005/0001
-    const { comments } = req.body;
-     // Ensure it's a single new comment
-    const newComment = Array.isArray(comments) ? comments[comments.length - 1] : comments;
-    try {
-      const appointment = await Application.findOneAndUpdate(
-        { applicationId: appointmentId },
-        { $push: { comments: newComment } },
-        { new: true }
-        
-      );
-  
-      if (!appointment) {
-        return res.status(404).json({ message: 'Appointment not found' });
-      }
-  
-      res.json(appointment);
-    } catch (error) {
-      res.status(500).json({ message: 'Server error' });
+async function addCommentForDoctors(req, res) {
+  const appointmentId = decodeURIComponent(req.params.id); // e.g., APP/005/0001
+  const { comments } = req.body;
+  // Ensure it's a single new comment
+  const newComment = Array.isArray(comments) ? comments[comments.length - 1] : comments;
+  try {
+    const appointment = await Application.findOneAndUpdate(
+      { applicationId: appointmentId },
+      { $push: { comments: newComment } },
+      { new: true }
+
+    );
+
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
     }
+
+    res.json(appointment);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
 }
 
 // Delete a comment - Doctors Interface
-async function deleteCommentForDoctors(req,res){
-    const { appointmentId, commentId } = req.params;
-    try {
-      // Find appointment by custom applicationId
-      const appointment = await Application.findOne({ applicationId: appointmentId });
-      if (!appointment) {
-        return res.status(404).json({ error: 'Appointment not found' });
-      }
-  
-      // Find the comment index
-      const commentIndex = appointment.comments.findIndex(
-        comment => comment._id.toString() === commentId
-      );
-  
-      if (commentIndex === -1) {
-        return res.status(404).json({ error: 'Comment not found' });
-      }
-  
-      // Remove the comment from the array
-      appointment.comments.splice(commentIndex, 1);
-  
-      // Save the updated appointment
-      await appointment.save();
-  
-      res.json({ 
-        success: true,
-        message: 'Comment deleted successfully',
-        appointmentId,
-        commentId
-      });
-  
-    } catch (error) {
-      res.status(500).json({ 
-        error: 'Server error',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+async function deleteCommentForDoctors(req, res) {
+  const { appointmentId, commentId } = req.params;
+  try {
+    // Find appointment by custom applicationId
+    const appointment = await Application.findOne({ applicationId: appointmentId });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
     }
+
+    // Find the comment index
+    const commentIndex = appointment.comments.findIndex(
+      comment => comment._id.toString() === commentId
+    );
+
+    if (commentIndex === -1) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Remove the comment from the array
+    appointment.comments.splice(commentIndex, 1);
+
+    // Save the updated appointment
+    await appointment.save();
+
+    res.json({
+      success: true,
+      message: 'Comment deleted successfully',
+      appointmentId,
+      commentId
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 }
 
 //Put add description for doctors interface
-async function addDescriptionForDoctors(req,res){
+async function addDescriptionForDoctors(req, res) {
   try {
     const appointment = await Application.findOne({ applicationId: req.params.id });
 
@@ -1190,7 +1258,7 @@ async function addDescriptionForDoctors(req,res){
 }
 
 // PUT add conclusion for doctors interface
-async function addConclusionForDoctors(req,res){
+async function addConclusionForDoctors(req, res) {
   try {
     const appointment = await Application.findOne({ applicationId: req.params.id });
 
@@ -1211,7 +1279,7 @@ async function addConclusionForDoctors(req,res){
 }
 
 //PUT Update the verification of document , Conclusion or Description
-async function updateVerificationStatusForDoctors(req,res){
+async function updateVerificationStatusForDoctors(req, res) {
   const { id } = req.params;
   const { type, field, status } = req.body;
   try {
@@ -1245,7 +1313,7 @@ async function updateVerificationStatusForDoctors(req,res){
 }
 
 //GET appointments by doctor email and date range for doctors interface
-async function getAppointmentsByDoctorEmail(req,res){
+async function getAppointmentsByDoctorEmail(req, res) {
   const doctorEmail = req.params.email;
   const { page = 1, limit = 21, status = 'all', search = '' } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
@@ -1270,8 +1338,8 @@ async function getAppointmentsByDoctorEmail(req,res){
       } else {
         // Convert other status values
         const statusMap = {
-          'completed':  'Completed',
-          'confirmed':  'Confirmed',
+          'completed': 'Completed',
+          'confirmed': 'Confirmed',
         };
 
         query.appointmentStatus = statusMap[status.toLowerCase()] || status;
@@ -1361,8 +1429,108 @@ async function getAppointmentsByDoctorEmail(req,res){
   }
 }
 
+// GET appointments accessible to an assistant by assistant email
+
+async function getAppointmentsByAssistantEmail(req, res) {
+  const assistantEmail = req.params.email;
+  const { page = 1, limit = 21, status = 'all', search = '', startDate, endDate } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  try {
+    const assistant = await Assistant.findOne({ email: assistantEmail }).lean();
+    if (!assistant) {
+      return res.status(404).json({ success: false, message: 'Assistant not found' });
+    }
+
+    // Collect doctor emails the assistant has access to
+    const doctorEmails = (assistant.doctors || []).map(d => d.doctorEmail).filter(Boolean);
+    if (doctorEmails.length === 0) {
+      return res.json({ success: true, data: { appointments: [], totalCount: 0 } });
+    }
+
+    const query = {
+      'doctors.doctorEmail': { $in: doctorEmails.map(e => new RegExp(`^${e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, 'i')) }
+    };
+
+    // Date range filter (optional)
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = startDate;
+      if (endDate) query.date.$lte = endDate;
+    }
+
+    // Status filter
+    if (status !== 'all') {
+      if (status.toLowerCase() === 'cancelled') {
+        query.appointmentStatus = 'Cancelled';
+      } else if (status.toLowerCase() === 'unconfirmed') {
+        query.appointmentStatus = 'Unconfirmed';
+      } else {
+        const statusMap = { 'completed': 'Completed', 'confirmed': 'Confirmed' };
+        query.appointmentStatus = statusMap[status.toLowerCase()] || status;
+      }
+    }
+
+    // Search across applicationId, serviceType and patient email/name
+    if (search) {
+      const matchingPatients = await Patient.find({
+        $or: [
+          { firstName: new RegExp(search, 'i') },
+          { lastName: new RegExp(search, 'i') },
+          { email: new RegExp(search, 'i') },
+        ]
+      }).select('email').lean();
+      const matchingEmails = matchingPatients.map(p => p.email);
+
+      query.$or = [
+        { applicationId: new RegExp(search, 'i') },
+        { serviceType: new RegExp(search, 'i') },
+        { patientEmail: new RegExp(search, 'i') },
+        ...(matchingEmails.length > 0 ? [{ patientEmail: { $in: matchingEmails } }] : []),
+      ];
+    }
+
+    const [appointments, totalCount] = await Promise.all([
+      Application.find(query).sort({ date: -1 }).skip(Number(skip)).limit(Number(limit)),
+      Application.countDocuments(query),
+    ]);
+
+    // Enrich with patient and doctor details
+    const patientEmails = [...new Set(appointments.map(a => a.patientEmail))].filter(Boolean);
+    const doctorEmailsPrimary = [...new Set(appointments.map(a => getPrimaryDoctorEmail(a)).filter(Boolean))];
+
+    const [patients, doctors] = await Promise.all([
+      Patient.find({ email: { $in: patientEmails } }),
+      Doctor.find({ email: { $in: doctorEmailsPrimary } }),
+    ]);
+
+    const patientMap = {};
+    patients.forEach(p => {
+      patientMap[p.email] = { firstName: p.firstName, middleName: p.middleName, lastName: p.lastName };
+    });
+
+    const doctorMap = {};
+    doctors.forEach(d => {
+      doctorMap[d.email] = { firstName: d.firstName, middleName: d.middleName, lastName: d.lastName };
+    });
+
+    const enrichedAppointments = appointments.map(appt => {
+      const obj = appt.toObject();
+      const primaryDoctorEmail = getPrimaryDoctorEmail(appt);
+      obj.patientDetails = patientMap[appt.patientEmail] || null;
+      obj.doctorDetails = doctorMap[primaryDoctorEmail] || null;
+      return obj;
+    });
+
+    return res.json({ success: true, data: { appointments: enrichedAppointments, totalCount } });
+  } catch (error) {
+    console.error('Assistant appointments fetch error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch appointments', error: error.message });
+  }
+}
+
 //Upload test result
-async function uploadTestResult(req,res){
+async function uploadTestResult(req, res) {
   try {
     const { applicationId, testId } = req.body;
     const file = req.file;
@@ -1374,11 +1542,11 @@ async function uploadTestResult(req,res){
     const decodedId = decodeURIComponent(applicationId);
 
     // Find the order by testId (since each test is a separate document)
-    const order = await Order.findOne({ 
-      applicationId: decodedId, 
-      testId: testId 
+    const order = await Order.findOne({
+      applicationId: decodedId,
+      testId: testId
     });
-    
+
     if (!order) {
       return res.status(404).json({ error: "Test order not found" });
     }
@@ -1422,7 +1590,7 @@ async function uploadTestResult(req,res){
 }
 
 // GET get result of the particular test results
-async function getTestResult(req,res){
+async function getTestResult(req, res) {
   try {
     const fileId = new ObjectId(req.params.id);
 
@@ -1453,7 +1621,7 @@ async function getTestResult(req,res){
 }
 
 // PUT Add Followup appointment
-async function addFollowUpAppointment(req,res){
+async function addFollowUpAppointment(req, res) {
   try {
     const { applicationId } = req.params;
     const { needed, comment, booked } = req.body;
@@ -1489,8 +1657,8 @@ async function addFollowUpAppointment(req,res){
 }
 
 //Get Application for calendar view
-async function getApplicationsForCalendar(req,res){
-   try {
+async function getApplicationsForCalendar(req, res) {
+  try {
     const { start, end, status, followup, doctorEmail } = req.query;
 
     if (!start || !end) {
@@ -1508,14 +1676,14 @@ async function getApplicationsForCalendar(req,res){
     };
 
     // Calendar view should only include these statuses.
-    const allowedCalendarStatuses = ["Completed","Confirmed"];
+    const allowedCalendarStatuses = ["Completed", "Confirmed"];
 
     // Status filter — map frontend tab keys to DB values
     const statusMap = {
-      'confirmed':           'Confirmed',
-      'completed':           'Completed',
-      'cancelled':           'Cancelled',
-      'unconfirmed':         'Unconfirmed',
+      'confirmed': 'Confirmed',
+      'completed': 'Completed',
+      'cancelled': 'Cancelled',
+      'unconfirmed': 'Unconfirmed',
       // 'new':                 'New',
       // 'paid':                'Paid',
       // 'pending':             'Pending payment',
@@ -1639,8 +1807,8 @@ async function getApplicationsForCalendar(req,res){
 }
 
 //Update history form schema - doctors interface
-async function updateHistoryFormForDoctor(req,res){
-   try {
+async function updateHistoryFormForDoctor(req, res) {
+  try {
     const { applicationId } = req.params;
     const { isFirstAppointment, isRepetitiveAppointment } = req.body;
 
@@ -1692,15 +1860,544 @@ async function updateHistoryFormForDoctor(req,res){
   }
 }
 
+//-----------------Assistant related Functions------------------------//
 
+// GET /api/applications/
+async function getCalendarApplications(req, res) {
+  try {
+    const { doctorEmail, start, end } = req.query;
+    if (!doctorEmail || !start || !end) {
+      return res.status(400).json({ error: 'doctorEmail, start, and end are required' });
+    }
+    const applications = await Application.find({
+      doctorEmail,
+      date: { $gte: start.slice(0, 10), $lte: end.slice(0, 10) },
+      appointmentStatus: { $ne: 'Unconfirmed' },
+    }).sort({ date: 1, startTime: 1 });
+    res.json(applications);
+  } catch (err) {
+    console.error('Error fetching applications:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
 
+async function getByApplicationId(req, res) {
+   const applicationId = req.params.id;
+  try {
+    const appointment = await Application.findOne({ applicationId });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found', applicationId });
+    }
+    const doctor = await Doctor.findOne(
+      { email: appointment.doctorEmail },
+      { firstName: 1, middleName: 1, lastName: 1, email: 1 }
+    ).lean();
+    const doctorName = doctor
+      ? {
+          en: [doctor.firstName?.en, doctor.middleName?.en, doctor.lastName?.en]
+            .filter(Boolean)
+            .join(' '),
+          ru: [doctor.firstName?.ru, doctor.middleName?.ru, doctor.lastName?.ru]
+            .filter(Boolean)
+            .join(' '),
+        }
+      : null;
+    return res.json({ ...appointment.toObject(), doctorName });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+}
 
+async function getByPatientEmail(req, res) {
+try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const { limit = 50 } = req.query;
+    const apps = await Application.find({ patientEmail: email })
+      .sort({ date: -1 })
+      .limit(Number(limit))
+      .lean();
+    res.json({ applications: apps });
+  } catch (err) {
+    console.error('GET by-patient-email error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
 
+async function addCommentAssistant(req, res) {
+  const appointmentId = decodeURIComponent(req.params.id);
+  const { comments } = req.body;
+  const newComment = Array.isArray(comments) ? comments[comments.length - 1] : comments;
+  try {
+    const appointment = await Application.findOneAndUpdate(
+      { applicationId: appointmentId },
+      { $push: { comments: newComment } },
+      { new: true }
+    );
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    res.json(appointment);
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
 
+async function updateCommentAssistant(req, res) {
+  const { appointmentId, commentId } = req.params;
+  const { text, edited, editTimestamp } = req.body;
+  try {
+    const appointment = await Application.findOne({ applicationId: appointmentId });
+    if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+    const comment = appointment.comments.id(commentId);
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+    comment.text = text;
+    comment.edited = edited;
+    comment.editTimestamp = editTimestamp;
+    await appointment.save();
+    res.json(comment);
+  } catch (err) {
+    console.error('Error updating comment:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
 
+async function deleteCommentAssistant(req, res) {
+  const { appointmentId, commentId } = req.params;
+  try {
+    const appointment = await Application.findOne({ applicationId: appointmentId });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    const commentIndex = appointment.comments.findIndex(
+      (comment) => comment._id.toString() === commentId
+    );
+    if (commentIndex === -1) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+    appointment.comments.splice(commentIndex, 1);
+    await appointment.save();
+    res.json({
+      success: true,
+      message: 'Comment deleted successfully',
+      appointmentId,
+      commentId,
+    });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({
+      error: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+}
 
+async function updatePrescriptionAssistant(req, res) {
+   try {
+    const appointment = await Application.findOne({ applicationId: req.params.id });
+    if (!appointment) {
+      return res.status(404).json({ msg: 'Appointment not found' });
+    }
+    appointment.prescription = {
+      text: req.body.prescription || '',
+      verificationStatus: 'Under Review',
+    };
+    await appointment.save();
+    res.json(appointment);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+}
 
+async function updateConclusionAssistant(req, res) {
+  try {
+    const appointment = await Application.findOne({ applicationId: req.params.id });
+    if (!appointment) {
+      return res.status(404).json({ msg: 'Appointment not found' });
+    }
+    appointment.conclusion = {
+      text: req.body.conclusion || '',
+      verificationStatus: 'Under Review',
+    };
+    await appointment.save();
+    res.json(appointment);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+}
 
+async function getAssistantAppointments(req,res){
+  const assistantEmail = req.params.email;
+  const { page = 1, limit = 21, status = 'all', search = '' } = req.query;
+  const skip = (page - 1) * limit;
+
+  try {
+    const assistantModel = req.user.role === 'head_assistant' ? HeadAssistant : Assistant;
+    const assistant = await assistantModel.findOne({ email: assistantEmail });
+
+    if (!assistant) {
+      return res.status(404).json({ success: false, message: 'No assigned doctors found for this assistant' });
+    }
+
+    if (!assistant.doctors || assistant.doctors.length === 0) {
+      return res.status(200).json({ success: true, data: { appointments: [], totalCount: 0 } });
+    }
+
+    const nowIST = moment().tz('Europe/Moscow');
+
+    const activeDoctorEmails = assistant.doctors
+      .filter((doc) => {
+        const start = moment(doc.startDateTime);
+        const end = moment(doc.endDateTime);
+        return nowIST.isBetween(start, end);
+      })
+      .map((doc) => doc.doctorEmail);
+
+    if (activeDoctorEmails.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: { appointments: [], totalCount: 0 },
+        message: 'No doctors available at this time',
+      });
+    }
+
+    const query = {
+      branch: { $in: assistant.branches },
+      'doctors.doctorEmail': { $in: activeDoctorEmails },
+      appointmentStatus: { $in: ALLOWED_APPOINTMENT_STATUSES },
+    };
+
+    if (req.query.doctorEmail && req.query.doctorEmail !== 'all') {
+      query['doctors.doctorEmail'] = req.query.doctorEmail;
+    }
+    if (req.query.patientEmail) {
+      query.patientEmail = req.query.patientEmail.toLowerCase().trim();
+    }
+    if (req.query.startDate && req.query.endDate) {
+      query.date = { $gte: req.query.startDate, $lte: req.query.endDate };
+    }
+
+    if (status !== 'all') {
+      const statusMap = {
+        completed: 'Completed',
+        confirmed: 'Confirmed',
+        upcoming: 'Upcoming',
+      };
+      const normalizedStatus = statusMap[String(status).toLowerCase()] || status;
+      if (ALLOWED_APPOINTMENT_STATUSES.includes(normalizedStatus)) {
+        query.appointmentStatus = normalizedStatus;
+      }
+    }
+
+    if (search) {
+      query.$or = [
+        { applicationId: new RegExp(search, 'i') },
+        { serviceType: new RegExp(search, 'i') },
+        { patientEmail: new RegExp(search, 'i') },
+        { 'doctors.doctorEmail': new RegExp(search, 'i') },
+        { patientName: new RegExp(search, 'i') },
+        { 'patientDetails.firstName': new RegExp(search, 'i') },
+        { 'patientDetails.lastName': new RegExp(search, 'i') },
+        { 'doctorDetails.firstName': new RegExp(search, 'i') },
+        { 'doctorDetails.lastName': new RegExp(search, 'i') },
+      ];
+    }
+
+    console.log('[Appointments] Final DB query:', JSON.stringify(query, null, 2));
+
+    const diagApps = await Application.find({ 'doctors.doctorEmail': { $in: activeDoctorEmails } })
+      .select('applicationId doctors branch appointmentStatus')
+      .limit(10)
+      .lean();
+    console.log(`[Appointments] DIAG — apps for active doctors (ignoring branch): ${diagApps.length}`);
+    diagApps.forEach((a) =>
+      console.log(`  id:${a.applicationId} | doctor:${a.doctors?.[0]?.doctorEmail} | branch:"${a.branch}" | status:${a.appointmentStatus}`)
+    );
+
+    const [appointments, totalCount] = await Promise.all([
+      Application.find(query).sort({ date: -1 }).skip(Number(skip)).limit(Number(limit)),
+      Application.countDocuments(query),
+    ]);
+
+    console.log(`[Appointments] DB result — found: ${appointments.length}, totalCount: ${totalCount}`);
+    if (appointments.length > 0) {
+      console.log('[Appointments] Sample statuses:', appointments.slice(0, 5).map((a) => `${a.applicationId}:${a.appointmentStatus}`));
+    }
+
+    const patientEmails = [...new Set(appointments.map((a) => a.patientEmail))].filter(Boolean);
+    const uniqueDoctorEmails = [
+      ...new Set(appointments.flatMap((a) => (a.doctors || []).map((d) => d.doctorEmail))),
+    ].filter(Boolean);
+
+    const [patients, doctors] = await Promise.all([
+      Patient.find({ email: { $in: patientEmails } }),
+      Doctor.find({ email: { $in: uniqueDoctorEmails } }),
+    ]);
+
+    const patientMap = {};
+    patients.forEach((p) => {
+      patientMap[p.email] = { firstName: p.firstName, middleName: p.middleName, lastName: p.lastName };
+    });
+
+    const doctorMap = {};
+    doctors.forEach((d) => {
+      doctorMap[d.email] = {
+        firstName: d.firstName || {},
+        middleName: d.middleName || {},
+        lastName: d.lastName || {},
+      };
+    });
+
+    const enrichedAppointments = appointments.map((appt) => {
+      const obj = appt.toObject();
+      obj.patientDetails = patientMap[appt.patientEmail] || null;
+      const primaryDoctorEmail = appt.doctors?.[0]?.doctorEmail;
+      obj.doctorDetails = doctorMap[primaryDoctorEmail] || null;
+      return obj;
+    });
+
+    console.log(`[Appointments] ✓ Returning ${enrichedAppointments.length} enriched appointments (total: ${totalCount})`);
+    console.log('─────────────────────────────────────────────────\n');
+
+    res.json({ success: true, data: { appointments: enrichedAppointments, totalCount } });
+  } catch (error) {
+    console.error('[Appointments] ✗ Error:', error.message);
+    console.error(error.stack);
+    res.status(500).json({ success: false, message: 'Failed to fetch appointments', error: error.message });
+  }
+}
+
+async function getResultFile(req, res) {
+  try {
+    const fileId = new ObjectId(req.params.id);
+    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+      bucketName: 'results',
+    });
+    const files = await bucket.find({ _id: fileId }).toArray();
+    if (!files || files.length === 0) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    const file = files[0];
+    const stream = bucket.openDownloadStream(fileId);
+    res.set('Content-Type', file.contentType || 'application/octet-stream');
+    if (req.query.download === 'true') {
+      res.set('Content-Disposition', `attachment; filename="${file.filename}"`);
+    }
+    stream.pipe(res);
+  } catch (err) {
+    console.error('Error streaming result file:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+
+async function updateFollowUp(req,res){
+  try {
+    const { applicationId } = req.params;
+    const { needed, comment, booked } = req.body;
+    const appointment = await Application.findOne({ applicationId });
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    if (appointment.followUp && appointment.followUp.needed) {
+      return res.status(400).json({ error: 'Follow-up already assigned' });
+    }
+    appointment.followUp = {
+      needed: needed ?? false,
+      comment: comment ?? '',
+      applicationId,
+      booked: booked || false,
+    };
+    await appointment.save();
+    res.json({ message: 'Follow-up saved successfully', followUp: appointment.followUp });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function getCalendar(req,res){
+  try {
+    const { start, end, status, followup, doctorEmail } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ message: 'Start and End dates are required' });
+    }
+    const assistant = await Assistant.findOne({ email: req.user.email });
+    if (!assistant) {
+      return res.status(404).json({ success: false, message: 'No assistant found' });
+    }
+    if (!assistant.doctors?.length) {
+      return res.status(200).json({
+        success: true,
+        data: { appointments: [], totalCount: 0 },
+        message: 'No doctors assigned to this assistant',
+      });
+    }
+    const startRange = moment.tz(start, 'Asia/Kolkata');
+    const endRange = moment.tz(end, 'Asia/Kolkata');
+    if (!startRange.isValid() || !endRange.isValid()) {
+      return res.status(400).json({ success: false, message: 'Invalid start or end date' });
+    }
+    const activeDoctorEmails = assistant.doctors
+      .filter((doc) => {
+        if (doc.status !== 'Access Granted') return false;
+        if (doctorEmail !== 'all' && doctorEmail !== doc.doctorEmail) return false;
+        if (!doc.startDateTime || !doc.endDateTime) return false;
+        const docStart = moment.tz(doc.startDateTime, 'Asia/Kolkata');
+        const docEnd = moment.tz(doc.endDateTime, 'Asia/Kolkata');
+        return docStart.isSameOrBefore(endRange) && docEnd.isSameOrAfter(startRange);
+      })
+      .map((doc) => doc.doctorEmail);
+
+    if (!activeDoctorEmails.length) {
+      return res.status(200).json({
+        success: true,
+        data: { appointments: [], totalCount: 0 },
+        message: 'No active doctors available in this time range',
+      });
+    }
+
+    const startDateStr = start.slice(0, 10);
+    const endDateStr = end.slice(0, 10);
+
+    const query = {
+      branch: { $in: assistant.branches },
+      doctorEmail: { $in: activeDoctorEmails },
+      date: { $gte: startDateStr, $lte: endDateStr },
+    };
+
+    const validStatuses = ['unconfirmed', 'confirmed', 'cancelled'];
+    if (status && validStatuses.includes(status.toLowerCase())) {
+      query.appointmentStatus = new RegExp(`^${status}$`, 'i');
+    }
+
+    const basicQuery = query;
+
+    if (followup === 'true') {
+      query['followUp.needed'] = true;
+    } else if (followup === 'false') {
+      query['$or'] = [
+        { 'followUp.needed': { $exists: false } },
+        { 'followUp.needed': false },
+      ];
+    }
+
+    let applications = await Application.find(query).sort({ startTime: 1 }).lean();
+    const results = [];
+
+    for (const app of applications) {
+      const patient = await Patient.findOne({ email: app.patientEmail })
+        .select('firstName middleName lastName')
+        .lean();
+      const doctor = await Doctor.findOne({ email: app.doctorEmail })
+        .select('firstName middleName lastName')
+        .lean();
+
+      const patientName = patient
+        ? `${patient.firstName || ''} ${patient.middleName || ''} ${patient.lastName || ''}`.trim()
+        : app.patientEmail;
+
+      const doctorName = doctor
+        ? {
+            en: `${doctor.firstName?.en || ''} ${doctor.middleName?.en || ''} ${doctor.lastName?.en || ''}`.trim(),
+            ru: `${doctor.firstName?.ru || ''} ${doctor.middleName?.ru || ''} ${doctor.lastName?.ru || ''}`.trim(),
+          }
+        : { en: app.doctorEmail, ru: app.doctorEmail };
+
+      results.push({
+        applicationId: app.applicationId || app._id,
+        branch: app.branch,
+        date: app.date,
+        startTime: app.startTime,
+        endTime: app.endTime,
+        serviceType: app.serviceType || '',
+        appointmentStatus: app.appointmentStatus,
+        isFollowUp: false,
+        patientName,
+        doctorName,
+        followUpApplicationId: app.followUp?.applicationId || null,
+      });
+
+      if (app.followUp?.needed && app.followUp.booked && app.followUp.applicationId) {
+        const followUpApp = await Application.findOne({
+          ...basicQuery,
+          applicationId: app.followUp.applicationId,
+        }).lean();
+
+        if (followUpApp) {
+          const followUpPatient = await Patient.findOne({ email: followUpApp.patientEmail })
+            .select('firstName middleName lastName')
+            .lean();
+          const followUpDoctor = await Doctor.findOne({ email: followUpApp.doctorEmail })
+            .select('firstName middleName lastName')
+            .lean();
+
+          const followUpPatientName = followUpPatient
+            ? `${followUpPatient.firstName || ''} ${followUpPatient.middleName || ''} ${followUpPatient.lastName || ''}`.trim()
+            : followUpApp.patientEmail;
+
+          const followUpDoctorName = followUpDoctor
+            ? {
+                en: `${followUpDoctor.firstName?.en || ''} ${followUpDoctor.middleName?.en || ''} ${followUpDoctor.lastName?.en || ''}`.trim(),
+                ru: `${followUpDoctor.firstName?.ru || ''} ${followUpDoctor.middleName?.ru || ''} ${followUpDoctor.lastName?.ru || ''}`.trim(),
+              }
+            : { en: followUpApp.doctorEmail, ru: followUpApp.doctorEmail };
+
+          results.push({
+            applicationId: followUpApp.applicationId || followUpApp._id,
+            branch: followUpApp.branch,
+            date: followUpApp.date,
+            startTime: followUpApp.startTime,
+            endTime: followUpApp.endTime,
+            serviceType: followUpApp.serviceType || '',
+            appointmentStatus: followUpApp.appointmentStatus,
+            isFollowUp: true,
+            parentApplicationId: app.applicationId,
+            patientName: followUpPatientName,
+            doctorName: followUpDoctorName,
+            followUpComment: app.followUp.comment || '',
+          });
+        }
+      }
+    }
+
+    let filteredResults = results;
+    if (followup === 'true') {
+      filteredResults = filteredResults.filter((r) => r.isFollowUp);
+    } else if (followup === 'false') {
+      filteredResults = filteredResults.filter((r) => !r.isFollowUp);
+    }
+
+    res.json({ applications: filteredResults });
+  } catch (error) {
+    console.error('Get Applications Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+async function patchApplication(req,res){
+  try {
+    const { applicationId } = req.params;
+    const allowedFields = ['appointmentStatus', 'branch', 'meetingLink'];
+    const update = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+    const updated = await Application.findOneAndUpdate(
+      { applicationId },
+      { $set: update },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'Application not found' });
+    res.json(updated);
+  } catch (err) {
+    console.error('PATCH application error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
 
 // Create a new application
 async function createApplication(req, res) {
@@ -1809,8 +2506,8 @@ async function createApplication(req, res) {
     const applicationId = `HD-R${counter.monthlyCount
       .toString()
       .padStart(3, "0")}-${monthYear}-${counter.overallCount
-      .toString()
-      .padStart(4, "0")}`;
+        .toString()
+        .padStart(4, "0")}`;
 
     // ---------- PAYMENT LOGIC ----------
     // Payment creation is now handled separately by the frontend via addPayment endpoint
@@ -2167,11 +2864,11 @@ async function createPayment(req, res) {
           };
 
           // === COMPLETE HTTP LOG FOR TOKEN REQUEST ===
-          Object.entries(options.headers).forEach(([key, value]) => {});
+          Object.entries(options.headers).forEach(([key, value]) => { });
 
           const req = https.request(options, (res) => {
             // Log response headers
-            Object.entries(res.headers).forEach(([key, value]) => {});
+            Object.entries(res.headers).forEach(([key, value]) => { });
 
             let data = "";
             res.on("data", (chunk) => (data += chunk));
@@ -2281,7 +2978,7 @@ async function createPayment(req, res) {
 
           const req = https.request(options, (res) => {
             // Log response headers immediately
-            Object.entries(res.headers).forEach(([key, value]) => {});
+            Object.entries(res.headers).forEach(([key, value]) => { });
 
             let data = "";
             res.on("data", (chunk) => (data += chunk));
@@ -2624,7 +3321,7 @@ async function deleteDocument(req, res) {
       const gfs = gfsMedia();
       try {
         await gfs.delete(new mongoose.Types.ObjectId(document.fileId));
-      } catch (err) {}
+      } catch (err) { }
     }
 
     application.documents.splice(documentIndex, 1);
@@ -2644,22 +3341,41 @@ async function deleteDocument(req, res) {
 // Retrieve a media file (with /media/ prefix)
 async function getMediaFile(req, res) {
   try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid media ID" });
+    }
+
     const gfs = gfsMedia();
-    const file = await gfs
-      .find({ _id: new mongoose.Types.ObjectId(req.params.id) })
-      .toArray();
-    if (!file || file.length === 0) {
+    const files = await gfs.find({ _id: new mongoose.Types.ObjectId(id) }).toArray();
+
+    if (!files || files.length === 0) {
       return res.status(404).json({ message: "Media not found" });
     }
 
-    const readStream = gfs.openDownloadStream(file[0]._id);
-    res.set("Content-Type", file[0].contentType);
-    res.set("Content-Disposition", `inline; filename="${file[0].filename}"`);
-    readStream.pipe(res);
-  } catch (error) {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: "Invalid media ID" });
+    const file = files[0];
+
+    res.set("Content-Type", file.contentType);
+
+    if (req.query.download === "true") {
+      res.set("Content-Disposition", `attachment; filename="${file.filename}"`);
+    } else {
+      res.set("Content-Disposition", `inline; filename="${file.filename}"`);
     }
+
+    const readStream = gfs.openDownloadStream(file._id);
+
+    readStream.on("error", (err) => {
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Error streaming file", error: err.message });
+      }
+    });
+
+    readStream.pipe(res);
+
+  } catch (error) {
+    console.error("Media Fetch Error:", error);
     res.status(500).json({ message: "Server error" });
   }
 }
@@ -2982,14 +3698,16 @@ async function saveFollowUp(req, res) {
 // Update History Form
 async function updateHistoryForm(req, res) {
   try {
-    const id = decodeURIComponent(req.params.id);
+    const { applicationId } = req.params;
     const { historyForm } = req.body;
+    const existing = await Application.findOne({ applicationId }).lean();
+    if (!existing) return res.status(404).json({ message: 'Application not found' });
 
-    if (!historyForm || typeof historyForm !== "object") {
-      return res
-        .status(400)
-        .json({ message: "historyForm object is required" });
-    }
+    const existingForm = existing.historyForm || {};
+    const mergedForm = {
+      isFirstAppointment: historyForm.isFirstAppointment ?? existingForm.isFirstAppointment ?? false,
+      isRepetitiveAppointment: historyForm.isRepetitiveAppointment ?? existingForm.isRepetitiveAppointment ?? false,
+    };
 
     const allowedKeys = [
       "isFirstAppointment",
@@ -3033,7 +3751,7 @@ async function updateHistoryForm(req, res) {
         applicationId: id,
         historyForm: application.historyForm,
       });
-    } catch (socketError) {}
+    } catch (socketError) { }
 
     return res.status(200).json({
       message: "History form updated successfully",
@@ -3111,11 +3829,11 @@ async function verifyHistoryField(req, res) {
         : f && typeof f === "object"
           ? f
           : {
-              value: "",
-              isVerified: false,
-              verifiedBy: null,
-              verifiedAt: null,
-            };
+            value: "",
+            isVerified: false,
+            verifiedBy: null,
+            verifiedAt: null,
+          };
 
       if (k === fieldKey) {
         historyUpdate[`historyForm.${k}`] = {
@@ -3144,7 +3862,7 @@ async function verifyHistoryField(req, res) {
         applicationId: id,
         historyForm: application.historyForm,
       });
-    } catch (socketError) {}
+    } catch (socketError) { }
 
     return res.status(200).json({
       message: "Field verification updated",
@@ -3157,8 +3875,6 @@ async function verifyHistoryField(req, res) {
       .json({ message: "Server error", error: err.message });
   }
 }
-
-
 
 module.exports = {
   uploadDocumentFile,
@@ -3206,6 +3922,20 @@ module.exports = {
   addConclusionForDoctors,
   updateVerificationStatusForDoctors,
   getAppointmentsByDoctorEmail,
+  getAppointmentsByAssistantEmail,
+  getCalendarApplications,
+  getByApplicationId,
+  getByPatientEmail,
+  addCommentAssistant,
+  updateCommentAssistant,
+  deleteCommentAssistant,
+  updatePrescriptionAssistant,
+  updateConclusionAssistant,
+  getAssistantAppointments,
+  getResultFile,
+  updateFollowUp,
+  getCalendar,
+  patchApplication,
   uploadTestResult,
   getTestResult,
   addFollowUpAppointment,

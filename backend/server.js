@@ -4,6 +4,7 @@ const cors = require("cors");
 const http = require("http");
 require("dotenv").config();
 const auditLogger = require("./middleware/auditLogger");
+const auth = require("./middleware/auth");
 
 const { initSocket } = require("./socket");
 
@@ -46,6 +47,9 @@ const applicationAnalyticsRoutes = require("./routes/applicationAnalyticsRoutes"
 
 const maxRoutes = require("./routes/maxRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+
+// Import managers list controller for direct route
+const { getManagersData } = require("./controllers/managerController");
 
 // Task routes
 const projectRoutes = require("./routes/projectRoutes");
@@ -184,6 +188,12 @@ app.get("/api/health", (req, res) => {
 // Routes
 app.use("/api/applications", applicationRoutes);
 app.use("/api/auth", managerRoutes);
+
+// Managers list endpoint (for sidebar and UI lists)
+const managersListRouter = express.Router();
+managersListRouter.get("/", auth, getManagersData);
+app.use("/api/managers", managersListRouter);
+
 app.use("/api/profile", profileRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/doctors-profile", doctorProfileRoutes);

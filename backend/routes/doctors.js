@@ -20,6 +20,12 @@ const {
   getMe,
   getMyBreaks,
   getDoctorBranchesList,
+  getDoctorsForAssistant,
+  getMessage,
+  deleteMessage,
+  uploadMessageFile,
+  getDoctorsLite,
+  getAllDoctorsForMessages,
 } = require("../controllers/doctorController");
 
 // Configure multer with memory storage
@@ -48,16 +54,24 @@ router.post("/doctor-breaks", auth, createOrUpdateMyBreaks);
 router.put("/doctor-breaks/:breakId", auth, updateMyBreakById);
 router.delete("/doctor-breaks/:breakId", auth, deleteMyBreakById);
 router.get("/branches", auth, getDoctorBranchesList);
+
+// Specific GET routes (before /:id pattern)
+router.get("/all", auth, getAllDoctors);
+router.get("/lite", auth, getDoctorsLite);
+router.get("/by-email/:email", auth, getDoctorByEmail);
+router.get("/for-assistant/:assistantEmail", auth, getDoctorsForAssistant);
+router.get("/messages/allDoctors", auth, getAllDoctorsForMessages);
+router.post("/messages/upload", auth, upload, uploadMessageFile);
+router.delete("/messages/:messageId", auth, deleteMessage);
+router.get("/messages", auth, getMessage);
+
+// Generic CRUD routes
 router.post("/", [auth, upload], createDoctor);
 router.get("/", auth, getDoctors);
-router.get("/all", auth, getAllDoctors);
 router.get("/:id", auth, getDoctorById);
 router.get("/:id/fees", auth, getDoctorFees);
 router.put("/:id", [auth, upload], updateDoctor);
 router.delete("/:id", auth, deleteDoctor);
-
-// Doctor by email
-router.get("/by-email/:email", auth, getDoctorByEmail);
 
 // Doctor breaks routes
 router.get("/breaks/:doctorEmail/:date", auth, getDoctorBreaks);

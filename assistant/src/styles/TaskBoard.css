@@ -279,7 +279,7 @@
 .modern-task-list {
     flex: 1;
     padding: 12px;
-    overflow-y: auto;
+    overflow: visible;
     min-height: 200px;
 }
 

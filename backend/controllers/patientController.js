@@ -1,11 +1,14 @@
 const Patient = require('../models/Patient');
 const User = require('../models/User');
 const Application = require('../models/Application');
+const Assistant = require('../models/Assistant');
+const HeadAssistant = require('../models/HeadAssistant');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const { getGfs } = require('../gridfs');
+const moment = require('moment-timezone');
 
 // Configure Nodemailer transport
 const transporter = nodemailer.createTransport({
@@ -850,6 +853,197 @@ const sendEmail = async (req, res) => {
   }
 };
 
+//----- Assistant related function -----------//
+const getAssistantpatients = async(req,res)=>{
+    const { assistantEmail, page = 1, limit = 20, search = '' } = req.query;
+
+  if (!assistantEmail) {
+    return res.status(400).json({ error: 'assistantEmail query parameter is required' });
+  }
+
+  try {
+    const assistantModel = req.user.role === 'head_assistant' ? HeadAssistant : Assistant;
+    const assistant = await assistantModel.findOne({ email: assistantEmail.toLowerCase().trim() });
+    if (!assistant) {
+      return res.status(404).json({ error: 'Assistant not found' });
+    }
+
+    const nowMSK = moment().tz('Europe/Moscow');
+
+    const activeDoctorEmails = (assistant.doctors || [])
+      .filter((doc) => {
+        const start = moment(doc.startDateTime);
+        const end = moment(doc.endDateTime);
+        return nowMSK.isBetween(start, end);
+      })
+      .map((doc) => doc.doctorEmail?.toLowerCase().trim())
+      .filter(Boolean);
+
+    if (activeDoctorEmails.length === 0) {
+      return res.json([]);
+    }
+
+    const applications = await Application.find({
+      'doctors.doctorEmail': { $in: activeDoctorEmails },
+      appointmentStatus: { $ne: 'Unconfirmed' },
+    });
+
+    const patientEmails = [
+      ...new Set(
+        applications
+          .map((app) => app.patientEmail?.toLowerCase().trim())
+          .filter((email) => !!email)
+      ),
+    ];
+
+    if (patientEmails.length === 0) {
+      return res.json([]);
+    }
+
+    let patients = await Patient.find({ email: { $in: patientEmails } });
+
+    if (search.trim()) {
+      const term = search.toLowerCase();
+      patients = patients.filter(
+        (p) =>
+          p.firstName?.toLowerCase().includes(term) ||
+          p.lastName?.toLowerCase().includes(term) ||
+          p.email?.toLowerCase().includes(term)
+      );
+    }
+
+    const latestByPatient = {};
+    applications.forEach((app) => {
+      const email = app.patientEmail?.toLowerCase().trim();
+      if (!email) return;
+      const current = latestByPatient[email];
+      const currentDate = new Date(current?.date || 0);
+      const newDate = new Date(app.date);
+      if (!current || newDate > currentDate) {
+        latestByPatient[email] = app;
+      }
+    });
+
+    const enriched = patients.map((patient) => {
+      const p = patient.toObject();
+      const email = (p.email || '').toLowerCase().trim();
+      const app = latestByPatient[email];
+      const mergedAppInfo = app
+        ? {
+            applicationId: app.applicationId,
+            serviceType: app.serviceType,
+            date: app.date,
+            startTime: app.startTime,
+            endTime: app.endTime,
+            appointmentMode: app.appointmentMode,
+            appointmentStatus: app.appointmentStatus,
+          }
+        : {};
+      return {
+        email: p.email,
+        firstName: p.firstName,
+        middleName: p.middleName,
+        lastName: p.lastName,
+        gender: p.gender,
+        dateOfBirth: p.dateOfBirth,
+        telephone: p.telephone,
+        additionalPhone: p.additionalPhone,
+        ...mergedAppInfo,
+      };
+    });
+
+    const start = (parseInt(page) - 1) * parseInt(limit);
+    const paginated = enriched.slice(start, start + parseInt(limit));
+
+    res.status(200).json(paginated);
+  } catch (error) {
+    console.error('Error fetching assistant patients:', error);
+    res.status(500).json({ error: 'Internal Server Error', detail: error.message });
+  }
+}
+
+const getAssistantAllPatients = async (req, res) => {
+  try {
+    const patients = await Patient.find({}, 'firstName middleName lastName email');
+    const formattedPatients = patients.map((patient) => {
+      let fullName = patient.firstName;
+      if (patient.middleName) fullName += ` ${patient.middleName}`;
+      fullName += ` ${patient.lastName}`;
+      return { id: patient._id, name: fullName, email: patient.email };
+    });
+    res.json(formattedPatients);
+  } catch (error) {
+    console.error('Error fetching patients:', error);
+    res.status(500).json({ message: 'Error fetching patients' });
+  }
+}
+
+const createPatient = async (req, res) => {
+  try {
+    const { firstName, middleName, lastName, email, phoneNumber, gender, dateOfBirth } = req.body;
+
+    if (!firstName || !lastName || !email || !phoneNumber || !gender || !dateOfBirth) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const randomPassword = Math.random().toString(36).slice(-8);
+
+    try {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(409).json({ message: 'User with this email already exists' });
+      }
+
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(randomPassword, saltRounds);
+
+      const newUser = new User({
+        email,
+        password: hashedPassword,
+        role: 'patient',
+        isProfileCompleted: true,
+      });
+      const savedUser = await newUser.save();
+
+      const newPatient = new Patient({
+        firstName,
+        middleName: middleName || '',
+        lastName,
+        email,
+        phoneNumber,
+        gender,
+        dateOfBirth,
+        user: savedUser._id,
+        profileCompleted: true,
+      });
+      const savedPatient = await newPatient.save();
+
+      let fullName = savedPatient.firstName;
+      if (savedPatient.middleName) fullName += ` ${savedPatient.middleName}`;
+      fullName += ` ${savedPatient.lastName}`;
+
+      res.status(201).json({
+        id: savedPatient._id,
+        name: fullName,
+        email: savedPatient.email,
+        tempPassword: randomPassword,
+      });
+    } catch (error) {
+      if (email) await User.findOneAndDelete({ email });
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error creating patient:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.response?.status === 409) {
+      return res.status(409).json({ message: 'User with this email already exists' });
+    }
+    res.status(500).json({ message: 'Error creating patient' });
+  }
+}
+
 module.exports = {
   getAllPatients,
   getPatientById,
@@ -870,4 +1064,7 @@ module.exports = {
   patchPatient,
   deletePatient,
   sendEmail,
+  getAssistantpatients,
+  getAssistantAllPatients,
+  createPatient
 };

@@ -57,8 +57,22 @@ const Patients = () => {
     try {
       setLoading(true);
       const data = await getPatientsByDoctor(assistantEmail, page, recordsPerPage, search);
-      setPatients(data || []);
-      setTotalRecords(data.length || 0);
+      const nextPatients = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.patients)
+          ? data.patients
+          : Array.isArray(data?.data)
+            ? data.data
+            : [];
+
+      setPatients(nextPatients);
+      setTotalRecords(
+        typeof data?.total === "number"
+          ? data.total
+          : typeof data?.totalCount === "number"
+            ? data.totalCount
+            : nextPatients.length
+      );
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {

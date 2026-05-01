@@ -74,9 +74,13 @@ const MySpace = () => {
   const closeModal = () => {
     document.body.classList.remove("modal-open");
     setModalOpen(false);
+    setDoctorsError("");
+    setDoctorsLoading(false);
   };
 
   const [allDoctors, setAllDoctors] = useState([]);
+  const [doctorsLoading, setDoctorsLoading] = useState(false);
+  const [doctorsError, setDoctorsError] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [startDateTime, setStartDateTime] = useState("");
   const [endDateTime, setEndDateTime] = useState("");
@@ -113,10 +117,27 @@ const MySpace = () => {
     let mounted = true;
     (async () => {
       try {
+        setDoctorsLoading(true);
+        setDoctorsError("");
         const list = await getDoctorsLite();
-        if (mounted) setAllDoctors(list || []);
+        console.log("[MySpace] getDoctorsLite response:", list, "type:", typeof list, "isArray:", Array.isArray(list));
+        if (mounted) {
+          const doctorsArray = Array.isArray(list) ? list : (list?.doctors || list?.data || []);
+          console.log("[MySpace] after parsing, doctors count:", doctorsArray.length);
+          console.log("[MySpace] first doctor:", doctorsArray[0]);
+          setAllDoctors(doctorsArray);
+          if (doctorsArray.length === 0) {
+            setDoctorsError("No doctors found");
+          }
+        }
       } catch (e) {
-        console.error(e);
+        console.error("[MySpace] getDoctorsLite error:", e);
+        if (mounted) {
+          setAllDoctors([]);
+          setDoctorsError(e.message || "Failed to load doctors");
+        }
+      } finally {
+        if (mounted) setDoctorsLoading(false);
       }
     })();
     return () => {
@@ -294,12 +315,17 @@ const handleSendRequest = async () => {
             <div className="modal__body">
               <label className="field">
                 <span className="field__label">{t("modal.select_doctor")}</span>
+                {doctorsLoading && <p style={{fontSize: "12px", color: "#666"}}>{t("common.loading")}</p>}
+                {doctorsError && <p style={{fontSize: "12px", color: "#dc2626"}}>{doctorsError}</p>}
                 <select
                   className="field__select"
                   value={selectedDoctor}
                   onChange={(e) => setSelectedDoctor(e.target.value)}
+                  disabled={doctorsLoading || allDoctors.length === 0}
                 >
-                  <option value="">— {t("modal.choose")} —</option>
+                  <option value="">
+                    {doctorsLoading ? `— ${t("common.loading")} —` : `— ${t("modal.choose")} —`}
+                  </option>
                   {allDoctors.map((d) => (
                     <option key={d.email} value={d.email}>
                       {resolveName(d.name) || d.email}
