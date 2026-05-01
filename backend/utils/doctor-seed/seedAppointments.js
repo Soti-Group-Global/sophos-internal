@@ -130,6 +130,60 @@ async function seed() {
   console.log(`\n[SEED-APPTS] Done — inserted ${appointments.length} appointments`);
   console.log("[SEED-APPTS] Status breakdown:", statusSummary);
 
+  // ── 3. Seed three simple Early Detection bookings so they appear
+  // in the Early Diagnosis mini-calendar and week view in the frontend.
+  try {
+    const EarlyDetectionBooking = require("../../models/EarlyDetectionBooking");
+    const Doctor = require("../../models/DoctorsProfile");
+    const Patient = require("../../models/Patient");
+
+    const demoDoctor = await Doctor.findOne({ email: DOCTOR_EMAIL });
+    const targetPatients = ["john@example.com", "anna@example.com", "maria@example.com"];
+
+    const timeslots = [
+      { start: "09:00", end: "09:30" },
+      { start: "14:00", end: "14:30" },
+      { start: "16:00", end: "16:30" },
+    ];
+
+    for (let i = 0; i < targetPatients.length; i++) {
+      const pEmail = targetPatients[i];
+      const patient = await Patient.findOne({ email: pEmail });
+      if (!patient) continue;
+
+      const eventDate = daysFromNow(i + 1); // tomorrow, +2, +3
+      const slot = timeslots[i];
+
+      // remove any existing booking for same patient + date to keep idempotent
+      await EarlyDetectionBooking.deleteOne({ patient: patient._id, 'schedule.specialistConsultations.date': new Date(eventDate) });
+
+      const booking = new EarlyDetectionBooking({
+        patient: patient._id,
+        schedule: {
+          specialistConsultations: [
+            {
+              title: "Ultrasound",
+              date: new Date(eventDate),
+              startTime: slot.start,
+              endTime: slot.end,
+              doctor: demoDoctor ? demoDoctor._id : null,
+              historyForm: {},
+            },
+          ],
+        },
+        consents: { dataProcessing: true, marketing: false },
+        package: { id: "predict", name: "«ПРЕДИКТ»", price: 99500, currency: "RUB" },
+        totalAmount: 99500,
+        status: "confirmed",
+      });
+
+      await booking.save();
+      console.log(`[SEED-APPTS] Created EarlyDetection booking for ${pEmail} on ${eventDate} at ${slot.start}-${slot.end}`);
+    }
+  } catch (err) {
+    console.warn("[SEED-APPTS] Skipped EarlyDetection booking seed:", err.message);
+  }
+
   await mongoose.disconnect();
 }
 

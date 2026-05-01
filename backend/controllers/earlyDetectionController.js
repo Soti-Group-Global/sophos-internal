@@ -80,6 +80,18 @@ const toDateValue = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const toObjectIdString = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (typeof value === 'object') {
+    if (typeof value.toHexString === 'function') return value.toHexString();
+    if (value._id && typeof value._id.toHexString === 'function') return value._id.toHexString();
+    if (typeof value._id === 'string' || typeof value._id === 'number') return String(value._id);
+    if (typeof value.id === 'string' || typeof value.id === 'number') return String(value.id);
+  }
+  return null;
+};
+
 const createLegacyCustomerView = (patientDoc) => {
   const base = patientDoc
     ? {
@@ -146,7 +158,7 @@ const normalizeHistoryForm = (historyForm = {}) => {
 const normalizeFileEntry = (file = {}) => ({
   filename: file?.filename || "",
   customName: file?.customName || "",
-  fileId: file?.fileId || null,
+  fileId: toObjectIdString(file?.fileId),
   url: file?.url || "",
   uploadedAt: toDateValue(file?.uploadedAt) || undefined,
 });
@@ -162,7 +174,7 @@ const normalizeConsultationItem = (item = {}) => ({
   date: toDateValue(item?.date),
   startTime: item?.startTime || "",
   endTime: item?.endTime || "",
-  doctor: item?.doctor || item?.doctorId || null,
+  doctor: toObjectIdString(item?.doctor) || toObjectIdString(item?.doctorId),
   historyForm: normalizeHistoryForm(item?.historyForm || {}),
 });
 
@@ -185,7 +197,7 @@ const buildSchedule = (scheduleInput = {}, legacyAppointmentDate = null, legacyA
     ? scheduleInput.laboratoryTests
         .filter((entry) => entry?.item || entry?.itemId)
         .map((entry) => ({
-          item: entry.item || entry.itemId,
+          item: toObjectIdString(entry.item) || toObjectIdString(entry.itemId),
           files: Array.isArray(entry?.files) ? entry.files.map(normalizeFileEntry) : [],
         }))
     : [];
@@ -194,7 +206,7 @@ const buildSchedule = (scheduleInput = {}, legacyAppointmentDate = null, legacyA
     ? scheduleInput.instrumentalAnalysis
         .filter((entry) => entry?.item || entry?.itemId)
         .map((entry) => ({
-          item: entry.item || entry.itemId,
+          item: toObjectIdString(entry.item) || toObjectIdString(entry.itemId),
           files: Array.isArray(entry?.files) ? entry.files.map(normalizeFileEntry) : [],
         }))
     : [];
@@ -1403,10 +1415,24 @@ exports.checkPaymentStatus = async (req, res) => {
 // @access  Public
 exports.getBookingById = async (req, res) => {
   try {
+    const bookingIdentifier = req.params.id || req.params.bookingId;
+
+    if (!bookingIdentifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking identifier is required'
+      });
+    }
+
+    const bookingIdQuery = mongoose.Types.ObjectId.isValid(bookingIdentifier)
+      ? [{ _id: bookingIdentifier }]
+      : [];
+
     const booking = await EarlyDetectionBooking.findOne({
       $or: [
-        { bookingNumber: req.params.id },
-        { invoiceNumber: req.params.id }
+        ...bookingIdQuery,
+        { bookingNumber: bookingIdentifier },
+        { invoiceNumber: bookingIdentifier }
       ]
     }).select('-__v');
 
@@ -1671,13 +1697,7 @@ exports.updateBookingStatus = async (req, res) => {
     }
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -1760,13 +1780,7 @@ exports.updatePaymentStatus = async (req, res) => {
     }
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -1907,13 +1921,7 @@ exports.markAsPaid = async (req, res) => {
     const { transactionId, paymentMethod, notes } = req.body;
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -2007,13 +2015,7 @@ exports.cancelBooking = async (req, res) => {
     const { reason, refundAmount } = req.body;
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -2091,13 +2093,7 @@ exports.updateBooking = async (req, res) => {
     const { getPackagePriceById, getAddOnById, calculateTotal, EARLY_DETECTION_PACKAGES } = require('../models/EarlyDetectionBooking');
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -2784,13 +2780,7 @@ exports.generatePaymentLink = async (req, res) => {
     }
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -3012,13 +3002,7 @@ exports.validatePaymentLink = async (req, res) => {
     const { id } = req.params;
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -3161,7 +3145,14 @@ const getInternalNotes = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-    res.json({ internalNotes: booking.internalNotes || [] });
+    const safeNotes = (booking.internalNotes || []).map((n) => ({
+      _id: n._id,
+      note: n.note,
+      addedBy: formatAddedBy(n.addedBy),
+      addedAt: n.addedAt,
+    }));
+
+    res.json({ internalNotes: safeNotes });
   } catch (error) {
     console.error("Error fetching internal notes:", error);
     res.status(500).json({ message: "Failed to fetch internal notes", error: error.message });
@@ -3170,20 +3161,83 @@ const getInternalNotes = async (req, res) => {
 
 exports.getInternalNotes = getInternalNotes;
 
+const normalizeTextInput = (value) =>
+  value === null || value === undefined ? "" : String(value).trim();
+
+// Convert various possible `addedBy` formats to a readable string
+const formatAddedBy = (val) => {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "string") return val.trim();
+  if (typeof val === "object") {
+    if (val.email) return String(val.email).trim();
+    if (val.addedBy) return formatAddedBy(val.addedBy);
+    if (val.author) return formatAddedBy(val.author);
+    if (val.firstName || val.lastName || val.middleName) {
+      const parts = [val.firstName, val.middleName, val.lastName].filter(Boolean).map(String);
+      if (parts.length) return parts.join(" ").trim();
+    }
+    if (val.fullName) {
+      if (typeof val.fullName === "string") return val.fullName.trim();
+      if (val.fullName.en) return String(val.fullName.en).trim();
+      if (val.fullName.ru) return String(val.fullName.ru).trim();
+    }
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+  return String(val);
+};
+
+const findBookingForNotes = async (rawId) => {
+  const id = normalizeTextInput(rawId);
+  if (!id) return null;
+
+  const orConditions = [
+    { bookingNumber: id },
+    { invoiceNumber: id },
+  ];
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    orConditions.unshift({ _id: id });
+  }
+
+  return EarlyDetectionBooking.findOne({ $or: orConditions });
+};
+
+const findBookingByIdentifier = async (rawId) => {
+  const id = normalizeTextInput(rawId);
+  if (!id) return null;
+
+  const orConditions = [
+    { bookingNumber: id },
+    { invoiceNumber: id },
+  ];
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    orConditions.unshift({ _id: id });
+  }
+
+  return EarlyDetectionBooking.findOne({ $or: orConditions });
+};
+
 // Add internal note to booking
 exports.addInternalNote = async (req, res) => {
   try {
     const { id } = req.params;
     const { note, addedBy } = req.body;
+    const normalizedNote = normalizeTextInput(note);
+    const addedByFinal = formatAddedBy(addedBy || req.user || "");
 
-    if (!note || !note.trim()) {
+    if (!normalizedNote) {
       return res.status(400).json({
         success: false,
         message: 'Note content is required'
       });
     }
 
-    if (!addedBy || !addedBy.trim()) {
+    if (!addedByFinal) {
       return res.status(400).json({
         success: false,
         message: 'Note author is required'
@@ -3191,13 +3245,7 @@ exports.addInternalNote = async (req, res) => {
     }
 
     // Find booking
-    const booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    const booking = await findBookingForNotes(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -3212,8 +3260,8 @@ exports.addInternalNote = async (req, res) => {
     }
 
     booking.internalNotes.push({
-      note: note.trim(),
-      addedBy: addedBy.trim(),
+      note: normalizedNote,
+      addedBy: addedByFinal,
       addedAt: new Date()
     });
 
@@ -3239,8 +3287,9 @@ exports.updateInternalNote = async (req, res) => {
   try {
     const { id, noteId } = req.params;
     const { note } = req.body;
+    const normalizedNote = normalizeTextInput(note);
 
-    if (!note || !note.trim()) {
+    if (!normalizedNote) {
       return res.status(400).json({
         success: false,
         message: 'Note content is required'
@@ -3248,13 +3297,7 @@ exports.updateInternalNote = async (req, res) => {
     }
 
     // Find booking
-    const booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    const booking = await findBookingForNotes(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -3272,7 +3315,7 @@ exports.updateInternalNote = async (req, res) => {
       });
     }
 
-    noteToUpdate.note = note.trim();
+    noteToUpdate.note = normalizedNote;
     await booking.save();
 
     res.status(200).json({
@@ -3296,13 +3339,7 @@ exports.deleteInternalNote = async (req, res) => {
     const { id, noteId } = req.params;
 
     // Find booking
-    const booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    const booking = await findBookingForNotes(id);
 
     if (!booking) {
       return res.status(404).json({

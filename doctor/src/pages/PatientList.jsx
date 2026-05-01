@@ -107,10 +107,21 @@ const PatientList = ({ patients, loading, error, navigate, setCurrentPatient }) 
             </td>
             <td>
               {patient.serviceType && (
-                <span className={serviceBadgeClass(patient.serviceType)}>
-                  {t(`serviceType.${patient.serviceType}`) || patient.serviceType}
-                </span>
+                (() => {
+                  const translationKey = `serviceType.${patient.serviceType}`;
+                  const translatedServiceType = t(translationKey);
+                  const label = translatedServiceType === translationKey
+                    ? patient.serviceType
+                    : translatedServiceType;
+
+                  return (
+                    <span className={serviceBadgeClass(patient.serviceType)}>
+                      {label}
+                    </span>
+                  );
+                })()
               )}
+              {!patient.serviceType && t("common.notAvailable")}
             </td>
           </tr>
         ))}

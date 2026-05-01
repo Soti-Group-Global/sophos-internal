@@ -510,6 +510,10 @@ const EarlyDetectionBookingDetails = () => {
       let list = [];
       const normalizedId = normalizeId(bookingId);
       const doctorEmailFromState = location?.state?.doctorEmail || getEmailFromToken();
+      const unwrapBookingResponse = (response) => {
+        const payload = response?.data?.data ?? response?.data;
+        return payload && typeof payload === "object" ? payload : null;
+      };
 
       const buildBookingFromApplication = (applicationData, bookingsList) => {
         if (!applicationData) return null;
@@ -601,7 +605,7 @@ const EarlyDetectionBookingDetails = () => {
       if (isMongoObjectId) {
         try {
           const response = await getEarlyDetectionBookingById(bookingId);
-          foundBooking = response?.data || null;
+          foundBooking = unwrapBookingResponse(response);
         } catch (innerErr) {
           if (!innerErr.response || innerErr.response?.status !== 404) {
             throw innerErr;
@@ -653,12 +657,13 @@ const EarlyDetectionBookingDetails = () => {
       if (foundBooking && !Array.isArray(foundBooking.internalNotes) && foundBooking?._id) {
         try {
           const detailsResponse = await getEarlyDetectionBookingById(foundBooking._id);
-          if (detailsResponse?.data) {
-            foundBooking = detailsResponse.data;
+          const detailsBooking = unwrapBookingResponse(detailsResponse);
+          if (detailsBooking) {
+            foundBooking = detailsBooking;
 
             // DEBUG: Log specialist consultations when booking is fetched
             console.log("[DEBUG] Booking loaded from API, specialist consultations:",
-              detailsResponse.data?.schedule?.specialistConsultations?.map((s, idx) => ({
+              detailsBooking?.schedule?.specialistConsultations?.map((s, idx) => ({
                 index: idx,
                 title: s.title,
                 doctorId: s.doctor?._id || s.doctor,
@@ -678,9 +683,10 @@ const EarlyDetectionBookingDetails = () => {
         try {
           console.log("[DEBUG] Specialist consultations empty, trying to fetch full booking from API:", foundBooking._id);
           const detailsResponse = await getEarlyDetectionBookingById(foundBooking._id);
-          if (detailsResponse?.data && detailsResponse.data?.schedule?.specialistConsultations?.length > 0) {
+          const detailsBooking = unwrapBookingResponse(detailsResponse);
+          if (detailsBooking?.schedule?.specialistConsultations?.length > 0) {
             console.log("[DEBUG] Successfully loaded specialist consultations from API");
-            foundBooking = detailsResponse.data;
+            foundBooking = detailsBooking;
           }
         } catch (err) {
           console.warn("[DEBUG] Failed to load full booking details:", err.message);
@@ -688,6 +694,42 @@ const EarlyDetectionBookingDetails = () => {
       }
 
       if (foundBooking) {
+        const fallbackPatientName = String(foundBooking?.patientName || "").trim();
+        const fallbackNameParts = fallbackPatientName.split(/\s+/).filter(Boolean);
+        const normalizedPatient = {
+          ...(foundBooking?.patient && typeof foundBooking.patient === "object" ? foundBooking.patient : {}),
+          _id:
+            normalizeId(foundBooking?.patient?._id) ||
+            normalizeId(foundBooking?.patientId) ||
+            normalizeId(foundBooking?.customer?._id) ||
+            undefined,
+          email:
+            foundBooking?.patient?.email ||
+            foundBooking?.patientEmail ||
+            foundBooking?.customer?.email ||
+            "",
+          firstName:
+            foundBooking?.patient?.firstName ||
+            foundBooking?.customer?.firstName ||
+            fallbackNameParts[0] ||
+            "",
+          middleName:
+            foundBooking?.patient?.middleName ||
+            foundBooking?.customer?.middleName ||
+            fallbackNameParts[2] ||
+            "",
+          lastName:
+            foundBooking?.patient?.lastName ||
+            foundBooking?.customer?.lastName ||
+            fallbackNameParts[1] ||
+            "",
+        };
+
+        foundBooking = {
+          ...foundBooking,
+          patient: normalizedPatient,
+        };
+
         setNotFound(false);
 
         // DEBUG: Log the full booking structure
@@ -822,7 +864,11 @@ const EarlyDetectionBookingDetails = () => {
   const loadManagedTests = async (section) => {
     try {
       const response = await getEarlyDetectionManagedTests(section);
-      const list = Array.isArray(response?.data) ? response.data : [];
+      const list = Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
       setManagedTests((prev) => ({ ...prev, [section]: list }));
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to load tests");
@@ -960,7 +1006,7 @@ const EarlyDetectionBookingDetails = () => {
           }
           formData.append("file", fileItem.file);
 
-          const response = await uploadEarlyDetectionScheduleFile(booking._id || id, formData);
+          const response = await uploadEarlyDetectionScheduleFile(booking._id || id, uploadSection, formData);
           const responseData = response?.data;
           const bookingData = responseData?.success ? responseData.data : responseData;
           if (bookingData) {
@@ -996,7 +1042,7 @@ const EarlyDetectionBookingDetails = () => {
         }
         formData.append("file", uploadFile);
 
-        const response = await uploadEarlyDetectionScheduleFile(booking._id || id, formData);
+        const response = await uploadEarlyDetectionScheduleFile(booking._id || id, uploadSection, formData);
         const responseData = response?.data;
         const bookingData = responseData?.success ? responseData.data : responseData;
 
@@ -2162,8 +2208,22 @@ const EarlyDetectionBookingDetails = () => {
                   application={{
                     createdAt: booking.createdAt,
                     applicationId: booking.invoiceNumber || booking.bookingNumber,
+                    patientName:
+                      [booking?.patient?.lastName, booking?.patient?.firstName, booking?.patient?.middleName]
+                        .filter(Boolean)
+                        .join(" ")
+                        .trim() ||
+                      booking?.patientName ||
+                      "",
+                    patientEmail: booking?.patient?.email || booking?.patientEmail || "",
                   }}
-                  patient={booking.patient || {}}
+                  patient={
+                    booking.patient || {
+                      _id: booking?.patientId || "",
+                      email: booking?.patientEmail || "",
+                      firstName: booking?.patientName || "",
+                    }
+                  }
                   onSave={(updatedPatient) => {
                     setBooking((prev) => ({
                       ...prev,

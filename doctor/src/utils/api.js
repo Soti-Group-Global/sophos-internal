@@ -250,10 +250,37 @@ export const getDoctorsProfileData = async () => {
   return getAllDoctors();
 };
 
+const normalizeEntityId = (value) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" || typeof value === "number") return String(value);
+
+  if (typeof value === "object") {
+    if (typeof value.toHexString === "function") return value.toHexString();
+    if (typeof value.$oid === "string") return value.$oid;
+    if (typeof value._id === "string" || typeof value._id === "number") return String(value._id);
+    if (typeof value.id === "string" || typeof value.id === "number") return String(value.id);
+  }
+
+  return "";
+};
+
 export const patchPatient = async (patientId, payload) => {
   try {
-    const response = await api.put(`/patients/${encodeURIComponent(patientId)}`, payload);
-    return response.data;
+    const normalizedPatientId = normalizeEntityId(patientId);
+
+    if (!normalizedPatientId) {
+      throw new Error("Invalid patient id");
+    }
+
+    // Use PATCH because GeneralInformationTab sends partial updates across many sections.
+    const response = await api.patch(`/patients/${encodeURIComponent(normalizedPatientId)}`, payload);
+
+    const patientData = response?.data?.patient || response?.data?.data || response?.data;
+    if (!patientData || typeof patientData !== "object") {
+      throw new Error("Invalid patient update response");
+    }
+
+    return patientData;
   } catch (error) {
     console.error("Patch Patient Error:", error.response?.data || error.message);
     throw error;
@@ -1995,8 +2022,7 @@ export const getEarlyDetectionDoctors = async () => {
 };
 
 const getManagedTestsEndpoint = (section) => {
-  if (section === 'instrumentalAnalysis') return '/early-detection/instrumental-analyses';
-  return '/early-detection/laboratory-tests';
+  return `/early-detection/bookings/tests/${encodeURIComponent(section)}`;
 };
 
 export const getEarlyDetectionManagedTests = async (section) => {
@@ -2117,7 +2143,7 @@ export const deleteEarlyDetectionBookingNote = async (bookingId, noteId) => {
 };
 
 export const generateEDPaymentLink = async (bookingId, payload) => {
-  return api.post(`/early-detection/bookings/${encodeURIComponent(bookingId)}/payment-links`, payload);
+  return api.post(`/early-detection/bookings/${encodeURIComponent(bookingId)}/generate-payment-link`, payload);
 };
 
 export const updateEarlyDetectionPaymentStatus = async (bookingId, payload) => {
@@ -2142,8 +2168,11 @@ export const getDoctorLeaves = async (doctorEmail, date) => {
   });
 };
 
-export const uploadEarlyDetectionScheduleFile = async (bookingId, formData) => {
-  return api.post(`/early-detection/bookings/${encodeURIComponent(bookingId)}/schedule-files`, formData);
+export const uploadEarlyDetectionScheduleFile = async (bookingId, section, formData) => {
+  return api.post(
+    `/early-detection/bookings/${encodeURIComponent(bookingId)}/schedule/${encodeURIComponent(section)}/upload`,
+    formData,
+  );
 };
 
 export const fetchEarlyDetectionScheduleFile = async (fileId) => {

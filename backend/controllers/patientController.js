@@ -1,5 +1,6 @@
 const Patient = require('../models/Patient');
 const User = require('../models/User');
+const Application = require('../models/Application');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const mongoose = require('mongoose');
@@ -51,11 +52,61 @@ function getPatientId(req) {
 // Get all patients (with optional doctorEmail query)
 const getAllPatients = async (req, res) => {
   try {
-    const patients = await Patient.find();
-    const patientsWithImages = await Promise.all(patients.map(async (patient) => {
-      const profilePicture = await readProfilePicture(patient.profileFileId);
-      return { ...patient.toObject(), profilePicture };
-    }));
+    const { doctorEmail } = req.query;
+    const normalizedDoctorEmail = doctorEmail ? doctorEmail.toLowerCase() : null;
+
+    const patients = await Patient.find().lean();
+
+    // Fetch applications by patient emails and/or by doctorEmail (if provided)
+    let applications = [];
+    const patientEmails = patients.map((p) => p.email).filter(Boolean).map((e) => e.toLowerCase());
+
+    const queryClauses = [];
+    if (patientEmails.length) {
+      queryClauses.push({ patientEmail: { $in: patientEmails } });
+    }
+    if (normalizedDoctorEmail) {
+      queryClauses.push({ doctorEmail: normalizedDoctorEmail });
+      queryClauses.push({ "doctors.doctorEmail": normalizedDoctorEmail });
+    }
+
+    if (queryClauses.length) {
+      applications = await Application.find({ $or: queryClauses })
+        .sort({ date: -1, startTime: -1, createdAt: -1 })
+        .select("patientEmail applicationId date startTime endTime serviceType appointmentStatus")
+        .lean();
+    }
+
+    const latestApplicationByPatient = new Map();
+    applications.forEach((application) => {
+      const patientEmail = application.patientEmail?.toLowerCase();
+      if (patientEmail && !latestApplicationByPatient.has(patientEmail)) {
+        latestApplicationByPatient.set(patientEmail, application);
+      }
+    });
+
+    const patientsWithImages = await Promise.all(
+      patients.map(async (patient) => {
+        const profilePicture = await readProfilePicture(patient.profileFileId);
+        const latestApplication = latestApplicationByPatient.get(patient.email?.toLowerCase());
+
+        return {
+          ...patient,
+          profilePicture,
+          ...(latestApplication
+            ? {
+                applicationId: latestApplication.applicationId,
+                date: latestApplication.date,
+                startTime: latestApplication.startTime,
+                endTime: latestApplication.endTime,
+                serviceType: latestApplication.serviceType,
+                appointmentStatus: latestApplication.appointmentStatus,
+              }
+            : {}),
+        };
+      }),
+    );
+
     res.status(200).json({ patients: patientsWithImages });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch patients', error: error.message });

@@ -247,18 +247,31 @@ const Appointments = () => {
   }, [miniCalMonth]);
 
   const miniCalDayEventCounts = useMemo(() => {
-    const allowedStatuses = new Set(["confirmed", "upcoming", "completed"]);
+    const allowedRegularStatuses = new Set(["confirmed", "upcoming", "completed"]);
+    const allowedEarlyDetectionStatuses = new Set([
+      "pending",
+      "confirmed",
+      "completed",
+    ]);
     const counts = {};
     appointments.forEach((appt) => {
-      if (appt?.type !== "application") return;
       const statusKey = (appt?.appointmentStatus || appt?.status || "").toLowerCase();
-      if (!allowedStatuses.has(statusKey)) return;
+      const isEarlyDetection = appt?.type === "earlyDetection";
+      const allowed = isEarlyDetection
+        ? allowedEarlyDetectionStatuses
+        : allowedRegularStatuses;
+      if (!allowed.has(statusKey)) return;
 
-      const startMoment = appt?.startTime
-        ? moment(appt.startTime)
-        : appt?.date
-          ? moment(appt.date)
-          : null;
+      const datePart = formatDateISO(appt?.date);
+      const startPart = formatTimeHHMM(appt?.startTime);
+      const startMoment =
+        datePart && startPart
+          ? moment(`${datePart} ${startPart}`, "YYYY-MM-DD HH:mm")
+          : appt?.startTime
+            ? moment(appt.startTime)
+            : appt?.date
+              ? moment(appt.date)
+              : null;
       if (!startMoment || !startMoment.isValid()) return;
 
       const key = startMoment.format("YYYY-MM-DD");
@@ -335,18 +348,22 @@ const Appointments = () => {
           : [];
       const earlyMapped = earlyDetectionApps
         .map((app) => {
+          const datePart = formatDateISO(app?.date);
+          const startPart = formatTimeHHMM(app?.startTime);
+          const endPart = formatTimeHHMM(app?.endTime);
+
           const start =
-            app.date && app.startTime
-              ? moment(`${app.date} ${app.startTime}`, "YYYY-MM-DD HH:mm")
-              : app.startTime
-              ? moment(app.startTime)
-              : null;
+            datePart && startPart
+              ? moment(`${datePart} ${startPart}`, "YYYY-MM-DD HH:mm")
+              : app?.startTime
+                ? moment(app.startTime)
+                : null;
           const end =
-            app.date && app.endTime
-              ? moment(`${app.date} ${app.endTime}`, "YYYY-MM-DD HH:mm")
-              : app.endTime
-              ? moment(app.endTime)
-              : null;
+            datePart && endPart
+              ? moment(`${datePart} ${endPart}`, "YYYY-MM-DD HH:mm")
+              : app?.endTime
+                ? moment(app.endTime)
+                : null;
           return {
             id: app.applicationId || app._id || app.id,
             title:
