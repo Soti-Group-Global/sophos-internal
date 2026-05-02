@@ -182,7 +182,7 @@ const getCalendarApplications = async (req, res) => {
 
     for (const app of applications) {
       const [patient, doctorProfile] = await Promise.all([
-        Patient.findOne({ email: app.patientEmail })
+        Patient.findOne({ patientId: app.patientId })
           .select("firstName middleName lastName")
           .lean(),
         DoctorsProfile.findOne({ email: app.doctorEmail })
@@ -227,7 +227,7 @@ const getCalendarApplications = async (req, res) => {
 
         if (followUpApp) {
           const [followUpPatient, followUpDoctorProfile] = await Promise.all([
-            Patient.findOne({ email: followUpApp.patientEmail })
+            Patient.findOne({ patientId: followUpApp.patientId })
               .select("firstName middleName lastName")
               .lean(),
             DoctorsProfile.findOne({ email: followUpApp.doctorEmail })

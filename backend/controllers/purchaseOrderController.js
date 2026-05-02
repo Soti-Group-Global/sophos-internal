@@ -1,8 +1,8 @@
-﻿const PurchaseOrder = require("../models/Inventory/PurchaseOrder");
+const PurchaseOrder = require("../models/Inventory/PurchaseOrder");
 const Stock = require("../models/Inventory/Stock");
 const Supplier = require("../models/Inventory/Supplier");
 const HeadAssistant = require("../models/HeadAssistant");
-const nodemailer = require('nodemailer');
+const { transporter: _emailTransporter } = require('../utils/emailService');
 // Get all purchase orders
 exports.getPurchaseOrders = async (req, res) => {
   try {
@@ -269,22 +269,14 @@ exports.createPurchaseOrderWithPDF = async (req, res) => {
 // Email service function for Gmail
 const sendEmailWithPDF = async ({ to, supplierName, order, pdfData }) => {
   try {
-    // Configure Nodemailer for Gmail
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD, // Use App Password for Gmail
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+    // Use shared transporter from emailService
+    const transporter = _emailTransporter;
+
 
     const mailOptions = {
-      from: `"Health-Direct" <${process.env.EMAIL_USER}>`,
+      from: `"SOPHOS" <${process.env.EMAIL_USER}>`,
       to: to,
-      subject: `Purchase Order #HD-${order._id.toString().slice(-6)} - Health-Direct`,
+      subject: `Purchase Order #HD-${order._id.toString().slice(-6)} - SOPHOS`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -302,7 +294,7 @@ const sendEmailWithPDF = async ({ to, supplierName, order, pdfData }) => {
         </head>
         <body>
           <div class="header">
-            <h1 style="margin: 0; font-size: 2em;">🏥 Health-Direct</h1>
+            <h1 style="margin: 0; font-size: 2em;">🏥 SOPHOS</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Medical Supplies & Equipment</p>
           </div>
           

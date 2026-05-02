@@ -1,4 +1,4 @@
-const Patient = require('../models/Patient');
+﻿const Patient = require('../models/Patient');
 const User = require('../models/User');
 const Application = require('../models/Application');
 const Assistant = require('../models/Assistant');
@@ -6,18 +6,12 @@ const HeadAssistant = require('../models/HeadAssistant');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
+const { transporter } = require('../utils/emailService');
 const { getGfs } = require('../gridfs');
 const moment = require('moment-timezone');
 
 // Configure Nodemailer transport
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // Adjust to your email service
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+
 
 // Helper: read profile picture from GridFS
 async function readProfilePicture(profileFileId) {
@@ -119,7 +113,7 @@ const getAllPatients = async (req, res) => {
 // Get a single patient by ID
 const getPatientById = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findById(req.params.patientId);
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
@@ -720,7 +714,7 @@ const updatePatient = async (req, res) => {
 // Patch a patient – partial update for GeneralInformationTab fields
 const patchPatient = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findById(req.params.patientId);
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
@@ -786,7 +780,7 @@ const patchPatient = async (req, res) => {
     }
 
     const updated = await Patient.findByIdAndUpdate(
-      req.params.id,
+      req.params.patientId,
       { $set: updates },
       { new: true, runValidators: true }
     );
@@ -800,7 +794,7 @@ const patchPatient = async (req, res) => {
 // Delete a patient
 const deletePatient = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findById(req.params.patientId);
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
@@ -829,7 +823,7 @@ const sendEmail = async (req, res) => {
   }
 
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findById(req.params.patientId);
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }

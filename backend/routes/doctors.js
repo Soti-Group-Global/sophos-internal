@@ -26,6 +26,7 @@ const {
   uploadMessageFile,
   getDoctorsLite,
   getAllDoctorsForMessages,
+  getDoctorImageById,
 } = require("../controllers/doctorController");
 
 // Configure multer with memory storage
@@ -54,6 +55,7 @@ router.post("/doctor-breaks", auth, createOrUpdateMyBreaks);
 router.put("/doctor-breaks/:breakId", auth, updateMyBreakById);
 router.delete("/doctor-breaks/:breakId", auth, deleteMyBreakById);
 router.get("/branches", auth, getDoctorBranchesList);
+  router.get("/image-by-id/:fileId", auth, getDoctorImageById);
 
 // Specific GET routes (before /:id pattern)
 router.get("/all", auth, getAllDoctors);
@@ -64,6 +66,7 @@ router.get("/messages/allDoctors", auth, getAllDoctorsForMessages);
 router.post("/messages/upload", auth, upload, uploadMessageFile);
 router.delete("/messages/:messageId", auth, deleteMessage);
 router.get("/messages", auth, getMessage);
+router.get("/image-by-id/:fileId", auth, getDoctorImageById);
 
 // Generic CRUD routes
 router.post("/", [auth, upload], createDoctor);

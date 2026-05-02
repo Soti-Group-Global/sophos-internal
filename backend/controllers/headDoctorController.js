@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+﻿const mongoose = require("mongoose");
+const { sendHeadDoctorAccountEmail } = require('../utils/emailService');
 const HeadDoctor = require("../models/HeadDoctor");
 const User = require("../models/User");
 const { getGfs } = require("../gridfs");
@@ -27,140 +27,9 @@ const generatePassword = (email) => {
   return `${emailFragment}${randomString}!`;
 };
 
-/** Mailer **/
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
-
-const sendAccountCreationEmail = async (email, password, fullName, notificationLanguage = 'en') => {
-  try {
-    const loginLink = 'https://doctor.health-direct.ru/';
-
-    const templates = {
-      en: {
-        subject: 'Your Head Doctor Account Has Been Created',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Welcome to SOPHOS</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${fullName},</p>
-                <p>Your <strong>Head Doctor (Главный врач)</strong> account has been successfully created. Below are your login credentials:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Email:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Password:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Click the button below to log in to your account:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Log In Now</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Or copy and paste this link: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Important: Please change your password after your first login for security purposes.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      },
-      ru: {
-        subject: 'Ваш аккаунт главного врача создан',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Добро пожаловать в СОФОС</h1>
-              </div>
-              <div class="content">
-                <p>Уважаемый(-ая) ${fullName},</p>
-                <p>Ваш аккаунт <strong>Главного врача</strong> был успешно создан. Ниже указаны ваши учетные данные для входа:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Электронная почта:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Пароль:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Нажмите на кнопку ниже, чтобы войти в свой аккаунт:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Войти</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Или скопируйте и вставьте эту ссылку: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Важно: Пожалуйста, смените пароль после первого входа в систему из соображений безопасности.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      }
-    };
-
-    const template = templates[language] || templates['ru'];
-
-    const mailOptions = {
-      from: `"Медицинский центр СОФОС" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: template.subject,
-      html: template.html,
-    };
-
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    throw error;
-  }
-};
+// Delegate to shared email utility (utils/emailService.js)
+const sendAccountCreationEmail = (email, password, fullName, lang = 'en') =>
+  sendHeadDoctorAccountEmail(email, password, fullName, lang);
 
 // Create Specialist
 const createHeadDoctor = async (req, res) => {

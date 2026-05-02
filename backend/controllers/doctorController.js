@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
+const { sendDoctorAccountEmail } = require('../utils/emailService');
 const { Readable } = require('stream');
 
 const Doctor = require('../models/DoctorsProfile');
@@ -32,143 +32,11 @@ const generatePassword = (email) => {
   return `${emailFragment}${randomString}!`;
 };
 
-// Configure nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+// Delegate to shared email utility (utils/emailService.js)
+const sendAccountCreationEmail = (email, password, fullName, language = 'en') =>
+  sendDoctorAccountEmail(email, password, fullName, language);
 
-// Function to send account creation email
-const sendAccountCreationEmail = async (email, password, fullName, language = 'en') => {
-  try {
-    const loginLink = 'https://doctor.health-direct.ru/';
 
-    const templates = {
-      en: {
-        subject: 'Your Doctor Account Has Been Created',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Welcome to SOPHOS</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${fullName},</p>
-                <p>Your <strong>Doctor (Врач)</strong> account has been successfully created. Below are your login credentials:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Email:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Password:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Click the button below to log in to your account:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Log In Now</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Or copy and paste this link: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Important: Please change your password after your first login for security purposes.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      },
-      ru: {
-        subject: 'Ваш аккаунт врача создан',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Добро пожаловать в СОФОС</h1>
-              </div>
-              <div class="content">
-                <p>Уважаемый(-ая) ${fullName},</p>
-                <p>Ваш аккаунт <strong>Врача</strong> был успешно создан. Ниже указаны ваши учетные данные для входа:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Электронная почта:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Пароль:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Нажмите на кнопку ниже, чтобы войти в свой аккаунт:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Войти</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Или скопируйте и вставьте эту ссылку: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Важно: Пожалуйста, смените пароль после первого входа в систему из соображений безопасности.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      }
-    };
-
-    const template = templates[language] || templates['ru'];
-
-    const mailOptions = {
-      from: `"Медицинский центр СОФОС" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: template.subject,
-      html: template.html,
-    };
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    throw error;
-  }
-};
 
 // Create doctor
 const createDoctor = async (req, res) => {
@@ -736,6 +604,62 @@ const getDoctorByEmail = async (req, res) => {
   }
 };
 
+// Get doctor profile image by GridFS file ID
+// Get doctor profile image by GridFS file ID or doctor ID
+const getDoctorImageById = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+
+    if (!ObjectId.isValid(fileId)) {
+      return res.status(400).json({ message: 'Invalid file ID' });
+    }
+
+    const gfs = getGfs();
+
+    const tryReadFile = async (id) => {
+      const files = await gfs.find({ _id: new ObjectId(id) }).toArray();
+      if (!files || files.length === 0) {
+        return null;
+      }
+
+      const file = files[0];
+      res.set('Content-Type', file.contentType || 'application/octet-stream');
+      res.set('Content-Disposition', `inline; filename="${file.filename}"`);
+      res.set('Cache-Control', 'public, max-age=31536000');
+
+      return await new Promise((resolve, reject) => {
+        const readStream = gfs.openDownloadStream(file._id);
+        readStream.on('error', reject);
+        readStream.on('end', resolve);
+        readStream.pipe(res);
+      });
+    };
+
+    const directFile = await tryReadFile(fileId);
+    if (directFile !== null) {
+      return;
+    }
+
+    const doctor = await Doctor.findOne({
+      $or: [{ profileFileId: fileId }, { _id: new ObjectId(fileId) }],
+    }).select('profileFileId');
+
+    if (doctor?.profileFileId && doctor.profileFileId !== fileId) {
+      const doctorFile = await tryReadFile(doctor.profileFileId);
+      if (doctorFile !== null) {
+        return;
+      }
+    }
+
+    return res.status(404).json({ message: 'Image not found' });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error fetching image',
+      error: error.message,
+    });
+  }
+};
+
 // Get breaks for a doctor on a specific date
 const getDoctorBreaks = async (req, res) => {
   try {
@@ -1159,6 +1083,7 @@ module.exports = {
   updateDoctor,
   deleteDoctor,
   getDoctorByEmail,
+  getDoctorImageById,
   getDoctorBreaks,
   createOrUpdateMyBreaks,
   updateMyBreakById,
@@ -1171,5 +1096,6 @@ module.exports = {
   deleteMessage,
   uploadMessageFile,
   getDoctorsLite,
-  getAllDoctorsForMessages
+  getAllDoctorsForMessages,
+  getDoctorImageById
 };

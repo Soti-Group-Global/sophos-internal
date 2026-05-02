@@ -6,8 +6,8 @@ const {
   uploadDocumentFile,
   uploadDocumentUrl,
   getUserIdByEmail,
-  getMedicalHistoryByEmail,
-  getApplicationsByPatientEmail,
+  getMedicalHistoryByPatientId,
+  getApplicationsByPatientId,
   getApplicationsByDate,
   getApplicationCountsByMonth,
   getApplicationById,
@@ -52,7 +52,6 @@ const {
   getAppointmentsByDoctorEmail,
   getCalendarApplications,
   getByApplicationId,
-  getByPatientEmail,
   getAssistantAppointments,
   getCalendar,
   patchApplication,
@@ -85,10 +84,14 @@ router.delete("/:id/documents/:filename", auth, deleteDocument);
 router.get("/user-id/:email", auth, getUserIdByEmail);
 
 // --- Medical history ---
-router.get("/medical-history/by-email/:email", auth, getMedicalHistoryByEmail);
+router.get(
+  "/medical-history/by-patient-id/:patientId",
+  auth,
+  getMedicalHistoryByPatientId,
+);
 
-// --- Applications by patient email ---
-router.get("/by-patient-email/:email", auth, getApplicationsByPatientEmail);
+// --- Applications by patient ID ---
+router.get("/by-patient-id/:patientId", auth, getApplicationsByPatientId);
 
 // --- Applications by date (calendar view) - MUST be before /:id route ---
 router.get("/applicationsByDate", auth, getApplicationsByDate);
@@ -185,7 +188,6 @@ router.put('/:applicationId/history-form',auth,updateHistoryFormForDoctor);
 // --- Assistant related routes --- //
 router.get('/', auth, getCalendarApplications);
 router.get('/by-application-id/:id', auth, getByApplicationId);
-router.get('/by-patient-email/:email', auth, getByPatientEmail);
 router.get('/assistant/:email', auth, getAssistantAppointments);
 router.get('/calendar', auth, getCalendar);
 router.patch('/by-application-id/:applicationId', auth, patchApplication);

@@ -52,7 +52,7 @@ function getWeekDays(date) {
 
 function generateTimeSlots() {
   const slots = [];
-  for (let h = 9; h < 18; h++)
+  for (let h = 0; h < 24; h++)
     for (let m = 0; m < 60; m += 30)
       slots.push({ hour: h, minute: m, display: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}` });
   return slots;
@@ -73,6 +73,30 @@ function getMonthNames(locale) {
   return Array.from({ length: 12 }, (_, i) =>
     new Date(2000, i, 1).toLocaleDateString(locale, { month: "long" })
   );
+}
+
+function extractDate(appt) {
+  if (appt.date) return String(appt.date).slice(0, 10);
+  if (appt.appointmentDate) return String(appt.appointmentDate).slice(0, 10);
+  if (appt.startTime && String(appt.startTime).includes("T")) {
+    return String(appt.startTime).slice(0, 10);
+  }
+  return null;
+}
+
+function formatTime(value) {
+  if (!value) return "";
+  let t = String(value).trim();
+  if (/^\d{1,2}:\d{2}$/.test(t)) return t;
+  const d = new Date(t);
+  if (!isNaN(d)) {
+    return d.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Moscow",
+    });
+  }
+  return t;
 }
 
 const WEEKDAYS_EN = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -141,33 +165,31 @@ const AppointmentsCalendarView = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  /* fetch appointments for the current week whenever week changes */
+  /* fetch all appointments for both the week grid and mini-calendar */
   useEffect(() => {
     if (!assistantEmail) return;
     setLoading(true);
-    getAppointmentsForCalendar(assistantEmail, weekStartYMD, weekEndYMD)
-      .then(setAppointments)
-      .catch((err) => console.error("Calendar fetch error:", err))
-      .finally(() => setLoading(false));
-  }, [weekStartYMD]); // re-fetch only when the week changes
-
-  /* fetch all appointments for mini-calendar counts */
-  useEffect(() => {
-    if (!assistantEmail) return;
     getAppointmentsByDoctor(assistantEmail, 1, 2000, "all", "")
       .then(({ appointments: allAppointments }) => {
-        setMiniCalendarAppointments(Array.isArray(allAppointments) ? allAppointments : []);
+        const valid = Array.isArray(allAppointments)
+          ? allAppointments.filter(appt => {
+              const s = (appt.appointmentStatus || appt.status || "").toLowerCase();
+              return ["confirmed", "completed"].includes(s);
+            })
+          : [];
+        setMiniCalendarAppointments(valid);
+        setAppointments(valid);
       })
-      .catch((err) => console.error("Mini calendar fetch error:", err));
+      .catch((err) => console.error("Calendar fetch error:", err))
+      .finally(() => setLoading(false));
   }, [assistantEmail]);
 
   /* group appointments by date string "YYYY-MM-DD" */
   const byDay = useMemo(() => {
     const map = {};
     appointments.forEach((appt) => {
-      if (!appt.date) return;
-      // date field is stored as a string like "2026-02-27" or ISO
-      const key = appt.date.slice(0, 10);
+      const key = extractDate(appt);
+      if (!key) return;
       if (!map[key]) map[key] = [];
       map[key].push(appt);
     });
@@ -177,8 +199,8 @@ const AppointmentsCalendarView = () => {
   const miniByDay = useMemo(() => {
     const map = {};
     miniCalendarAppointments.forEach((appt) => {
-      if (!appt.date) return;
-      const key = appt.date.slice(0, 10);
+      const key = extractDate(appt);
+      if (!key) return;
       if (!map[key]) map[key] = new Set();
       const doctorKey = Array.isArray(appt.doctors)
         ? appt.doctors.map((doctor) => doctor?.doctorEmail || doctor?.doctorName || "").join(",")
@@ -199,11 +221,11 @@ const AppointmentsCalendarView = () => {
     return Object.fromEntries(Object.entries(map).map(([dayKey, value]) => [dayKey, value.size]));
   }, [miniCalendarAppointments]);
 
-  /* match slot — startTime is a plain "HH:mm" string */
+  /* match slot — startTime might be a plain "HH:mm" string or ISO string */
   const getBookingsAtSlot = (dayApps, hour, minute) =>
     dayApps.filter((appt) => {
       if (!appt.startTime) return false;
-      const t = String(appt.startTime).trim();
+      const t = formatTime(appt.startTime);
       if (!/^\d{1,2}:\d{2}$/.test(t)) return false;
       const [h, m] = t.split(":").map(Number);
       return h === hour && m >= minute && m < minute + 30;
@@ -406,8 +428,8 @@ const AppointmentsCalendarView = () => {
                       <div key={i} className={`edcv2-slot${slot.minute === 0 ? " full" : " half"}`}>
                         {slotBookings.map((appt) => {
                           const timeLabel = appt.startTime && appt.endTime
-                            ? `${appt.startTime} – ${appt.endTime}`
-                            : appt.startTime || "";
+                            ? `${formatTime(appt.startTime)} – ${formatTime(appt.endTime)}`
+                            : formatTime(appt.startTime);
 
                           const patientName = appt.patientDetails
                             ? [

@@ -1,4 +1,4 @@
-const Application = require("../models/Application");
+﻿const Application = require("../models/Application");
 const Media = require("../models/Media");
 const moment = require('moment-timezone');
 const Patient = require("../models/Patient");
@@ -14,7 +14,7 @@ const { GridFsStorage } = require("multer-gridfs-storage");
 const mongoose = require("mongoose");
 const { gfsMedia } = require("../gridfs-media");
 const { v4: uuidv4 } = require("uuid");
-const nodemailer = require("nodemailer");
+const { transporter } = require('../utils/emailService');
 const { ObjectId } = mongoose.Types;
 
 const https = require("https");
@@ -197,16 +197,6 @@ const validPaymentStatuses = [
 ];
 
 // Configure Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
 
 // Helper: populate documents with GridFS file info
 async function populateDocuments(documents) {
@@ -242,7 +232,7 @@ async function buildPopulatedApplication(application) {
   populatedApplication.applicationId =
     application.applicationId || application._id;
   populatedApplication.patient = await Patient.findOne({
-    email: application.patientEmail,
+    email: application.patientId,
   })
     .select("firstName middleName lastName email phoneNumber _id")
     .lean();
@@ -400,19 +390,19 @@ async function getUserIdByEmail(req, res) {
 
 //Get medical history by application ID (for medical history details view)
 async function getMedicalHistory(req, res) {
-  const email = req.params.email;
+  const patientId = req.params.patientId;
 
   try {
     const applications = await Application.find({
-      patientEmail: email,
+      patientId: patientId,
       appointmentStatus: { $nin: ['Unconfirmed', 'Cancelled'] }
     }).sort({ date: -1 });
 
     if (!applications.length) {
       return res.status(404).json({
         success: false,
-        message: 'No medical history found for this email.',
-        email
+        message: 'No medical history found for this patient.',
+        patientId
       });
     }
     const doctorEmails = [
@@ -450,17 +440,17 @@ async function getMedicalHistory(req, res) {
     });
   }
 }
-// Get applications by patient email
-async function getApplicationsByPatientEmail(req, res) {
+// Get applications by patient ID
+async function getApplicationsByPatientId(req, res) {
   try {
-    const { email } = req.params;
-    const applications = await Application.find({ patientEmail: email })
+    const { patientId } = req.params;
+    const applications = await Application.find({ patientId })
       .sort({ date: -1 })
       .lean();
 
     for (let app of applications) {
       app.applicationId = app.applicationId || app._id;
-      app.patient = await Patient.findOne({ email: app.patientEmail })
+      app.patient = await Patient.findOne({ patientId: app.patientId })
         .select("firstName middleName lastName email phoneNumber")
         .lean();
       app.doctor = await DoctorsProfile.findOne({ email: app.doctorEmail })
@@ -533,7 +523,7 @@ async function getApplicationsByDate(req, res) {
       const docEmail =
         app.doctorEmail || (app.doctors && app.doctors[0]?.doctorEmail);
 
-      app.patient = await Patient.findOne({ email: app.patientEmail })
+      app.patient = await Patient.findOne({ patientId: app.patientId })
         .select("firstName middleName lastName email phoneNumber _id")
         .lean();
 
@@ -566,7 +556,7 @@ async function getApplicationById(req, res) {
 
     application.applicationId = application.applicationId || application._id;
     application.patient = await Patient.findOne({
-      email: application.patientEmail,
+      patientId: application.patientId,
     })
       .select("firstName middleName lastName email phoneNumber _id")
       .lean();
@@ -614,17 +604,17 @@ async function updateApplication(req, res) {
     }
 
     if (
-      req.body.patientEmail &&
-      req.body.patientEmail !== application.patientEmail
+      req.body.patientId &&
+      req.body.patientId !== application.patientId
     ) {
       const patient = await User.findOne({
-        email: req.body.patientEmail,
+        patientId: req.body.patientId,
         role: "patient",
       });
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
       }
-      application.patientEmail = req.body.patientEmail;
+      application.patientId = req.body.patientId;
     }
 
     if (
@@ -662,7 +652,7 @@ async function updateApplication(req, res) {
           if (
             !user ||
             user.role !== "patient" ||
-            (req.body.patientEmail && user.email !== req.body.patientEmail)
+            (req.body.patientId && user.patientId !== req.body.patientId)
           ) {
             return res
               .status(400)
@@ -770,6 +760,7 @@ async function getAllApplications(req, res) {
     if (search) {
       const patientQuery = {
         $or: [
+          { patientId: { $regex: search, $options: "i" } },
           { email: { $regex: search, $options: "i" } },
           { phoneNumber: { $regex: search, $options: "i" } },
           {
@@ -799,13 +790,13 @@ async function getAllApplications(req, res) {
         ],
       };
 
-      const matchingPatients = await Patient.find(patientQuery).select("email");
-      const patientEmails = matchingPatients.map((p) => p.email);
+      const matchingPatients = await Patient.find(patientQuery).select("patientId");
+      const patientIds = matchingPatients.map((p) => p.patientId);
 
       query.$or = [
         { applicationId: { $regex: search, $options: "i" } },
-        { patientEmail: { $in: patientEmails } },
-        { patientEmail: { $regex: search, $options: "i" } },
+        { patientId: { $in: patientIds } },
+        { patientId: { $regex: search, $options: "i" } },
         { doctorEmail: { $regex: search, $options: "i" } },
       ];
     }
@@ -866,7 +857,7 @@ async function getAllApplications(req, res) {
 
     for (let app of applications) {
       app.applicationId = app.applicationId || app._id;
-      app.patient = await Patient.findOne({ email: app.patientEmail })
+      app.patient = await Patient.findOne({ patientId: app.patientId })
         .select(
           "firstName middleName lastName email phoneNumber _id dateOfBirth phoneNumber",
         )
@@ -891,19 +882,19 @@ async function getAllApplications(req, res) {
   }
 }
 
-// Get all applications for a patient by email (for medical history)
-async function getMedicalHistoryByEmail(req, res) {
+// Get all applications for a patient by Id (for medical history)
+async function getMedicalHistoryByPatientId(req, res) {
   try {
-    const { email } = req.params;
+    const { patientId } = req.params;
 
-    const applications = await Application.find({ patientEmail: email, appointmentStatus: { $nin: ['Unconfirmed', 'Cancelled'] } })
+    const applications = await Application.find({ patientId: patientId, appointmentStatus: { $nin: ['Unconfirmed', 'Cancelled'] } })
       .sort({ createdAt: -1 })
       .lean();
 
     for (let app of applications) {
       app.applicationId = app.applicationId || app._id;
       try {
-        app.patient = await Patient.findOne({ email: app.patientEmail })
+        app.patient = await Patient.findOne({ patientId: app.patientId })
           .select("firstName middleName lastName email phoneNumber")
           .lean();
       } catch {
@@ -1471,7 +1462,7 @@ async function getAppointmentsByAssistantEmail(req, res) {
       }
     }
 
-    // Search across applicationId, serviceType and patient email/name
+    // Search across applicationId, serviceType and patient id/name
     if (search) {
       const matchingPatients = await Patient.find({
         $or: [
@@ -1479,14 +1470,14 @@ async function getAppointmentsByAssistantEmail(req, res) {
           { lastName: new RegExp(search, 'i') },
           { email: new RegExp(search, 'i') },
         ]
-      }).select('email').lean();
-      const matchingEmails = matchingPatients.map(p => p.email);
+      }).select('patientId').lean();
+      const matchingIds = matchingPatients.map(p => p.patientId);
 
       query.$or = [
         { applicationId: new RegExp(search, 'i') },
         { serviceType: new RegExp(search, 'i') },
-        { patientEmail: new RegExp(search, 'i') },
-        ...(matchingEmails.length > 0 ? [{ patientEmail: { $in: matchingEmails } }] : []),
+        { patientId: new RegExp(search, 'i') },
+        ...(matchingIds.length > 0 ? [{ patientId: { $in: matchingIds } }] : []),
       ];
     }
 
@@ -1496,8 +1487,9 @@ async function getAppointmentsByAssistantEmail(req, res) {
     ]);
 
     // Enrich with patient and doctor details
-    const patientEmails = [...new Set(appointments.map(a => a.patientEmail))].filter(Boolean);
+    const patientIds = [...new Set(appointments.map(a => a.patientId))].filter(Boolean);
     const doctorEmailsPrimary = [...new Set(appointments.map(a => getPrimaryDoctorEmail(a)).filter(Boolean))];
+    const patientEmails = [...new Set(appointments.map((a) => a.patientEmail).concat(patientIds))].filter(Boolean);
 
     const [patients, doctors] = await Promise.all([
       Patient.find({ email: { $in: patientEmails } }),
@@ -1517,7 +1509,7 @@ async function getAppointmentsByAssistantEmail(req, res) {
     const enrichedAppointments = appointments.map(appt => {
       const obj = appt.toObject();
       const primaryDoctorEmail = getPrimaryDoctorEmail(appt);
-      obj.patientDetails = patientMap[appt.patientEmail] || null;
+      obj.patientDetails = patientMap[appt.patientEmail] || patientMap[appt.patientId] || null;
       obj.doctorDetails = doctorMap[primaryDoctorEmail] || null;
       return obj;
     });
@@ -1672,11 +1664,14 @@ async function getApplicationsForCalendar(req, res) {
     const targetEmail = doctorEmail || req.user?.email;
     const query = {
       date: { $gte: startDateStr, $lte: endDateStr },
-      ...(targetEmail ? { "doctors.doctorEmail": targetEmail } : {}),
     };
+    if (targetEmail) {
+      const escaped = String(targetEmail).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+      query["doctors.doctorEmail"] = { $regex: new RegExp(`^${escaped}$`, "i") };
+    }
 
-    // Calendar view should only include these statuses.
-    const allowedCalendarStatuses = ["Completed", "Confirmed"];
+    // Calendar view should include these statuses (allow Upcoming too)
+    const allowedCalendarStatuses = ALLOWED_APPOINTMENT_STATUSES;
 
     // Status filter — map frontend tab keys to DB values
     const statusMap = {
@@ -1869,8 +1864,9 @@ async function getCalendarApplications(req, res) {
     if (!doctorEmail || !start || !end) {
       return res.status(400).json({ error: 'doctorEmail, start, and end are required' });
     }
+    const escaped = String(doctorEmail).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
     const applications = await Application.find({
-      doctorEmail,
+      "doctors.doctorEmail": { $regex: new RegExp(`^${escaped}$`, 'i') },
       date: { $gte: start.slice(0, 10), $lte: end.slice(0, 10) },
       appointmentStatus: { $ne: 'Unconfirmed' },
     }).sort({ date: 1, startTime: 1 });
@@ -2048,13 +2044,22 @@ async function getAssistantAppointments(req,res){
       return res.status(200).json({ success: true, data: { appointments: [], totalCount: 0 } });
     }
 
-    const nowIST = moment().tz('Europe/Moscow');
+    // Determine active doctors by overlap with requested range (if provided)
+    const reqStart = req.query.startDate ? moment.tz(req.query.startDate, 'Europe/Moscow') : null;
+    const reqEnd = req.query.endDate ? moment.tz(req.query.endDate, 'Europe/Moscow') : null;
 
     const activeDoctorEmails = assistant.doctors
       .filter((doc) => {
-        const start = moment(doc.startDateTime);
-        const end = moment(doc.endDateTime);
-        return nowIST.isBetween(start, end);
+        if (!doc.startDateTime || !doc.endDateTime) return false;
+        const docStart = moment.tz(doc.startDateTime, 'Europe/Moscow');
+        const docEnd = moment.tz(doc.endDateTime, 'Europe/Moscow');
+        // If no requested range, fall back to "now" overlap
+        if (!reqStart || !reqEnd) {
+          const nowIST = moment().tz('Europe/Moscow');
+          return nowIST.isBetween(docStart, docEnd);
+        }
+        // Overlap: docStart <= reqEnd && docEnd >= reqStart
+        return docStart.isSameOrBefore(reqEnd) && docEnd.isSameOrAfter(reqStart);
       })
       .map((doc) => doc.doctorEmail);
 
@@ -2066,10 +2071,15 @@ async function getAssistantAppointments(req,res){
       });
     }
 
+    // Default for assistant-facing calendar and mini-calendar: only show Confirmed and Completed
+    const DEFAULT_ASSISTANT_CALENDAR_STATUSES = ["Confirmed", "Completed"];
+
+    const regexes = activeDoctorEmails.map(e => new RegExp(`^${String(e).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}$`, 'i'));
+
     const query = {
       branch: { $in: assistant.branches },
-      'doctors.doctorEmail': { $in: activeDoctorEmails },
-      appointmentStatus: { $in: ALLOWED_APPOINTMENT_STATUSES },
+      'doctors.doctorEmail': { $in: regexes },
+      appointmentStatus: { $in: DEFAULT_ASSISTANT_CALENDAR_STATUSES },
     };
 
     if (req.query.doctorEmail && req.query.doctorEmail !== 'all') {
@@ -2089,7 +2099,8 @@ async function getAssistantAppointments(req,res){
         upcoming: 'Upcoming',
       };
       const normalizedStatus = statusMap[String(status).toLowerCase()] || status;
-      if (ALLOWED_APPOINTMENT_STATUSES.includes(normalizedStatus)) {
+      // Allow overriding when explicit, but keep safety: only allow statuses we know about
+      if (['Confirmed', 'Completed', 'Upcoming', 'Unconfirmed', 'Cancelled'].includes(normalizedStatus)) {
         query.appointmentStatus = normalizedStatus;
       }
     }
@@ -2263,11 +2274,21 @@ async function getCalendar(req,res){
     const startDateStr = start.slice(0, 10);
     const endDateStr = end.slice(0, 10);
 
+    const escapedEmails = activeDoctorEmails.map(e => String(e).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&"));
+    const regexes = escapedEmails.map(e => new RegExp(`^${e}$`, 'i'));
     const query = {
       branch: { $in: assistant.branches },
-      doctorEmail: { $in: activeDoctorEmails },
+      'doctors.doctorEmail': { $in: regexes },
       date: { $gte: startDateStr, $lte: endDateStr },
     };
+
+    console.log('Assistant calendar query:', {
+      assistant: assistant.email,
+      branches: assistant.branches,
+      activeDoctorEmails,
+      startDateStr,
+      endDateStr,
+    });
 
     const validStatuses = ['unconfirmed', 'confirmed', 'cancelled'];
     if (status && validStatuses.includes(status.toLowerCase())) {
@@ -3536,7 +3557,7 @@ async function getApplicationByAppointmentId(req, res) {
 
     application.applicationId = application.applicationId || application._id;
     application.patient = await Patient.findOne({
-      email: application.patientEmail,
+      patientId: application.patientId,
     })
       .select("firstName middleName lastName email phoneNumber _id")
       .lean();
@@ -3880,8 +3901,8 @@ module.exports = {
   uploadDocumentFile,
   uploadDocumentUrl,
   getUserIdByEmail,
-  getMedicalHistoryByEmail,
-  getApplicationsByPatientEmail,
+  getMedicalHistoryByPatientId,
+  getApplicationsByPatientId,
   getApplicationsByDate,
   getApplicationCountsByMonth,
   getApplicationById,
