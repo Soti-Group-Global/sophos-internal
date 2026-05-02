@@ -1308,8 +1308,6 @@ const sendDoctorCredentials = async (req, res) => {
     await user.save();
 
     // Send email with credentials
-    const transporter = require('../utils/emailService').transporter;
-
     // Helper function to extract multilingual field value
     const getFieldValue = (field, lang = 'en') => {
       if (!field) return '';
@@ -1629,8 +1627,6 @@ const testDoctorCredentialsEmail = async (req, res) => {
 
     const lang = language || 'ru';
     const template = templates[lang] || templates.ru;
-
-    const transporter = require('../utils/emailService').transporter;
 
     await transporter.sendMail({
       from: `"Медицинский центр СОФОС" <${process.env.EMAIL_USER}>`,

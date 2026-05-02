@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
 const api = axios.create({
-  baseURL: "http://localhost:3003/api",
+  baseURL: "http://localhost:5002/api",
   withCredentials: false,
 });
 
@@ -815,6 +815,16 @@ export const getDoctorLeaves = async (params = {}) => {
 export const updateDoctorLeaveStatus = async (id, status, reviewComment = "") => {
   try {
     const response = await api.patch(`/doctor-leaves/${id}/status`, { status, reviewComment });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Delete doctor leave
+export const deleteDoctorLeave = async (id) => {
+  try {
+    const response = await api.delete(`/doctor-leaves/${id}`);
     return response;
   } catch (error) {
     throw error;
@@ -3770,6 +3780,98 @@ export const deleteContactRequest = async (requestId) => {
     return response.data;
   } catch (error) {
     
+    throw error;
+  }
+};
+
+// ── Doctor Weekly Schedule ──
+export const getDoctorWeeklySchedule = async (doctorEmail) => {
+  try {
+    const response = await api.get(`/doctor-availability/weekly-schedule/${doctorEmail}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const saveDoctorWeeklySchedule = async (doctorEmail, scheduleData) => {
+  try {
+    const response = await api.post(`/doctor-availability/weekly-schedule`, {
+      doctorEmail,
+      schedule: scheduleData,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ── Doctor Date Override ──
+export const getDoctorDateOverride = async (doctorEmail, date) => {
+  try {
+    const response = await api.get(`/doctor-availability/date-override/${doctorEmail}/${date}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const saveDoctorDateOverride = async (doctorEmail, date, overrideData) => {
+  try {
+    const response = await api.post(`/doctor-availability/date-override`, {
+      doctorEmail,
+      date,
+      ...overrideData,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteDoctorDateOverride = async (doctorEmail, date) => {
+  try {
+    const response = await api.delete(`/doctor-availability/date-override/${doctorEmail}/${date}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ── Doctor Break By ID ──
+export const deleteDoctorBreakById = async (breakId) => {
+  try {
+    const response = await api.delete(`/doctor-availability/breaks/by-id/${breakId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ── Day Closure Status ──
+export const getDayClosureStatus = async (doctorEmail, date) => {
+  try {
+    const response = await api.get(`/doctor-availability/day-closure/${doctorEmail}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const closeDaySchedule = async (doctorEmail, reason = '') => {
+  try {
+    const response = await api.post(`/doctor-availability/day-closure`, { doctorEmail, reason });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const reopenDaySchedule = async (doctorEmail) => {
+  try {
+    const response = await api.delete(`/doctor-availability/day-closure/${doctorEmail}`);
+    return response.data;
+  } catch (error) {
     throw error;
   }
 };

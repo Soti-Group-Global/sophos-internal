@@ -58,7 +58,7 @@ const EmployeeManagement = lazy(() => import("./pages/EmployeeManagement"));
 const InventoryManagement = lazy(() => import("./pages/InventoryManagement"));
 const MaxMessenger = lazy(() => import("./pages/MaxMessenger"));
 const ProjectWorkspace = lazy(() => import("./pages/ProjectWorkspace"));
-const ScheduleManagement = lazy(() => import("./pages/SchedulaManagement"));
+const ScheduleManagement = lazy(() => import("./pages/ScheduleManagementCalendar"));
 const ConsultationPage = lazy(() => import("./pages/ConsultationPage"));
 const ScheduleConsultation = lazy(() => import("./pages/ScheduleConsultation"));
 const DoctorProfile = lazy(() => import("./pages/DoctorProfile"));

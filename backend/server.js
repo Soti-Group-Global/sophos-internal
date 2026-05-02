@@ -18,6 +18,7 @@ const patientRoutes = require("./routes/patients");
 const applicationRoutes = require("./routes/applications");
 const messagesRoutes = require("./routes/messages");
 const availabilityRoutes = require("./routes/availability");
+const doctorAvailabilityRoutes = require("./routes/doctorAvailabilityRoutes");
 const whatsappRoutes = require("./routes/whatsappRoutes");
 const telegramRoutes = require("./routes/telegramRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
@@ -197,6 +198,7 @@ app.use("/api/managers", managersListRouter);
 app.use("/api/profile", profileRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/doctors-profile", doctorProfileRoutes);
+app.use("/api/doctor-availability", doctorAvailabilityRoutes);
 app.use("/api/doctor-leaves", doctorLeaveRoutes);
 
 app.use("/api/patients", patientRoutes);

@@ -692,8 +692,8 @@ const createOrUpdateMyBreaks = async (req, res) => {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    const doctorEmail = req.user.email.toLowerCase();
     const { date, breaks, comment } = req.body;
+    const doctorEmail = (req.user.role === 'doctor' ? req.user.email : (req.body.doctorEmail || req.user.email)).toLowerCase();
 
     if (!date) {
       return res.status(400).json({ message: 'Date is required' });
@@ -748,7 +748,6 @@ const updateMyBreakById = async (req, res) => {
     }
 
     const { breakId } = req.params;
-    const doctorEmail = req.user.email.toLowerCase();
     const { date, breaks, comment } = req.body || {};
 
     const doctorBreak = await DoctorBreak.findById(breakId);
@@ -756,7 +755,7 @@ const updateMyBreakById = async (req, res) => {
       return res.status(404).json({ message: 'Break record not found' });
     }
 
-    if (doctorBreak.doctorEmail !== doctorEmail) {
+    if (req.user.role === 'doctor' && doctorBreak.doctorEmail !== req.user.email.toLowerCase()) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
@@ -799,14 +798,13 @@ const deleteMyBreakById = async (req, res) => {
     }
 
     const { breakId } = req.params;
-    const doctorEmail = req.user.email.toLowerCase();
 
     const doctorBreak = await DoctorBreak.findById(breakId);
     if (!doctorBreak) {
       return res.status(404).json({ message: 'Break record not found' });
     }
 
-    if (doctorBreak.doctorEmail !== doctorEmail) {
+    if (req.user.role === 'doctor' && doctorBreak.doctorEmail !== req.user.email.toLowerCase()) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
