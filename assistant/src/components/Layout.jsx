@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar2 from "./Sidebar/Sidebar2";
 import Header from "./Header/Header";
 import "./Layout.css";
@@ -7,6 +7,11 @@ import "./Layout.css";
 const Layout = () => {
   const [collapsed, setCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const location = useLocation();
+  const isEarlyDetectionDetails = /^\/early-detection\/[^/]+$/.test(location.pathname);
+  const isAppointmentDetails = /^\/appointments\/[^/]+$/.test(location.pathname);
+  const hideSidebar = isEarlyDetectionDetails || isAppointmentDetails;
+  const hideHeader = isEarlyDetectionDetails || isAppointmentDetails;
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,11 +38,13 @@ const Layout = () => {
 
   return (
     <div className="layout-container">
-      <Sidebar2
-        isMobileOpen={isMobile && !collapsed}
-        onMobileClose={() => setCollapsed(true)}
-        onToggleSidebar={(open) => setCollapsed(!open)}
-      />
+      {!hideSidebar && (
+        <Sidebar2
+          isMobileOpen={isMobile && !collapsed}
+          onMobileClose={() => setCollapsed(true)}
+          onToggleSidebar={(open) => setCollapsed(!open)}
+        />
+      )}
 
       {/* Backdrop only when expanded on mobile */}
       {isMobile && !collapsed && (
@@ -46,10 +53,10 @@ const Layout = () => {
 
       <div
         className={`layout-main ${
-          isMobile ? "" : collapsed ? "collapsed" : "expanded"
+          hideSidebar ? "no-sidebar" : isMobile ? "" : collapsed ? "collapsed" : "expanded"
         }`}
       >
-        <Header toggleSidebar={toggleSidebar} isMobile={isMobile} />
+        {!hideHeader && <Header toggleSidebar={toggleSidebar} isMobile={isMobile} />}
         <main className="layout-content">
           <Outlet />
         </main>

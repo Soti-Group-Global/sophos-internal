@@ -1638,82 +1638,77 @@ const EarlyDetectionBookingDetails = () => {
         )}
       </div>
 
-      <div
-        className="adp-tab-bar"
-        role="tablist"
-        aria-label="Booking details tabs"
-      >
-        <button
-          type="button"
-          className={`adp-tab ${activeTab === "patient" ? "active" : ""}`}
-          onClick={() => setActiveTab("patient")}
-        >
-          <span className="adp-tab-icon">
-            <User size={15} />
-          </span>
-          {t("earlyDiagnosis.patientInformation") || "Patient details"}
-        </button>
-        <button
-          type="button"
-          className={`adp-tab ${activeTab === "appointmentDetails" ? "active" : ""}`}
-          onClick={() => setActiveTab("appointmentDetails")}
-        >
-          <span className="adp-tab-icon">
-            <Calendar size={15} />
-          </span>
-          {t("earlyDiagnosis.appointmentDetails") || "Appointment Details"}
-        </button>
-        <button
-          type="button"
-          className={`adp-tab ${activeTab === "medicalHistory" ? "active" : ""}`}
-          onClick={() => setActiveTab("medicalHistory")}
-        >
-          <span className="adp-tab-icon">
-            <FileText size={15} />
-          </span>
-          {t("earlyDiagnosis.medicalHistory") || "Medical History"}
-        </button>
-        <button
-          type="button"
-          className={`adp-tab ${activeTab === "payments" ? "active" : ""}`}
-          onClick={() => setActiveTab("payments")}
-        >
-          <span className="adp-tab-icon">
-            <FileText size={15} />
-          </span>
-          {t("earlyDiagnosis.paymentSummary") || "Payments"}
-        </button>
-        <button
-          type="button"
-          className={`adp-tab ${activeTab === "history" ? "active" : ""}`}
-          onClick={() => setActiveTab("history")}
-        >
-          <span className="adp-tab-icon">
-            <Clock size={15} />
-          </span>
-          {t("earlyDiagnosis.historyLogs") || "History"}
-        </button>
-        <button
-          type="button"
-          className={`adp-tab ${activeTab === "notes" ? "active" : ""}`}
-          onClick={() => setActiveTab("notes")}
-        >
-          <span className="adp-tab-icon">
-            <Edit2 size={15} />
-          </span>
-          {t("earlyDiagnosis.internalNotes") || "Notes"}
-        </button>
-      </div>
-
       <div className="booking-details-content">
         <div className={`ed-details-body${activeTab === "medicalHistory" && activeScheduleTab === "conclusion" ? " ed-details-body--no-sidebar" : ""}`}>
           {!(activeTab === "medicalHistory" && activeScheduleTab === "conclusion") && (
             <aside className="ed-appointments-sidebar adp-app-sidebar">
-            <div className="ed-appointments-sidebar-title adp-app-sidebar-title">
-              {t(
-                "sidebar_title",
-                t("earlyDiagnosis.appointments", "Appointments"),
-              )}
+            <div className="ed-appointments-sidebar-tabs">
+              <button
+                type="button"
+                className={`ed-appointments-sidebar-tab ${activeTab === "patient" ? "active" : ""}`}
+                onClick={() => setActiveTab("patient")}
+                title={t("earlyDiagnosis.patientInformation", "Patient details")}
+                aria-label={t("earlyDiagnosis.patientInformation", "Patient details")}
+              >
+                <span className="ed-appointments-sidebar-tab-icon">
+                  <User size={18} />
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`ed-appointments-sidebar-tab ${activeTab === "appointmentDetails" ? "active" : ""}`}
+                onClick={() => setActiveTab("appointmentDetails")}
+                title={t("earlyDiagnosis.appointmentDetails", "Appointment Details")}
+                aria-label={t("earlyDiagnosis.appointmentDetails", "Appointment Details")}
+              >
+                <span className="ed-appointments-sidebar-tab-icon">
+                  <Calendar size={18} />
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`ed-appointments-sidebar-tab ${activeTab === "medicalHistory" ? "active" : ""}`}
+                onClick={() => setActiveTab("medicalHistory")}
+                title={t("earlyDiagnosis.medicalHistory", "Medical History")}
+                aria-label={t("earlyDiagnosis.medicalHistory", "Medical History")}
+              >
+                <span className="ed-appointments-sidebar-tab-icon">
+                  <FileText size={18} />
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`ed-appointments-sidebar-tab ${activeTab === "payments" ? "active" : ""}`}
+                onClick={() => setActiveTab("payments")}
+                title={t("earlyDiagnosis.paymentSummary", "Payments")}
+                aria-label={t("earlyDiagnosis.paymentSummary", "Payments")}
+              >
+                <span className="ed-appointments-sidebar-tab-icon">
+                  <FileText size={18} />
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`ed-appointments-sidebar-tab ${activeTab === "history" ? "active" : ""}`}
+                onClick={() => setActiveTab("history")}
+                title={t("earlyDiagnosis.historyLogs", "History")}
+                aria-label={t("earlyDiagnosis.historyLogs", "History")}
+              >
+                <span className="ed-appointments-sidebar-tab-icon">
+                  <Clock size={18} />
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`ed-appointments-sidebar-tab ${activeTab === "notes" ? "active" : ""}`}
+                onClick={() => setActiveTab("notes")}
+                title={t("earlyDiagnosis.internalNotes", "Notes")}
+                aria-label={t("earlyDiagnosis.internalNotes", "Notes")}
+              >
+                <span className="ed-appointments-sidebar-tab-icon">
+                  <Edit2 size={18} />
+                </span>
+              </button>
             </div>
 
             <div className="ed-appointments-sidebar-list adp-app-sidebar-list">
@@ -2300,8 +2295,9 @@ const EarlyDetectionBookingDetails = () => {
 
                 {activeTab === "medicalHistory" && (
                   <>
-                    <div className={`detail-section${activeScheduleTab === "conclusion" ? " detail-section--compact" : ""}`}>
-                      <div className="ed-schedule-tabs">
+                    <div className="ed-medical-history-layout">
+                      <aside className="ed-medical-history-sidebar">
+                        <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
                         {[
                            [
                             "specialistConsultation",
@@ -2376,8 +2372,10 @@ const EarlyDetectionBookingDetails = () => {
                             )}
                           </button>
                         ))}
-                      </div>
-
+                        </div>
+                      </aside>
+                      <div className="ed-medical-history-content">
+                        <div className={`detail-section${activeScheduleTab === "conclusion" ? " detail-section--compact" : ""}`}>
                       {activeScheduleTab === "laboratoryTests" && (
                         <div className="ed-schedule-section-list">
                           <div className="ed-section-actions-row">
@@ -2983,42 +2981,46 @@ const EarlyDetectionBookingDetails = () => {
                                   activeSpecialistTab
                                 ];
                               if (!specialist) return null;
+                              const displaySpecialistTitle = specialist.title
+                                ? t(
+                                    `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
+                                    specialist.title,
+                                  )
+                                : specialist.title;
                               return (
-                                <SpecialistHistoryForm
-                                  key={`specialist_form_${activeSpecialistTab}`}
-                                  specialistTitle={
-                                    specialist.title
-                                      ? t(
-                                          `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
-                                          specialist.title,
-                                        )
-                                      : specialist.title
-                                  }
-                                  historyForm={
-                                    specialistForms[activeSpecialistTab] ||
-                                    specialist.historyForm ||
-                                    {}
-                                  }
-                                  isSaving={
-                                    !!specialistFormSaving[activeSpecialistTab]
-                                  }
-                                  onSave={(formData) =>
-                                    handleSaveSpecialistForm(
-                                      activeSpecialistTab,
-                                      formData,
-                                    )
-                                  }
-                                />
+                                <div className="ed-specialist-consultation-wrapper">
+                                  
+                                  <SpecialistHistoryForm
+                                    key={`specialist_form_${activeSpecialistTab}`}
+                                    specialistTitle={displaySpecialistTitle}
+                                    historyForm={
+                                      specialistForms[activeSpecialistTab] ||
+                                      specialist.historyForm ||
+                                      {}
+                                    }
+                                    isSaving={
+                                      !!specialistFormSaving[activeSpecialistTab]
+                                    }
+                                    onSave={(formData) =>
+                                      handleSaveSpecialistForm(
+                                        activeSpecialistTab,
+                                        formData,
+                                      )
+                                    }
+                                  />
+                                </div>
                               );
                             })()}
                         </div>
                       )}
-                    </div>
+                        </div>
                       {activeScheduleTab === "conclusion" && (
                         <div style={{ marginTop: 16 }}>
                           <EarlyDetectionReportTab booking={booking} />
                         </div>
                       )}
+                      </div>
+                    </div>
                   </>
                 )}
               </div>

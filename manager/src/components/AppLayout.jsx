@@ -5,6 +5,7 @@ import "../styles/AppLayout.css";
 import Sidebar from "./Sidebar/Sidebar";
 import "./Sidebar/Sidebar.css";
 import "./Header/Header.css";
+import { useLayoutTopBar } from "../context/LayoutTopBarContext";
 
 const LoadingSpinner = () => (
   <div style={{
@@ -30,6 +31,7 @@ const LoadingSpinner = () => (
 
 const AppLayout = ({ children }) => {
   const { pathname } = useLocation();
+  const { topBarContent } = useLayoutTopBar();
   // true = sidebar expanded (280px), false = sidebar minimized (72px)
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -81,24 +83,37 @@ const AppLayout = ({ children }) => {
     }
   }, [pathname]);
 
+  const hideSidebar =
+    pathname.startsWith("/applications/appointment/") ||
+    pathname.startsWith("/early-detection-bookings/");
+
+  const hideHeader = pathname.startsWith("/early-detection-bookings/");
+
   // Determine CSS classes based on state
-  const sidebarMinimized = !isSidebarExpanded && !isMobile;
+  const sidebarMinimized = !isSidebarExpanded && !isMobile && !hideSidebar;
+  const showCustomTopBar = Boolean(topBarContent);
 
   return (
-    <div className="layout-container">
-      <Sidebar
-        isSidebarOpen={isSidebarExpanded}
-        isMobileOpen={isMobileSidebarOpen}
-        onMobileClose={handleMobileClose}
-        onToggleSidebar={handleSidebarToggle}
-      />
-      <div className={`layout-top-bar ${sidebarMinimized ? 'sidebar-minimized' : ''}`}>
-        <Header
-          onMenuToggle={handleMenuToggle}
-          isSidebarOpen={isMobile ? isMobileSidebarOpen : isSidebarExpanded}
+    <div className={`layout-container${hideSidebar ? " no-sidebar" : ""}${hideHeader ? " no-header" : ""}`}>
+      {!hideSidebar && (
+        <Sidebar
+          isSidebarOpen={isSidebarExpanded}
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileClose={handleMobileClose}
+          onToggleSidebar={handleSidebarToggle}
         />
-      </div>
-      <div className={`layout-content ${sidebarMinimized ? 'sidebar-minimized' : ''}`}>
+      )}
+      {(!hideHeader || showCustomTopBar) && (
+        <div className={`layout-top-bar ${sidebarMinimized ? "sidebar-minimized" : ""}`}>
+          {showCustomTopBar ? topBarContent : (
+            <Header
+              onMenuToggle={handleMenuToggle}
+              isSidebarOpen={isMobile ? isMobileSidebarOpen : isSidebarExpanded}
+            />
+          )}
+        </div>
+      )}
+      <div className={`layout-content ${sidebarMinimized ? "sidebar-minimized" : ""}`}>
         <main className={`layout-main ${isMobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
           <Suspense fallback={<LoadingSpinner />}>
             {children || <Outlet />}

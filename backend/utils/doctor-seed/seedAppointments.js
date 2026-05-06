@@ -45,6 +45,8 @@ const appointments = [
   { id: "HD-R030-02/2026-0179", patient: "john@example.com",  status: "Confirmed",         date: daysFromNow(1),   start: "09:00", end: "09:30", service: "Physical consultation" },
   { id: "HD-R030-02/2026-0177", patient: "anna@example.com",  status: "Confirmed",         date: daysFromNow(2),   start: "10:00", end: "10:30", service: "Telemedicine" },
   { id: "HD-R030-02/2026-0181", patient: "ivan@example.com",  status: "Confirmed",         date: daysFromNow(3),   start: "11:00", end: "11:30", service: "Physical consultation" },
+  { id: "HD-R030-02/2026-0258", patient: "maria@example.com", status: "Confirmed",         date: daysFromNow(2),   start: "12:00", end: "12:30", service: "Physical consultation" },
+  { id: "HD-R030-02/2026-0269", patient: "maria@example.com", status: "Confirmed",         date: daysFromNow(5),   start: "13:00", end: "13:30", service: "Telemedicine" },
 
   // Completed (past)
   { id: "HD-R030-02/2026-0192", patient: "maria@example.com", status: "Completed",         date: daysFromNow(-5),  start: "14:00", end: "14:30", service: "Telemedicine" },
@@ -100,9 +102,18 @@ async function seed() {
   });
   console.log(`  🗑️  Deleted ${deletedCount} existing seed appointments`);
 
+  const patientRecords = await Patient.find({ email: { $in: appointments.map((a) => a.patient) } })
+    .select("email patientId")
+    .lean();
+  const patientIdByEmail = patientRecords.reduce((acc, p) => {
+    if (p.email) acc[p.email] = p.patientId || "";
+    return acc;
+  }, {});
+
   await Application.collection.insertMany(
     appointments.map((a) => ({
       applicationId: a.id,
+      patientId: patientIdByEmail[a.patient] || "",
       patientEmail: a.patient,
       doctorEmail: DOCTOR_EMAIL,
       doctors: [{ doctorEmail: DOCTOR_EMAIL, doctorName: DOCTOR_NAME }],

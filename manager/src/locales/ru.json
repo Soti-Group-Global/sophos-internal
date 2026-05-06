@@ -5525,6 +5525,15 @@
     "verify_title_verified": "Нажмите для отмены подтверждения",
     "first_appointment": "Первичный приём",
     "repetitive_appointment": "Повторный приём",
+    "sidebar_title": "Разделы истории",
+    "sidebar": {
+      "specialistConsultation": "Консультация специалиста",
+      "laboratoryAnalysis": "Лабораторный анализ",
+      "studiesManipulations": "Исследования / манипуляции",
+      "morphologicalResearch": "Морфологические исследования",
+      "proceduresManipulations": "Процедуры и манипуляции",
+      "conclusion": "Заключение"
+    },
     "dtp_back": "Назад",
     "dtp_title": "Шаблоны истории болезни",
     "dtp_total": "всего",

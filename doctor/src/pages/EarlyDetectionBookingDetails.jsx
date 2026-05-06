@@ -365,6 +365,13 @@ const EarlyDetectionBookingDetails = () => {
   const [activeScheduleTab, setActiveScheduleTab] = useState("laboratoryTests");
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
   const [editedScheduleItems, setEditedScheduleItems] = useState([]);
+
+  useEffect(() => {
+    document.body.classList.add("hide-global-sidebar");
+    return () => {
+      document.body.classList.remove("hide-global-sidebar");
+    };
+  }, []);
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [managedTests, setManagedTests] = useState({
@@ -2061,140 +2068,78 @@ const EarlyDetectionBookingDetails = () => {
       )}
     </div>
 
-    <div className="adp-tab-bar" role="tablist" aria-label="Booking details tabs">
-      <button
-        type="button"
-        className={`adp-tab ${activeTab === "patient" ? "active" : ""}`}
-        onClick={() => setActiveTab("patient")}
-      >
-        <span className="adp-tab-icon"><User size={15} /></span>
-        {t("earlyDiagnosis.patientInformation")}
-      </button>
-      <button
-        type="button"
-        className={`adp-tab ${activeTab === "appointmentDetails" ? "active" : ""}`}
-        onClick={() => setActiveTab("appointmentDetails")}
-      >
-        <span className="adp-tab-icon"><Calendar size={15} /></span>
-        {t("earlyDiagnosis.appointmentDetails")}
-      </button>
-      <button
-        type="button"
-        className={`adp-tab ${activeTab === "medicalHistory" ? "active" : ""}`}
-        onClick={() => setActiveTab("medicalHistory")}
-      >
-        <span className="adp-tab-icon"><FileText size={15} /></span>
-        {t("earlyDiagnosis.medicalHistory")}
-      </button>
-
-      <button
-        type="button"
-        className={`adp-tab ${activeTab === "history" ? "active" : ""}`}
-        onClick={() => setActiveTab("history")}
-      >
-        <span className="adp-tab-icon"><Clock size={15} /></span>
-        {t("earlyDiagnosis.historyLogs")}
-      </button>
-      <button
-        type="button"
-        className={`adp-tab ${activeTab === "notes" ? "active" : ""}`}
-        onClick={() => setActiveTab("notes")}
-      >
-        <span className="adp-tab-icon"><Edit2 size={15} /></span>
-        {t("earlyDiagnosis.internalNotes")}
-      </button>
-    </div>
-
     <div className="booking-details-content">
-      <div className={`ed-details-body${isConclusionView ? " ed-details-body--full-width" : ""}`}>
+      <div className={`ed-details-body${isConclusionView ? " ed-details-body--full-width" : ""}${activeTab === "medicalHistory" ? " ed-details-body--with-med-sidebar" : ""}`}>
         {!isConclusionView && (
-        <aside className="ed-appointments-sidebar adp-app-sidebar">
-          <div className="ed-appointments-sidebar-title adp-app-sidebar-title">
-            {t("sidebar_title", t("earlyDiagnosis.appointments", t("earlyDiagnosis.appointment", "Appointment")))}
-          </div>
-
-          <div className="ed-appointments-sidebar-list adp-app-sidebar-list">
-            {patientBookings.length === 0 ? (
-              <div className="ed-appointments-sidebar-empty adp-app-sidebar-empty">{t("sidebar_empty", t("earlyDiagnosis.noAppointments", "No appointments"))}</div>
-            ) : (
-              patientBookings.map((item, index) => {
-                const rawStatus = item?.status || item?.appointmentStatus || item?.bookingStatus || "pending";
-                const statusValue = normalizeStatusValue(rawStatus);
-                const itemIds = [
-                  normalizeId(item?._id),
-                  normalizeId(item?.bookingNumber),
-                  normalizeId(item?.invoiceNumber),
-                  normalizeId(item?.applicationId),
-                  normalizeId(item?.id),
-                ].filter(Boolean);
-                const itemId = itemIds[0] || normalizeId(item?.bookingNumber) || normalizeId(item?.invoiceNumber) || normalizeId(item?.applicationId) || normalizeId(item?.id) || `booking-${index}`;
-                const currentSelected = normalizeId(selectedBookingId);
-                const isCurrent = currentSelected && itemIds.includes(currentSelected);
-                const bookingRef = String(
-                  item?.invoiceNumber ||
-                  item?.bookingNumber ||
-                  item?.applicationId ||
-                  item?._id?.slice(-6) ||
-                  "-",
-                );
-                const displayDate =
-                  item?.appointmentDate ||
-                  item?.date ||
-                  item?.schedule?.specialistConsultations?.[0]?.date ||
-                  item?.createdAt;
-                const appointment = item;
-                const normalizedAppointmentStatus = normalizeStatusValue(
-                  appointment.appointmentStatus || statusValue,
-                );
-                const appointmentIdText = String(
-                  appointment.applicationId || bookingRef,
-                );
-                const doctorNameText =
-                  typeof appointment.doctorName === "object"
-                    ? readNameField(appointment.doctorName)
-                    : appointment.doctorName;
-                const doctorDisplay =
-                  doctorNameText ||
-                  getDoctorDisplayName(
-                    appointment?.schedule?.specialistConsultations?.[0]?.doctor,
-                  ) ||
-                  t("notDefined");
-                return (
-                  <button
-                    key={itemId || `booking-${index}`}
-                    type="button"
-                    className={`app-sidebar-card${isCurrent ? " current" : ""}`}
-                    onClick={() => {
-                      if (!isCurrent && itemId) {
-                        setSelectedBookingId(itemId);
-                      }
-                    }}
-                  >
-                    <div className="app-card-top">
-                      <span className="app-card-id">#{appointmentIdText}</span>
-                      <span className={`status-badge ${normalizedAppointmentStatus?.toLowerCase()}`}>
-                        {translateStatus(normalizedAppointmentStatus)}
-                      </span>
-                    </div>
-                    <div className="app-card-date">
-                      {formatDate(
-                        appointment.date ||
-                        appointment.appointmentDate ||
-                        displayDate,
-                      )}
-                    </div>
-                    <div className="app-card-doctor">{doctorDisplay}</div>
-                    {isCurrent && (
-                      <div className="app-card-current">
-                        {t("earlyDiagnosis.current")}
-                      </div>
-                    )}
-                  </button>
-                );
-              })
-            )}
+        <aside className={`ed-appointments-sidebar adp-app-sidebar${activeTab === "medicalHistory" ? " ed-sidebar-expanded" : ""}`}>
+          <div className="ed-sidebar-icons">
+            <div className="ed-appointments-sidebar-list ed-sidebar-icon-list" role="tablist" aria-label={t("earlyDiagnosis.sectionTabs", "Section tabs")}>
+              {[
+                { key: "patient", Icon: User, label: t("earlyDiagnosis.patientInformation", "Patient information") },
+                { key: "appointmentDetails", Icon: Calendar, label: t("earlyDiagnosis.appointmentDetails", "Appointment details") },
+                { key: "medicalHistory", Icon: FileText, label: t("earlyDiagnosis.medicalHistory", "Medical history") },
+                { key: "history", Icon: Clock, label: t("earlyDiagnosis.historyLogs", "History logs") },
+                { key: "notes", Icon: Edit2, label: t("earlyDiagnosis.internalNotes", "Internal notes") },
+              ].map(({ key, Icon, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`ed-sidebar-icon-btn${activeTab === key ? " active" : ""}`}
+                  onClick={() => setActiveTab(key)}
+                  aria-label={label}
+                  title={label}
+                >
+                  <Icon size={18} />
+                </button>
+              ))}
+            </div>
           </div>
         </aside>
+        )}
+
+        {activeTab === "medicalHistory" && (
+          <aside className="ed-medical-history-sidebar ed-medical-history-outside">
+            <div className="ed-sidebar-medical-tabs">
+              {[
+                ["specialistConsultation", t("earlyDiagnosis.specialistConsultation")],
+                ["laboratoryTests", t("earlyDiagnosis.laboratoryTests")],
+                ["instrumentalAnalysis", t("earlyDiagnosis.instrumentalAnalysis")],
+                ["morphologicalResearch", t("earlyDiagnosis.morphologicalResearch")],
+                ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations")],
+                ["conclusion", t("earlyDiagnosis.conclusion")],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`ed-sidebar-medical-tab-btn${activeScheduleTab === key ? " active" : ""}`}
+                  onClick={() => setActiveScheduleTab(key)}
+                >
+                  <span>{label}</span>
+                  {managedSectionTabs.includes(key) && (
+                    <span
+                      className="ed-tab-settings-btn"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openTestSettingsModal(key);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openTestSettingsModal(key);
+                        }
+                      }}
+                      title={t("earlyDiagnosis.manageTests")}
+                    >
+                      <Settings size={14} />
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </aside>
         )}
 
         <div
@@ -2453,48 +2398,10 @@ const EarlyDetectionBookingDetails = () => {
 
               {activeTab === "medicalHistory" && (
                 <>
-                  <div className="detail-section">
-                    <div className="ed-schedule-tabs">
-                      {[
-                        ["specialistConsultation", t("earlyDiagnosis.specialistConsultation")],
-                        ["laboratoryTests", t("earlyDiagnosis.laboratoryTests")],
-                        ["instrumentalAnalysis", t("earlyDiagnosis.instrumentalAnalysis")],
-                        ["morphologicalResearch", t("earlyDiagnosis.morphologicalResearch")],
-                        ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations")],
-                        ["conclusion",t("earlyDiagnosis.conclusion")],
-                      ].map(([key, label]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
-                          onClick={() => setActiveScheduleTab(key)}
-                        >
-                          <span>{label}</span>
-                          {managedSectionTabs.includes(key) && (
-                            <span
-                              className="ed-tab-settings-btn"
-                              role="button"
-                              tabIndex={0}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openTestSettingsModal(key);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  openTestSettingsModal(key);
-                                }
-                              }}
-                              title={t("earlyDiagnosis.manageTests")}
-                            >
-                              <Settings size={14} />
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                <div className="detail-section">
 
+                    <div className="detail-section-content">
+                      <div className="ed-medical-history-content">
                     {activeScheduleTab === "laboratoryTests" && (
                       <div className="ed-schedule-section-list">
                         <div className="ed-section-actions-row">
@@ -2752,7 +2659,32 @@ const EarlyDetectionBookingDetails = () => {
 
                     {activeScheduleTab === "specialistConsultation" && (
                       <div className="detail-section">
-                        <div className="ed-schedule-tabs ed-specialist-tabs">
+
+                        {(() => {
+                          const specialistList = getVisibleSpecialistConsultations(booking);
+
+                          if (specialistList.length === 0) {
+                            return <div className="ed-schedule-empty">{t("earlyDiagnosis.noSpecialistConsultations")}</div>;
+                          }
+
+                          const currentIndex =
+                            activeSpecialistTab !== null && activeSpecialistTab >= 0 && activeSpecialistTab < specialistList.length
+                              ? activeSpecialistTab
+                              : 0;
+
+                          const specialist = specialistList[currentIndex];
+
+                          if (!specialist) {
+                            return <div className="ed-schedule-empty">{t("earlyDiagnosis.noSpecialistConsultations")}</div>;
+                          }
+
+                          const specialistDoctorEmail = normalizeDoctorEmail(specialist?.doctor);
+                          const isSpecialistOwner = !!currentDoctorEmail && specialistDoctorEmail === currentDoctorEmail;
+                          const displaySpecialistTitle = specialist.title ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`, specialist.title) : specialist.title;
+
+                          return (
+                            <div className="ed-specialist-consultation-wrapper">
+                              <div className="ed-schedule-tabs ed-specialist-tabs">
                           {getVisibleSpecialistConsultations(booking).map((s, i) => {
                             const specialistDoctorEmail = normalizeDoctorEmail(s?.doctor);
                             const isOwned = !!currentDoctorEmail && specialistDoctorEmail === currentDoctorEmail;
@@ -2795,37 +2727,15 @@ const EarlyDetectionBookingDetails = () => {
                             );
                           })}
                         </div>
-
-                        {(() => {
-                          const specialistList = getVisibleSpecialistConsultations(booking);
-
-                          if (specialistList.length === 0) {
-                            return <div className="ed-schedule-empty">{t("earlyDiagnosis.noSpecialistConsultations")}</div>;
-                          }
-
-                          const currentIndex =
-                            activeSpecialistTab !== null && activeSpecialistTab >= 0 && activeSpecialistTab < specialistList.length
-                              ? activeSpecialistTab
-                              : 0;
-
-                          const specialist = specialistList[currentIndex];
-
-                          if (!specialist) {
-                            return <div className="ed-schedule-empty">{t("earlyDiagnosis.noSpecialistConsultations")}</div>;
-                          }
-
-                          const specialistDoctorEmail = normalizeDoctorEmail(specialist?.doctor);
-                          const isSpecialistOwner = !!currentDoctorEmail && specialistDoctorEmail === currentDoctorEmail;
-
-                          return (
-                            <SpecialistHistoryForm
-                              key={`specialist_form_${currentIndex}`}
-                              specialistTitle={specialist.title ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`, specialist.title) : specialist.title}
-                              historyForm={specialistForms[currentIndex] || specialist.historyForm || {}}
-                              isSaving={!!specialistFormSaving[currentIndex]}
-                              isEditable={isSpecialistOwner}
-                              onSave={(formData) => handleSaveSpecialistForm(currentIndex, formData)}
-                            />
+                              <SpecialistHistoryForm
+                                key={`specialist_form_${currentIndex}`}
+                                specialistTitle={displaySpecialistTitle}
+                                historyForm={specialistForms[currentIndex] || specialist.historyForm || {}}
+                                isSaving={!!specialistFormSaving[currentIndex]}
+                                isEditable={isSpecialistOwner}
+                                onSave={(formData) => handleSaveSpecialistForm(currentIndex, formData)}
+                              />
+                            </div>
                           );
                         })()}
                       </div>
@@ -2835,7 +2745,10 @@ const EarlyDetectionBookingDetails = () => {
                         <EarlyDetectionReportTab booking={booking} />
                       </div>
                     )}
-                  </div>
+                      </div>
+                    </div>
+                  
+                </div>                  
                 </>
               )}
             </div>

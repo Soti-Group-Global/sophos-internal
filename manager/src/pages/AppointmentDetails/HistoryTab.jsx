@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText } from "react-icons/fi";
 import {
   updateHistoryForm,
   updateHistoryFieldVerify,
@@ -9,6 +10,27 @@ import {
   createHistoryTemplate,
   updateHistoryTemplate,
   deleteHistoryTemplate,
+  getApplicationsByPatientId,
+  getAllApplicationLaboratoryTests,
+  createApplicationLaboratoryTest,
+  updateApplicationLaboratoryTest,
+  deleteApplicationLaboratoryTest,
+  uploadApplicationLaboratoryTestFile,
+  removeApplicationLaboratoryTestFile,
+  fetchApplicationLaboratoryTestFile,
+  addApplicationLaboratoryTestNote,
+  updateApplicationLaboratoryTestNote,
+  deleteApplicationLaboratoryTestNote,
+  getAllApplicationInstrumentalAnalysis,
+  createApplicationInstrumentalAnalysis,
+  updateApplicationInstrumentalAnalysis,
+  deleteApplicationInstrumentalAnalysis,
+  uploadApplicationInstrumentalAnalysisFile,
+  removeApplicationInstrumentalAnalysisFile,
+  fetchApplicationInstrumentalAnalysisFile,
+  addApplicationInstrumentalAnalysisNote,
+  updateApplicationInstrumentalAnalysisNote,
+  deleteApplicationInstrumentalAnalysisNote,
 } from "../../utils/api";
 import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
 import TemplatePicker from "../../components/RichTextEditor/TemplatePicker";
@@ -114,6 +136,15 @@ const collectKeys = (sections) => {
 };
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
+const HISTORY_NAV_ITEMS = [
+  { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", icon: <FiChevronDown size={14} />, sectionId: "complaints" },
+  { id: "laboratoryAnalysis", labelKey: "sidebar.laboratoryAnalysis", sectionId: "examinationPlan" },
+  { id: "studiesManipulations", labelKey: "sidebar.studiesManipulations", sectionId: "physicalExam" },
+  { id: "morphologicalResearch", labelKey: "sidebar.morphologicalResearch", sectionId: "examinationResults" },
+  { id: "proceduresManipulations", labelKey: "sidebar.proceduresManipulations", sectionId: "treatmentPlan" },
+  { id: "conclusion", labelKey: "sidebar.conclusion", sectionId: "clinicalDiagnosis" },
+];
+
 /* ────────────────────────────────────────────────────────────
    RichTextField — dual-mode: preview (read) ↔ edit (RichTextEditor)
    ──────────────────────────────────────────────────────────── */
@@ -194,6 +225,465 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   /* Track which individual fields are in edit mode */
   const [editingFields, setEditingFields] = useState({});
   const containerRef = useRef(null);
+  const sectionRefs = useRef({});
+  const [activeNavItem, setActiveNavItem] = useState(HISTORY_NAV_ITEMS[0].id);
+  const [patientAppointments, setPatientAppointments] = useState([]);
+  const [isAppointmentsPanelOpen, setIsAppointmentsPanelOpen] = useState(false);
+  const [isAppointmentsLoading, setIsAppointmentsLoading] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState(null);
+  const [labTests, setLabTests] = useState([]);
+  const [studyTests, setStudyTests] = useState([]);
+  const [selectedLabTests, setSelectedLabTests] = useState({});
+  const [selectedStudyTests, setSelectedStudyTests] = useState({});
+  const [labPopupOpen, setLabPopupOpen] = useState(false);
+  const [labPopupMode, setLabPopupMode] = useState(null);
+  const [newTestNameEN, setNewTestNameEN] = useState("");
+  const [newTestNameRU, setNewTestNameRU] = useState("");
+  const [editingTestId, setEditingTestId] = useState(null);
+  const [deleteConfirmTest, setDeleteConfirmTest] = useState(null);
+  const [selectedTest, setSelectedTest] = useState(null);
+  const [selectedTestMode, setSelectedTestMode] = useState(null);
+  const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
+  const [testNoteDraft, setTestNoteDraft] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [isUploadingTestFile, setIsUploadingTestFile] = useState(false);
+  const [testFileUploadError, setTestFileUploadError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const formatDate = useCallback((dateStr) => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }, []);
+
+  const formatTime = useCallback((timeStr) => {
+    if (!timeStr) return "";
+    const parsed = new Date(timeStr);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleTimeString("ru-RU", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+    return timeStr;
+  }, []);
+
+  const loadPatientAppointments = useCallback(async () => {
+    const patientId = patient?.patientId || patient?._id || application?.patientId;
+    if (!patientId) {
+      toast.error(t("history_tab.patient_id_missing", { defaultValue: "Patient ID is not available" }));
+      return;
+    }
+
+    setIsAppointmentsLoading(true);
+    setAppointmentsError(null);
+
+    try {
+      const response = await getApplicationsByPatientId(patientId);
+      const apps = Array.isArray(response?.data) ? response.data : [];
+      const filtered = apps.filter(
+        (appt) => (appt.applicationId || appt._id) !== (application?.applicationId || application?._id),
+      );
+      setPatientAppointments(filtered);
+      setIsAppointmentsPanelOpen(true);
+    } catch (error) {
+      const message = error?.response?.data?.message || t("history_tab.failed_loading_other_appointments", { defaultValue: "Failed to load other appointments" });
+      setAppointmentsError(message);
+      toast.error(message);
+    } finally {
+      setIsAppointmentsLoading(false);
+    }
+  }, [application, patient, t]);
+
+  const scrollToSection = useCallback((navItem) => {
+    if (!navItem) return;
+    setActiveNavItem(navItem.id);
+    const sectionEl = sectionRefs.current[navItem.sectionId];
+    if (sectionEl) {
+      sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
+  const handleSidebarItemClick = useCallback(
+    async (item, e) => {
+      if (item.id === "specialistConsultation") {
+        if (isAppointmentsPanelOpen) {
+          setIsAppointmentsPanelOpen(false);
+        } else {
+          await loadPatientAppointments();
+        }
+        scrollToSection(item);
+        return;
+      }
+
+      if (item.id === "laboratoryAnalysis" || item.id === "studiesManipulations") {
+        return;
+      }
+
+      scrollToSection(item);
+    },
+    [isAppointmentsPanelOpen, loadPatientAppointments, scrollToSection],
+  );
+
+  const openLabAnalysisPopup = useCallback((mode, e) => {
+    if (e?.stopPropagation) e.stopPropagation();
+    setLabPopupMode(mode);
+    setLabPopupOpen(true);
+    setEditingTestId(null);
+  }, []);
+
+  const closeLabAnalysisPopup = useCallback(() => {
+    setLabPopupOpen(false);
+    setLabPopupMode(null);
+    setNewTestNameEN("");
+    setNewTestNameRU("");
+    setEditingTestId(null);
+    setDeleteConfirmTest(null);
+  }, []);
+
+  const handleAddLabTest = useCallback(async () => {
+    if (!newTestNameEN.trim() || !newTestNameRU.trim()) {
+      toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter both EN and RU names." }));
+      return;
+    }
+
+    const payload = {
+      name: {
+        en: newTestNameEN.trim(),
+        ru: newTestNameRU.trim(),
+      },
+    };
+
+    try {
+      const response = labPopupMode === "studiesManipulations"
+        ? await createApplicationInstrumentalAnalysis(payload)
+        : await createApplicationLaboratoryTest(payload);
+      const created = response?.data || response;
+      if (created) {
+        if (labPopupMode === "studiesManipulations") {
+          setStudyTests((prev) => [...prev, created]);
+          setSelectedStudyTests((prev) => ({ ...prev, [created._id]: true }));
+        } else {
+          setLabTests((prev) => [...prev, created]);
+          setSelectedLabTests((prev) => ({ ...prev, [created._id]: true }));
+        }
+        setNewTestNameEN("");
+        setNewTestNameRU("");
+        toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
+      }
+    } catch (err) {
+      toast.error(t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
+    }
+  }, [labPopupMode, newTestNameEN, newTestNameRU, createApplicationInstrumentalAnalysis, createApplicationLaboratoryTest, t]);
+
+  const openEditTest = useCallback((test) => {
+    setEditingTestId(test._id);
+    setNewTestNameEN(test.name?.en || "");
+    setNewTestNameRU(test.name?.ru || "");
+  }, []);
+
+  const cancelEditTest = useCallback(() => {
+    setEditingTestId(null);
+    setNewTestNameEN("");
+    setNewTestNameRU("");
+  }, []);
+
+  const handleSaveTest = useCallback(async () => {
+    if (!newTestNameEN.trim() || !newTestNameRU.trim()) {
+      toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter both EN and RU names." }));
+      return;
+    }
+
+    const payload = {
+      name: {
+        en: newTestNameEN.trim(),
+        ru: newTestNameRU.trim(),
+      },
+    };
+
+    try {
+      if (editingTestId) {
+        const response = labPopupMode === "studiesManipulations"
+          ? await updateApplicationInstrumentalAnalysis(editingTestId, payload)
+          : await updateApplicationLaboratoryTest(editingTestId, payload);
+        const updated = response?.data || response;
+
+        if (labPopupMode === "studiesManipulations") {
+          setStudyTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
+        } else {
+          setLabTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
+        }
+
+        toast.success(t("history_tab.test_updated", { defaultValue: "Test updated" }));
+      } else {
+        const response = labPopupMode === "studiesManipulations"
+          ? await createApplicationInstrumentalAnalysis(payload)
+          : await createApplicationLaboratoryTest(payload);
+        const created = response?.data || response;
+
+        if (created) {
+          if (labPopupMode === "studiesManipulations") {
+            setStudyTests((prev) => [...prev, created]);
+            setSelectedStudyTests((prev) => ({ ...prev, [created._id]: true }));
+          } else {
+            setLabTests((prev) => [...prev, created]);
+            setSelectedLabTests((prev) => ({ ...prev, [created._id]: true }));
+          }
+          toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
+        }
+      }
+
+      setEditingTestId(null);
+      setNewTestNameEN("");
+      setNewTestNameRU("");
+    } catch (err) {
+      toast.error(editingTestId ? t("history_tab.failed_update_test", { defaultValue: "Failed to update test" }) : t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
+    }
+  }, [editingTestId, labPopupMode, newTestNameEN, newTestNameRU, t]);
+
+  const openDeleteConfirm = useCallback((test) => {
+    setDeleteConfirmTest(test);
+  }, []);
+
+  const closeDeleteConfirm = useCallback(() => {
+    setDeleteConfirmTest(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteConfirmTest) return;
+    try {
+      await (labPopupMode === "studiesManipulations"
+        ? deleteApplicationInstrumentalAnalysis(deleteConfirmTest._id)
+        : deleteApplicationLaboratoryTest(deleteConfirmTest._id));
+
+      if (labPopupMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
+        setSelectedStudyTests((prev) => {
+          const next = { ...prev };
+          delete next[deleteConfirmTest._id];
+          return next;
+        });
+      } else {
+        setLabTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
+        setSelectedLabTests((prev) => {
+          const next = { ...prev };
+          delete next[deleteConfirmTest._id];
+          return next;
+        });
+      }
+
+      if (editingTestId === deleteConfirmTest._id) {
+        cancelEditTest();
+      }
+
+      setDeleteConfirmTest(null);
+      toast.success(t("history_tab.test_deleted", { defaultValue: "Test deleted" }));
+    } catch (err) {
+      toast.error(t("history_tab.failed_delete_test", { defaultValue: "Failed to delete test" }));
+    }
+  }, [cancelEditTest, deleteConfirmTest, editingTestId, labPopupMode, t]);
+
+  const handleToggleLabTest = useCallback((id, useStudyMode = false) => {
+    if (useStudyMode || labPopupMode === "studiesManipulations") {
+      setSelectedStudyTests((prev) => ({ ...prev, [id]: !prev[id] }));
+    } else {
+      setSelectedLabTests((prev) => ({ ...prev, [id]: !prev[id] }));
+    }
+  }, [labPopupMode]);
+
+  const handleSaveLabPopup = useCallback(() => {
+    closeLabAnalysisPopup();
+    const messageKey = labPopupMode === "studiesManipulations" ? "history_tab.study_tests_saved" : "history_tab.lab_tests_saved";
+    toast.success(t(messageKey, { defaultValue: "Tests saved" }));
+  }, [closeLabAnalysisPopup, labPopupMode, t]);
+
+  const handleSelectTest = useCallback((test, mode) => {
+    setSelectedTest(test);
+    setSelectedTestMode(mode);
+    setShowTestNoteEditor(false);
+    setTestNoteDraft(test?.note || "");
+    setTestFileUploadError(null);
+  }, []);
+
+  const handleCloseSelectedTest = useCallback(() => {
+    setSelectedTest(null);
+    setSelectedTestMode(null);
+    setShowTestNoteEditor(false);
+    setTestNoteDraft("");
+    setTestFileUploadError(null);
+  }, []);
+
+  const selectedTestFiles = React.useMemo(() => {
+    if (!selectedTest) return [];
+    if (Array.isArray(selectedTest.files) && selectedTest.files.length > 0) {
+      return selectedTest.files;
+    }
+    if (selectedTest.fileId) {
+      return [
+        {
+          fileId: selectedTest.fileId,
+          fileName: selectedTest.fileName || selectedTest.originalName || t("history_tab.unknown_file", { defaultValue: "Unknown file" }),
+          fileMimeType: selectedTest.fileMimeType || "",
+          fileSize: selectedTest.fileSize || 0,
+          uploadedAt: selectedTest.uploadedAt || null,
+        },
+      ];
+    }
+    return [];
+  }, [selectedTest, t]);
+
+  const handleTestFileUpload = useCallback(async (file) => {
+    if (!selectedTest || !selectedTestMode || !file) return;
+    setIsUploadingTestFile(true);
+    setTestFileUploadError(null);
+
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await uploadApplicationInstrumentalAnalysisFile(selectedTest._id, file)
+        : await uploadApplicationLaboratoryTestFile(selectedTest._id, file);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      } else {
+        setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      }
+      toast.success(t("history_tab.file_uploaded", { defaultValue: "File uploaded" }));
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_upload_file", { defaultValue: "Failed to upload file" });
+      setTestFileUploadError(message);
+      toast.error(message);
+    } finally {
+      setIsUploadingTestFile(false);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleTestFileChange = useCallback(async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+    for (const file of files) {
+      await handleTestFileUpload(file);
+    }
+    event.target.value = "";
+  }, [handleTestFileUpload]);
+
+  const selectedTestNotes = React.useMemo(() => {
+    if (!selectedTest) return [];
+    const notes = Array.isArray(selectedTest.notes) ? selectedTest.notes : [];
+    if (notes.length > 0) return notes;
+    if (selectedTest.note) {
+      return [
+        {
+          _id: "legacy-note",
+          content: selectedTest.note,
+          createdAt: selectedTest.updatedAt || selectedTest.createdAt || new Date(),
+          updatedAt: selectedTest.updatedAt || selectedTest.createdAt || new Date(),
+        },
+      ];
+    }
+    return [];
+  }, [selectedTest]);
+
+  const handleOpenTestNoteEditor = useCallback(() => {
+    setShowTestNoteEditor(true);
+    setEditingNoteId(null);
+    setTestNoteDraft("");
+  }, []);
+
+  const handleEditTestNote = useCallback((note) => {
+    setShowTestNoteEditor(true);
+    setEditingNoteId(note._id);
+    setTestNoteDraft(note.content || "");
+  }, []);
+
+  const handleSaveTestNote = useCallback(async () => {
+    if (!selectedTest || !selectedTestMode || !testNoteDraft.trim()) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? editingNoteId
+          ? await updateApplicationInstrumentalAnalysisNote(selectedTest._id, editingNoteId, { note: testNoteDraft })
+          : await addApplicationInstrumentalAnalysisNote(selectedTest._id, { note: testNoteDraft })
+        : editingNoteId
+          ? await updateApplicationLaboratoryTestNote(selectedTest._id, editingNoteId, { note: testNoteDraft })
+          : await addApplicationLaboratoryTestNote(selectedTest._id, { note: testNoteDraft });
+
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      } else {
+        setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      }
+      toast.success(t("history_tab.note_saved", { defaultValue: "Note saved" }));
+      setShowTestNoteEditor(false);
+      setEditingNoteId(null);
+      setTestNoteDraft("");
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_save_note", { defaultValue: "Failed to save note" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, testNoteDraft, editingNoteId, t]);
+
+  const handleRemoveTestFile = useCallback(async (fileId) => {
+    if (!selectedTest || !selectedTestMode || !fileId) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
+        : await removeApplicationLaboratoryTestFile(selectedTest._id, fileId);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      } else {
+        setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      }
+      toast.success(t("history_tab.file_removed", { defaultValue: "File removed" }));
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_remove_file", { defaultValue: "Failed to remove file" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleViewTestFile = useCallback(async (fileId) => {
+    if (!selectedTest || !selectedTestMode || !fileId) return;
+    try {
+      const blob = selectedTestMode === "studiesManipulations"
+        ? await fetchApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
+        : await fetchApplicationLaboratoryTestFile(selectedTest._id, fileId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_view_file", { defaultValue: "Failed to open file" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleDeleteTestNote = useCallback(async (noteId) => {
+    if (!selectedTest || !selectedTestMode || !noteId) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, noteId)
+        : await deleteApplicationLaboratoryTestNote(selectedTest._id, noteId);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      } else {
+        setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      }
+      toast.success(t("history_tab.note_deleted", { defaultValue: "Note deleted" }));
+      setShowTestNoteEditor(false);
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_delete_note", { defaultValue: "Failed to delete note" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
 
   /* Close all editing fields when clicking outside any field */
   useEffect(() => {
@@ -248,6 +738,43 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       }
     };
     fetchTemplates();
+  }, []);
+
+  useEffect(() => {
+    const fetchLabTests = async () => {
+      try {
+        const response = await getAllApplicationLaboratoryTests();
+        const tests = Array.isArray(response?.data) ? response.data : response || [];
+        setLabTests(tests);
+        setSelectedLabTests(
+          tests.reduce((acc, test) => {
+            acc[test._id] = false;
+            return acc;
+          }, {}),
+        );
+      } catch (err) {
+        console.error("Failed to load laboratory tests", err);
+      }
+    };
+
+    const fetchStudyTests = async () => {
+      try {
+        const response = await getAllApplicationInstrumentalAnalysis();
+        const tests = Array.isArray(response?.data) ? response.data : response || [];
+        setStudyTests(tests);
+        setSelectedStudyTests(
+          tests.reduce((acc, test) => {
+            acc[test._id] = false;
+            return acc;
+          }, {}),
+        );
+      } catch (err) {
+        console.error("Failed to load study tests", err);
+      }
+    };
+
+    fetchLabTests();
+    fetchStudyTests();
   }, []);
 
   /** Returns templates for a specific field key */
@@ -394,6 +921,11 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     return (
       <div
         key={section.id}
+        ref={(node) => {
+          if (level === 0) {
+            sectionRefs.current[section.id] = node;
+          }
+        }}
         className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}`}
       >
         {/* ── Header ── */}
@@ -437,6 +969,65 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
           ) : (
             <>
               {section.fields && renderFields(section.fields)}
+              {((section.id === "examinationPlan" && activeNavItem === "laboratoryAnalysis") || (section.id === "physicalExam" && activeNavItem === "studiesManipulations")) && (
+                <div className="ht-lab-analysis-panel">
+                  <div className="ht-lab-analysis-header">
+                    <span>
+                      {activeNavItem === "laboratoryAnalysis"
+                        ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" })
+                        : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}
+                    </span>
+                    <button
+                      type="button"
+                      className="ht-lab-analysis-manage-btn"
+                      onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}
+                    >
+                      {t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
+                    </button>
+                  </div>
+                  {((activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).length > 0) ? (
+                    <div className="ht-lab-analysis-grid">
+                      {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).map((test) => (
+                        <div
+                          key={test._id}
+                          className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}
+                        >
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleToggleLabTest(test._id, activeNavItem === "studiesManipulations");
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </label>
+                          <div
+                            className="ht-lab-analysis-item-label"
+                            onClick={() => handleSelectTest(test, activeNavItem)}
+                          >
+                            <span>{test.name?.en || ""}</span>
+                            <span>{test.name?.ru || ""}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="ht-lab-analysis-empty">
+                      {t(
+                        activeNavItem === "laboratoryAnalysis" ? "history_tab.no_lab_tests" : "history_tab.no_studies_tests",
+                        {
+                          defaultValue:
+                            activeNavItem === "laboratoryAnalysis"
+                              ? "No laboratory tests available."
+                              : "No studies/manipulations available.",
+                        },
+                      )}
+                    </p>
+                  )}
+                </div>
+              )}
               {section.subsections?.map((sub) => renderSection(sub, level + 1))}
             </>
           )}
@@ -447,53 +1038,378 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   return (
     <>
-      <div className="ht-container">
-        {/* ── First appointment checkbox ── */}
-        <div className="ht-first-appt-bar">
-          <label className="ht-first-appt-label">
-            <input
-              type="checkbox"
-              className="ht-first-appt-checkbox"
-              checked={!!form.isFirstAppointment}
-              onChange={(e) => setForm((prev) => ({ ...prev, isFirstAppointment: e.target.checked, isRepetitiveAppointment: e.target.checked ? false : prev.isRepetitiveAppointment }))}
-            />
-            <span>{t("first_appointment")}</span>
-          </label>
-          <label className="ht-first-appt-label">
-            <input
-              type="checkbox"
-              className="ht-first-appt-checkbox"
-              checked={!!form.isRepetitiveAppointment}
-              onChange={(e) => setForm((prev) => ({ ...prev, isRepetitiveAppointment: e.target.checked, isFirstAppointment: e.target.checked ? false : prev.isFirstAppointment }))}
-            />
-            <span>{t("repetitive_appointment")}</span>
-          </label>
+      <div className="ht-shell">
+        <aside className="ht-sub-sidebar" aria-label={t("sidebar_title")}>
+          <div className="ht-sub-sidebar-list">
+            {HISTORY_NAV_ITEMS.map((item) => (
+              <React.Fragment key={item.id}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`ht-sub-sidebar-item${activeNavItem === item.id ? " active" : ""}`}
+                  onClick={(e) => handleSidebarItemClick(item, e)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" || e.key === " ") handleSidebarItemClick(item, e);
+                  }}
+                >
+                  <span className="ht-sub-sidebar-label">{t(item.labelKey)}</span>
+                  <span className="ht-sub-sidebar-actions">
+                    {(item.id === "laboratoryAnalysis" || item.id === "studiesManipulations") && (
+                      <button
+                        type="button"
+                        className="ht-sub-sidebar-setting-btn"
+                        onClick={(e) => openLabAnalysisPopup(item.id, e)}
+                        aria-label={t("history_tab.manage_lab_tests", { defaultValue: "Manage tests" })}
+                      >
+                        <FiSettings size={14} />
+                      </button>
+                    )}
+                    {item.icon && (
+                      <span className="ht-sub-sidebar-icon" aria-hidden="true">
+                        {item.icon}
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
+                  <div className="ht-appointments-panel">
+                    {isAppointmentsLoading ? (
+                      <div className="ht-appointments-loading">
+                        {t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}
+                      </div>
+                    ) : appointmentsError ? (
+                      <div className="ht-appointments-error">{appointmentsError}</div>
+                    ) : patientAppointments.length === 0 ? (
+                      <div className="ht-appointments-empty">
+                        {t("history_tab.no_other_appointments", { defaultValue: "No other appointments found" })}
+                      </div>
+                    ) : (
+                      <ul className="ht-appointments-list">
+                        {patientAppointments.map((appt) => {
+                          const patientName = appt.patient
+                            ? [appt.patient.firstName, appt.patient.middleName, appt.patient.lastName]
+                              .filter(Boolean)
+                              .join(" ")
+                              .trim() || appt.patient.email || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" })
+                            : appt.patientName || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" });
+                          const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
+                          const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
+
+                          return (
+                            <li key={appt.applicationId || appt._id} className="ht-appointment-item">
+                              <span className="ht-appointment-name">{patientName}</span>
+                              <span className="ht-appointment-meta">
+                                {appointmentDate}
+                                {appointmentTime ? ` · ${appointmentTime}` : ""}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </aside>
+
+        <div className="ht-main-column" ref={containerRef}>
+          {selectedTest ? (
+            <div className="ht-selected-test-page">
+              <div className="ht-selected-test-header">
+                <div>
+                  <h2>{selectedTest.name?.en || ""}</h2>
+                  <p>{selectedTest.name?.ru || ""}</p>
+                </div>
+                <button type="button" className="ht-selected-test-close" onClick={handleCloseSelectedTest}>
+                  ×
+                </button>
+              </div>
+              <div className="ht-selected-test-body">
+                <div className="ht-selected-test-actions">
+                  <button type="button" className="ht-selected-test-btn ht-action-btn" onClick={() => fileInputRef.current?.click()}>
+                    <FiUpload className="ht-action-btn-icon" />
+                    {t("history_tab.upload_file", { defaultValue: "Upload file" })}
+                  </button>
+                  <button type="button" className="ht-selected-test-btn ht-action-btn" onClick={handleOpenTestNoteEditor}>
+                    <FiFileText className="ht-action-btn-icon" />
+                    {t("history_tab.add_text", { defaultValue: "Add text" })}
+                  </button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="ht-hidden-file-input"
+                  onChange={handleTestFileChange}
+                />
+                {testFileUploadError && <div className="ht-error-message">{testFileUploadError}</div>}
+                {selectedTestFiles.length > 0 && (
+                  <div className="ht-selected-test-file-list">
+                    <strong>{t("history_tab.current_files", { defaultValue: "Uploaded files:" })}</strong>
+                    {selectedTestFiles.map((file) => (
+                      <div key={String(file.fileId)} className="ht-selected-test-file">
+                        <div className="ht-selected-test-file-info">
+                          <span>{file.fileName}</span>
+                          {file.uploadedAt && (
+                            <small>{new Date(file.uploadedAt).toLocaleString("ru-RU")}</small>
+                          )}
+                        </div>
+                        <div className="ht-selected-test-file-actions">
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            onClick={() => handleViewTestFile(file.fileId)}
+                            aria-label={t("history_tab.view_file", { defaultValue: "View file" })}
+                          >
+                            <FiEye />
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            onClick={() => handleRemoveTestFile(file.fileId)}
+                            aria-label={t("history_tab.remove_file", { defaultValue: "Remove file" })}
+                          >
+                            <FiTrash2 />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showTestNoteEditor ? (
+                  <div className="ht-selected-test-note-editor">
+                    <RichTextEditor
+                      value={testNoteDraft}
+                      onChange={(value) => setTestNoteDraft(value)}
+                      placeholder={t("history_tab.enter_text", { defaultValue: "Enter text..." })}
+                    />
+                    <div className="ht-selected-test-note-actions">
+                      <button type="button" className="ht-selected-test-btn" onClick={handleSaveTestNote}>
+                        {t("history_tab.save", { defaultValue: "Save" })}
+                      </button>
+                      <button type="button" className="ht-selected-test-btn ht-secondary-btn" onClick={() => setShowTestNoteEditor(false)}>
+                        {t("history_tab.cancel", { defaultValue: "Cancel" })}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  selectedTestNotes.length > 0 && (
+                    <div className="ht-selected-test-note-preview-list">
+                      <strong>{t("history_tab.notes", { defaultValue: "Notes:" })}</strong>
+                      {selectedTestNotes.map((note) => (
+                        <div key={String(note._id)} className="ht-selected-test-note-preview">
+                          <div className="ht-selected-test-note-preview-header">
+                            <div>
+                              <span>{t("history_tab.note", { defaultValue: "Note" })}</span>
+                              {note.createdAt && (
+                                <small>{new Date(note.createdAt).toLocaleString("ru-RU")}</small>
+                              )}
+                            </div>
+                            <div className="ht-selected-test-note-preview-actions">
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                onClick={() => handleEditTestNote(note)}
+                                aria-label={t("history_tab.edit_note", { defaultValue: "Edit note" })}
+                              >
+                                <FiEdit2 />
+                              </button>
+                              <button
+                                type="button"
+                                className="icon-btn"
+                                onClick={() => handleDeleteTestNote(note._id)}
+                                aria-label={t("history_tab.delete_text", { defaultValue: "Delete text" })}
+                              >
+                                <FiTrash2 />
+                              </button>
+                            </div>
+                          </div>
+                          <div dangerouslySetInnerHTML={{ __html: note.content }} />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="ht-container">
+                {/* ── First appointment checkbox ── */}
+                <div className="ht-first-appt-bar">
+                  <label className="ht-first-appt-label">
+                    <input
+                      type="checkbox"
+                      className="ht-first-appt-checkbox"
+                      checked={!!form.isFirstAppointment}
+                      onChange={(e) => setForm((prev) => ({ ...prev, isFirstAppointment: e.target.checked, isRepetitiveAppointment: e.target.checked ? false : prev.isRepetitiveAppointment }))}
+                    />
+                    <span>{t("first_appointment")}</span>
+                  </label>
+                  <label className="ht-first-appt-label">
+                    <input
+                      type="checkbox"
+                      className="ht-first-appt-checkbox"
+                      checked={!!form.isRepetitiveAppointment}
+                      onChange={(e) => setForm((prev) => ({ ...prev, isRepetitiveAppointment: e.target.checked, isFirstAppointment: e.target.checked ? false : prev.isFirstAppointment }))}
+                    />
+                    <span>{t("repetitive_appointment")}</span>
+                  </label>
+                </div>
+
+                {HISTORY_SECTIONS.map((s) => renderSection(s))}
+              </div>
+
+              {/* Sticky footer — same pattern as GeneralInformationTab */}
+              <div className="adp-sticky-footer">
+                <button
+                  className="adp-footer-btn adp-footer-save-btn"
+                  onClick={handleSaveAll}
+                  disabled={isSaving}
+                >
+                  {isSaving
+                    ? t("footer.saving", { ns: "appointment_details_general" })
+                    : t("footer.save", { ns: "appointment_details_general" })}
+                </button>
+                <button
+                  className="adp-footer-btn adp-footer-save-close-btn"
+                  onClick={handleSaveAndClose}
+                  disabled={isSaving}
+                >
+                  {isSaving
+                    ? t("footer.saving", { ns: "appointment_details_general" })
+                    : t("footer.save_and_close", { ns: "appointment_details_general" })}
+                </button>
+              </div>
+            </>
+          )}
         </div>
-
-        {HISTORY_SECTIONS.map((s) => renderSection(s))}
       </div>
+      {labPopupOpen && (
+        <div className="ht-popup-overlay" onClick={closeLabAnalysisPopup}>
+          <div className="ht-popup-container" onClick={(e) => e.stopPropagation()}>
+            <div className="popup-header">
+              <h2 className="popup-title">
+                {labPopupMode === "studiesManipulations"
+                  ? t("history_tab.manage_study_tests", { defaultValue: "Manage Studies & Manipulations" })
+                  : t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
+              </h2>
+              <button className="close-btn" type="button" onClick={closeLabAnalysisPopup}>
+                ×
+              </button>
+            </div>
 
-      {/* Sticky footer — same pattern as GeneralInformationTab */}
-      <div className="adp-sticky-footer">
-        <button
-          className="adp-footer-btn adp-footer-save-btn"
-          onClick={handleSaveAll}
-          disabled={isSaving}
-        >
-          {isSaving
-            ? t("footer.saving", { ns: "appointment_details_general" })
-            : t("footer.save", { ns: "appointment_details_general" })}
-        </button>
-        <button
-          className="adp-footer-btn adp-footer-save-close-btn"
-          onClick={handleSaveAndClose}
-          disabled={isSaving}
-        >
-          {isSaving
-            ? t("footer.saving", { ns: "appointment_details_general" })
-            : t("footer.save_and_close", { ns: "appointment_details_general" })}
-        </button>
-      </div>
+            <div className="popup-content">
+              {/* Left section - Add/Edit test form */}
+              <div className="left-section">
+                <div className="input-group">
+                  <label>{t("history_tab.name_en", { defaultValue: "EN" })}</label>
+                  <input
+                    type="text"
+                    placeholder={t("history_tab.test_name_en", { defaultValue: "Test name (EN)" })}
+                    value={newTestNameEN}
+                    onChange={(e) => setNewTestNameEN(e.target.value)}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>{t("history_tab.name_ru", { defaultValue: "RU" })}</label>
+                  <input
+                    type="text"
+                    placeholder={t("history_tab.test_name_ru", { defaultValue: "Test name (RU)" })}
+                    value={newTestNameRU}
+                    onChange={(e) => setNewTestNameRU(e.target.value)}
+                  />
+                </div>
+                <div className="left-section-actions">
+                  <button className="add-btn" type="button" onClick={handleSaveTest}>
+                    {editingTestId ? t("history_tab.save", { defaultValue: "Save" }) : t("history_tab.add_test", { defaultValue: "Add test" })}
+                  </button>
+                  {editingTestId && (
+                    <button className="cancel-edit-btn" type="button" onClick={cancelEditTest}>
+                      {t("history_tab.cancel", { defaultValue: "Cancel" })}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Right section - Tests list */}
+              <div className="right-section">
+                <div className="tests-list">
+                  {(labPopupMode === "studiesManipulations" ? studyTests : labTests).length > 0 ? (
+                    (labPopupMode === "studiesManipulations" ? studyTests : labTests).map((test) => (
+                      <div
+                        key={test._id}
+                        className="test-item"
+                        role="button"
+                        onClick={() => {
+                          handleSelectTest(test, labPopupMode);
+                          closeLabAnalysisPopup();
+                        }}
+                      >
+                        <div className="test-item-main">
+                          <div className="test-info">
+                            <span className="test-name-en">{test.name?.en || ""}</span>
+                            <span className="test-name-ru">{test.name?.ru || ""}</span>
+                          </div>
+
+                          <div className="test-item-actions">
+                            <button
+                              type="button"
+                              className="icon-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditTest(test);
+                              }}
+                              aria-label={t("history_tab.edit_test", { defaultValue: "Edit test" })}
+                            >
+                              <FiEdit2 />
+                            </button>
+                            <button
+                              type="button"
+                              className="icon-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDeleteConfirm(test);
+                              }}
+                              aria-label={t("history_tab.delete_test", { defaultValue: "Delete test" })}
+                            >
+                              <FiTrash2 />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="no-tests">{t("history_tab.no_tests_yet", { defaultValue: "No tests added yet" })}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteConfirmTest && (
+        <div className="ht-delete-confirm-overlay">
+          <div className="ht-delete-confirm-card">
+            <p>
+              {t("history_tab.confirm_delete_message", {
+                defaultValue: "Are you sure you want to delete this test? This action cannot be undone.",
+              })}
+            </p>
+            <div className="ht-delete-confirm-actions">
+              <button type="button" className="cancel-delete-btn" onClick={closeDeleteConfirm}>
+                {t("history_tab.cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button type="button" className="confirm-delete-btn" onClick={handleConfirmDelete}>
+                {t("history_tab.delete", { defaultValue: "Delete" })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 });

@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { BranchProvider } from "./context/BranchContext";
+import { LayoutTopBarProvider } from "./context/LayoutTopBarContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./i18n";
@@ -203,9 +204,11 @@ const ProtectedLayout = () => {
 
   return (
     <ProtectedRoute>
-      <AppLayout>
-        <Outlet />
-      </AppLayout>
+      <LayoutTopBarProvider>
+        <AppLayout>
+          <Outlet />
+        </AppLayout>
+      </LayoutTopBarProvider>
     </ProtectedRoute>
   );
 };

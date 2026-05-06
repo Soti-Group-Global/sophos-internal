@@ -231,7 +231,6 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
     <div className="shf-wrap">
       {/* ── Save row ── */}
       <div className="shf-header-row">
-        <span className="shf-specialist-title">{specialistTitle}</span>
         <div className="shf-header-actions">
           <label className="ht-first-appt-label">
             <input

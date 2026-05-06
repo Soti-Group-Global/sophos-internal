@@ -3,10 +3,10 @@
    ========================================================= */
 
 .adp-page {
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 82vh;
-  overflow: hidden;
+  min-height: 100%;
   background: #f5f6f8;
   font-family: inherit;
 }
@@ -21,6 +21,24 @@
   background: #fff;
   padding: 14px 28px;
   border-bottom: 1px solid #e4e7ec;
+  position: sticky;
+  top: 0;
+}
+
+.adp-top-header--system {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  position: static;
+  padding: 0 24px;
+  border-bottom: none;
+  background: transparent;
+}
+
+.adp-top-header--system .adp-header-center,
+.adp-top-header--system .adp-header-name-row {
+  min-width: 0;
 }
 
 .adp-back-btn {
@@ -118,6 +136,7 @@
   overflow-x: auto;
   gap: 2px;
   scrollbar-width: none;
+  margin-top: 10px;
 }
 .adp-tab-bar::-webkit-scrollbar { display: none; }
 
@@ -134,7 +153,7 @@
   letter-spacing: 0.01em;
   transition: color 0.2s ease;
   border-bottom: 3px solid transparent;
-  top: 1px;
+  top: 10px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -143,6 +162,7 @@
 .adp-tab-icon {
   display: flex;
   align-items: center;
+  font-size: 18px;
 }
 
 .adp-tab::after {
@@ -174,6 +194,88 @@
 
 .adp-tab.active::after {
   transform: translateX(-50%) scaleX(1);
+}
+
+/* Hide horizontal tab bar when vertical iconic tabs are used */
+.adp-page .adp-tab-bar { display: none; }
+
+/* Vertical tabs (left fixed iconic bar) */
+.apd-vertical-tabs {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
+  width: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 8px 6px;
+  background: transparent;
+  position: fixed;
+  left: 0;
+  top: 70px;
+  height: calc(100vh - 70px);
+  z-index: 30;
+}
+
+.apd-vert-tab {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease, color .12s ease;
+}
+
+.apd-vert-tab:hover { background: #f3f6f9; color: #0a2e5d; transform: translateY(-2px); }
+
+.apd-vert-tab.active {
+  color: #0a2e5d;
+  border-left: 5px solid #0a2e5d;
+}
+
+/* Active indicator: thicker right border / divider */
+.apd-vertical-tabs::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  top: 5px;
+  bottom: 8px;
+  width: 1px;
+  background: #e4e7ec;
+  border-radius: 2px;
+  height: calc(120% - 13px);
+}
+
+/* Shift content to the right so vertical bar doesn't overlap */
+.adp-content-scroll, .adp-content { margin-left: 84px; }
+
+/* Hide the left patient appointments list when page requests it */
+body.hide-global-sidebar .adp-app-sidebar {
+  display: none !important;
+}
+
+/* When the sidebar is hidden, allow content to take full width (still keep space for vertical tabs) */
+body.hide-global-sidebar .adp-content-scroll,
+body.hide-global-sidebar .adp-content {
+  margin-left: 84px;
+}
+
+/* Also hide the main application sidebar (global) when requested */
+body.hide-global-sidebar .sidebar,
+body.hide-global-sidebar .modern-sidebar,
+body.hide-global-sidebar .sidebar-backdrop {
+  display: none !important;
+}
+
+/* Make sure mobile keeps original top tabs (override for small screens) */
+@media (max-width: 768px) {
+  .apd-vertical-tabs { display: none; }
+  .adp-page .adp-tab-bar { display: flex; }
+  .adp-content-scroll, .adp-content { margin-left: 0; }
 }
 
 /* ── Two-column body ── */
@@ -208,7 +310,6 @@
 }
 
 .adp-app-sidebar-list {
-  display: flex;
   flex-direction: column;
   gap: 6px;
 }
@@ -301,7 +402,7 @@
 }
 
 .adp-content {
-  max-width: 960px;
+  max-width: 1180px;
   width: 100%;
   margin: 24px auto;
   padding: 0 20px 80px;
@@ -1797,46 +1898,59 @@
 .adp-confirm-ok-btn:disabled,
 .adp-confirm-cancel-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* ── Sidebar toggle button (hidden above 768px) ── */
-.adp-sidebar-toggle { display: none; }
-.adp-sidebar-open-btn { display: none; }
-
 /* ── Header responsive ── */
 @media (max-width: 768px) {
-  .adp-top-header {
-    flex-wrap: wrap;
+  .adp-top-header--system {
+    flex-wrap: nowrap;
     gap: 8px;
-    padding: 10px 14px;
-    align-items: flex-start;
-  }
-
-  .adp-header-divider { display: none; }
-
-  .adp-back-btn { font-size: 12px; }
-
-  .adp-header-center {
-    flex: 1 1 100%;
-    order: 2;
-  }
-
-  .adp-header-name-row { flex-wrap: wrap; gap: 6px; }
-
-  .adp-patient-title { font-size: 14px; }
-
-  .adp-header-right {
-    order: 3;
-    flex-direction: row;
+    padding: 0 14px;
     align-items: center;
-    gap: 6px;
-    margin-left: 0;
   }
-  .adp-dob-value { font-size: 14px; font-weight: 600; }
-  .adp-dob-label { font-size: 10px; }
+
+  .adp-top-header--system .adp-header-divider { display: none; }
+
+  .adp-top-header--system .adp-back-btn {
+    font-size: 12px;
+    padding: 4px 0;
+  }
+  .adp-top-header--system .adp-back-btn span { display: none; }
+
+  .adp-top-header--system .adp-header-center {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .adp-top-header--system .adp-header-name-row {
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .adp-top-header--system .adp-patient-title {
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .adp-top-header--system .adp-status-badge-header {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .adp-top-header--system .adp-added-date { display: none; }
+
+  .adp-top-header--system .adp-header-right { display: none; }
 }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .adp-body { position: relative; }
+  .adp-body { 
+    position: relative;
+    margin-left: 0;
+  }
 
   .adp-app-sidebar {
     position: absolute;
@@ -1876,6 +1990,52 @@
   }
   .adp-sidebar-toggle:hover { background: #e5e7eb; }
 
+  .adp-tab-bar {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 70px;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid #e4e7ec;
+    padding: 0 12px;
+    z-index: 50;
+    justify-content: center;
+  }
+
+  .adp-tab {
+    padding: 8px 12px;
+    height: auto;
+    width: auto;
+  }
+
+  .adp-tab::after {
+    width: 100%;
+    height: 3px;
+    bottom: -1px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    border-radius: 3px 3px 0 0;
+  }
+
+  .adp-tab:hover::after {
+    transform: translateX(-50%) scaleX(0.5);
+  }
+
+  .adp-tab.active::after {
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  .adp-content-scroll {
+    padding-bottom: 80px;
+  }
+
+  .adp-sticky-footer {
+    bottom: 70px;
+  }
+
   /* Open button shown in main area */
   .adp-sidebar-open-btn {
     display: inline-flex;
@@ -1895,7 +2055,7 @@
 }
 
 @media (max-width: 600px) {
-  .adp-top-header { padding: 12px 14px; }
+  .adp-top-header--system { padding: 0 12px; }
   .adp-content { padding: 0 12px 80px; }
   .adp-tab-bar { padding: 0 8px; }
   .adp-tab { padding: 12px 10px; font-size: 12px; }

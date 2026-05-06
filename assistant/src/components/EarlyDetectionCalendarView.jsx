@@ -81,7 +81,7 @@ const WEEKDAYS_EN = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 const WEEKDAYS_RU = ["Пн",  "Вт",  "Ср",  "Чт",  "Пт",  "Сб",  "Вс" ];
 
 /* ─── Component ─── */
-const EarlyDetectionCalendarView = () => {
+const EarlyDetectionCalendarView = ({ bookings = [], loading = true }) => {
   const { user }      = useContext(AuthContext);
   const { i18n }      = useTranslation();
   const navigate      = useNavigate();
@@ -94,8 +94,7 @@ const EarlyDetectionCalendarView = () => {
   const [currentDate,   setCurrentDate]   = useState(new Date());
   const [showMonthDrop, setShowMonthDrop] = useState(false);
   const [showYearDrop,  setShowYearDrop]  = useState(false);
-  const [applications,  setApplications]  = useState([]);
-  const [loading,       setLoading]       = useState(true);
+  const [applications,  setApplications]  = useState(bookings);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -137,68 +136,45 @@ const EarlyDetectionCalendarView = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  /* fetch applications */
+  /* sync applications with bookings prop */
   useEffect(() => {
-    const normalizeAccessStatus = (status) =>
-      String(status || "").toLowerCase().replace(/[_-]+/g, " ").trim();
-    const isAccessAllowed = (status) => {
-      if (!status) return true;
-      return ["accepted", "access granted", "granted", "approved", "active"].includes(
-        normalizeAccessStatus(status),
-      );
-    };
-    const isWithinWindow = (entry) => {
-      const now = new Date();
-      const start = entry?.startDateTime ? new Date(entry.startDateTime) : null;
-      const end = entry?.endDateTime ? new Date(entry.endDateTime) : null;
-      const startValid = !start || Number.isNaN(start.getTime()) || now >= start;
-      const endValid = !end || Number.isNaN(end.getTime()) || now <= end;
-      return startValid && endValid;
-    };
+    setApplications(bookings || []);
+    console.log("📅 Bookings received:", bookings);
+    if (bookings && bookings.length > 0) {
+      console.log("First booking structure:", bookings[0]);
+      console.log("Available fields:", Object.keys(bookings[0]));
+    }
+  }, [bookings]);
 
-    const loadData = async () => {
-      if (!user?.email) return;
-      try {
-        let emails = [];
-        if (user.role === "assistant" || user.role === "head_assistant") {
-          const res = await getAssistantDoctors(user.email);
-          const list = Array.isArray(res) ? res : [];
-          emails = [
-            ...new Set(
-              list
-                .filter((d) => isAccessAllowed(d?.status) && isWithinWindow(d))
-                .map((d) => d?.doctorEmail || d?.email)
-                .filter(Boolean),
-            ),
-          ];
-        } else {
-          emails = [user.email];
-        }
-        const all = [];
-        for (const email of emails) {
-          const res = await getEarlyDetectionBookingsByDoctor(email);
-          all.push(...(res.data || []));
-        }
-        setApplications(all);
-      } catch (err) {
-        console.error("Error fetching early diagnosis applications:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [user?.email, user?.role]);
+  /* Helper: Combine date + time into ISO datetime */
+  const getFullDateTime = (booking) => {
+    if (!booking.date) return null;
+    
+    // If startTime is already ISO, use it directly
+    if (booking.startTime && booking.startTime.includes('T')) {
+      return booking.startTime;
+    }
+    
+    // Otherwise combine date + startTime (time only)
+    const dateStr = booking.date instanceof Date 
+      ? booking.date.toISOString().split('T')[0]
+      : String(booking.date).split('T')[0];
+    
+    const timeStr = booking.startTime || "09:00";
+    return `${dateStr}T${timeStr}:00`;
+  };
 
   /* group by date key (Moscow timezone from startTime) */
   const byDay = useMemo(() => {
     const map = {};
     applications.forEach((appt) => {
       let key = null;
-      if (appt.startTime) {
-        key = moment(appt.startTime).tz("Europe/Moscow").format("YYYY-MM-DD");
-      } else if (appt.date) {
-        key = toYMD(new Date(appt.date));
+      const fullDateTime = getFullDateTime(appt);
+      
+      if (fullDateTime) {
+        key = moment(fullDateTime).tz("Europe/Moscow").format("YYYY-MM-DD");
       }
+      
       if (!key) return;
       if (!map[key]) map[key] = [];
       map[key].push(appt);
@@ -210,11 +186,12 @@ const EarlyDetectionCalendarView = () => {
     const map = {};
     applications.forEach((appt) => {
       let key = null;
-      if (appt.startTime) {
-        key = moment(appt.startTime).tz("Europe/Moscow").format("YYYY-MM-DD");
-      } else if (appt.date) {
-        key = toYMD(new Date(appt.date));
+      const fullDateTime = getFullDateTime(appt);
+      
+      if (fullDateTime) {
+        key = moment(fullDateTime).tz("Europe/Moscow").format("YYYY-MM-DD");
       }
+      
       if (!key) return;
 
       if (!map[key]) map[key] = new Set();
@@ -237,12 +214,20 @@ const EarlyDetectionCalendarView = () => {
     return Object.fromEntries(Object.entries(map).map(([dayKey, value]) => [dayKey, value.size]));
   }, [applications]);
 
-  const getBookingsAtSlot = (dayApps, hour, minute) =>
-    dayApps.filter((appt) => {
-      if (!appt.startTime) return false;
-      const m = moment(appt.startTime).tz("Europe/Moscow");
-      return m.hour() === hour && m.minute() >= minute && m.minute() < minute + 30;
+  const getBookingsAtSlot = (dayApps, hour, minute) => {
+    const result = dayApps.filter((appt) => {
+      const fullDateTime = getFullDateTime(appt);
+      if (!fullDateTime) return false;
+      
+      const m = moment(fullDateTime).tz("Europe/Moscow");
+      const matches = m.hour() === hour && m.minute() >= minute && m.minute() < minute + 30;
+      if (matches) {
+        console.log(`✅ Found booking at ${hour}:${String(minute).padStart(2, "0")}`, appt);
+      }
+      return matches;
     });
+    return result;
+  };
 
   return (
     <div className="edcv2-layout">
@@ -442,8 +427,19 @@ const EarlyDetectionCalendarView = () => {
                     return (
                       <div key={i} className={`edcv2-slot${slot.minute === 0 ? " full" : " half"}`}>
                         {slotBookings.map((appt) => {
-                          const sm = appt.startTime ? moment(appt.startTime).tz("Europe/Moscow") : null;
-                          const em = appt.endTime   ? moment(appt.endTime).tz("Europe/Moscow")   : null;
+                          const fullDateTime = getFullDateTime(appt);
+                          const sm = fullDateTime ? moment(fullDateTime).tz("Europe/Moscow") : null;
+                          
+                          // Parse endTime if it's just HH:mm
+                          let em = null;
+                          if (appt.endTime && appt.date) {
+                            const dateStr = appt.date instanceof Date 
+                              ? appt.date.toISOString().split('T')[0]
+                              : String(appt.date).split('T')[0];
+                            const endDateTime = `${dateStr}T${appt.endTime}:00`;
+                            em = moment(endDateTime).tz("Europe/Moscow");
+                          }
+                          
                           const timeLabel = sm
                             ? `${sm.format("HH:mm")}${em ? ` – ${em.format("HH:mm")}` : ""}`
                             : "";

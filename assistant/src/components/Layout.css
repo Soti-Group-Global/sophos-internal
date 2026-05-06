@@ -52,6 +52,12 @@
   overflow: hidden;
 }
 
+.layout-main.no-sidebar .layout-content {
+  padding: 0 !important;
+  border-top-left-radius: 0;
+  border-left: none;
+}
+
 /* Mobile styles */
 @media (max-width: 1024px) {
   .sidebar.mobile {

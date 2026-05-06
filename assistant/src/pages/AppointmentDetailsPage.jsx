@@ -92,6 +92,12 @@ const AppointmentDetailsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    // Hide global app sidebar to give room for the left iconic tabs
+    document.body.classList.add("hide-global-sidebar");
+    return () => document.body.classList.remove("hide-global-sidebar");
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
       if (isFirstLoad.current) {
         setLoading(true);
@@ -264,6 +270,21 @@ const AppointmentDetailsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Left vertical iconic tabs (replace top tab bar visually) */}
+      <nav className="apd-vertical-tabs" aria-label="Appointment sections">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className={`apd-vert-tab ${activeTab === tab.key ? "active" : ""}`}
+            onClick={() => setActiveTab(tab.key)}
+            title={tab.label}
+            aria-pressed={activeTab === tab.key}
+          >
+            <span className="apd-vert-icon">{tab.icon}</span>
+          </button>
+        ))}
+      </nav>
 
       <div className="adp-tab-bar">
         {TABS.map((tab) => (

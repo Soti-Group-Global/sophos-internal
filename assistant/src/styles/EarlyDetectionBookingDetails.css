@@ -984,23 +984,155 @@
 }
 
 /* ===== Early Detection Booking Details (unique classes) ===== */
+/* Assistant specific vertical tabs */
+.booking-details-page--compact .adp-top-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: #fff;
+  padding-left: 20px; /* Space for the vertical tab bar */
+  border-top-left-radius: 20px;
+  border:1px solid #eef2f7;
+}
+
+.booking-details-page--compact .edb-booking-details-content {
+  padding-top: 20px;
+  padding-left: 64px;
+}
+
+.booking-details-page--compact .edb-tab-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  z-index: 210;
+  background: #f5f6f8;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e5e7eb;
+  padding: 12px 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin: 0;
+  border-radius: 0;
+  margin-top: 68px;
+  height: 120%;
+}
+
+.booking-details-page--compact .edb-tab {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 0; /* Hide text */
+  position: relative;
+  transition: all 0.2s ease;
+  margin: 0;
+}
+
+.booking-details-page--compact .edb-tab .edb-tab-icon {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.booking-details-page--compact .edb-tab .edb-tab-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.booking-details-page--compact .edb-tab.active {
+  border-left:4px solid #0f3f7f ;
+  color:#0f3f7f;
+  background: #f5f7fa;
+}
+
+.booking-details-page--compact .edb-tab:not(.active):hover {
+  background: #f0f4ff;
+}
+
+/* Tooltip for vertical tabs */
+.booking-details-page--compact .edb-tab::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 100%;
+  margin-left: 10px;
+  padding: 4px 8px;
+  background: #1e293b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.booking-details-page--compact .edb-tab:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(5px);
+}
+
+/* Hide the main application sidebar when compact booking details use the left icon tab panel */
+body.hide-global-sidebar .sidebar,
+body.hide-global-sidebar .modern-sidebar,
+body.hide-global-sidebar .sidebar-backdrop {
+  display: none !important;
+}
+
+body.hide-global-sidebar .adp-app-sidebar {
+  display: none !important;
+}
+
+.booking-details-page--compact .ed-details-body {
+  display: block;
+}
+
+.ed-booking-details-page {
+  --ed-app-topbar-h: 64px;
+  --ed-header-h: 64px;
+  --ed-tabbar-h: 64px;
+  --ed-footer-reserve: 96px;
+  padding: 0;
+  background-color: #f5f7fa;
+  min-height: 0;
+  height: calc(100vh - var(--ed-app-topbar-h));
+  overflow: hidden;
+}
+
+.layout-main.no-sidebar {
+  margin-left: 0;
+  width: 100%;
+}
+
 .edb-booking-details-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 70px);
-  overflow: hidden;
+  min-height: 100%;
 }
 
 .edb-booking-details-content {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  padding-left: 64px;
 }
 
 .edb-details-body {
   display: flex;
   min-height: 0;
-  height: 100%;
 }
 
 .edb-booking-details-layout {
@@ -1024,6 +1156,7 @@
   border-bottom: 1px solid #e4e7ec;
   overflow-x: auto;
   scrollbar-width: none;
+  
 }
 
 .edb-tab-bar::-webkit-scrollbar {
@@ -1052,8 +1185,9 @@
 }
 
 .edb-tab.active {
+  background: #e5e7eb;
+  border-left: 1px solid #0f3f7f;
   color: #0f3f7f;
-  border-bottom-color: #2b5fab;
   font-weight: 600;
 }
 
@@ -1066,8 +1200,9 @@
 }
 
 .edb-tab--section.active {
+  background: #e5e7eb;
+  border-left: 1px solid #0f3f7f;
   color: #0f3f7f;
-  border-bottom-color: #2b5fab;
   font-weight: 600;
 }
 
@@ -3412,24 +3547,81 @@
   margin-left: 20px
 }
 
+.ed-medical-history-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  width: 100%;
+}
+
+.ed-medical-history-sidebar {
+  background: #f5f7fa;
+  border-right: 1px solid #e4e7ec;
+  padding: 12px;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-height: 0;
+  margin-top: -30px;
+}
+
+.ed-medical-history-content {
+  min-width: 0;
+}
+
+.ed-schedule-tabs--vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow-x: visible;
+  overflow-y: auto;
+  max-height: calc(100vh - 180px);
+}
+
 .ed-schedule-tab-btn {
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: none;
+  background:transparent;
   color: #374151;
   font-size: 12px;
   font-weight: 600;
   padding: 8px 12px;
-  border-radius: 999px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
+.ed-schedule-tabs--vertical .ed-schedule-tab-btn {
+  width: 100%;
+  justify-content: flex-start;
+  white-space: normal;
+}
+
+.ed-schedule-tabs--vertical .ed-schedule-tab-btn span {
+  max-width: none;
+  display: block;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .ed-schedule-tab-btn.active {
   background: #0c3870;
   color: #fff;
   border-color: #0c3870;
+}
+
+.ed-schedule-tabs--vertical .ed-schedule-tab-btn.active {
+  background: #f5f7fa;
+  color: #0c3870;
+  border-left: 4px solid #0c3870;
+  border-radius: 10px;
+  padding-left: 8px;
 }
 
 /* Locked specialist tab — view only */
@@ -3443,13 +3635,41 @@
 
 .ed-schedule-tab-btn.ed-specialist-tab-locked.active {
   background: #6b7280;
-  border-color: #6b7280;
   color: #fff;
+  border: none;
 }
 
 .ed-specialist-lock-icon {
   opacity: 0.6;
   flex-shrink: 0;
+}
+
+.ed-specialist-consultation-wrapper {
+  width: 100%;
+}
+
+.ed-specialist-type-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 0;
+}
+
+.ed-specialist-type-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #0c3870;
+  border: 1px solid #0c3870;
+  border-radius: 999px;
+  padding: 8px 16px;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  min-height: 40px;
 }
 
 /* Title + verified badge group */

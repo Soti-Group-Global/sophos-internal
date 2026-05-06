@@ -1082,7 +1082,7 @@ export const getDoctorEarlyDetectionApplications = (doctorEmail) =>
 
 // Get EarlyDetectionBooking records where doctors[] contains this email
 export const getEarlyDetectionBookingsByDoctor = (email) =>
-  api.get(`/early-detection-bookings/by-doctor`, { params: { email } });
+  api.get(`/early-detection/bookings/calendar`, { params: { doctorEmail: email } });
 
 export const addEarlyDetectionAppointmentComment = async (
   applicationId,
@@ -2082,37 +2082,37 @@ export const getEarlyDetectionDoctors = async () => {
 };
 
 export const getEarlyDetectionBookingById = async (bookingId) => {
-  const res = await api.get(`/early-detection-bookings/${encodeURIComponent(bookingId)}`);
-  return res.data;
+  const res = await api.get(`/early-detection/booking/${encodeURIComponent(bookingId)}`);
+  return res.data?.data || null;
 };
 
 export const updateEarlyDetectionBooking = async (bookingId, payload) =>
-  api.patch(`/early-detection-bookings/${encodeURIComponent(bookingId)}`, payload);
+  api.patch(`/early-detection/bookings/${encodeURIComponent(bookingId)}`, payload);
 
 export const addEarlyDetectionBookingNote = async (bookingId, payload) => {
-  const res = await api.post(`/early-detection-bookings/${encodeURIComponent(bookingId)}/notes`, payload);
+  const res = await api.post(`/early-detection/bookings/${encodeURIComponent(bookingId)}/notes`, payload);
   return res.data;
 };
 
 export const updateEarlyDetectionBookingNote = async (bookingId, noteId, payload) => {
-  const res = await api.patch(`/early-detection-bookings/${encodeURIComponent(bookingId)}/notes/${encodeURIComponent(noteId)}`, payload);
+  const res = await api.patch(`/early-detection/bookings/${encodeURIComponent(bookingId)}/notes/${encodeURIComponent(noteId)}`, payload);
   return res.data;
 };
 
 export const deleteEarlyDetectionBookingNote = async (bookingId, noteId) => {
-  const res = await api.delete(`/early-detection-bookings/${encodeURIComponent(bookingId)}/notes/${encodeURIComponent(noteId)}`);
+  const res = await api.delete(`/early-detection/bookings/${encodeURIComponent(bookingId)}/notes/${encodeURIComponent(noteId)}`);
   return res.data;
 };
 
 export const generateEDPaymentLink = async (bookingId) =>
-  api.post(`/early-detection-bookings/${encodeURIComponent(bookingId)}/payments/generate-link`);
+  api.post(`/early-detection/bookings/${encodeURIComponent(bookingId)}/generate-payment-link`);
 
 export const updateEarlyDetectionPaymentStatus = async (bookingId, payload) =>
-  api.patch(`/early-detection-bookings/${encodeURIComponent(bookingId)}/payments/status`, payload);
+  api.patch(`/early-detection/bookings/${encodeURIComponent(bookingId)}/payment-status`, payload);
 
 export const getEarlyDetectionManagedTests = async (section) => {
   try {
-    return await api.get(`/early-detection-bookings/managed-tests`, { params: { section } });
+    return await api.get(`/early-detection/bookings/tests/${encodeURIComponent(section)}`);
   } catch (error) {
     // Backend route may not exist in some environments yet.
     // Return empty list so booking details page remains usable.
@@ -2156,13 +2156,13 @@ export const saveEarlyDetectionReport = async (bookingId, payload) => {
 };
 
 export const createEarlyDetectionManagedTest = async (section, payload) =>
-  api.post(`/early-detection-bookings/managed-tests`, { section, ...payload });
+  api.post(`/early-detection/bookings/tests/${encodeURIComponent(section)}`, payload);
 
 export const updateEarlyDetectionManagedTest = async (section, testId, payload) =>
-  api.patch(`/early-detection-bookings/managed-tests/${encodeURIComponent(testId)}`, { section, ...payload });
+  api.patch(`/early-detection/bookings/tests/${encodeURIComponent(section)}/${encodeURIComponent(testId)}`, payload);
 
 export const deleteEarlyDetectionManagedTest = async (section, testId) =>
-  api.delete(`/early-detection-bookings/managed-tests/${encodeURIComponent(testId)}`, { params: { section } });
+  api.delete(`/early-detection/bookings/tests/${encodeURIComponent(section)}/${encodeURIComponent(testId)}`);
 
 export const getDoctorAppointmentsByDate = async (doctorEmail, date) =>
   api.get(`/calendar/doctor-appointments`, { params: { doctorEmail, date } });
@@ -2179,17 +2179,17 @@ export const uploadEarlyDetectionScheduleFile = async (bookingId, { section, ite
   if (itemId) formData.append("itemId", itemId);
   if (customName) formData.append("customName", customName);
   if (file) formData.append("file", file);
-  return api.post(`/early-detection-bookings/${encodeURIComponent(bookingId)}/schedule/files`, formData);
+  return api.post(`/early-detection/bookings/${encodeURIComponent(bookingId)}/schedule/${encodeURIComponent(section)}/upload`, formData);
 };
 
 export const getEarlyDetectionScheduleFileUrl = (fileId, download = false) => {
   const qs = download ? "?download=1" : "";
-  return `${api.defaults.baseURL}/early-detection-bookings/schedule/files/${encodeURIComponent(fileId)}${qs}`;
+  return `${api.defaults.baseURL}/early-detection/bookings/files/${encodeURIComponent(fileId)}${qs}`;
 };
 
 export const saveEarlyDetectionSpecialistHistoryForm = async (bookingId, specialistIndex, payload) =>
   api.put(
-    `/early-detection-bookings/${encodeURIComponent(bookingId)}/schedule/specialist/${encodeURIComponent(specialistIndex)}/history-form`,
+    `/early-detection/bookings/${encodeURIComponent(bookingId)}/specialist/${encodeURIComponent(specialistIndex)}`,
     payload
   );
 

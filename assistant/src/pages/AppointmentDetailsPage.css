@@ -5,8 +5,7 @@
 .adp-page {
   display: flex;
   flex-direction: column;
-  height: 82vh;
-  overflow: hidden;
+  min-height: 100%;
   background: #f5f6f8;
   font-family: inherit;
 }
@@ -21,6 +20,8 @@
   background: #fff;
   padding: 14px 28px;
   border-bottom: 1px solid #e4e7ec;
+  position: sticky;
+  top: 0;
 }
 
 .adp-back-btn {
@@ -174,6 +175,88 @@
 
 .adp-tab.active::after {
   transform: translateX(-50%) scaleX(1);
+}
+
+/* Hide horizontal tab bar when vertical iconic tabs are used */
+.adp-page .adp-tab-bar { display: none; }
+
+/* Vertical tabs (left fixed iconic bar) */
+.apd-vertical-tabs {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
+  width: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 8px 6px;
+  background: transparent;
+  position: fixed; /* fixed to viewport like a main sidebar */
+  left: 0;
+  top: 64px; /* moved upward to align below header */
+  height: calc(100vh - 64px);
+  z-index: 30;
+}
+
+.apd-vert-tab {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease, color .12s ease;
+}
+
+.apd-vert-tab:hover { background: #f3f6f9; color: #0a2e5d; transform: translateY(-2px); }
+
+.apd-vert-tab.active {
+   color: #0a2e5d;
+  border-left: 5px solid #0a2e5d;
+}
+
+/* Active indicator: thicker right border / divider */
+.apd-vertical-tabs::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  top: 5px;
+  bottom: 8px;
+  width: 1px;
+  background: #e4e7ec;
+  border-radius: 2px;
+  height: calc(120% - 13px);
+}
+
+/* Shift content to the right so vertical bar doesn't overlap */
+.adp-content-scroll, .adp-content { margin-left: 84px; }
+
+/* Hide the left patient appointments list when page requests it */
+body.hide-global-sidebar .adp-app-sidebar {
+  display: none !important;
+}
+
+/* When the sidebar is hidden, allow content to take full width (still keep space for vertical tabs) */
+body.hide-global-sidebar .adp-content-scroll,
+body.hide-global-sidebar .adp-content {
+  margin-left: 84px; /* keep space for vertical tabs */
+}
+
+/* Also hide the main application sidebar (global) when requested */
+body.hide-global-sidebar .sidebar,
+body.hide-global-sidebar .modern-sidebar,
+body.hide-global-sidebar .sidebar-backdrop {
+  display: none !important;
+}
+
+/* Make sure mobile keeps original top tabs (override for small screens) */
+@media (max-width: 768px) {
+  .apd-vertical-tabs { display: none; }
+  .adp-page .adp-tab-bar { display: flex; }
+  .adp-content-scroll, .adp-content { margin-left: 0; }
 }
 
 /* ── Two-column body ── */

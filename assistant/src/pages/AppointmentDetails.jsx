@@ -92,6 +92,7 @@ const AppointmentDetails = () => {
   const [followUpNeeded, setFollowUpNeeded] = useState(false);
   const [followUpComment, setFollowUpComment] = useState("");
   const [loadingDocuments, setLoadingDocuments] = useState({});
+  const [activeSubTab, setActiveSubTab] = useState("patient");
 
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -766,7 +767,7 @@ const AppointmentDetails = () => {
   };
 
   return (
-    <div className="appointment-details-container">
+    <div className={`appointment-details-container tab-${activeSubTab}`}>
       <ToastContainer position="top-right" autoClose={3000} />
       <button className="appointment-back-button" onClick={() => navigate(-1)}>
         <FiArrowLeft /> {t("appointment.backToAppointments")}
@@ -783,6 +784,45 @@ const AppointmentDetails = () => {
           </span>
         )}
       </div>
+
+      {/* Left vertical iconic tabs for assistant appointment details */}
+      <nav className="apd-vertical-tabs" aria-label="Appointment sections">
+        <button
+          className={`apd-vert-tab ${activeSubTab === "patient" ? "active" : ""}`}
+          title={t("appointment.patient")}
+          onClick={() => setActiveSubTab("patient")}
+        >
+          <FiUser />
+        </button>
+        <button
+          className={`apd-vert-tab ${activeSubTab === "history" ? "active" : ""}`}
+          title={t("appointment.medicalHistory")}
+          onClick={() => setActiveSubTab("history")}
+        >
+          <FiClock />
+        </button>
+        <button
+          className={`apd-vert-tab ${activeSubTab === "documents" ? "active" : ""}`}
+          title={t("appointment.documents")}
+          onClick={() => setActiveSubTab("documents")}
+        >
+          <GrDocumentStore />
+        </button>
+        <button
+          className={`apd-vert-tab ${activeSubTab === "tests" ? "active" : ""}`}
+          title={t("appointment.testResults")}
+          onClick={() => setActiveSubTab("tests")}
+        >
+          <GrDocumentTest />
+        </button>
+        <button
+          className={`apd-vert-tab ${activeSubTab === "followup" ? "active" : ""}`}
+          title={t("appointment.followUp")}
+          onClick={() => setActiveSubTab("followup")}
+        >
+          <FiCalendar />
+        </button>
+      </nav>
 
       {/* Main Appointment Info */}
       <div className="details-grid">

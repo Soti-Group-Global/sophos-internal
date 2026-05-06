@@ -153,6 +153,14 @@ const AppointmentDetails = () => {
   const [urlFileName, setUrlFileName] = useState("");
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
+  // Hide global app sidebar while on appointment details page
+  useEffect(() => {
+    document.body.classList.add("hide-global-sidebar");
+    return () => {
+      document.body.classList.remove("hide-global-sidebar");
+    };
+  }, []);
+
   useEffect(() => {
     fetchAppointment();
     fetchAvailableTests();
@@ -1060,118 +1068,45 @@ const AppointmentDetails = () => {
         )}
       </div>
 
-      {/* === Full-width tabs bar === */}
-      <div className="apd-tabs-bar">
-        <button
-          className={`apd-tab${activeSubTab === "patient" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("patient")}
-        >
-          <FiUser size={15} />
-          <span>{t("appointment.patient")}</span>
-        </button>
-        <button
-          className={`apd-tab${activeSubTab === "history" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("history")}
-        >
-          <FiClock size={15} />
-          <span>{t("appointment.medicalHistory")}</span>
-        </button>
-        <button
-          className={`apd-tab${activeSubTab === "documents" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("documents")}
-        >
-          <GrDocumentStore size={15} />
-          <span>{t("appointment.documents")}</span>
-        </button>
-        <button
-          className={`apd-tab${activeSubTab === "followup" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("followup")}
-        >
-          <FiCalendar size={15} />
-          <span>{t("appointment.followUp")}</span>
-        </button>
-        {/* <button
-          className={`apd-tab${activeSubTab === "telemedicine" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("telemedicine")}
-        >
-          <FiVideo size={15} />
-          <span>{t("appointments.telemedicine")}</span>
-        </button> */}
-        <button
-          className={`apd-tab${activeSubTab === "overview" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("overview")}
-        >
-          <FiActivity size={15} />
-          <span>{t("appointment.earlyDiagnosis") || "Early diagnosis"}</span>
-        </button>
-        {/* <button
-          className={`apd-tab${activeSubTab === "tests" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("tests")}
-        >
-          <GrDocumentTest size={15} />
-          <span>{t("appointment.testResults")}</span>
-        </button> */}
-        {/* <button
-          className={`apd-tab${activeSubTab === "meetings" ? " active" : ""}`}
-          onClick={() => setActiveSubTab("meetings")}
-        >
-          <FiVideo size={15} />
-          <span>{t("appointment.meetings")}</span>
-        </button> */}
-      </div>
-
-      {/* === Page Layout: Sidebar + Right Column === */}
+      {/* === Page Layout: Left vertical tabs + Right Column === */}
       <div className="app-detail-page-layout">
-        {/* Left panel at subtab-bar level */}
-        <aside
-          className={`app-detail-sidebar header-level${sidebarExpanded ? " sidebar-expanded" : ""}`}
-          onClick={(e) => {
-            // Close if clicking the backdrop (the ::before pseudo-element area)
-            if (e.target === e.currentTarget) setSidebarExpanded(false);
-          }}
-        >
-          {" "}
-          {/* Mobile-only collapse toggle */}
+        <nav className="apd-vertical-tabs" aria-label="Appointment sections">
           <button
-            className="sidebar-mobile-toggle"
-            onClick={() => setSidebarExpanded((prev) => !prev)}
+            title={t("appointment.patient")}
+            className={`apd-vert-tab${activeSubTab === "patient" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("patient")}
           >
-            <span>{t("appointment.currentAppointment")}</span>
-            {sidebarExpanded ? (
-              <FiArrowUp size={16} />
-            ) : (
-              <FiArrowDown size={16} />
-            )}
+            <FiUser size={18} />
           </button>
-          <div className="sidebar-body">
-            <h4 className="app-detail-sidebar-title">
-              {t("appointment.currentAppointment")}
-            </h4>
-            <div className="app-detail-sidebar-content">
-              <div className="app-sidebar-card current">
-                <div className="app-card-top">
-                  <span className="app-card-id">
-                    #{appointment.applicationId}
-                  </span>
-                  <span
-                    className={`status-badge ${appointment.appointmentStatus?.toLowerCase()}`}
-                  >
-                    {translateStatus(appointment.appointmentStatus)}
-                  </span>
-                </div>
-                <div className="app-card-date">
-                  {formatLocalDate(appointment.date)}
-                </div>
-                <div className="app-card-doctor">
-                  {appointment.doctorName || t("notDefined")}
-                </div>
-                <div className="app-card-current">{t("current")}</div>
-              </div>
-            </div>
-          </div>
-          {/* end sidebar-body */}
-        </aside>
-        {/* Right column: content only (tabs are now full-width above) */}
+          <button
+            title={t("appointment.medicalHistory")}
+            className={`apd-vert-tab${activeSubTab === "history" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("history")}
+          >
+            <FiClock size={18} />
+          </button>
+          <button
+            title={t("appointment.documents")}
+            className={`apd-vert-tab${activeSubTab === "documents" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("documents")}
+          >
+            <GrDocumentStore size={18} />
+          </button>
+          <button
+            title={t("appointment.followUp")}
+            className={`apd-vert-tab${activeSubTab === "followup" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("followup")}
+          >
+            <FiCalendar size={18} />
+          </button>
+          <button
+            title={t("appointment.earlyDiagnosis") || "Early diagnosis"}
+            className={`apd-vert-tab${activeSubTab === "overview" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("overview")}
+          >
+            <FiActivity size={18} />
+          </button>
+        </nav>
         <div className="app-detail-right-column">
           {/* Main body */}
           <div className="app-detail-main-body flex-layout">

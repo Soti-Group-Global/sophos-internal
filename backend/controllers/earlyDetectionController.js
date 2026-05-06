@@ -1466,21 +1466,16 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
     console.log("[CALENDAR] === getWeeklyBookingsOnCalendar START ===");
     console.log("[CALENDAR] doctorEmail:", doctorEmail);
 
-    // If doctor email provided, find their profile and filter by that
-    if (doctorEmail) {
-      const doctor = await DoctorsProfile.findOne({ email: doctorEmail });
-      console.log("[CALENDAR] Doctor found:", !!doctor, doctor?._id);
-      if (doctor) {
-        // Find bookings where this doctor is assigned to specialist consultations
-        query["schedule.specialistConsultations.doctor"] = doctor._id;
-        console.log("[CALENDAR] Query filter:", JSON.stringify(query));
-      }
-    }
-
-    let bookings = await EarlyDetectionBooking.find(query)
-      .populate("patient");
+    // For doctors/managers: show ALL ED bookings (not just ones where they're assigned)
+    // The query is intentionally empty to return all bookings
+    // Filtering by specific doctor assignment happens in UI logic, not backend
     
-    console.log("[CALENDAR] Bookings found:", bookings.length);
+    let bookings = await EarlyDetectionBooking.find(query)
+      .populate("patient")
+      .sort({ createdAt: -1 })
+      .limit(1000);
+    
+    console.log("[CALENDAR] Bookings found:", bookings.length, "for doctor:", doctorEmail);
 
     // Manually populate doctor refs in specialist consultations for all bookings
     for (let b of bookings) {
@@ -1510,11 +1505,11 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
             bookingId: booking._id,
             bookingNumber: booking.bookingNumber,
             invoiceNumber: booking.invoiceNumber,
-            applicationId: booking.bookingNumber, // Use bookingNumber as applicationId for legacy compatibility
+            applicationId: booking.bookingNumber,
             patientId: booking.patient?._id,
             patientEmail: booking.patient?.email || null,
             patientName: booking.patient?.firstName || booking.patient?.name || "Unknown",
-            appointmentStatus: booking.status, // 'pending', 'confirmed', 'completed', 'cancelled'
+            appointmentStatus: booking.status,
             date: consultation.date,
             startTime: consultation.startTime,
             endTime: consultation.endTime,
@@ -1522,7 +1517,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
             doctorId: consultation.doctor?._id,
             doctorEmail: consultation.doctor?.email,
             doctorName: consultation.doctor?.firstName || consultation.doctor?.name,
-            serviceType: "specialist-consultation", // or could be derived from title
+            serviceType: "specialist-consultation",
             totalAmount: booking.totalAmount || 0,
             paymentStatus: booking.payment?.status || "pending",
           };
@@ -1535,7 +1530,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
           });
         });
       } else {
-        // If no consultations, still create base entry
+        // If no consultations, still create base entry showing the booking exists
         const transformed = {
           _id: booking._id,
           bookingId: booking._id,
@@ -1558,7 +1553,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
           paymentStatus: booking.payment?.status || "pending",
         };
         results.push(transformed);
-        console.log("[CALENDAR] - No specialist consultations found");
+        console.log("[CALENDAR] - No specialist consultations found, showing booking only");
       }
       
       return results;

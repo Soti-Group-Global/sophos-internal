@@ -17,9 +17,10 @@
     background: var(--bg);
     font-family: 'Inter Tight', sans-serif;
     color: var(--text);
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+  display: block;
+  position: relative;
+  min-height: 100vh;
+  padding-left: 120px; /* space for fixed vertical tabs */
 }
 
 .appointment-back-button {
@@ -115,6 +116,66 @@
     font-weight: 600;
     background-color: #4eccc4;
 }
+
+/* Vertical tabs for assistant appointment details */
+.apd-vertical-tabs {
+  position: fixed;
+  left: 24px;
+  top: 96px;
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  z-index: 40;
+}
+
+.apd-vert-tab {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: transparent;
+  color: #98a2b3;
+  border: none;
+  cursor: pointer;
+  transition: all .12s ease;
+}
+
+.apd-vert-tab:hover { background: #f3f6f9; color: #0a2e5d; transform: translateY(-2px); }
+
+.apd-vert-tab.active { background: #0a2e5d; color: #fff; box-shadow: 0 8px 20px rgba(10,46,93,0.12); }
+
+/* Right divider thicker for active indicator */
+.apd-vertical-tabs::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e6eef8;
+}
+
+/* Show/hide sections based on active tab class on container */
+.appointment-details-container .info-card,
+.appointment-details-container .documents-section,
+.appointment-details-container .comments-panel {
+  display: none;
+}
+.appointment-details-container.tab-patient .info-card:first-of-type,
+.appointment-details-container.tab-patient .documents-section {
+  display: block;
+}
+.appointment-details-container.tab-history .info-card,
+.appointment-details-container.tab-history .comments-panel {
+  display: block;
+}
+.appointment-details-container.tab-documents .documents-section { display: block; }
+.appointment-details-container.tab-tests .info-card { display: block; }
+.appointment-details-container.tab-followup .info-card { display: block; }
 
 .card-content {
     padding: 16px 20px;

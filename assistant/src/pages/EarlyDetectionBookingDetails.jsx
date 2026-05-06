@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getApptStatusClass } from "../utils/appointmentStatus";
@@ -1261,6 +1261,14 @@ const EarlyDetectionBookingDetails = () => {
   const showSidebarTabs = ["history", "notes"].includes(activeTab);
   const isConclusionTabActive =
     activeTab === "medicalHistory" && activeScheduleTab === "conclusion";
+
+  useEffect(() => {
+    document.body.classList.add("hide-global-sidebar");
+    return () => {
+      document.body.classList.remove("hide-global-sidebar");
+    };
+  }, []);
+
   const readNameField = (value) => {
     if (!value) return "";
     if (typeof value === "string") return value.trim();
@@ -1765,8 +1773,70 @@ const EarlyDetectionBookingDetails = () => {
     : null;
 
   return (
-    <div className="booking-details-page edb-booking-details-page">
+    <div className="booking-details-page edb-booking-details-page booking-details-page--compact">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      <div
+        className="edb-tab-bar"
+        role="tablist"
+        aria-label="Booking details tabs"
+      >
+        <button
+          type="button"
+          className={`edb-tab ${activeTab === "patient" ? "active" : ""}`}
+          data-label={t("earlyDiagnosis.patientInformation") || "Patient details"}
+          onClick={() => setActiveTab("patient")}
+        >
+          <span className="edb-tab-icon">
+            <User size={15} />
+          </span>
+          {t("earlyDiagnosis.patientInformation") || "Patient details"}
+        </button>
+        <button
+          type="button"
+          className={`edb-tab edb-tab--section ${activeTab === "appointmentDetails" ? "active" : ""}`}
+          data-label={t("earlyDiagnosis.appointmentDetails") || "Appointment Details"}
+          onClick={() => setActiveTab("appointmentDetails")}
+        >
+          <span className="edb-tab-icon">
+            <Calendar size={15} />
+          </span>
+          {t("earlyDiagnosis.appointmentDetails") ||
+            "Appointment Details"}
+        </button>
+        <button
+          type="button"
+          className={`edb-tab edb-tab--section ${activeTab === "medicalHistory" ? "active" : ""}`}
+          data-label={t("earlyDiagnosis.medicalHistory") || "Medical History"}
+          onClick={() => setActiveTab("medicalHistory")}
+        >
+          <span className="edb-tab-icon">
+            <FileText size={15} />
+          </span>
+          {t("earlyDiagnosis.medicalHistory") || "Medical History"}
+        </button>
+        <button
+          type="button"
+          className={`edb-tab edb-tab--section ${activeTab === "history" ? "active" : ""}`}
+          data-label={t("earlyDiagnosis.historyLogs") || "History"}
+          onClick={() => setActiveTab("history")}
+        >
+          <span className="edb-tab-icon">
+            <Clock size={15} />
+          </span>
+          {t("earlyDiagnosis.historyLogs") || "History"}
+        </button>
+        <button
+          type="button"
+          className={`edb-tab edb-tab--section ${activeTab === "notes" ? "active" : ""}`}
+          data-label={t("earlyDiagnosis.internalNotes") || "Notes"}
+          onClick={() => setActiveTab("notes")}
+        >
+          <span className="edb-tab-icon">
+            <Edit2 size={15} />
+          </span>
+          {t("earlyDiagnosis.internalNotes") || "Notes"}
+        </button>
+      </div>
       <div className="adp-top-header">
         <button
           className="adp-back-btn"
@@ -1812,143 +1882,11 @@ const EarlyDetectionBookingDetails = () => {
         <div
           className={`ed-details-body edb-details-body${isConclusionTabActive ? " edb-details-body--conclusion-full ed-details-body--full-width" : ""}`}
         >
-          {!isConclusionTabActive && (
-            <aside className="ed-appointments-sidebar adp-app-sidebar">
-            <div className="ed-appointments-sidebar-title adp-app-sidebar-title">
-              {t(
-                "sidebar_title",
-                t("earlyDiagnosis.appointments", "Appointments"),
-              )}
-            </div>
 
-            <div className="ed-appointments-sidebar-list adp-app-sidebar-list">
-              {patientBookings.length === 0 ? (
-                <div className="ed-appointments-sidebar-empty adp-app-sidebar-empty">
-                  {t(
-                    "sidebar_empty",
-                    t("earlyDiagnosis.noAppointments", "No appointments"),
-                  )}
-                </div>
-              ) : (
-                patientBookings.map((item) => {
-                  const itemId = normalizeId(item?._id);
-                  const bookingRef =
-                    item?.invoiceNumber ||
-                    item?.bookingNumber ||
-                    item?._id?.slice(-6) ||
-                    "-";
-                  const bookingLookupId =
-                    item?.invoiceNumber || item?.bookingNumber || itemId;
-                  const selectedId = String(selectedBookingId || "");
-                  const isCurrent =
-                    (!!itemId && itemId === normalizeId(selectedBookingId)) ||
-                    (!!item?.invoiceNumber && String(item.invoiceNumber) === selectedId) ||
-                    (!!item?.bookingNumber && String(item.bookingNumber) === selectedId);
-                  const statusLabel =
-                    {
-                      confirmed: t("earlyDiagnosis.confirmed"),
-                      pending: t("earlyDiagnosis.pendingStatus"),
-                      cancelled: t("earlyDiagnosis.cancelled"),
-                      completed: t("earlyDiagnosis.completed"),
-                    }[String(item?.status || "").toLowerCase()] ||
-                    item?.status ||
-                    "-";
-
-                  return (
-                    <button
-                      key={itemId || bookingRef}
-                      type="button"
-                      className={`adp-app-card${isCurrent ? " adp-app-card--active" : ""}`}
-                      onClick={() => {
-                        if (!isCurrent && bookingLookupId) {
-                          setSelectedBookingId(bookingLookupId);
-                        }
-                      }}
-                    >
-                      <div className="adp-app-card-top">
-                        <span className="adp-app-card-id">#{bookingRef}</span>
-                        <span
-                          className={`appt-status-badge ${getApptStatusClass(item?.status)}`}
-                        >
-                          {statusLabel}
-                        </span>
-                      </div>
-                      <div className="adp-app-card-date">
-                        {formatDate(item?.appointmentDate || item?.createdAt)}
-                      </div>
-                      {isCurrent && (
-                        <div className="adp-app-card-current-label">
-                          {t("sidebar_current", "Current")}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-            </aside>
-          )}
 
           <div
-            className={`booking-details-layout edb-booking-details-layout booking-details-layout--single${showSidebarTabs ? " booking-details-layout--sidebar-only" : ""}${isConclusionTabActive ? " edb-booking-details-layout--conclusion-full" : ""}`}
+            className="booking-details-layout edb-booking-details-layout booking-details-layout--single"
           >
-            <div
-              className="edb-tab-bar"
-              role="tablist"
-              aria-label="Booking details tabs"
-            >
-              <button
-                type="button"
-                className={`edb-tab ${activeTab === "patient" ? "active" : ""}`}
-                onClick={() => setActiveTab("patient")}
-              >
-                <span className="edb-tab-icon">
-                  <User size={15} />
-                </span>
-                {t("earlyDiagnosis.patientInformation") || "Patient details"}
-              </button>
-              <button
-                type="button"
-                className={`edb-tab edb-tab--section ${activeTab === "appointmentDetails" ? "active" : ""}`}
-                onClick={() => setActiveTab("appointmentDetails")}
-              >
-                <span className="edb-tab-icon">
-                  <Calendar size={15} />
-                </span>
-                {t("earlyDiagnosis.appointmentDetails") ||
-                  "Appointment Details"}
-              </button>
-              <button
-                type="button"
-                className={`edb-tab edb-tab--section ${activeTab === "medicalHistory" ? "active" : ""}`}
-                onClick={() => setActiveTab("medicalHistory")}
-              >
-                <span className="edb-tab-icon">
-                  <FileText size={15} />
-                </span>
-                {t("earlyDiagnosis.medicalHistory") || "Medical History"}
-              </button>
-              <button
-                type="button"
-                className={`edb-tab edb-tab--section ${activeTab === "history" ? "active" : ""}`}
-                onClick={() => setActiveTab("history")}
-              >
-                <span className="edb-tab-icon">
-                  <Clock size={15} />
-                </span>
-                {t("earlyDiagnosis.historyLogs") || "History"}
-              </button>
-              <button
-                type="button"
-                className={`edb-tab edb-tab--section ${activeTab === "notes" ? "active" : ""}`}
-                onClick={() => setActiveTab("notes")}
-              >
-                <span className="edb-tab-icon">
-                  <Edit2 size={15} />
-                </span>
-                {t("earlyDiagnosis.internalNotes") || "Notes"}
-              </button>
-            </div>
             {/* Left Column */}
             {!showSidebarTabs && (
               <div
@@ -2426,8 +2364,9 @@ const EarlyDetectionBookingDetails = () => {
 
                 {activeTab === "medicalHistory" && (
                   <>
-                    <div className="detail-section">
-                      <div className="ed-schedule-tabs">
+                    <div className="ed-medical-history-layout">
+                      <aside className="ed-medical-history-sidebar">
+                        <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
                         {[
                           [
                             "laboratoryTests",
@@ -2505,7 +2444,11 @@ const EarlyDetectionBookingDetails = () => {
                             )}
                           </button>
                         ))}
-                      </div>
+                        </div>
+                      </aside>
+
+                      <div className="ed-medical-history-content">
+                        <div className="detail-section">
 
                       {activeScheduleTab === "laboratoryTests" && (
                         <div className="ed-schedule-section-list">
@@ -3148,32 +3091,44 @@ const EarlyDetectionBookingDetails = () => {
                                       specialistDoctorEmail,
                                     )));
                               return (
-                                <SpecialistHistoryForm
-                                  key={`specialist_form_${activeSpecialistTab}`}
-                                  specialistTitle={
-                                    specialist.title
-                                      ? t(
-                                          `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
-                                          specialist.title,
-                                        )
-                                      : specialist.title
-                                  }
-                                  historyForm={
-                                    specialistForms[activeSpecialistTab] ||
-                                    specialist.historyForm ||
-                                    {}
-                                  }
-                                  isSaving={
-                                    !!specialistFormSaving[activeSpecialistTab]
-                                  }
-                                  readOnly={!canEdit}
-                                  onSave={(formData) =>
-                                    handleSaveSpecialistForm(
-                                      activeSpecialistTab,
-                                      formData,
-                                    )
-                                  }
-                                />
+                                <div className="ed-specialist-consultation-wrapper">
+                                  <div className="ed-specialist-type-header">
+                                    <span className="ed-specialist-type-name">
+                                      {specialist.title
+                                        ? t(
+                                            `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
+                                            specialist.title,
+                                          )
+                                        : specialist.title}
+                                    </span>
+                                  </div>
+                                  <SpecialistHistoryForm
+                                    key={`specialist_form_${activeSpecialistTab}`}
+                                    specialistTitle={
+                                      specialist.title
+                                        ? t(
+                                            `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
+                                            specialist.title,
+                                          )
+                                        : specialist.title
+                                    }
+                                    historyForm={
+                                      specialistForms[activeSpecialistTab] ||
+                                      specialist.historyForm ||
+                                      {}
+                                    }
+                                    isSaving={
+                                      !!specialistFormSaving[activeSpecialistTab]
+                                    }
+                                    readOnly={!canEdit}
+                                    onSave={(formData) =>
+                                      handleSaveSpecialistForm(
+                                        activeSpecialistTab,
+                                        formData,
+                                      )
+                                    }
+                                  />
+                                </div>
                               );
                             })()}
                         </div>
@@ -3184,6 +3139,8 @@ const EarlyDetectionBookingDetails = () => {
                           <EarlyDetectionReportTab booking={booking} />
                         </div>
                       )}
+                        </div>
+                      </div>
                     </div>
                   </>
                 )}

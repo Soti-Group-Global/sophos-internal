@@ -5548,6 +5548,15 @@
     "verify_title_verified": "Click to unverify",
     "first_appointment": "First appointment",
     "repetitive_appointment": "Repetitive appointment",
+    "sidebar_title": "History sections",
+    "sidebar": {
+      "specialistConsultation": "Specialist Consultation",
+      "laboratoryAnalysis": "Laboratory Analysis",
+      "studiesManipulations": "Studies / Manipulations",
+      "morphologicalResearch": "Morphological Research",
+      "proceduresManipulations": "Procedures and Manipulations",
+      "conclusion": "Conclusion"
+    },
     "dtp_back": "Back",
     "dtp_title": "History Templates",
     "dtp_total": "total",

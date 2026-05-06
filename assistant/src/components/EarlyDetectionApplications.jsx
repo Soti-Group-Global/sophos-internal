@@ -43,49 +43,15 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const EarlyDetectionApplications = () => {
+const EarlyDetectionApplications = ({ bookings = [], loading = true }) => {
   const { user } = useContext(AuthContext);
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
   const navigate = useNavigate();
-
+  const [applications, setApplications] = useState(bookings);
 
   useEffect(() => {
-    const fetchApplications = async () => {
-      if (!user?.email) return;
-
-      try {
-        let doctorEmails = [];
-
-        // Check if assistant: fetch doctor emails
-        if (user.role === "assistant") {
-          const res = await getDoctors(user.email);
-          doctorEmails = res.doctors.map((d) => d.email);
-        } else {
-          // Normal doctor
-          doctorEmails = [user.email];
-        }
-
-        const allApps = [];
-
-        for (const email of doctorEmails) {
-          try {
-            const res = await getEarlyDetectionBookingsByDoctor(email);
-            allApps.push(...res.data);
-          } catch { /* skip on error */ }
-        }
-
-        setApplications(allApps);
-      } catch (error) {
-        console.error("Error fetching early detection applications:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchApplications();
-  }, [user?.email]);
+    setApplications(bookings || []);
+  }, [bookings]);
 
 
   const formatDateTimeForCSV = (dateString) => {

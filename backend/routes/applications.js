@@ -91,7 +91,7 @@ router.get(
 );
 
 // --- Applications by patient ID ---
-router.get("/by-patient-id/:patientId", auth, getApplicationsByPatientId);
+router.get("/by-patient-id/:patientId(*)", auth, getApplicationsByPatientId);
 
 // --- Applications by date (calendar view) - MUST be before /:id route ---
 router.get("/applicationsByDate", auth, getApplicationsByDate);

@@ -92,6 +92,10 @@ const auditLogsRoutes = require("./routes/auditLogs");
 const corporateRegisterRoutes = require('./routes/website/corporateRegisterRoutes');
 const corporateFormRegistrationRoutes = require('./routes/website/corporateFormRegistrationRoutes');
 
+//Instumental analysis and laboratory test routes
+const applicationLaboratoryTestRoutes = require("./routes/applicationLaboratoryTestRoutes");
+const applicationInstrumentalAnalysisRoutes = require("./routes/applicationInstrumentalAnalysisRoutes");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -213,6 +217,8 @@ app.use("/api/assistants", assistantRoutes);
 app.use("/api/specialties", specialtyRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/application-laboratory-test", applicationLaboratoryTestRoutes);
+app.use("/api/application-instrumental-analysis", applicationInstrumentalAnalysisRoutes);
 app.use("/api/early-detection", earlyDetectionFormRoutes);
 app.use("/api/head-doctors", headDoctorRoutes);
 app.use("/api/head-assistants", headAssistantRoutes);

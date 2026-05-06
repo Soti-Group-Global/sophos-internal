@@ -93,6 +93,7 @@ const EarlyDetectionApplications = () => {
   const { user, isLoading } = useContext(AuthContext);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState("calendar"); // "table" or "calendar"
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
@@ -190,37 +191,44 @@ const EarlyDetectionApplications = () => {
 
   useEffect(() => {
     const fetchApplications = async () => {
-      if (isLoading || !user?.email) return;
+      const doctorEmail = doctorInfo.email || user?.email;
+      
+      if (isLoading || !doctorEmail) {
+        console.log("[ED] Skipping fetch - isLoading:", isLoading, "doctorEmail:", doctorEmail);
+        return;
+      }
 
       try {
-        console.log("[COMPONENT] fetchApplications called for email:", user.email);
-        const appsResp = await getDoctorEarlyDetectionApplications(user.email);
-        console.log("[COMPONENT] appsResp received:", {
-          hasData: !!appsResp.data,
-          dataType: typeof appsResp.data,
-          isArray: Array.isArray(appsResp.data),
-          length: Array.isArray(appsResp.data) ? appsResp.data.length : 'N/A',
-          rawResponse: appsResp.data,
-        });
+        setLoading(true);
+        setError(null);
         
-        if (appsResp.data && appsResp.data.length > 0) {
-          console.log("[COMPONENT] Setting applications with", appsResp.data.length, 'items');
-          setApplications(appsResp.data);
-          // For debugging, log exact fields in requested shape.
-          const logged = appsResp.data.map((app) => ({
-            applicationId: app.applicationId || app._id,
-            date: formatDateISO(app.date),
-            startTime: formatTimeHHMM(app.startTime),
-            endTime: formatTimeHHMM(app.endTime),
-          }));
-          console.log("Fetched early detection applications:", logged);
-        } else {
-          console.warn("[COMPONENT] No applications found - setting empty array");
-          setApplications([]);
+        console.log("[ED] Fetching applications for email:", doctorEmail);
+        
+        // Use Promise.allSettled to safely handle the API response
+        const [edResult] = await Promise.allSettled([
+          getDoctorEarlyDetectionApplications(doctorEmail),
+        ]);
+
+        console.log("[ED] API result status:", edResult.status);
+        
+        // Check if request was fulfilled before accessing data
+        const edAppointments =
+          edResult.status === "fulfilled" &&
+          Array.isArray(edResult.value?.data)
+            ? edResult.value.data
+            : [];
+
+        console.log("[ED] Early Detection applications count:", edAppointments.length);
+        
+        if (edAppointments.length > 0) {
+          console.log("[ED] Sample:", edAppointments.slice(0, 2));
         }
+        
+        setApplications(edAppointments);
       } catch (error) {
-        console.error("[COMPONENT] Error fetching early detection data:", error);
-        // fallback: empty list
+        console.error("[ED] Error fetching applications:", error);
+        const errorMsg = error?.response?.data?.message || error?.message || "Failed to load applications";
+        setError(errorMsg);
         setApplications([]);
       } finally {
         setLoading(false);
@@ -228,7 +236,7 @@ const EarlyDetectionApplications = () => {
     };
 
     fetchApplications();
-  }, [user?.email, isLoading]);
+  }, [doctorInfo.email, user?.email, isLoading]);
 
   // Fetch doctor breaks for calendar rendering
   const fetchBreaks = useCallback(async () => {
@@ -348,6 +356,20 @@ const EarlyDetectionApplications = () => {
           (a.applicationId || "").toLowerCase().includes(term),
       );
     }
+    console.log("[ED] FILTERED_APPS: Total:", applications.length, "Filtered:", result.length, "Filter:", filter);
+    if (result.length === 0 && applications.length > 0) {
+      console.warn("[ED] All applications filtered out! Current filter:", filter);
+    }
+    if (applications.length > 0) {
+      console.table(applications.map(a => ({
+        id: a._id,
+        applicationId: a.applicationId,
+        patientName: a.patientName,
+        date: a.date,
+        startTime: a.startTime,
+        status: a.appointmentStatus
+      })));
+    }
     return result;
   }, [applications, filter, searchTerm]);
 
@@ -463,10 +485,18 @@ const EarlyDetectionApplications = () => {
       return moment(time);
     };
 
-    return filteredApplications
+    const events = filteredApplications
       .map((app) => {
         const start = buildDateTime(app.date, app.startTime);
         const end = buildDateTime(app.date, app.endTime);
+        console.log("[WEEK_EVENTS] Mapping app:", {
+          applicationId: app.applicationId,
+          date: app.date,
+          startTime: app.startTime,
+          endTime: app.endTime,
+          parsedStart: start?.format("YYYY-MM-DD HH:mm"),
+          parsedEnd: end?.format("YYYY-MM-DD HH:mm"),
+        });
         return {
           id: app.applicationId || app._id,
           title: app.patientName || t("appointment.unknownPatient"),
@@ -483,16 +513,19 @@ const EarlyDetectionApplications = () => {
           ev.end &&
           ev.start.isBetween(selectedWeekStart, selectedWeekEnd, "day", "[]"),
       );
+    
+    console.log("[WEEK_EVENTS] Final weekEvents count:", events.length, "Week range:", {
+      start: selectedWeekStart.format("YYYY-MM-DD"),
+      end: selectedWeekEnd.format("YYYY-MM-DD"),
+    });
+    
+    return events;
   }, [filteredApplications, selectedWeekStart, selectedWeekEnd, t]);
 
   const miniCalDayEventCounts = useMemo(() => {
-    const allowedStatuses = new Set(["confirmed", "upcoming", "completed"]);
     const counts = {};
 
     filteredApplications.forEach((app) => {
-      const statusKey = (app?.appointmentStatus || "").toLowerCase();
-      if (!allowedStatuses.has(statusKey)) return;
-
       let dayMoment = null;
 
       if (app?.date) {
@@ -627,10 +660,31 @@ const EarlyDetectionApplications = () => {
   return (
     <div className="early-detect-container">
       <ToastContainer position="top-right" autoClose={3000} />
+      
+      {/* Error display */}
+      {error && (
+        <div style={{
+          padding: "12px",
+          marginBottom: "15px",
+          backgroundColor: "#fee2e2",
+          border: "1px solid #fca5a5",
+          borderRadius: "6px",
+          color: "#991b1b",
+          fontSize: "14px"
+        }}>
+          ❌ Error loading applications: {error}
+        </div>
+      )}
+      
       {/* Header with search, filter, view toggle, export */}
       <div className="early-detect-header">
         <h2 className="early-detect-heading">
           {t("EarlyDetectionApplications.header")}
+          {/* Debug info */}
+          <span style={{ fontSize: "15px", marginLeft: "12px",marginTop:"-10px" ,color: "#3730a3",backgroundColor: "#e0e7ff", padding: "4px 10px", borderRadius: "999px" }}>
+            {applications.length} 
+          </span>
+          {loading && <span style={{ fontSize: "12px", marginLeft: "5px", color: "#ff6b6b" }}>Loading...</span>}
         </h2>
         <div className="ed-action-section">
           {/* Search */}

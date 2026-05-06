@@ -68,6 +68,19 @@ const documentSchema = new mongoose.Schema(
   { _id: false },
 );
 
+// Lab / Study entry (file or text)
+const labEntrySchema = new mongoose.Schema(
+  {
+    kind: { type: String, enum: ["file", "text"], required: true },
+    text: { type: String, default: "" },
+    label: { type: String, default: "" },
+    filename: { type: String },
+    fileId: { type: mongoose.Schema.Types.ObjectId },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: true },
+);
+
 // Service Order Schema (embedded)
 const serviceOrderSchema = new mongoose.Schema(
   {
@@ -162,12 +175,20 @@ const historyFieldSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const bookingFileSchema = new mongoose.Schema(
+  {
+    filename: { type: String, trim: true, default: "" },
+    customName: { type: String, trim: true, default: "" },
+    fileId: { type: mongoose.Schema.Types.ObjectId, ref: "Media", default: null },
+    url: { type: String, trim: true, default: "" },
+    uploadedAt: { type: Date, default: Date.now },
+  },
+  { _id: true },
+);
+
 // History Form Schema (medical history for this appointment)
 const historyFormSchema = new mongoose.Schema(
   {
-    // Meta
-    isFirstAppointment: { type: Boolean, default: false },
-    isRepetitiveAppointment: { type: Boolean, default: false },
     // Section 1 — Complaints
     complaints: { type: historyFieldSchema, default: () => ({}) },
     // Section 2 — Anamnesis Morbi
@@ -206,11 +227,21 @@ const doctorServiceSchema = new mongoose.Schema(
   { _id: false },
 );
 
+
+const managedUploadSectionSchema = new mongoose.Schema(
+  {
+    files: { type: [bookingFileSchema], default: [] },
+    comment: { type: historyFieldSchema, default: () => ({}) },
+  },
+  { _id: false },
+);
+
 // Application Schema
 const applicationSchema = new mongoose.Schema(
   {
     applicationId: { type: String, required: true, unique: true },
-    patientEmail: { type: String, required: true },
+    patientId: { type: String, index: true },       // СОФ/Мос/Пац-001 — primary reference
+    patientEmail: { type: String },                  // legacy, kept for backward compat
     doctors: { type: [doctorServiceSchema], default: [] }, // Array of doctors with their assigned services
     serviceType: {
       type: String,
@@ -241,6 +272,7 @@ const applicationSchema = new mongoose.Schema(
     comments: { type: [commentSchema], default: [] },
     documents: { type: [documentSchema], default: [] },
     serviceOrders: { type: [serviceOrderSchema], default: [] },
+    services: [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicePosition" }],
     followUp: {
       needed: { type: Boolean, default: false },
       comment: { type: String, default: "" },
@@ -251,7 +283,19 @@ const applicationSchema = new mongoose.Schema(
       type: meetingInfoSchema,
       default: () => ({ status: "scheduled" }),
     },
+    isFirstAppointment: { type: Boolean, default: false },
+    isRepetitiveAppointment: { type: Boolean, default: false },
     historyForm: { type: historyFormSchema, default: () => ({}) },
+       morphologicalResearch: {
+      type: managedUploadSectionSchema,
+      default: () => ({}),
+    },
+    proceduresAndManipulations: {
+      type: managedUploadSectionSchema,
+      default: () => ({}),
+    },
+    laboratoryAnalysis: { type: [labEntrySchema], default: [] },
+    studiesManipulations: { type: [labEntrySchema], default: [] },
   },
   { timestamps: true, strict: true },
 );

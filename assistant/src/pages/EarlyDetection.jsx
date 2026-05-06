@@ -19,6 +19,7 @@ import {
   getAssistantDoctors,
 } from "../utils/api";
 import EarlyDetectionCalendarView from "../components/EarlyDetectionCalendarView";
+import EarlyDetectionApplications from "../components/EarlyDetectionApplications";
 import "../styles/Appointments.css";
 import "../styles/EarlyDetection.css";
 
@@ -121,42 +122,24 @@ const EarlyDetection = () => {
       setLoading(false);
       return;
     }
+    
     setLoading(true);
     setError(null);
     try {
-      let emails = [];
-      if (user.role === "assistant" || user.role === "head_assistant") {
-        const res = await getAssistantDoctors(user.email);
-        const list = dedupeDoctors(Array.isArray(res) ? res : []);
-        const accessEntries = list.filter(
-          (d) => isDoctorAccessAllowed(d?.status) && isDoctorAccessWithinWindow(d),
-        );
-        emails = [...new Set(accessEntries.map((d) => d.doctorEmail || d.email).filter(Boolean))];
-        console.log("[EarlyDetection] assistant doctor access entries", {
-          totalEntries: Array.isArray(res) ? res.length : 0,
-          uniqueEntries: list.length,
-          acceptedEntries: accessEntries.length,
-          statuses: list.map((d) => d?.status),
-          doctorEmails: emails,
-        });
-      } else {
-        emails = [user.email];
-        console.log("[EarlyDetection] non-assistant flow, using own email", {
-          doctorEmails: emails,
-        });
-      }
-
-      const all = [];
-      for (const email of emails) {
-        const res = await getEarlyDetectionBookingsByDoctor(email);
-        console.log("[EarlyDetection] bookings API response", {
-          email,
-          count: Array.isArray(res?.data) ? res.data.length : 0,
-        });
-        all.push(...(res.data || []));
-      }
-      console.log("[EarlyDetection] combined bookings count", { total: all.length });
-      setBookings(all);
+      // For both doctors and assistants, use the /early-detection/doctor endpoint
+      // which returns ALL ED bookings (no longer filters by doctor assignment)
+      const response = await getEarlyDetectionBookingsByDoctor(user.email);
+      
+      const bookingsData = Array.isArray(response?.data) ? response.data : [];
+      
+      console.log("[EarlyDetection] ED bookings fetched", {
+        userEmail: user.email,
+        role: user.role,
+        count: bookingsData.length,
+        firstItem: bookingsData[0] || null,
+      });
+      
+      setBookings(bookingsData);
     } catch (err) {
       console.error("[EarlyDetection] fetchBookings() failed", err);
       setError(err.message || t("EarlyDetectionApplications.errorLoad", { defaultValue: "Failed to load bookings" }));
@@ -386,191 +369,10 @@ const EarlyDetection = () => {
       </div>
 
       {/* ── Calendar view ── */}
-      {view === "calendar" && <EarlyDetectionCalendarView />}
+      {view === "calendar" && <EarlyDetectionCalendarView bookings={bookings} loading={loading} />}
 
-      {/* ── Table view ── */}
-      {view === "table" && (
-        <>
-          {/* Filter tabs */}
-          <div className="appt-filter-tabs">
-            {["all", "pending", "confirmed", "completed", "cancelled"].map((f) => (
-              <button
-                key={f}
-                className={`appt-tab ${filter === f ? "active" : ""}`}
-                onClick={() => setFilter(f)}
-              >
-                {t(`appointments.filters.${f}`, { defaultValue: f.charAt(0).toUpperCase() + f.slice(1) })}
-              </button>
-            ))}
-          </div>
-
-          {/* Loading */}
-          {loading && (
-            <div className="appt-state">
-              <div className="appt-spinner" />
-              <p className="appt-state-text">{t("EarlyDetectionApplications.loading")}</p>
-            </div>
-          )}
-
-          {/* Error */}
-          {!loading && error && (
-            <div className="appt-state">
-              <p className="appt-error-msg">{error}</p>
-              <button className="appt-action-btn" onClick={fetchBookings}>
-                {t("appointments.retry")}
-              </button>
-            </div>
-          )}
-
-          {/* Empty */}
-          {!loading && !error && filteredBookings.length === 0 && (
-            <div className="appt-state">
-              <div className="appt-empty-icon"><FiCalendar size={36} /></div>
-              <p className="appt-state-title">{t("EarlyDetectionApplications.noApplications")}</p>
-              <button className="appt-action-btn" onClick={() => { setSearchTerm(""); setFilter("all"); setSelectedDoctor("all"); }}>
-                {t("appointments.clearFilters")}
-              </button>
-            </div>
-          )}
-
-          {/* Table */}
-          {!loading && !error && paginatedBookings.length > 0 && (
-            <>
-              <div className="appt-table-wrap">
-                <table className="appt-table">
-                  <thead>
-                    <tr>
-                      <th>{t("appointments.columns.appointment")}</th>
-                      <th>{t("appointments.columns.patient")}</th>
-                      <th>{t("appointments.columns.dateTime")}</th>
-                      <th>{t("appointments.columns.doctorService", { defaultValue: "Package / Service" })}</th>
-                      <th>{t("appointments.columns.status")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedBookings.map((b) => {
-                      const patientName = b.patientName || "N/A";
-                      return (
-                        <tr
-                          key={b._id}
-                          className="appt-row"
-                          onClick={() =>
-                            navigate(
-                              `/early-detection/${encodeURIComponent(b.applicationId || b._id)}`,
-                              { state: { doctorEmail: b.doctorEmail, patientEmail: b.patientEmail } }
-                            )
-                          }
-                        >
-                          {/* ID */}
-                          <td>
-                            <span className="appt-cell-id">
-                              #{b.applicationId || b.invoiceNumber || b._id || "N/A"}
-                            </span>
-                          </td>
-
-                          {/* Patient */}
-                          <td>
-                            <div className="appt-person-cell">
-                              <div className="appt-avatar appt-avatar--patient">
-                                {getInitials(patientName)}
-                              </div>
-                              <div>
-                                <div className="appt-person-name">{patientName}</div>
-                                <div className="appt-person-sub">{b.patientEmail || ""}</div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Date & Time */}
-                          <td>
-                            <div className="appt-datetime-cell">
-                              <div className="appt-date-row">
-                                <FiCalendar size={12} />
-                                {formatDate(b.date)}
-                              </div>
-                              <div className="appt-time-row">
-                                <FiClock size={12} />
-                                {b.appointmentTime
-                                  ? b.appointmentTime
-                                  : `${formatTime(b.startTime)} – ${formatTime(b.endTime)}`}{" "}
-                                MSK
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Service / Package */}
-                          <td>
-                            <div className="appt-doctor-cell">
-                              <div>
-                                <div className="appt-person-name">
-                                  {b.serviceType || "Early Detection"}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Status */}
-                          <td>
-                            <div className="appt-status-cell">
-                              <StatusBadge status={b.appointmentStatus} />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Footer */}
-              <div className="appt-footer">
-                <span className="appt-results-count">
-                  {t("appointments.resultsCount", {
-                    from: (currentPage - 1) * recordsPerPage + 1,
-                    to: Math.min(currentPage * recordsPerPage, totalRecords),
-                    total: totalRecords,
-                  })}
-                </span>
-                {totalPages > 1 && (
-                  <div className="appt-pagination">
-                    <button
-                      className="appt-page-btn"
-                      onClick={() => paginate(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
-                      <FiChevronLeft size={15} />
-                    </button>
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum = i + 1;
-                      if (totalPages > 5) {
-                        if (currentPage <= 3) pageNum = i + 1;
-                        else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                        else pageNum = currentPage - 2 + i;
-                      }
-                      return (
-                        <button
-                          key={`page-${pageNum}`}
-                          className={`appt-page-btn ${currentPage === pageNum ? "active" : ""}`}
-                          onClick={() => paginate(pageNum)}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    <button
-                      className="appt-page-btn"
-                      onClick={() => paginate(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
-                      <FiChevronRight size={15} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </>
-      )}
+      {/* ── Table/Grid view ── */}
+      {view === "table" && <EarlyDetectionApplications bookings={bookings} loading={loading} />}
     </div>
   );
 };
