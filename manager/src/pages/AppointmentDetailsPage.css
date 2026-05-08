@@ -250,11 +250,7 @@ body.hide-global-sidebar .adp-app-sidebar {
   display: none !important;
 }
 
-/* When the sidebar is hidden, allow content to take full width (still keep space for vertical tabs) */
-body.hide-global-sidebar .adp-content-scroll,
-body.hide-global-sidebar .adp-content {
-  margin-left: 84px;
-}
+
 
 /* Also hide the main application sidebar (global) when requested */
 body.hide-global-sidebar .sidebar,

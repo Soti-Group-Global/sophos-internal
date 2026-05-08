@@ -316,8 +316,9 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
 
   const handleSidebarItemClick = useCallback(
-    async (item, e) => {
+    async (item, _e) => {
       setActiveNavItem(item.id);
+      setSelectedTest(null);
 
       if (item.id === "specialistConsultation") {
         if (isAppointmentsPanelOpen) {
@@ -408,41 +409,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     setEditingTestId(null);
     setDeleteConfirmTest(null);
   }, []);
-
-  const handleAddLabTest = useCallback(async () => {
-    if (!newTestNameEN.trim() || !newTestNameRU.trim()) {
-      toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter both EN and RU names." }));
-      return;
-    }
-
-    const payload = {
-      name: {
-        en: newTestNameEN.trim(),
-        ru: newTestNameRU.trim(),
-      },
-    };
-
-    try {
-      const response = labPopupMode === "studiesManipulations"
-        ? await createApplicationInstrumentalAnalysis(payload)
-        : await createApplicationLaboratoryTest(payload);
-      const created = response?.data || response;
-      if (created) {
-        if (labPopupMode === "studiesManipulations") {
-          setStudyTests((prev) => [...prev, created]);
-          setSelectedStudyTests((prev) => ({ ...prev, [created._id]: true }));
-        } else {
-          setLabTests((prev) => [...prev, created]);
-          setSelectedLabTests((prev) => ({ ...prev, [created._id]: true }));
-        }
-        setNewTestNameEN("");
-        setNewTestNameRU("");
-        toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
-      }
-    } catch (err) {
-      toast.error(t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
-    }
-  }, [labPopupMode, newTestNameEN, newTestNameRU, createApplicationInstrumentalAnalysis, createApplicationLaboratoryTest, t]);
 
   const openEditTest = useCallback((test) => {
     setEditingTestId(test._id);
@@ -558,12 +524,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       setSelectedLabTests((prev) => ({ ...prev, [id]: !prev[id] }));
     }
   }, [labPopupMode]);
-
-  const handleSaveLabPopup = useCallback(() => {
-    closeLabAnalysisPopup();
-    const messageKey = labPopupMode === "studiesManipulations" ? "history_tab.study_tests_saved" : "history_tab.lab_tests_saved";
-    toast.success(t(messageKey, { defaultValue: "Tests saved" }));
-  }, [closeLabAnalysisPopup, labPopupMode, t]);
 
   const handleSelectTest = useCallback((test, mode) => {
     setSelectedTest(test);
@@ -1151,12 +1111,31 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                       </div>
                     ) : appointmentsError ? (
                       <div className="ht-appointments-error">{appointmentsError}</div>
-                    ) : patientAppointments.length === 0 ? (
-                      <div className="ht-appointments-empty">
-                        {t("history_tab.no_other_appointments", { defaultValue: "No other appointments found" })}
-                      </div>
                     ) : (
                       <ul className="ht-appointments-list">
+                        {application && (() => {
+                          const name =
+                            application.service?.name?.ru ||
+                            application.service?.name?.en ||
+                            (Array.isArray(application.services) && application.services[0]?.name?.ru) ||
+                            (Array.isArray(application.services) && application.services[0]?.name?.en) ||
+                            t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                          const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
+                          const time = application.startTime
+                            ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}`
+                            : "";
+                          return (
+                            <li className="ht-appointment-item ht-appointment-item--current">
+                              <div className="ht-appointment-current-row">
+                                <span className="ht-appointment-name">{name}</span>
+                                <span className="ht-appointment-current-badge">
+                                  {t("history_tab.current_badge", { defaultValue: "Current" })}
+                                </span>
+                              </div>
+                              <span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span>
+                            </li>
+                          );
+                        })()}
                         {patientAppointments.map((appt) => {
                           const patientName = appt.patient
                             ? [appt.patient.firstName, appt.patient.middleName, appt.patient.lastName]
@@ -1166,7 +1145,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                             : appt.patientName || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" });
                           const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
                           const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
-
                           return (
                             <li key={appt.applicationId || appt._id} className="ht-appointment-item">
                               <span className="ht-appointment-name">{patientName}</span>
@@ -1298,7 +1276,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 {/* FILES section */}
                 <div className="ht-sp-section">
                   <div className="ht-sp-section-header">
-                    <span className="ht-sp-section-title">FILES</span>
+                    <span className="ht-sp-section-title">{t("history_tab.files_title", { defaultValue: "FILES" })}</span>
                     <button
                       type="button"
                       className="ht-sp-upload-btn"
@@ -1319,7 +1297,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                     <div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>
                   )}
                   {files.length === 0 ? (
-                    <div className="ht-sp-files-empty">No files uploaded yet</div>
+                    <div className="ht-sp-files-empty">{t("history_tab.no_files_uploaded", { defaultValue: "No files uploaded yet" })}</div>
                   ) : (
                     <div className="ht-sp-files-list">
                       {files.map((file) => {
@@ -1362,7 +1340,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 {/* COMMENT section */}
                 <div className="ht-sp-section">
                   <div className="ht-sp-section-header">
-                    <span className="ht-sp-section-title">COMMENT</span>
+                    <span className="ht-sp-section-title">{t("history_tab.comment_title", { defaultValue: "COMMENT" })}</span>
                     {sectionDirty[sid] && (
                       <button
                         type="button"
@@ -1384,7 +1362,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                         }));
                         setSectionDirty((prev) => ({ ...prev, [sid]: true }));
                       }}
-                      placeholder="Enter comment..."
+                      placeholder={t("history_tab.enter_comment", { defaultValue: "Enter comment..." })}
                     />
                   </div>
                 </div>
