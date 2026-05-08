@@ -221,8 +221,27 @@ const doctorServiceSchema = new mongoose.Schema(
   {
     doctorEmail: { type: String, required: true },
     doctorName: { type: String },
-    serviceId: { type: mongoose.Schema.Types.ObjectId, ref: "Service" },
+    specialization: { type: String },
+    serviceId: { type: mongoose.Schema.Types.ObjectId, ref: "ServicePosition" },
     serviceName: { type: String },
+  },
+  { _id: false },
+);
+
+// Application Service Entry — links a ServicePosition to a doctor with a resolved price
+const applicationServiceSchema = new mongoose.Schema(
+  {
+    servicePosition: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ServicePosition",
+      required: true,
+    },
+    doctorProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DoctorsProfile",
+      default: null,
+    },
+    price: { type: Number, default: null },
   },
   { _id: false },
 );
@@ -272,8 +291,7 @@ const applicationSchema = new mongoose.Schema(
     comments: { type: [commentSchema], default: [] },
     documents: { type: [documentSchema], default: [] },
     serviceOrders: { type: [serviceOrderSchema], default: [] },
-    services: [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicePosition" }],
-    addedServicePositions: [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicePosition" }],
+    services: { type: [applicationServiceSchema], default: [] },
     followUp: {
       needed: { type: Boolean, default: false },
       comment: { type: String, default: "" },
@@ -287,11 +305,15 @@ const applicationSchema = new mongoose.Schema(
     isFirstAppointment: { type: Boolean, default: false },
     isRepetitiveAppointment: { type: Boolean, default: false },
     historyForm: { type: historyFormSchema, default: () => ({}) },
-       morphologicalResearch: {
+    morphologicalResearch: {
       type: managedUploadSectionSchema,
       default: () => ({}),
     },
     proceduresAndManipulations: {
+      type: managedUploadSectionSchema,
+      default: () => ({}),
+    },
+    conclusion: {
       type: managedUploadSectionSchema,
       default: () => ({}),
     },

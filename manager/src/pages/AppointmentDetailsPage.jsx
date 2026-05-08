@@ -15,7 +15,7 @@ import {
 } from "../utils/api";
 import { getApptStatusClass } from "../utils/appointmentStatus";
 import LoadingComponent from "../components/Loading/LoadingComponent";
-import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo, FiFileText, FiSettings } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo, FiSettings } from "react-icons/fi";
 import { MdOutlinePerson } from "react-icons/md";
 import { LuClipboardList } from "react-icons/lu";
 import "./AppointmentDetailsPage.css";
@@ -113,15 +113,14 @@ const AppointmentDetailsPage = () => {
   const { setTopBarContent } = useLayoutTopBar();
 
   const TABS = [
-    { key: "general",   label: t("tabs.general"),   icon: <MdOutlinePerson size={16} /> },
-    { key: "history",   label: t("tabs.history"),   icon: <FiClock size={15} /> },
-    { key: "medical",   label: t("tabs.medical"),   icon: <LuClipboardList size={15} /> },
-    { key: "payments",  label: t("tabs.payments"),  icon: <FiCreditCard size={15} /> },
-    { key: "documents", label: t("tabs.documents", "Documents"), icon: <FiFolder size={15} /> },
-    // { key: "telemedicine", label: t("tabs.telemedicine", "Telemedicine"), icon: <FiVideo size={15} /> },
-    { key: "followups", label: t("tabs.followups", "Follow-ups"), icon: <FiRepeat size={15} /> },
-    { key: "report", label: t("tabs.report", "Report"), icon: <FiFileText size={15} /> },
-    { key:"service", label: t("tabs.service", "Service"), icon: <FiSettings size={15} /> }
+    { key: "general",   label: t("tabs.general"),   icon: <MdOutlinePerson size={18} /> },
+    { key: "history",   label: t("tabs.history"),   icon: <FiClock size={17} /> },
+    { key: "medical",   label: t("tabs.medical"),   icon: <LuClipboardList size={17} /> },
+    { key: "payments",  label: t("tabs.payments"),  icon: <FiCreditCard size={17} /> },
+    { key: "documents", label: t("tabs.documents", "Documents"), icon: <FiFolder size={17} /> },
+    // { key: "telemedicine", label: t("tabs.telemedicine", "Telemedicine"), icon: <FiVideo size={17} /> },
+    { key: "followups", label: t("tabs.followups", "Follow-ups"), icon: <FiRepeat size={17} /> },
+    { key:"service", label: t("tabs.service", "Service"), icon: <FiSettings size={17} /> }
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -427,11 +426,11 @@ const AppointmentDetailsPage = () => {
         </aside>
 
         <div className="adp-content-scroll">
-          <div className="adp-content">{renderTab()}</div>
+          <div className={`adp-content${activeTab === "history" ? " adp-content--history" : ""}`}>{renderTab()}</div>
         </div>
       </div>
 
-      <div className="adp-sticky-footer">
+      {activeTab !== "history" && <div className="adp-sticky-footer">
         <button
           className="adp-footer-btn adp-footer-save-btn"
           onClick={async () => {
@@ -486,7 +485,7 @@ const AppointmentDetailsPage = () => {
             ? t("saving", "Saving...")
             : t("save_and_completed", "Save and completed")}
         </button>
-      </div>
+      </div>}
     </div>
   );
 };

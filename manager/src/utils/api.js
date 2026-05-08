@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
 const api = axios.create({
-  baseURL: "http://localhost:5002/api",
+  baseURL: "http://localhost:3003/api",
   withCredentials: false,
 });
 
@@ -4729,6 +4729,38 @@ export const getServicePositionFolderContents = async (params = {}) => {
   } catch (error) {
     throw error;
   }
+};
+
+/* ── Application Section (morphologicalResearch / proceduresAndManipulations) ── */
+export const getApplicationSection = async (applicationId, section) => {
+  const response = await api.get(`/application-section/${encodeURIComponent(applicationId)}/${section}`);
+  return response.data;
+};
+
+export const uploadApplicationSectionFile = async (applicationId, section, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post(`/application-section/${encodeURIComponent(applicationId)}/${section}/upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+export const getApplicationSectionFile = async (applicationId, section, fileId) => {
+  const response = await api.get(`/application-section/${encodeURIComponent(applicationId)}/${section}/file/${fileId}`, {
+    responseType: "blob",
+  });
+  return response.data;
+};
+
+export const removeApplicationSectionFile = async (applicationId, section, fileId) => {
+  const response = await api.delete(`/application-section/${encodeURIComponent(applicationId)}/${section}/file/${fileId}`);
+  return response.data;
+};
+
+export const updateApplicationSectionComment = async (applicationId, section, value) => {
+  const response = await api.patch(`/application-section/${encodeURIComponent(applicationId)}/${section}/comment`, { value });
+  return response.data;
 };
 
 export const exportServicePositions = async (params = {}) => {

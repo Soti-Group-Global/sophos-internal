@@ -1,10 +1,9 @@
 ﻿import React, { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
-import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText } from "react-icons/fi";
+import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX } from "react-icons/fi";
 import {
-  updateHistoryForm,
   updateHistoryFieldVerify,
   getHistoryTemplates,
   createHistoryTemplate,
@@ -31,9 +30,14 @@ import {
   addApplicationInstrumentalAnalysisNote,
   updateApplicationInstrumentalAnalysisNote,
   deleteApplicationInstrumentalAnalysisNote,
+  getApplicationSection,
+  uploadApplicationSectionFile,
+  removeApplicationSectionFile,
+  updateApplicationSectionComment,
 } from "../../utils/api";
 import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
 import TemplatePicker from "../../components/RichTextEditor/TemplatePicker";
+import AppointmentReport from "../AppointmentReport";
 import "./HistoryTab.css";
 
 /* ────────────────────────────────────────────────────────────
@@ -235,6 +239,8 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const [studyTests, setStudyTests] = useState([]);
   const [selectedLabTests, setSelectedLabTests] = useState({});
   const [selectedStudyTests, setSelectedStudyTests] = useState({});
+  const [isLabPanelOpen, setIsLabPanelOpen] = useState(false);
+  const [isStudyPanelOpen, setIsStudyPanelOpen] = useState(false);
   const [labPopupOpen, setLabPopupOpen] = useState(false);
   const [labPopupMode, setLabPopupMode] = useState(null);
   const [newTestNameEN, setNewTestNameEN] = useState("");
@@ -249,6 +255,14 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const [isUploadingTestFile, setIsUploadingTestFile] = useState(false);
   const [testFileUploadError, setTestFileUploadError] = useState(null);
   const fileInputRef = useRef(null);
+  const [sectionData, setSectionData] = useState({
+    morphologicalResearch: { files: [], comment: {} },
+    proceduresManipulations: { files: [], comment: {} },
+  });
+  const [sectionUploading, setSectionUploading] = useState({});
+  const [sectionDirty, setSectionDirty] = useState({});
+  const morphFileRef = useRef(null);
+  const procFileRef = useRef(null);
 
   const formatDate = useCallback((dateStr) => {
     if (!dateStr) return "—";
@@ -300,35 +314,84 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     }
   }, [application, patient, t]);
 
-  const scrollToSection = useCallback((navItem) => {
-    if (!navItem) return;
-    setActiveNavItem(navItem.id);
-    const sectionEl = sectionRefs.current[navItem.sectionId];
-    if (sectionEl) {
-      sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, []);
 
   const handleSidebarItemClick = useCallback(
     async (item, e) => {
+      setActiveNavItem(item.id);
+
       if (item.id === "specialistConsultation") {
         if (isAppointmentsPanelOpen) {
           setIsAppointmentsPanelOpen(false);
         } else {
           await loadPatientAppointments();
         }
-        scrollToSection(item);
-        return;
+      } else if (item.id === "laboratoryAnalysis") {
+        setIsLabPanelOpen((prev) => !prev);
+      } else if (item.id === "studiesManipulations") {
+        setIsStudyPanelOpen((prev) => !prev);
       }
-
-      if (item.id === "laboratoryAnalysis" || item.id === "studiesManipulations") {
-        return;
-      }
-
-      scrollToSection(item);
     },
-    [isAppointmentsPanelOpen, loadPatientAppointments, scrollToSection],
+    [isAppointmentsPanelOpen, loadPatientAppointments],
   );
+
+  const appId = application?.applicationId;
+
+  /* nav item id → Application schema field name */
+  const SECTION_SCHEMA = {
+    morphologicalResearch: "morphologicalResearch",
+    proceduresManipulations: "proceduresAndManipulations",
+  };
+  const PANEL_NAV_IDS = Object.keys(SECTION_SCHEMA);
+
+  useEffect(() => {
+    if (!PANEL_NAV_IDS.includes(activeNavItem)) return;
+    const schemaKey = SECTION_SCHEMA[activeNavItem];
+    getApplicationSection(appId, schemaKey)
+      .then((data) => {
+        setSectionData((prev) => ({ ...prev, [activeNavItem]: data }));
+        setSectionDirty((prev) => ({ ...prev, [activeNavItem]: false }));
+      })
+      .catch(() => {});
+  }, [activeNavItem, appId]);
+
+  const handleSectionFileChange = useCallback(async (navId, e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    const schemaKey = SECTION_SCHEMA[navId];
+    setSectionUploading((prev) => ({ ...prev, [navId]: true }));
+    try {
+      for (const file of files) {
+        const result = await uploadApplicationSectionFile(appId, schemaKey, file);
+        setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Upload failed");
+    } finally {
+      setSectionUploading((prev) => ({ ...prev, [navId]: false }));
+    }
+  }, [appId]);
+
+  const handleSectionFileRemove = useCallback(async (navId, fileId) => {
+    const schemaKey = SECTION_SCHEMA[navId];
+    try {
+      const result = await removeApplicationSectionFile(appId, schemaKey, fileId);
+      setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to remove file");
+    }
+  }, [appId]);
+
+  const handleSectionCommentSave = useCallback(async (navId, value) => {
+    const schemaKey = SECTION_SCHEMA[navId];
+    try {
+      const result = await updateApplicationSectionComment(appId, schemaKey, value);
+      setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+      setSectionDirty((prev) => ({ ...prev, [navId]: false }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to save comment");
+    }
+  }, [appId]);
 
   const openLabAnalysisPopup = useCallback((mode, e) => {
     if (e?.stopPropagation) e.stopPropagation();
@@ -864,36 +927,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     );
   };
 
-  const navigate = useNavigate();
-  const [isSaving, setIsSaving] = useState(false);
-
-  const doSave = useCallback(async () => {
-    if (!application?.applicationId) {
-      toast.error(t("footer.patient_not_found", { ns: "appointment_details_general" }));
-      return false;
-    }
-    setIsSaving(true);
-    try {
-      await updateHistoryForm(application.applicationId, { ...form });
-      toast.success(t("footer.save_success", { ns: "appointment_details_general" }));
-      return true;
-    } catch (err) {
-      toast.error(err?.response?.data?.error || t("footer.save_error", { ns: "appointment_details_general" }));
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [application, form, t]);
-
-  const handleSaveAll = useCallback(async () => {
-    await doSave();
-  }, [doSave]);
-
-  const handleSaveAndClose = useCallback(async () => {
-    const ok = await doSave();
-    if (ok) navigate(-1);
-  }, [doSave, navigate]);
-
   /* ── Render helpers ── */
   const renderFields = (fields) => (
     <div className="ht-fields">
@@ -1046,9 +1079,9 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 <div
                   role="button"
                   tabIndex={0}
-                  className={`ht-sub-sidebar-item${activeNavItem === item.id ? " active" : ""}`}
+                  className={`ht-sub-sidebar-item${activeNavItem === item.id ? " ht-sub-sidebar-item--active" : ""}`}
                   onClick={(e) => handleSidebarItemClick(item, e)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") handleSidebarItemClick(item, e);
                   }}
                 >
@@ -1071,6 +1104,44 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                     )}
                   </span>
                 </div>
+
+                {item.id === "laboratoryAnalysis" && isLabPanelOpen && (
+                  <div className="ht-tests-panel">
+                    {labTests.length === 0 ? (
+                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
+                    ) : (
+                      labTests.map((test) => (
+                        <button
+                          key={test._id}
+                          type="button"
+                          className="ht-tests-panel-item"
+                          onClick={() => handleSelectTest(test, "laboratoryAnalysis")}
+                        >
+                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {item.id === "studiesManipulations" && isStudyPanelOpen && (
+                  <div className="ht-tests-panel">
+                    {studyTests.length === 0 ? (
+                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
+                    ) : (
+                      studyTests.map((test) => (
+                        <button
+                          key={test._id}
+                          type="button"
+                          className="ht-tests-panel-item"
+                          onClick={() => handleSelectTest(test, "studiesManipulations")}
+                        >
+                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
 
                 {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
                   <div className="ht-appointments-panel">
@@ -1117,125 +1188,209 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
         <div className="ht-main-column" ref={containerRef}>
           {selectedTest ? (
-            <div className="ht-selected-test-page">
-              <div className="ht-selected-test-header">
-                <div>
-                  <h2>{selectedTest.name?.en || ""}</h2>
-                  <p>{selectedTest.name?.ru || ""}</p>
+            <div className="ht-td-page">
+              {/* Header */}
+              <div className="ht-td-header">
+                <div className="ht-td-title-group">
+                  <h2 className="ht-td-title">{selectedTest.name?.ru || selectedTest.name?.en || ""}</h2>
+                  {selectedTest.name?.en && selectedTest.name?.ru && (
+                    <span className="ht-td-subtitle">{selectedTest.name.en}</span>
+                  )}
                 </div>
-                <button type="button" className="ht-selected-test-close" onClick={handleCloseSelectedTest}>
-                  ×
+                <button type="button" className="ht-td-close" onClick={handleCloseSelectedTest} aria-label="Close">
+                  <FiX size={18} />
                 </button>
               </div>
-              <div className="ht-selected-test-body">
-                <div className="ht-selected-test-actions">
-                  <button type="button" className="ht-selected-test-btn ht-action-btn" onClick={() => fileInputRef.current?.click()}>
-                    <FiUpload className="ht-action-btn-icon" />
-                    {t("history_tab.upload_file", { defaultValue: "Upload file" })}
-                  </button>
-                  <button type="button" className="ht-selected-test-btn ht-action-btn" onClick={handleOpenTestNoteEditor}>
-                    <FiFileText className="ht-action-btn-icon" />
-                    {t("history_tab.add_text", { defaultValue: "Add text" })}
-                  </button>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="ht-hidden-file-input"
-                  onChange={handleTestFileChange}
-                />
-                {testFileUploadError && <div className="ht-error-message">{testFileUploadError}</div>}
-                {selectedTestFiles.length > 0 && (
-                  <div className="ht-selected-test-file-list">
-                    <strong>{t("history_tab.current_files", { defaultValue: "Uploaded files:" })}</strong>
-                    {selectedTestFiles.map((file) => (
-                      <div key={String(file.fileId)} className="ht-selected-test-file">
-                        <div className="ht-selected-test-file-info">
-                          <span>{file.fileName}</span>
-                          {file.uploadedAt && (
-                            <small>{new Date(file.uploadedAt).toLocaleString("ru-RU")}</small>
-                          )}
-                        </div>
-                        <div className="ht-selected-test-file-actions">
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            onClick={() => handleViewTestFile(file.fileId)}
-                            aria-label={t("history_tab.view_file", { defaultValue: "View file" })}
-                          >
-                            <FiEye />
-                          </button>
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            onClick={() => handleRemoveTestFile(file.fileId)}
-                            aria-label={t("history_tab.remove_file", { defaultValue: "Remove file" })}
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
+
+              {/* Actions */}
+              <div className="ht-td-actions">
+                <button type="button" className="ht-td-btn" onClick={() => fileInputRef.current?.click()}>
+                  <FiUpload size={14} />
+                  {t("history_tab.upload_file", { defaultValue: "Upload file" })}
+                </button>
+                <button type="button" className="ht-td-btn" onClick={handleOpenTestNoteEditor}>
+                  <FiFileText size={14} />
+                  {t("history_tab.add_text", { defaultValue: "Add text" })}
+                </button>
+              </div>
+
+              <input ref={fileInputRef} type="file" multiple className="ht-hidden-file-input" onChange={handleTestFileChange} />
+              {testFileUploadError && <div className="ht-error-message">{testFileUploadError}</div>}
+              {isUploadingTestFile && <div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>}
+
+              {/* Items list — files + notes interleaved */}
+              <div className="ht-td-list">
+                {selectedTestFiles.map((file) => {
+                  const ext = (file.fileName || "").split(".").pop().toUpperCase().slice(0, 5);
+                  const dt = file.uploadedAt ? new Date(file.uploadedAt) : null;
+                  const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                  const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                  return (
+                    <div key={String(file.fileId)} className="ht-td-item">
+                      <span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span>
+                      <div className="ht-td-item-info">
+                        <span className="ht-td-item-name">{file.fileName}</span>
+                        {dateStr && (
+                          <span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-                {showTestNoteEditor ? (
-                  <div className="ht-selected-test-note-editor">
-                    <RichTextEditor
-                      value={testNoteDraft}
-                      onChange={(value) => setTestNoteDraft(value)}
-                      placeholder={t("history_tab.enter_text", { defaultValue: "Enter text..." })}
-                    />
-                    <div className="ht-selected-test-note-actions">
-                      <button type="button" className="ht-selected-test-btn" onClick={handleSaveTestNote}>
-                        {t("history_tab.save", { defaultValue: "Save" })}
-                      </button>
-                      <button type="button" className="ht-selected-test-btn ht-secondary-btn" onClick={() => setShowTestNoteEditor(false)}>
-                        {t("history_tab.cancel", { defaultValue: "Cancel" })}
-                      </button>
+                      <div className="ht-td-item-actions">
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleViewTestFile(file.fileId)} aria-label="View"><FiEye size={14} /></button>
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleRemoveTestFile(file.fileId)} aria-label="Delete"><FiTrash2 size={14} /></button>
+                      </div>
                     </div>
+                  );
+                })}
+
+                {selectedTestNotes.map((note) => {
+                  const dt = note.createdAt ? new Date(note.createdAt) : null;
+                  const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                  const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                  return (
+                    <div key={String(note._id)} className="ht-td-item">
+                      <span className="ht-td-note-icon"><FiFileText size={16} /></span>
+                      <div className="ht-td-item-info">
+                        <div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
+                        {dateStr && (
+                          <span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>
+                        )}
+                      </div>
+                      <div className="ht-td-item-actions">
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleEditTestNote(note)} aria-label="Edit"><FiEdit2 size={14} /></button>
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote(note._id)} aria-label="Delete"><FiTrash2 size={14} /></button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Note editor */}
+              {showTestNoteEditor && (
+                <div className="ht-td-note-editor">
+                  <RichTextEditor
+                    value={testNoteDraft}
+                    onChange={(value) => setTestNoteDraft(value)}
+                    placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })}
+                  />
+                  <div className="ht-td-note-editor-actions">
+                    <button type="button" className="ht-td-save-btn" onClick={handleSaveTestNote}>
+                      {t("history_tab.save", { defaultValue: "Save" })}
+                    </button>
+                    <button type="button" className="ht-td-cancel-btn" onClick={() => setShowTestNoteEditor(false)}>
+                      {t("history_tab.cancel", { defaultValue: "Cancel" })}
+                    </button>
                   </div>
-                ) : (
-                  selectedTestNotes.length > 0 && (
-                    <div className="ht-selected-test-note-preview-list">
-                      <strong>{t("history_tab.notes", { defaultValue: "Notes:" })}</strong>
-                      {selectedTestNotes.map((note) => (
-                        <div key={String(note._id)} className="ht-selected-test-note-preview">
-                          <div className="ht-selected-test-note-preview-header">
-                            <div>
-                              <span>{t("history_tab.note", { defaultValue: "Note" })}</span>
-                              {note.createdAt && (
-                                <small>{new Date(note.createdAt).toLocaleString("ru-RU")}</small>
+                </div>
+              )}
+            </div>
+          ) : activeNavItem === "conclusion" ? (
+            <div className="ht-conclusion-wrap">
+              <AppointmentReport booking={application} />
+            </div>
+          ) : PANEL_NAV_IDS.includes(activeNavItem) ? (() => {
+            const sid = activeNavItem;
+            const fileRef = sid === "morphologicalResearch" ? morphFileRef : procFileRef;
+            const sec = sectionData[sid] || { files: [], comment: {} };
+            const files = sec.files || [];
+            const commentValue = sec.comment?.value || "";
+            return (
+              <div className="ht-sp-page">
+                {/* FILES section */}
+                <div className="ht-sp-section">
+                  <div className="ht-sp-section-header">
+                    <span className="ht-sp-section-title">FILES</span>
+                    <button
+                      type="button"
+                      className="ht-sp-upload-btn"
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      <FiUpload size={13} />
+                      {t("history_tab.upload_file", { defaultValue: "Upload file" })}
+                    </button>
+                  </div>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    multiple
+                    className="ht-hidden-file-input"
+                    onChange={(e) => handleSectionFileChange(sid, e)}
+                  />
+                  {sectionUploading[sid] && (
+                    <div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>
+                  )}
+                  {files.length === 0 ? (
+                    <div className="ht-sp-files-empty">No files uploaded yet</div>
+                  ) : (
+                    <div className="ht-sp-files-list">
+                      {files.map((file) => {
+                        const name = file.filename || file.fileName || "";
+                        const ext = name.split(".").pop().toUpperCase().slice(0, 5);
+                        const dt = file.uploadedAt ? new Date(file.uploadedAt) : null;
+                        const dateStr = dt
+                          ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}`
+                          : "";
+                        const timeStr = dt
+                          ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}`
+                          : "";
+                        const fid = String(file._id || file.fileId);
+                        return (
+                          <div key={fid} className="ht-sp-file-row">
+                            <span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span>
+                            <div className="ht-sp-file-info">
+                              <span className="ht-sp-file-name">{name}</span>
+                              {dateStr && (
+                                <span className="ht-sp-file-meta">
+                                  <FiClock size={11} />{dateStr} · {timeStr}
+                                </span>
                               )}
                             </div>
-                            <div className="ht-selected-test-note-preview-actions">
-                              <button
-                                type="button"
-                                className="icon-btn"
-                                onClick={() => handleEditTestNote(note)}
-                                aria-label={t("history_tab.edit_note", { defaultValue: "Edit note" })}
-                              >
-                                <FiEdit2 />
-                              </button>
-                              <button
-                                type="button"
-                                className="icon-btn"
-                                onClick={() => handleDeleteTestNote(note._id)}
-                                aria-label={t("history_tab.delete_text", { defaultValue: "Delete text" })}
-                              >
-                                <FiTrash2 />
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              className="ht-td-icon-btn"
+                              onClick={() => handleSectionFileRemove(sid, fid)}
+                              aria-label="Remove"
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
                           </div>
-                          <div dangerouslySetInnerHTML={{ __html: note.content }} />
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
-                  )
-                )}
+                  )}
+                </div>
+
+                {/* COMMENT section */}
+                <div className="ht-sp-section">
+                  <div className="ht-sp-section-header">
+                    <span className="ht-sp-section-title">COMMENT</span>
+                    {sectionDirty[sid] && (
+                      <button
+                        type="button"
+                        className="ht-sp-save-btn"
+                        onClick={() => handleSectionCommentSave(sid, sectionData[sid]?.comment?.value || "")}
+                      >
+                        <FiFileText size={13} />
+                        {t("history_tab.save", { defaultValue: "Save" })}
+                      </button>
+                    )}
+                  </div>
+                  <div className="ht-sp-comment-editor">
+                    <RichTextEditor
+                      value={commentValue}
+                      onChange={(val) => {
+                        setSectionData((prev) => ({
+                          ...prev,
+                          [sid]: { ...prev[sid], comment: { ...prev[sid]?.comment, value: val } },
+                        }));
+                        setSectionDirty((prev) => ({ ...prev, [sid]: true }));
+                      }}
+                      placeholder="Enter comment..."
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : (
+            );
+          })() : (
             <>
               <div className="ht-container">
                 {/* ── First appointment checkbox ── */}
@@ -1262,136 +1417,95 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
                 {HISTORY_SECTIONS.map((s) => renderSection(s))}
               </div>
-
-              {/* Sticky footer — same pattern as GeneralInformationTab */}
-              <div className="adp-sticky-footer">
-                <button
-                  className="adp-footer-btn adp-footer-save-btn"
-                  onClick={handleSaveAll}
-                  disabled={isSaving}
-                >
-                  {isSaving
-                    ? t("footer.saving", { ns: "appointment_details_general" })
-                    : t("footer.save", { ns: "appointment_details_general" })}
-                </button>
-                <button
-                  className="adp-footer-btn adp-footer-save-close-btn"
-                  onClick={handleSaveAndClose}
-                  disabled={isSaving}
-                >
-                  {isSaving
-                    ? t("footer.saving", { ns: "appointment_details_general" })
-                    : t("footer.save_and_close", { ns: "appointment_details_general" })}
-                </button>
-              </div>
             </>
           )}
         </div>
       </div>
-      {labPopupOpen && (
-        <div className="ht-popup-overlay" onClick={closeLabAnalysisPopup}>
-          <div className="ht-popup-container" onClick={(e) => e.stopPropagation()}>
-            <div className="popup-header">
-              <h2 className="popup-title">
+      {labPopupOpen && createPortal(
+        <div className="ht-portal-overlay" onClick={closeLabAnalysisPopup}>
+          <div className="ht-portal-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="ht-portal-header">
+              <h2 className="ht-portal-title">
                 {labPopupMode === "studiesManipulations"
-                  ? t("history_tab.manage_study_tests", { defaultValue: "Manage Studies & Manipulations" })
-                  : t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
+                  ? t("history_tab.manage_study_tests", { defaultValue: "Studies / Manipulations" })
+                  : t("history_tab.manage_tests", { defaultValue: "Laboratory Analysis" })}
               </h2>
-              <button className="close-btn" type="button" onClick={closeLabAnalysisPopup}>
+              <button className="ht-portal-close" type="button" onClick={closeLabAnalysisPopup} aria-label="Close">
                 ×
               </button>
             </div>
 
-            <div className="popup-content">
-              {/* Left section - Add/Edit test form */}
-              <div className="left-section">
-                <div className="input-group">
-                  <label>{t("history_tab.name_en", { defaultValue: "EN" })}</label>
-                  <input
-                    type="text"
-                    placeholder={t("history_tab.test_name_en", { defaultValue: "Test name (EN)" })}
-                    value={newTestNameEN}
-                    onChange={(e) => setNewTestNameEN(e.target.value)}
-                  />
-                </div>
-                <div className="input-group">
-                  <label>{t("history_tab.name_ru", { defaultValue: "RU" })}</label>
-                  <input
-                    type="text"
-                    placeholder={t("history_tab.test_name_ru", { defaultValue: "Test name (RU)" })}
-                    value={newTestNameRU}
-                    onChange={(e) => setNewTestNameRU(e.target.value)}
-                  />
-                </div>
-                <div className="left-section-actions">
-                  <button className="add-btn" type="button" onClick={handleSaveTest}>
-                    {editingTestId ? t("history_tab.save", { defaultValue: "Save" }) : t("history_tab.add_test", { defaultValue: "Add test" })}
-                  </button>
-                  {editingTestId && (
-                    <button className="cancel-edit-btn" type="button" onClick={cancelEditTest}>
-                      {t("history_tab.cancel", { defaultValue: "Cancel" })}
-                    </button>
-                  )}
-                </div>
+            {/* Form row: inputs + Add button */}
+            <div className="ht-portal-form">
+              <div className="ht-portal-inputs">
+                <input
+                  className="ht-portal-input"
+                  type="text"
+                  placeholder={t("history_tab.test_name_ru", { defaultValue: "Name (RU)" })}
+                  value={newTestNameRU}
+                  onChange={(e) => setNewTestNameRU(e.target.value)}
+                />
+                <input
+                  className="ht-portal-input"
+                  type="text"
+                  placeholder={t("history_tab.test_name_en", { defaultValue: "Name (EN)" })}
+                  value={newTestNameEN}
+                  onChange={(e) => setNewTestNameEN(e.target.value)}
+                />
               </div>
+              <button className="ht-portal-add-btn" type="button" onClick={handleSaveTest}>
+                <span className="ht-portal-add-plus">+</span>
+                <span>{editingTestId ? t("history_tab.save", { defaultValue: "Save" }) : t("history_tab.add_btn", { defaultValue: "Add" })}</span>
+              </button>
+            </div>
+            {editingTestId && (
+              <button className="ht-portal-cancel-btn" type="button" onClick={cancelEditTest}>
+                {t("history_tab.cancel", { defaultValue: "Cancel" })}
+              </button>
+            )}
 
-              {/* Right section - Tests list */}
-              <div className="right-section">
-                <div className="tests-list">
-                  {(labPopupMode === "studiesManipulations" ? studyTests : labTests).length > 0 ? (
-                    (labPopupMode === "studiesManipulations" ? studyTests : labTests).map((test) => (
-                      <div
-                        key={test._id}
-                        className="test-item"
-                        role="button"
-                        onClick={() => {
-                          handleSelectTest(test, labPopupMode);
-                          closeLabAnalysisPopup();
-                        }}
-                      >
-                        <div className="test-item-main">
-                          <div className="test-info">
-                            <span className="test-name-en">{test.name?.en || ""}</span>
-                            <span className="test-name-ru">{test.name?.ru || ""}</span>
-                          </div>
-
-                          <div className="test-item-actions">
-                            <button
-                              type="button"
-                              className="icon-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEditTest(test);
-                              }}
-                              aria-label={t("history_tab.edit_test", { defaultValue: "Edit test" })}
-                            >
-                              <FiEdit2 />
-                            </button>
-                            <button
-                              type="button"
-                              className="icon-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openDeleteConfirm(test);
-                              }}
-                              aria-label={t("history_tab.delete_test", { defaultValue: "Delete test" })}
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="no-tests">{t("history_tab.no_tests_yet", { defaultValue: "No tests added yet" })}</p>
-                  )}
-                </div>
-              </div>
+            {/* Tests list */}
+            <div className="ht-portal-list">
+              {(labPopupMode === "studiesManipulations" ? studyTests : labTests).length > 0 ? (
+                (labPopupMode === "studiesManipulations" ? studyTests : labTests).map((test) => (
+                  <div
+                    key={test._id}
+                    className="ht-portal-item"
+                    role="button"
+                    onClick={() => { handleSelectTest(test, labPopupMode); closeLabAnalysisPopup(); }}
+                  >
+                    <div className="ht-portal-item-info">
+                      <span className="ht-portal-item-name">{test.name?.ru || test.name?.en || ""}</span>
+                      {test.name?.en && test.name?.ru && (
+                        <span className="ht-portal-item-sub">{test.name.en}</span>
+                      )}
+                    </div>
+                    <div className="ht-portal-item-actions">
+                      <button
+                        type="button"
+                        className="ht-portal-icon-btn"
+                        onClick={(e) => { e.stopPropagation(); openEditTest(test); }}
+                        aria-label="Edit"
+                      ><FiEdit2 size={14} /></button>
+                      <button
+                        type="button"
+                        className="ht-portal-icon-btn"
+                        onClick={(e) => { e.stopPropagation(); openDeleteConfirm(test); }}
+                        aria-label="Delete"
+                      ><FiTrash2 size={14} /></button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="ht-portal-empty">{t("history_tab.no_tests_yet", { defaultValue: "No items yet" })}</p>
+              )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-      {deleteConfirmTest && (
+      {deleteConfirmTest && createPortal(
         <div className="ht-delete-confirm-overlay">
           <div className="ht-delete-confirm-card">
             <p>
@@ -1400,15 +1514,16 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
               })}
             </p>
             <div className="ht-delete-confirm-actions">
-              <button type="button" className="cancel-delete-btn" onClick={closeDeleteConfirm}>
+              <button type="button" className="ht-cancel-delete-btn" onClick={closeDeleteConfirm}>
                 {t("history_tab.cancel", { defaultValue: "Cancel" })}
               </button>
-              <button type="button" className="confirm-delete-btn" onClick={handleConfirmDelete}>
+              <button type="button" className="ht-confirm-delete-btn" onClick={handleConfirmDelete}>
                 {t("history_tab.delete", { defaultValue: "Delete" })}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

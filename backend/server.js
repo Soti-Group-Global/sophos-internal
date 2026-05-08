@@ -95,6 +95,7 @@ const corporateFormRegistrationRoutes = require('./routes/website/corporateFormR
 //Instumental analysis and laboratory test routes
 const applicationLaboratoryTestRoutes = require("./routes/applicationLaboratoryTestRoutes");
 const applicationInstrumentalAnalysisRoutes = require("./routes/applicationInstrumentalAnalysisRoutes");
+const applicationSectionRoutes = require("./routes/applicationSectionRoutes");
 
 //Categories and services routes
 const serviceCategoryRoutes = require("./routes/serviceCategoryRoutes");
@@ -147,9 +148,9 @@ app.use(
   cors({
     origin: function (origin, callback) {
       const allowedOrigins = [
-        "http://localhost:5173",
         "http://localhost:5174",
-        "http://localhost:5175",
+        "http://localhost:5177",
+        "http://localhost:5178",
         "http://localhost:5176",
         "https://health-direct-manager.vercel.app",
         "https://manager.sophos-med.ru",
@@ -223,6 +224,7 @@ app.use("/api/vendors", vendorRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/application-laboratory-test", applicationLaboratoryTestRoutes);
 app.use("/api/application-instrumental-analysis", applicationInstrumentalAnalysisRoutes);
+app.use("/api/application-section", applicationSectionRoutes);
 app.use("/api/early-detection", earlyDetectionFormRoutes);
 app.use("/api/head-doctors", headDoctorRoutes);
 app.use("/api/head-assistants", headAssistantRoutes);
