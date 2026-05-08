@@ -106,6 +106,13 @@ const managedUploadSectionSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const testEntryNoteSchema = new mongoose.Schema(
+  {
+    content: { type: String, trim: true, default: "" },
+  },
+  { _id: true, timestamps: true },
+);
+
 const laboratoryTestEntrySchema = new mongoose.Schema(
   {
     item: {
@@ -114,6 +121,7 @@ const laboratoryTestEntrySchema = new mongoose.Schema(
       ref: "EarlyDetectionLaboratoryTest",
     },
     files: { type: [bookingFileSchema], default: [] },
+    notes: { type: [testEntryNoteSchema], default: [] },
   },
   { _id: true },
 );
@@ -126,6 +134,7 @@ const instrumentalAnalysisEntrySchema = new mongoose.Schema(
       ref: "EarlyDetectionInstrumentalAnalysis",
     },
     files: { type: [bookingFileSchema], default: [] },
+    notes: { type: [testEntryNoteSchema], default: [] },
   },
   { _id: true },
 );

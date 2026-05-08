@@ -46,6 +46,9 @@ import {
   uploadEarlyDetectionScheduleFile,
   getEarlyDetectionScheduleFileUrl,
   saveEarlyDetectionSpecialistHistoryForm,
+  addEarlyDetectionTestEntryNote,
+  updateEarlyDetectionTestEntryNote,
+  deleteEarlyDetectionTestEntryNote,
 } from "../utils/api";
 import { createPortal } from "react-dom";
 import GeneralInformationTab from "./AppointmentDetails/GeneralInformationTab";
@@ -268,6 +271,11 @@ const EarlyDetectionBookingDetails = () => {
   const [editingRows, setEditingRows] = useState({}); // { rowKey: status }
   const [activeTab, setActiveTab] = useState("appointmentDetails");
   const [activeScheduleTab, setActiveScheduleTab] = useState("specialistConsultation");
+  const [activeTestId, setActiveTestId] = useState(null);
+  const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
+  const [testNoteDraft, setTestNoteDraft] = useState("");
+  const [editingTestNoteId, setEditingTestNoteId] = useState(null);
+  const [isSavingTestNote, setIsSavingTestNote] = useState(false);
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
   const [editedScheduleItems, setEditedScheduleItems] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -536,6 +544,40 @@ const EarlyDetectionBookingDetails = () => {
       setManagedTests((prev) => ({ ...prev, [section]: list }));
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to load tests");
+    }
+  };
+
+  const handleSaveTestNote = async (section) => {
+    if (!testNoteDraft.trim() || !activeTestId) return;
+    setIsSavingTestNote(true);
+    try {
+      let result;
+      if (editingTestNoteId) {
+        const entries = booking?.schedule?.[section] || [];
+        const entry = entries.find((e) => normalizeId(e?.item?._id) === activeTestId);
+        if (!entry) { toast.error("Entry not found"); return; }
+        result = await updateEarlyDetectionTestEntryNote(booking._id, section, entry._id, editingTestNoteId, testNoteDraft);
+      } else {
+        result = await addEarlyDetectionTestEntryNote(booking._id, section, activeTestId, testNoteDraft);
+      }
+      if (result?.data) setBooking(result.data);
+      setShowTestNoteEditor(false);
+      setTestNoteDraft("");
+      setEditingTestNoteId(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to save note");
+    } finally {
+      setIsSavingTestNote(false);
+    }
+  };
+
+  const handleDeleteTestNote = async (section, entryId, noteId) => {
+    if (!window.confirm("Delete this note?")) return;
+    try {
+      const result = await deleteEarlyDetectionTestEntryNote(booking._id, section, entryId, noteId);
+      if (result?.data) setBooking(result.data);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete note");
     }
   };
 
@@ -1595,7 +1637,7 @@ const EarlyDetectionBookingDetails = () => {
     : null;
 
   return (
-    <div className="booking-details-page">
+    <div className={`booking-details-page${activeTab === "medicalHistory" ? " booking-details-page--fixed" : ""}`}>
       <div className="adp-top-header">
         <button
           className="adp-back-btn"
@@ -1639,9 +1681,8 @@ const EarlyDetectionBookingDetails = () => {
       </div>
 
       <div className="booking-details-content">
-        <div className={`ed-details-body${activeTab === "medicalHistory" && activeScheduleTab === "conclusion" ? " ed-details-body--no-sidebar" : ""}`}>
-          {!(activeTab === "medicalHistory" && activeScheduleTab === "conclusion") && (
-            <aside className="ed-appointments-sidebar adp-app-sidebar">
+        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}`}>
+          <aside className="ed-appointments-sidebar adp-app-sidebar">
             <div className="ed-appointments-sidebar-tabs">
               <button
                 type="button"
@@ -1772,11 +1813,75 @@ const EarlyDetectionBookingDetails = () => {
               )}
             </div>
           </aside>
+
+          {activeTab === "medicalHistory" && (
+            <aside className="ed-medical-history-sidebar">
+              <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
+                {[
+                  ["specialistConsultation", t("earlyDiagnosis.specialistConsultation", "Specialist Consultation")],
+                  ["laboratoryTests",        t("earlyDiagnosis.laboratoryTests",        "Laboratory analysis")],
+                  ["instrumentalAnalysis",   t("earlyDiagnosis.instrumentalAnalysis",   "Исследования/манипуляции")],
+                  ["morphologicalResearch",  t("earlyDiagnosis.morphologicalResearch",  "Morphological research")],
+                  ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations", "Procedures and manipulations")],
+                  ["conclusion",             t("earlyDiagnosis.conclusion",             "Conclusion")],
+                ].map(([key, label]) => (
+                  <React.Fragment key={key}>
+                    <button
+                      type="button"
+                      className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
+                      onClick={() => { setActiveScheduleTab(key); setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}
+                    >
+                      <span>{label}</span>
+                      {managedSectionTabs.includes(key) && (
+                        <span
+                          className="ed-tab-settings-btn"
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); openTestSettingsModal(key); }}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openTestSettingsModal(key); } }}
+                          title={t("earlyDiagnosis.manageTests", "Manage tests")}
+                        >
+                          <Settings size={14} />
+                        </span>
+                      )}
+                    </button>
+                    {managedSectionTabs.includes(key) && (managedTests?.[key] || []).length > 0 && (
+                      <div className="ed-subnav-test-list">
+                        {(managedTests[key] || []).map((test) => {
+                          const testId = normalizeId(test?._id);
+                          const entries = (booking?.schedule?.[key] || []).filter(
+                            (entry) => normalizeId(entry?.item?._id) === testId,
+                          );
+                          const isDone = entries.some((e) => Array.isArray(e.files) && e.files.length > 0);
+                          const isActive = activeScheduleTab === key && activeTestId === testId;
+                          return (
+                            <button
+                              key={testId}
+                              type="button"
+                              className={`ed-subnav-test-item${isDone ? " ed-subnav-test-item--done" : ""}${isActive ? " ed-subnav-test-item--active" : ""}`}
+                              onClick={() => {
+                                setActiveScheduleTab(key);
+                                setActiveTestId(isActive ? null : testId);
+                                setShowTestNoteEditor(false);
+                                setTestNoteDraft("");
+                                setEditingTestNoteId(null);
+                              }}
+                            >
+                              <span className="ed-subnav-test-name">{readLocalizedName(test?.name)}</span>
+                              {isDone && <CheckCircle size={12} className="ed-subnav-test-check" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </aside>
           )}
 
           <div
             className={`booking-details-layout booking-details-layout--single${showSidebarTabs ? " booking-details-layout--sidebar-only" : ""}`}
-            style={activeTab === "medicalHistory" && activeScheduleTab === "conclusion" ? { gridColumn: "1 / -1", overflowY: "hidden" } : {}}
           >
             {/* Left Column */}
             {!showSidebarTabs && (
@@ -2294,368 +2399,180 @@ const EarlyDetectionBookingDetails = () => {
                 )}
 
                 {activeTab === "medicalHistory" && (
-                  <>
-                    <div className="ed-medical-history-layout">
-                      <aside className="ed-medical-history-sidebar">
-                        <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
-                        {[
-                           [
-                            "specialistConsultation",
-                            t(
-                              "earlyDiagnosis.specialistConsultation",
-                              "Specialist Consultation",
-                            ),
-                          ],
-                          [
-                            "laboratoryTests",
-                            t(
-                              "earlyDiagnosis.laboratoryTests",
-                              "Laboratory analysis",
-                            ),
-                          ],
-                          [
-                            "instrumentalAnalysis",
-                            t(
-                              "earlyDiagnosis.instrumentalAnalysis",
-                              "Исследования/манипуляции",
-                            ),
-                          ],
-                          [
-                            "morphologicalResearch",
-                            t(
-                              "earlyDiagnosis.morphologicalResearch",
-                              "Morphological research",
-                            ),
-                          ],
-                          [
-                            "proceduresAndManipulations",
-                            t(
-                              "earlyDiagnosis.proceduresAndManipulations",
-                              "Procedures and manipulations",
-                            ),
-                          ],
-                          [
-                            "conclusion",
-                            t("earlyDiagnosis.conclusion", "Conclusion"),
-                          ],
-                        ].map(([key, label]) => (
-                          <button
-                            key={key}
-                            type="button"
-                            className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
-                            onClick={() => setActiveScheduleTab(key)}
-                          >
-                            <span>{label}</span>
-                            {managedSectionTabs.includes(key) && (
-                              <span
-                                className="ed-tab-settings-btn"
-                                role="button"
-                                tabIndex={0}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openTestSettingsModal(key);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    openTestSettingsModal(key);
-                                  }
-                                }}
-                                title={t(
-                                  "earlyDiagnosis.manageTests",
-                                  "Manage tests",
-                                )}
-                              >
-                                <Settings size={14} />
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                        </div>
-                      </aside>
-                      <div className="ed-medical-history-content">
+                  <div className={`ed-medical-history-content${activeScheduleTab === "conclusion" ? " ed-medical-history-content--conclusion" : ""}`}>
                         <div className={`detail-section${activeScheduleTab === "conclusion" ? " detail-section--compact" : ""}`}>
                       {activeScheduleTab === "laboratoryTests" && (
-                        <div className="ed-schedule-section-list">
-                          <div className="ed-section-actions-row">
-                            <button
-                              type="button"
-                              className="ed-upload-btn"
-                              onClick={() =>
-                                openUploadSectionModal("laboratoryTests")
-                              }
-                            >
-                              {t("earlyDiagnosis.uploadFile", "Upload file")}
-                            </button>
-                          </div>
-                          {(booking?.schedule?.laboratoryTests || []).length ===
-                          0 ? (
-                            <div className="ed-schedule-empty">
-                              {t("earlyDiagnosis.noFiles", "No files")}
-                            </div>
-                          ) : (
-                            (booking?.schedule?.laboratoryTests || []).map(
-                              (entry, index) => (
-                                <div
-                                  className="ed-section-card ed-test-card"
-                                  key={entry?._id || `lab-${index}`}
-                                >
-                                  <div className="ed-test-card-head">
-                                    <div className="ed-test-icon-wrap">
-                                      <FileText size={18} />
+                        activeTestId ? (() => {
+                          const selTest = (managedTests?.laboratoryTests || []).find((t) => normalizeId(t?._id) === activeTestId);
+                          const selEntries = (booking?.schedule?.laboratoryTests || []).filter((e) => normalizeId(e?.item?._id) === activeTestId);
+                          const selFiles = selEntries.flatMap((e) => e?.files || []);
+                          const selNotes = selEntries.flatMap((e) => e?.notes || []);
+                          const hasItems = selFiles.length > 0 || selNotes.length > 0;
+                          return (
+                            <div className="ed-test-detail-page">
+                              <div className="ed-test-detail-header">
+                                <h2 className="ed-test-detail-title">{readLocalizedName(selTest?.name)}</h2>
+                              </div>
+                              <div className="ed-test-detail-actions">
+                                <button type="button" className="ed-td-btn" onClick={() => { setUploadSection("laboratoryTests"); setUploadItemId(activeTestId); setUploadFiles([]); setShowUploadModal(true); }}>
+                                  <Plus size={14} />{t("earlyDiagnosis.uploadFile", "Upload file")}
+                                </button>
+                                <button type="button" className="ed-td-btn" onClick={() => { setShowTestNoteEditor(true); setEditingTestNoteId(null); setTestNoteDraft(""); }}>
+                                  <FileText size={14} />{t("earlyDiagnosis.addText", "Add text")}
+                                </button>
+                              </div>
+                              <div className="ed-td-list">
+                                {!hasItems && !showTestNoteEditor && (
+                                  <div className="ed-td-empty">{t("earlyDiagnosis.noEntries", "No entries yet")}</div>
+                                )}
+                                {selFiles.map((file, fi) => (
+                                  <div key={normalizeId(file?.fileId) || file?._id || fi} className="ed-td-item">
+                                    <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
+                                    <div className="ed-td-item-info">
+                                      <span className="ed-td-item-name">{getFileLabel(file)}</span>
+                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(file?.uploadedAt)}</span>
                                     </div>
-                                    <div className="ed-test-head-main">
-                                      <div className="ed-section-title">
-                                        {readLocalizedName(entry?.item?.name)}
-                                      </div>
-                                      <div className="ed-test-head-sub">
-                                        {formatDate(
-                                          entry?.updatedAt ||
-                                            entry?.createdAt ||
-                                            entry?.date,
-                                        )}
-                                        {Array.isArray(entry?.files) &&
-                                          entry.files.length > 0 && (
-                                            <span className="ed-test-validated">
-                                              <CheckCircle size={12} />
-                                            </span>
-                                          )}
-                                      </div>
+                                    <div className="ed-td-item-actions">
+                                      {getSectionFileUrl(file) && (<a href={getSectionFileUrl(file, false)} target="_blank" rel="noopener noreferrer" className="ed-td-icon-btn"><Eye size={15} /></a>)}
+                                      {getSectionFileUrl(file, true) && (<a href={getSectionFileUrl(file, true)} download className="ed-td-icon-btn"><Download size={15} /></a>)}
+                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete"><Trash2 size={15} /></button>
                                     </div>
-                                    <button
-                                      type="button"
-                                      className="ed-test-more-btn"
-                                      aria-label="More"
-                                    >
-                                      <MoreVertical size={16} />
-                                    </button>
                                   </div>
-
-                                  {Array.isArray(entry?.files) &&
-                                    entry.files.length > 0 && (
-                                      <ul className="ed-files-list ed-test-files-list">
-                                        {entry.files.map((file, fileIndex) => (
-                                          <li
-                                            key={
-                                              normalizeId(file?.fileId) ||
-                                              file?._id ||
-                                              fileIndex
-                                            }
-                                            className="ed-file-row ed-test-file-row"
-                                          >
-                                            <div className="ed-test-file-left">
-                                              <span
-                                                className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                                              >
-                                                {getFileExtension(
-                                                  file,
-                                                ).toUpperCase()}
-                                              </span>
-                                              <span className="ed-test-file-meta">
-                                                <span className="ed-test-file-name">
-                                                  {getFileLabel(file)}
-                                                </span>
-                                                <span className="ed-test-file-subtext">
-                                                  {[
-                                                    formatFileSize(file),
-                                                    file?.uploadedByName ||
-                                                      file?.uploadedBy ||
-                                                      file?.uploadedByDoctorName,
-                                                  ]
-                                                    .filter(Boolean)
-                                                    .join(" • ")}
-                                                </span>
-                                              </span>
-                                            </div>
-                                            <span className="ed-file-actions ed-test-file-actions">
-                                              {getSectionFileUrl(file) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    false,
-                                                  )}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="ed-file-link-btn ed-file-link-btn--view"
-                                                  title={t(
-                                                    "earlyDiagnosis.view",
-                                                    "View",
-                                                  )}
-                                                >
-                                                  <Eye size={14} />
-                                                </a>
-                                              )}
-                                              {getSectionFileUrl(
-                                                file,
-                                                true,
-                                              ) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    true,
-                                                  )}
-                                                  download
-                                                  className="ed-file-link-btn ed-file-link-btn--download"
-                                                  title={t(
-                                                    "earlyDiagnosis.download",
-                                                    "Download",
-                                                  )}
-                                                >
-                                                  <Download size={14} />
-                                                </a>
-                                              )}
-                                            </span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
+                                ))}
+                                {selNotes.map((note) => (
+                                  <div key={String(note._id)} className="ed-td-item ed-td-item--note">
+                                    <span className="ed-td-note-icon"><FileText size={18} /></span>
+                                    <div className="ed-td-item-info">
+                                      <div className="ed-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
+                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(note?.createdAt)}</span>
+                                    </div>
+                                    <div className="ed-td-item-actions">
+                                      <button type="button" className="ed-td-icon-btn" onClick={() => { setEditingTestNoteId(note._id); setTestNoteDraft(note.content || ""); setShowTestNoteEditor(true); }}><Edit2 size={15} /></button>
+                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete" onClick={() => { const entry = selEntries.find((e) => (e.notes || []).some((n) => String(n._id) === String(note._id))); if (entry) handleDeleteTestNote("laboratoryTests", entry._id, note._id); }}><Trash2 size={15} /></button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              {showTestNoteEditor && (
+                                <div className="ed-td-note-editor">
+                                  <RichTextEditor value={testNoteDraft} onChange={setTestNoteDraft} placeholder={t("history_tab.enter_text", "Enter text…")} />
+                                  <div className="ed-td-note-editor-actions">
+                                    <button type="button" className="ed-td-save-btn" disabled={isSavingTestNote} onClick={() => handleSaveTestNote("laboratoryTests")}>{isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}</button>
+                                    <button type="button" className="ed-td-cancel-btn" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                  </div>
                                 </div>
-                              ),
-                            )
-                          )}
-                        </div>
+                              )}
+                            </div>
+                          );
+                        })() : (
+                          <div className="ed-schedule-section-list">
+                            {(managedTests?.laboratoryTests || []).length === 0 ? (
+                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noTests", "No tests configured")}</div>
+                            ) : (
+                              (managedTests?.laboratoryTests || []).map((test) => {
+                                const testId = normalizeId(test?._id);
+                                const isDone = (booking?.schedule?.laboratoryTests || []).filter((e) => normalizeId(e?.item?._id) === testId).flatMap((e) => e?.files || []).length > 0;
+                                return (
+                                  <div className="ed-test-list-item" key={testId}>
+                                    <div className="ed-test-list-item-header">
+                                      <span className={`ed-test-list-status${isDone ? " ed-test-list-status--done" : ""}`}>
+                                        {isDone ? <CheckCircle size={15} /> : <span className="ed-test-status-circle" />}
+                                      </span>
+                                      <span className="ed-test-list-name">{readLocalizedName(test?.name)}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        )
                       )}
 
                       {activeScheduleTab === "instrumentalAnalysis" && (
-                        <div className="ed-schedule-section-list">
-                          <div className="ed-section-actions-row">
-                            <button
-                              type="button"
-                              className="ed-upload-btn"
-                              onClick={() =>
-                                openUploadSectionModal("instrumentalAnalysis")
-                              }
-                            >
-                              {t("earlyDiagnosis.uploadFile", "Upload file")}
-                            </button>
-                          </div>
-                          {(booking?.schedule?.instrumentalAnalysis || [])
-                            .length === 0 ? (
-                            <div className="ed-schedule-empty">
-                              {t("earlyDiagnosis.noFiles", "No files")}
-                            </div>
-                          ) : (
-                            (booking?.schedule?.instrumentalAnalysis || []).map(
-                              (entry, index) => (
-                                <div
-                                  className="ed-section-card ed-test-card"
-                                  key={entry?._id || `inst-${index}`}
-                                >
-                                  <div className="ed-test-card-head">
-                                    <div className="ed-test-icon-wrap">
-                                      <FileText size={18} />
+                        activeTestId ? (() => {
+                          const selTest = (managedTests?.instrumentalAnalysis || []).find((t) => normalizeId(t?._id) === activeTestId);
+                          const selEntries = (booking?.schedule?.instrumentalAnalysis || []).filter((e) => normalizeId(e?.item?._id) === activeTestId);
+                          const selFiles = selEntries.flatMap((e) => e?.files || []);
+                          const selNotes = selEntries.flatMap((e) => e?.notes || []);
+                          const hasItems = selFiles.length > 0 || selNotes.length > 0;
+                          return (
+                            <div className="ed-test-detail-page">
+                              <div className="ed-test-detail-header">
+                                <h2 className="ed-test-detail-title">{readLocalizedName(selTest?.name)}</h2>
+                              </div>
+                              <div className="ed-test-detail-actions">
+                                <button type="button" className="ed-td-btn" onClick={() => { setUploadSection("instrumentalAnalysis"); setUploadItemId(activeTestId); setUploadFiles([]); setShowUploadModal(true); }}>
+                                  <Plus size={14} />{t("earlyDiagnosis.uploadFile", "Upload file")}
+                                </button>
+                                <button type="button" className="ed-td-btn" onClick={() => { setShowTestNoteEditor(true); setEditingTestNoteId(null); setTestNoteDraft(""); }}>
+                                  <FileText size={14} />{t("earlyDiagnosis.addText", "Add text")}
+                                </button>
+                              </div>
+                              <div className="ed-td-list">
+                                {!hasItems && !showTestNoteEditor && (
+                                  <div className="ed-td-empty">{t("earlyDiagnosis.noEntries", "No entries yet")}</div>
+                                )}
+                                {selFiles.map((file, fi) => (
+                                  <div key={normalizeId(file?.fileId) || file?._id || fi} className="ed-td-item">
+                                    <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
+                                    <div className="ed-td-item-info">
+                                      <span className="ed-td-item-name">{getFileLabel(file)}</span>
+                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(file?.uploadedAt)}</span>
                                     </div>
-                                    <div className="ed-test-head-main">
-                                      <div className="ed-section-title">
-                                        {readLocalizedName(entry?.item?.name)}
-                                      </div>
-                                      <div className="ed-test-head-sub">
-                                        {formatDate(
-                                          entry?.updatedAt ||
-                                            entry?.createdAt ||
-                                            entry?.date,
-                                        )}
-                                        {Array.isArray(entry?.files) &&
-                                          entry.files.length > 0 && (
-                                            <span className="ed-test-validated">
-                                              <CheckCircle size={12} />
-                                            </span>
-                                          )}
-                                      </div>
+                                    <div className="ed-td-item-actions">
+                                      {getSectionFileUrl(file) && (<a href={getSectionFileUrl(file, false)} target="_blank" rel="noopener noreferrer" className="ed-td-icon-btn"><Eye size={15} /></a>)}
+                                      {getSectionFileUrl(file, true) && (<a href={getSectionFileUrl(file, true)} download className="ed-td-icon-btn"><Download size={15} /></a>)}
+                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete"><Trash2 size={15} /></button>
                                     </div>
-                                    <button
-                                      type="button"
-                                      className="ed-test-more-btn"
-                                      aria-label="More"
-                                    >
-                                      <MoreVertical size={16} />
-                                    </button>
                                   </div>
-
-                                  {Array.isArray(entry?.files) &&
-                                    entry.files.length > 0 && (
-                                      <ul className="ed-files-list ed-test-files-list">
-                                        {entry.files.map((file, fileIndex) => (
-                                          <li
-                                            key={
-                                              normalizeId(file?.fileId) ||
-                                              file?._id ||
-                                              fileIndex
-                                            }
-                                            className="ed-file-row ed-test-file-row"
-                                          >
-                                            <div className="ed-test-file-left">
-                                              <span
-                                                className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                                              >
-                                                {getFileExtension(
-                                                  file,
-                                                ).toUpperCase()}
-                                              </span>
-                                              <span className="ed-test-file-meta">
-                                                <span className="ed-test-file-name">
-                                                  {getFileLabel(file)}
-                                                </span>
-                                                <span className="ed-test-file-subtext">
-                                                  {[
-                                                    formatFileSize(file),
-                                                    file?.uploadedByName ||
-                                                      file?.uploadedBy ||
-                                                      file?.uploadedByDoctorName,
-                                                  ]
-                                                    .filter(Boolean)
-                                                    .join(" • ")}
-                                                </span>
-                                              </span>
-                                            </div>
-                                            <span className="ed-file-actions ed-test-file-actions">
-                                              {getSectionFileUrl(file) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    false,
-                                                  )}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="ed-file-link-btn ed-file-link-btn--view"
-                                                  title={t(
-                                                    "earlyDiagnosis.view",
-                                                    "View",
-                                                  )}
-                                                >
-                                                  <Eye size={14} />
-                                                </a>
-                                              )}
-                                              {getSectionFileUrl(
-                                                file,
-                                                true,
-                                              ) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    true,
-                                                  )}
-                                                  download
-                                                  className="ed-file-link-btn ed-file-link-btn--download"
-                                                  title={t(
-                                                    "earlyDiagnosis.download",
-                                                    "Download",
-                                                  )}
-                                                >
-                                                  <Download size={14} />
-                                                </a>
-                                              )}
-                                            </span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
+                                ))}
+                                {selNotes.map((note) => (
+                                  <div key={String(note._id)} className="ed-td-item ed-td-item--note">
+                                    <span className="ed-td-note-icon"><FileText size={18} /></span>
+                                    <div className="ed-td-item-info">
+                                      <div className="ed-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
+                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(note?.createdAt)}</span>
+                                    </div>
+                                    <div className="ed-td-item-actions">
+                                      <button type="button" className="ed-td-icon-btn" onClick={() => { setEditingTestNoteId(note._id); setTestNoteDraft(note.content || ""); setShowTestNoteEditor(true); }}><Edit2 size={15} /></button>
+                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete" onClick={() => { const entry = selEntries.find((e) => (e.notes || []).some((n) => String(n._id) === String(note._id))); if (entry) handleDeleteTestNote("instrumentalAnalysis", entry._id, note._id); }}><Trash2 size={15} /></button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              {showTestNoteEditor && (
+                                <div className="ed-td-note-editor">
+                                  <RichTextEditor value={testNoteDraft} onChange={setTestNoteDraft} placeholder={t("history_tab.enter_text", "Enter text…")} />
+                                  <div className="ed-td-note-editor-actions">
+                                    <button type="button" className="ed-td-save-btn" disabled={isSavingTestNote} onClick={() => handleSaveTestNote("instrumentalAnalysis")}>{isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}</button>
+                                    <button type="button" className="ed-td-cancel-btn" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                  </div>
                                 </div>
-                              ),
-                            )
-                          )}
-                        </div>
+                              )}
+                            </div>
+                          );
+                        })() : (
+                          <div className="ed-schedule-section-list">
+                            {(managedTests?.instrumentalAnalysis || []).length === 0 ? (
+                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noTests", "No tests configured")}</div>
+                            ) : (
+                              (managedTests?.instrumentalAnalysis || []).map((test) => {
+                                const testId = normalizeId(test?._id);
+                                const isDone = (booking?.schedule?.instrumentalAnalysis || []).filter((e) => normalizeId(e?.item?._id) === testId).flatMap((e) => e?.files || []).length > 0;
+                                return (
+                                  <div className="ed-test-list-item" key={testId}>
+                                    <div className="ed-test-list-item-header">
+                                      <span className={`ed-test-list-status${isDone ? " ed-test-list-status--done" : ""}`}>
+                                        {isDone ? <CheckCircle size={15} /> : <span className="ed-test-status-circle" />}
+                                      </span>
+                                      <span className="ed-test-list-name">{readLocalizedName(test?.name)}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        )
                       )}
 
                       {activeScheduleTab === "morphologicalResearch" && (
@@ -3015,13 +2932,9 @@ const EarlyDetectionBookingDetails = () => {
                       )}
                         </div>
                       {activeScheduleTab === "conclusion" && (
-                        <div style={{ marginTop: 16 }}>
-                          <EarlyDetectionReportTab booking={booking} />
-                        </div>
+                        <EarlyDetectionReportTab booking={booking} />
                       )}
                       </div>
-                    </div>
-                  </>
                 )}
               </div>
             )}

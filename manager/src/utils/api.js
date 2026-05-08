@@ -1322,6 +1322,29 @@ export const saveEarlyDetectionSpecialistHistoryForm = async (bookingId, idx, hi
   return response.data;
 };
 
+export const addEarlyDetectionTestEntryNote = async (bookingId, section, itemId, content) => {
+  const response = await api.post(
+    `/early-detection/form/bookings/${bookingId}/schedule/${section}/items/${itemId}/notes`,
+    { content },
+  );
+  return response.data;
+};
+
+export const updateEarlyDetectionTestEntryNote = async (bookingId, section, entryId, noteId, content) => {
+  const response = await api.put(
+    `/early-detection/form/bookings/${bookingId}/schedule/${section}/entries/${entryId}/notes/${noteId}`,
+    { content },
+  );
+  return response.data;
+};
+
+export const deleteEarlyDetectionTestEntryNote = async (bookingId, section, entryId, noteId) => {
+  const response = await api.delete(
+    `/early-detection/form/bookings/${bookingId}/schedule/${section}/entries/${entryId}/notes/${noteId}`,
+  );
+  return response.data;
+};
+
 // Mark payment as paid
 export const markPaymentAsPaid = async (applicationId, paymentId) => {
   try {

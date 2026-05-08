@@ -91,8 +91,9 @@ const EarlyDetectionCalendarView = ({ bookings = [] }) => {
   const [showYearDrop, setShowYearDrop]   = useState(false);
   const [sidebarOpen, setSidebarOpen]     = useState(false);
   const [hoveredSlot, setHoveredSlot]     = useState(null);
-  const yearDropRef  = useRef(null);
-  const timeLineRef  = useRef(null);
+  const yearDropRef      = useRef(null);
+  const timeLineRef      = useRef(null);
+  const scrollWrapperRef = useRef(null);
 
   const SLOT_HEIGHT   = 36;
   const CAL_START_MIN = 9 * 60;
@@ -117,8 +118,9 @@ const EarlyDetectionCalendarView = ({ bookings = [] }) => {
     : -1;
 
   useEffect(() => {
-    if (nowTop >= 0 && timeLineRef.current) {
-      timeLineRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (nowTop >= 0 && scrollWrapperRef.current) {
+      const wrapper = scrollWrapperRef.current;
+      wrapper.scrollTop = nowTop - wrapper.clientHeight / 2;
     }
   }, [isViewingToday]);
 
@@ -386,7 +388,7 @@ const EarlyDetectionCalendarView = ({ bookings = [] }) => {
           MAIN CONTENT
       ═══════════════════════════════════════ */}
       <div className="edcv2-main">
-       <div className="edcv2-scroll-wrapper">
+       <div className="edcv2-scroll-wrapper" ref={scrollWrapperRef}>
         {/* Column header */}
         <div className="edcv2-col-header">
           <div className="edcv2-time-col-hdr">

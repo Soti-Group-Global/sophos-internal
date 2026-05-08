@@ -3370,3 +3370,96 @@ exports.deleteInternalNote = async (req, res) => {
   }
 };
 
+const TEST_ENTRY_SECTIONS = ['laboratoryTests', 'instrumentalAnalysis'];
+
+// @desc    Add a text note to a test item entry (creates entry if it doesn't exist yet)
+// @route   POST /api/early-detection/bookings/:id/schedule/:section/items/:itemId/notes
+exports.addTestEntryNote = async (req, res) => {
+  try {
+    const { id, section, itemId } = req.params;
+    const { content } = req.body || {};
+    if (!TEST_ENTRY_SECTIONS.includes(section)) {
+      return res.status(400).json({ success: false, message: 'Unsupported section' });
+    }
+    if (!String(content || '').trim()) {
+      return res.status(400).json({ success: false, message: 'Note content is required' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(String(itemId))) {
+      return res.status(400).json({ success: false, message: 'Invalid itemId' });
+    }
+    const booking = await EarlyDetectionBooking.findById(id);
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    if (!Array.isArray(booking.schedule[section])) booking.schedule[section] = [];
+    let entry = booking.schedule[section].find(
+      (e) => String(e.item) === String(itemId),
+    );
+    if (!entry) {
+      booking.schedule[section].push({ item: itemId, files: [], notes: [] });
+      entry = booking.schedule[section][booking.schedule[section].length - 1];
+    }
+    entry.notes.push({ content: String(content).trim() });
+    booking.markModified(`schedule.${section}`);
+    await booking.save();
+    const populated = await booking.populate([
+      { path: 'schedule.laboratoryTests.item', select: 'name' },
+      { path: 'schedule.instrumentalAnalysis.item', select: 'name' },
+    ]);
+    res.status(200).json({ success: true, data: populated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error adding note', error: error.message });
+  }
+};
+
+// @desc    Update a text note on a test entry
+// @route   PUT /api/early-detection/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId
+exports.updateTestEntryNote = async (req, res) => {
+  try {
+    const { id, section, entryId, noteId } = req.params;
+    const { content } = req.body || {};
+    if (!TEST_ENTRY_SECTIONS.includes(section)) {
+      return res.status(400).json({ success: false, message: 'Unsupported section' });
+    }
+    const booking = await EarlyDetectionBooking.findById(id);
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    const entry = booking.schedule[section].id(entryId);
+    if (!entry) return res.status(404).json({ success: false, message: 'Test entry not found' });
+    const note = entry.notes.id(noteId);
+    if (!note) return res.status(404).json({ success: false, message: 'Note not found' });
+    note.content = String(content || '').trim();
+    booking.markModified(`schedule.${section}`);
+    await booking.save();
+    const populated = await booking.populate([
+      { path: 'schedule.laboratoryTests.item', select: 'name' },
+      { path: 'schedule.instrumentalAnalysis.item', select: 'name' },
+    ]);
+    res.status(200).json({ success: true, data: populated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error updating note', error: error.message });
+  }
+};
+
+// @desc    Delete a text note from a test entry
+// @route   DELETE /api/early-detection/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId
+exports.deleteTestEntryNote = async (req, res) => {
+  try {
+    const { id, section, entryId, noteId } = req.params;
+    if (!TEST_ENTRY_SECTIONS.includes(section)) {
+      return res.status(400).json({ success: false, message: 'Unsupported section' });
+    }
+    const booking = await EarlyDetectionBooking.findById(id);
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    const entry = booking.schedule[section].id(entryId);
+    if (!entry) return res.status(404).json({ success: false, message: 'Test entry not found' });
+    entry.notes.pull({ _id: noteId });
+    booking.markModified(`schedule.${section}`);
+    await booking.save();
+    const populated = await booking.populate([
+      { path: 'schedule.laboratoryTests.item', select: 'name' },
+      { path: 'schedule.instrumentalAnalysis.item', select: 'name' },
+    ]);
+    res.status(200).json({ success: true, data: populated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error deleting note', error: error.message });
+  }
+};
+

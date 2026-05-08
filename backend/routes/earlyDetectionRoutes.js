@@ -33,7 +33,10 @@ const {
   getWeeklyBookingsOnCalendar,
   getBookingById,
   updateBooking,
-  saveSpecialistHistoryForm
+  saveSpecialistHistoryForm,
+  addTestEntryNote,
+  updateTestEntryNote,
+  deleteTestEntryNote,
 } = require("../controllers/earlyDetectionController");
 
 // Public routes
@@ -75,6 +78,9 @@ router.post(
 );
 router.get("/bookings/files/:fileId", getScheduleFile);
 router.put("/bookings/:id/specialist/:idx", saveSpecialistHistoryForm);
+router.post("/bookings/:id/schedule/:section/items/:itemId/notes", addTestEntryNote);
+router.put("/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId", updateTestEntryNote);
+router.delete("/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId", deleteTestEntryNote);
 
 // === Early Detection Booking Routes ===
 router.get('/doctor', auth, getWeeklyBookingsOnCalendar);

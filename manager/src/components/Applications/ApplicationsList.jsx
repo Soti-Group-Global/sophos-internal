@@ -271,8 +271,10 @@ const ApplicationsList = () => {
 
   const handleRowClick = (app) => {
     const appId = app.applicationId || app._id;
-    navigate(
+    window.open(
       `/applications/appointment/${encodeURIComponent(appId)}?tab=general`,
+      "_blank",
+      "noopener,noreferrer",
     );
   };
 
