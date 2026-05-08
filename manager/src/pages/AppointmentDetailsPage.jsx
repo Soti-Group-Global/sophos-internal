@@ -15,7 +15,7 @@ import {
 } from "../utils/api";
 import { getApptStatusClass } from "../utils/appointmentStatus";
 import LoadingComponent from "../components/Loading/LoadingComponent";
-import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo, FiFileText, FiSettings } from "react-icons/fi";
 import { MdOutlinePerson } from "react-icons/md";
 import { LuClipboardList } from "react-icons/lu";
 import "./AppointmentDetailsPage.css";
@@ -28,6 +28,8 @@ import DocumentsTab from "./AppointmentDetails/DocumentsTab";
 import FollowUpsTab from "./AppointmentDetails/FollowUpsTab";
 import TelemedicineTab from "./AppointmentDetails/TelemedicineTab";
 import ComingSoonTab from "./AppointmentDetails/ComingSoonTab";
+import AppointmentReport from "../pages/AppointmentReport";
+import Service from "./Service";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
@@ -118,6 +120,8 @@ const AppointmentDetailsPage = () => {
     { key: "documents", label: t("tabs.documents", "Documents"), icon: <FiFolder size={15} /> },
     // { key: "telemedicine", label: t("tabs.telemedicine", "Telemedicine"), icon: <FiVideo size={15} /> },
     { key: "followups", label: t("tabs.followups", "Follow-ups"), icon: <FiRepeat size={15} /> },
+    { key: "report", label: t("tabs.report", "Report"), icon: <FiFileText size={15} /> },
+    { key:"service", label: t("tabs.service", "Service"), icon: <FiSettings size={15} /> }
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -318,6 +322,11 @@ const AppointmentDetailsPage = () => {
             onApplicationUpdate={(updated) => setApplication(updated)}
           />
         );
+      case "report":
+      case "conclusion":
+        return <AppointmentReport booking={application} />;
+      case "service":
+        return <Service applicationId={application?.applicationId} />;
       default: {
         const tabLabel = TABS.find((t) => t.key === activeTab)?.label || activeTab;
         return <ComingSoonTab tabLabel={tabLabel} />;

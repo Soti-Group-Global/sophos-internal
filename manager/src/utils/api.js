@@ -4566,4 +4566,227 @@ export const getAllApplicationInstrumentalAnalysis = async (params = {}) => {
   }
 };
 
+/* ---------------- Service Manager ---------------- */
+
+// Categories
+export const getAllServiceCategories = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/categories", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Backward-compatible category list helper
+export const getAllCategories = async (params = {}) => getAllServiceCategories(params);
+
+export const getServiceCategoryById = async (id) => {
+  try {
+    const response = await api.get(`/service-manager/categories/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServiceCategoryBreadcrumb = async (id) => {
+  try {
+    const response = await api.get(`/service-manager/categories/${id}/breadcrumb`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createServiceCategory = async (data) => {
+  try {
+    const response = await api.post("/service-manager/categories", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateServiceCategory = async (id, data) => {
+  try {
+    const response = await api.put(`/service-manager/categories/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteServiceCategory = async (id) => {
+  try {
+    const response = await api.delete(`/service-manager/categories/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const moveServiceCategory = async (id, parent = null) => {
+  try {
+    const response = await api.patch(`/service-manager/categories/${id}/move`, { parent });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServiceCategoryFolderContents = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/folder", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportServiceCategories = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const importServiceCategories = async (rows) => {
+  try {
+    const response = await api.post("/service-manager/import", { rows });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Positions
+export const getAllServicePositions = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/positions/positions", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServicePositionById = async (id) => {
+  try {
+    const response = await api.get(`/service-manager/positions/positions/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createServicePosition = async (data) => {
+  try {
+    const response = await api.post("/service-manager/positions/positions", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateServicePosition = async (id, data) => {
+  try {
+    const response = await api.put(`/service-manager/positions/positions/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteServicePosition = async (id) => {
+  try {
+    const response = await api.delete(`/service-manager/positions/positions/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const moveServicePosition = async (id, category = null) => {
+  try {
+    const response = await api.patch(`/service-manager/positions/positions/${id}/move`, {
+      category,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServicePositionFolderContents = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/positions/folder", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportServicePositions = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/positions/export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const importServicePositions = async (rows) => {
+  try {
+    const response = await api.post("/service-manager/positions/import", { rows });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/* ── Application Service Positions ────────────────────────────────────── */
+
+// Get all service positions added to an application
+export const getApplicationServicePositions = async (applicationId) => {
+  try {
+    const response = await api.get(`/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Add a service position to an application
+export const addApplicationServicePosition = async (applicationId, positionId) => {
+  try {
+    const response = await api.post(
+      `/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions`,
+      { positionId }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Remove a service position from an application
+export const removeApplicationServicePosition = async (applicationId, positionId) => {
+  try {
+    const response = await api.delete(
+      `/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions/${encodeURIComponent(positionId)}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default api;

@@ -96,6 +96,10 @@ const corporateFormRegistrationRoutes = require('./routes/website/corporateFormR
 const applicationLaboratoryTestRoutes = require("./routes/applicationLaboratoryTestRoutes");
 const applicationInstrumentalAnalysisRoutes = require("./routes/applicationInstrumentalAnalysisRoutes");
 
+//Categories and services routes
+const serviceCategoryRoutes = require("./routes/serviceCategoryRoutes");
+const servicePositionRoutes = require("./routes/servicePositionRoutes");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -256,6 +260,8 @@ app.use("/api/telemedicine", bbbTelemedicineRoutes);
 // Services apis
 app.use("/api/services", serviceRoutes);
 app.use("/api/sub-services", subServiceRoutes);
+app.use("/api/service-manager", serviceCategoryRoutes);
+app.use("/api/service-manager/positions", servicePositionRoutes);
 
 app.use('/api/vacancies', vacancyRoutes);
 app.use('/api/vacancies', vacancyApplicationRoutes);

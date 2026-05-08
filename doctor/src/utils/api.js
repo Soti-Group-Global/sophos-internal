@@ -2288,4 +2288,51 @@ export const deleteEarlyDetectionTemplate = async (id) => {
   }
 };
 
+/* ── Application Service Positions ────────────────────────────────────── */
+
+// Get all available service positions
+export const getAllServicePositions = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/positions/positions", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get all service positions added to an application
+export const getApplicationServicePositions = async (applicationId) => {
+  try {
+    const response = await api.get(`/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Add a service position to an application
+export const addApplicationServicePosition = async (applicationId, positionId) => {
+  try {
+    const response = await api.post(
+      `/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions`,
+      { positionId }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Remove a service position from an application
+export const removeApplicationServicePosition = async (applicationId, positionId) => {
+  try {
+    const response = await api.delete(
+      `/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions/${encodeURIComponent(positionId)}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default api;

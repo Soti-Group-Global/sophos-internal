@@ -886,6 +886,39 @@
   border: 1px solid #bbdefb;
 }
 
+/* ========== Content Scrolling Area ========== */
+.adp-content-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.adp-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== Page Layout ========== */
+.adp-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.adp-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .view-button:hover {
   background-color: #bbdefb;
   color: #1565c0;

@@ -4,6 +4,7 @@ const moment = require('moment-timezone');
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const DoctorsProfile = require("../models/DoctorsProfile");
+const ServicePosition = require("../models/ServicePosition");
 const User = require("../models/User");
 const Assistant = require('../models/Assistant');
 const HeadAssistant = require('../models/HeadAssistant');
@@ -244,6 +245,18 @@ async function buildPopulatedApplication(application) {
   populatedApplication.documents = await populateDocuments(
     application.documents,
   );
+  // Populate added service positions if present
+  try {
+    if (application.addedServicePositions && application.addedServicePositions.length) {
+      const ids = application.addedServicePositions.map((id) => id && id.toString ? id.toString() : id);
+      const positions = await ServicePosition.find({ _id: { $in: ids } }).lean();
+      populatedApplication.addedServicePositions = positions;
+    } else {
+      populatedApplication.addedServicePositions = [];
+    }
+  } catch (err) {
+    populatedApplication.addedServicePositions = [];
+  }
   return populatedApplication;
 }
 
@@ -702,6 +715,11 @@ async function updateApplication(req, res) {
           : application.followUp || {}),
         ...req.body.followUp,
       };
+    }
+
+    // Allow setting addedServicePositions (array of ServicePosition ids)
+    if (req.body.addedServicePositions && Array.isArray(req.body.addedServicePositions)) {
+      application.addedServicePositions = req.body.addedServicePositions;
     }
 
     await application.save();

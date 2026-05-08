@@ -67,6 +67,7 @@ const DoctorAppointmentsCalendar = lazy(() => import("./pages/DoctorAppointments
 const DoctorTemplatesPage = lazy(() => import("./pages/DoctorTemplatesPage"));
 const DoctorProfileDetails = lazy(() => import("./pages/DoctorProfileDetails"));
 const Services = lazy(() => import("./pages/Services"));
+const ServiceManager = lazy(() => import("./pages/ServiceManager"));
 const JobPostsManagement = lazy(() => import("./pages/JobPostsManagement"));
 const JobPostsApplicationsManagement = lazy(() => import("./pages/JobPostsApplicationsManagement"));
 const Reviews = lazy(() => import("./pages/Reviews"));
@@ -163,6 +164,7 @@ const ProtectedLayout = () => {
       doctors: ["/doctors-profile", "/doctors-profile/:id"],
       blogs: ["/blogs"],
       services: ["/services"],
+      serviceManager: ["/service-manager"],
       vacancies: ["/vacancies", "/vacancies/:id"],
       reviews: ["/reviews"],
       promos: ["/promos"],
@@ -719,6 +721,14 @@ function App() {
                 element={
                   <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager", "content_manager"]}>
                     <Services />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="/service-manager"
+                element={
+                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager", "content_manager"]}>
+                    <ServiceManager />
                   </RoleProtectedRoute>
                 }
               />

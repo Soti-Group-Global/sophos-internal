@@ -273,6 +273,7 @@ const applicationSchema = new mongoose.Schema(
     documents: { type: [documentSchema], default: [] },
     serviceOrders: { type: [serviceOrderSchema], default: [] },
     services: [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicePosition" }],
+    addedServicePositions: [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicePosition" }],
     followUp: {
       needed: { type: Boolean, default: false },
       comment: { type: String, default: "" },

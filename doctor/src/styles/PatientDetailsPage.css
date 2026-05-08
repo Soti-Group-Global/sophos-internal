@@ -801,6 +801,66 @@
   padding: 32px 0;
 }
 
+/* ===== Vertical iconic tabs (left fixed bar) ===== */
+.apd-vertical-tabs {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
+  width: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 8px 6px;
+  background: transparent;
+  position: fixed; /* keep tabs fixed to viewport */
+  left: 0;
+  top: 64px; /* align below header */
+  height: calc(100vh - 64px);
+  z-index: 30;
+}
+
+.apd-vert-tab {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  cursor: pointer;
+  transition: transform .12s ease, background .12s ease, color .12s ease;
+}
+
+.apd-vert-tab:hover { background: #f3f6f9; color: #0a2e5d; transform: translateY(-2px); }
+
+.apd-vert-tab.active {
+  color: #0a2e5d;
+  border-left: 5px solid #0a2e5d;
+}
+
+/* subtle divider between tabs and content */
+.apd-vertical-tabs::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  top: 5px;
+  bottom: 8px;
+  width: 1px;
+  background: #e4e7ec;
+  border-radius: 2px;
+}
+
+/* shift main right column so fixed tabs don't overlap content */
+.app-detail-right-column {
+  margin-left: 84px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Error state */
 .adp-error {
   padding: 40px;

@@ -13,7 +13,7 @@ import {
   updateHistoryForm,
 } from "../utils/api";
 import LoadingComponent from "../components/Loading/LoadingComponent";
-import { FiArrowLeft, FiClock, FiChevronDown, FiChevronUp, FiFile, FiVideo } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiChevronDown, FiChevronUp, FiFile, FiVideo ,FiSettings} from "react-icons/fi";
 import { MdOutlinePerson } from "react-icons/md";
 import { LuClipboardList, LuCalendarClock } from "react-icons/lu";
 import "./AppointmentDetailsPage.css";
@@ -23,6 +23,8 @@ import HistoryTab from "./AppointmentDetails/HistoryTab";
 import DocumentsTab from "./AppointmentDetails/DocumentsTab";
 import FollowUpsTab from "./AppointmentDetails/FollowUpsTab";
 import TelemedicineTab from "./AppointmentDetails/TelemedicineTab";
+import AppointmentReport from "./AppointmentReport"
+import Service from "./Service";
 
 
 const formatDate = (dateStr) => {
@@ -75,6 +77,8 @@ const AppointmentDetailsPage = () => {
     { key: "documents", label: t("tabs.documents"),  icon: <FiFile size={15} /> },
     { key: "followups", label: t("tabs.followups"),  icon: <LuCalendarClock size={15} /> },
     { key: "telemedicine", label: t("tabs.telemedicine"), icon: <FiVideo size={15} /> },
+    { key: "report", label: t("tabs.report") || "Report", icon: <FiFile size={15} /> },
+    { key: "service", label: t("tabs.service") || "Service", icon: <FiSettings size={15} /> },
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -235,6 +239,10 @@ const AppointmentDetailsPage = () => {
         );
       case "telemedicine":
         return <TelemedicineTab application={application} />;
+      case "report":
+        return <AppointmentReport booking={application} />;
+      case "service":
+        return <Service applicationId={application.applicationId} />;
       default:
         return null;
     }

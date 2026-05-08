@@ -36,6 +36,8 @@ import html2canvas from "html2canvas";
 import AppointmentPDFTemplate from "../components/AppointmentPDFTemplate";
 import PatientDetailsTab from "../components/PatientDetailsTab";
 import HistoryTab from "../components/HistoryTab";
+import AppointmentReport from "./AppointmentReport";
+import Service from "./Service";
 import {
   FiCalendar,
   FiPhone,
@@ -65,6 +67,7 @@ import {
   FiArrowUp,
   FiExternalLink,
   FiLink,
+  FiSettings,
 } from "react-icons/fi";
 import { GrDocumentTest, GrDocumentStore } from "react-icons/gr";
 import Modal from "react-modal";
@@ -1106,6 +1109,20 @@ const AppointmentDetails = () => {
           >
             <FiActivity size={18} />
           </button>
+          <button
+            title={t("appointment.report") || "Report"}
+            className={`apd-vert-tab${activeSubTab === "report" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("report")}
+          >
+            <FiFileText size={18} />
+          </button>
+          <button
+            title={t("appointment.service") || "Service"}
+            className={`apd-vert-tab${activeSubTab === "service" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("service")}
+          >
+            <FiSettings size={18} />
+          </button>
         </nav>
         <div className="app-detail-right-column">
           {/* Main body */}
@@ -1800,6 +1817,17 @@ const AppointmentDetails = () => {
                     </div>
                   </div>
                 )} */}
+
+                {
+                  activeSubTab === "report" && (
+                    <AppointmentReport
+                      booking={appointment}
+                    />
+                  )
+                }
+                {activeSubTab === "service" && (
+                  <Service applicationId={appointment.applicationId} />
+                )}
               </div>
             </div>
 
