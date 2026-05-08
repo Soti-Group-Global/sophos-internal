@@ -82,7 +82,7 @@ const EarlyDetection = () => {
         >
           Create Application
         </button>
-      </div> */}
+       */}
 
       {/* Tab Content */}
       <div className="tab-content">

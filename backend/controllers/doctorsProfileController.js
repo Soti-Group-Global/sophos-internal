@@ -1264,7 +1264,7 @@ const sendDoctorCredentials = async (req, res) => {
   try {
     const doctorId = req.params.id;
     const User = require("../models/User");
-    const nodemailer = require("nodemailer");
+    const { transporter } = require('../utils/emailService');
     const { generateHashedPassword } = require("../utils/passwordUtils");
     const mongoose = require("mongoose");
 
@@ -1308,17 +1308,6 @@ const sendDoctorCredentials = async (req, res) => {
     await user.save();
 
     // Send email with credentials
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-
     // Helper function to extract multilingual field value
     const getFieldValue = (field, lang = 'en') => {
       if (!field) return '';
@@ -1499,7 +1488,7 @@ const checkDoctorHasAccount = async (req, res) => {
 const testDoctorCredentialsEmail = async (req, res) => {
   try {
     const { email, firstName, lastName, middleName, language } = req.body;
-    const nodemailer = require("nodemailer");
+    const { transporter } = require('../utils/emailService');
 
     if (!email) {
       return res.status(400).json({
@@ -1638,17 +1627,6 @@ const testDoctorCredentialsEmail = async (req, res) => {
 
     const lang = language || 'ru';
     const template = templates[lang] || templates.ru;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
 
     await transporter.sendMail({
       from: `"Медицинский центр СОФОС" <${process.env.EMAIL_USER}>`,

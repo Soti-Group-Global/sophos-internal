@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { BranchProvider } from "./context/BranchContext";
+import { LayoutTopBarProvider } from "./context/LayoutTopBarContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./i18n";
@@ -58,7 +59,7 @@ const EmployeeManagement = lazy(() => import("./pages/EmployeeManagement"));
 const InventoryManagement = lazy(() => import("./pages/InventoryManagement"));
 const MaxMessenger = lazy(() => import("./pages/MaxMessenger"));
 const ProjectWorkspace = lazy(() => import("./pages/ProjectWorkspace"));
-const ScheduleManagement = lazy(() => import("./pages/SchedulaManagement"));
+const ScheduleManagement = lazy(() => import("./pages/ScheduleManagementCalendar"));
 const ConsultationPage = lazy(() => import("./pages/ConsultationPage"));
 const ScheduleConsultation = lazy(() => import("./pages/ScheduleConsultation"));
 const DoctorProfile = lazy(() => import("./pages/DoctorProfile"));
@@ -66,6 +67,7 @@ const DoctorAppointmentsCalendar = lazy(() => import("./pages/DoctorAppointments
 const DoctorTemplatesPage = lazy(() => import("./pages/DoctorTemplatesPage"));
 const DoctorProfileDetails = lazy(() => import("./pages/DoctorProfileDetails"));
 const Services = lazy(() => import("./pages/Services"));
+const ServiceManager = lazy(() => import("./pages/ServiceManager"));
 const JobPostsManagement = lazy(() => import("./pages/JobPostsManagement"));
 const JobPostsApplicationsManagement = lazy(() => import("./pages/JobPostsApplicationsManagement"));
 const Reviews = lazy(() => import("./pages/Reviews"));
@@ -162,6 +164,7 @@ const ProtectedLayout = () => {
       doctors: ["/doctors-profile", "/doctors-profile/:id"],
       blogs: ["/blogs"],
       services: ["/services"],
+      serviceManager: ["/service-manager"],
       vacancies: ["/vacancies", "/vacancies/:id"],
       reviews: ["/reviews"],
       promos: ["/promos"],
@@ -203,9 +206,11 @@ const ProtectedLayout = () => {
 
   return (
     <ProtectedRoute>
-      <AppLayout>
-        <Outlet />
-      </AppLayout>
+      <LayoutTopBarProvider>
+        <AppLayout>
+          <Outlet />
+        </AppLayout>
+      </LayoutTopBarProvider>
     </ProtectedRoute>
   );
 };
@@ -716,6 +721,14 @@ function App() {
                 element={
                   <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager", "content_manager"]}>
                     <Services />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="/service-manager"
+                element={
+                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager", "content_manager"]}>
+                    <ServiceManager />
                   </RoleProtectedRoute>
                 }
               />

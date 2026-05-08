@@ -28,7 +28,6 @@ const doctorLeaveSchema = new mongoose.Schema(
         "Vacation",
         "Sick Leave",
         "Unpaid Leave",
-        "Personal Leave",
         "Maternity/Paternity",
         "Other",
       ],
@@ -51,6 +50,10 @@ const doctorLeaveSchema = new mongoose.Schema(
       default: false,
     },
     reviewedBy: {
+      type: String,
+      default: null,
+    },
+    reviewedByName: {
       type: String,
       default: null,
     },

@@ -1,9 +1,11 @@
-const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+﻿const mongoose = require("mongoose");
+const { sendAssistantAccountEmail } = require('../utils/emailService');
 const { Readable } = require("stream");
+const { ObjectId } = require("mongodb");
 const { validationResult } = require("express-validator");
 const Assistant = require("../models/Assistant");
 const HeadAssistant = require("../models/HeadAssistant");
+const HeadAssistantAvailability = require("../models/HeadAssistantAvailability");
 const User = require("../models/User");
 const DoctorsProfile = require("../models/DoctorsProfile");
 const { getGfs } = require("../gridfs");
@@ -25,146 +27,9 @@ const calculateAge = (dob) => {
   return age;
 };
 
-// Configure nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: {
-    // Do not fail on invalid certs
-    rejectUnauthorized: false,
-  },
-});
-
-// Function to send account creation email
-const sendAccountCreationEmail = async (email, password, fullName, notificationLanguage = 'en') => {
-  try {
-    const loginLink = 'https://assistant.health-direct.ru/';
-
-    const templates = {
-      en: {
-        subject: 'Your Assistant Account Has Been Created',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Welcome to SOPHOS</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${fullName},</p>
-                <p>Your <strong>Assistant (Ассистент)</strong> account has been successfully created. Below are your login credentials:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Email:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Password:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Click the button below to log in to your account:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Log In Now</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Or copy and paste this link: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Important: Please change your password after your first login for security purposes.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      },
-      ru: {
-        subject: 'Ваш аккаунт ассистента создан',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Добро пожаловать в СОФОС</h1>
-              </div>
-              <div class="content">
-                <p>Уважаемый(-ая) ${fullName},</p>
-                <p>Ваш аккаунт <strong>Ассистента</strong> был успешно создан. Ниже указаны ваши учетные данные для входа:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Электронная почта:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Пароль:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Нажмите на кнопку ниже, чтобы войти в свой аккаунт:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Войти</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Или скопируйте и вставьте эту ссылку: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Важно: Пожалуйста, смените пароль после первого входа в систему из соображений безопасности.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      }
-    };
-
-    const template = templates[notificationLanguage] || templates['ru'];
-
-    const mailOptions = {
-      from: `"Медицинский центр СОФОС" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: template.subject,
-      html: template.html,
-    };
-
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    throw error;
-  }
-};
-
+// Delegate to shared email utility (utils/emailService.js)
+const sendAccountCreationEmail = (email, password, fullName, lang = 'en') =>
+  sendAssistantAccountEmail(email, password, fullName, lang);
 // Helper to check overlap between assignments
 const hasOverlap = (assignments, accessId, start, end) => {
   return assignments.some((assignment) => {
@@ -197,6 +62,435 @@ const readProfilePicture = async (profileFileId) => {
     readStream.on("error", reject);
   });
 };
+
+//Get me
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email }).select(
+      "-password",
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.role !== "assistant" && user.role !== "head_assistant") {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Not an assistant" });
+    }
+    const profileModel = user.role === "assistant" ? Assistant : HeadAssistant;
+    const assistant = await profileModel.findOne({ email: user.email });
+    if (!assistant) {
+      return res.status(404).json({
+        message:
+          user.role === "assistant"
+            ? "Assistant profile not found"
+            : "Head Assistant profile not found",
+      });
+    }
+    res.status(200).json({ assistant });
+  } catch (err) {
+    console.error("GET /assistants/me error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+//Update me
+const updateMe = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.role !== "assistant" && user.role !== "head_assistant") {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Not an assistant" });
+    }
+    const updateData = { ...req.body, profileCompleted: true };
+    const profileModel = user.role === "assistant" ? Assistant : HeadAssistant;
+    const updatedAssistant = await profileModel.findOneAndUpdate(
+      { email: user.email },
+      updateData,
+      { new: true, runValidators: true },
+    );
+    if (!updatedAssistant) {
+      return res.status(404).json({
+        message:
+          user.role === "assistant"
+            ? "Assistant profile not found"
+            : "Head Assistant profile not found",
+      });
+    }
+    if (!user.profileCompleted) {
+      user.profileCompleted = true;
+      await user.save();
+    }
+    res.status(200).json({ assistant: updatedAssistant });
+  } catch (err) {
+    console.error("PUT /assistants/me error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+//Upload profile image
+const uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
+    }
+    const profileBucket = req.app.locals.profileBucket;
+    const uploadStream = profileBucket.openUploadStream(
+      `${Date.now()}_${req.file.originalname}`,
+      { contentType: req.file.mimetype },
+    );
+    const fileId = uploadStream.id;
+    uploadStream.end(req.file.buffer);
+    uploadStream.on("finish", async () => {
+      const imageUrl = `/api/assistants/image-by-id/${fileId}`;
+      const profileModel =
+        req.user.role === "assistant" ? Assistant : HeadAssistant;
+      const updatedAssistant = await profileModel.findOneAndUpdate(
+        { email: req.user.email },
+        { profileFileId: fileId, imageUrl },
+        { new: true, select: "profileFileId imageUrl" },
+      );
+      if (!updatedAssistant) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Assistant not found" });
+      }
+      res.status(200).json({
+        success: true,
+        data: { fileId, imageUrl: updatedAssistant.imageUrl },
+      });
+    });
+    uploadStream.on("error", (err) => {
+      console.error("Upload stream error:", err);
+      if (!res.headersSent) {
+        res
+          .status(500)
+          .json({
+            success: false,
+            message: "Upload failed",
+            error: err.message,
+          });
+      }
+    });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Upload failed", error: err.message });
+  }
+}
+
+//get image by id
+const getImageById = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Assistant email is required" });
+    }
+    const profileModel =
+      req.user.role === "assistant" ? Assistant : HeadAssistant;
+    const assistant = await profileModel
+      .findOne({ email }, { doctors: 1, _id: 0 })
+      .lean();
+    if (!assistant) {
+      return res.status(404).json({
+        message: `${req.user.role === "head_assistant" ? "head " : ""}assistant not found`,
+      });
+    }
+    const accessEntries = assistant.doctors || [];
+    const doctorEmails = accessEntries.map((d) => d.doctorEmail);
+    const doctorDetailsMap = await DoctorsProfile.find(
+      { email: { $in: doctorEmails } },
+      { email: 1, firstName: 1, middleName: 1, lastName: 1 },
+    )
+      .lean()
+      .then((doctors) =>
+        doctors.reduce((acc, doc) => {
+          acc[doc.email] = doc;
+          return acc;
+        }, {}),
+      );
+    const merged = accessEntries
+      .map((entry) => ({
+        ...entry,
+        name: doctorDetailsMap[entry.doctorEmail]
+          ? {
+              en:
+                [
+                  doctorDetailsMap[entry.doctorEmail].lastName?.en,
+                  doctorDetailsMap[entry.doctorEmail].firstName?.en,
+                  doctorDetailsMap[entry.doctorEmail].middleName?.en,
+                ]
+                  .filter(Boolean)
+                  .join(" ") || entry.doctorEmail,
+              ru:
+                [
+                  doctorDetailsMap[entry.doctorEmail].lastName?.ru,
+                  doctorDetailsMap[entry.doctorEmail].firstName?.ru,
+                  doctorDetailsMap[entry.doctorEmail].middleName?.ru,
+                ]
+                  .filter(Boolean)
+                  .join(" ") || entry.doctorEmail,
+            }
+          : { en: entry.doctorEmail, ru: entry.doctorEmail },
+      }))
+      .sort((a, b) => new Date(b.startDateTime) - new Date(a.startDateTime));
+    return res.json(merged);
+  } catch (err) {
+    console.error("Error fetching assistant doctors:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+// GET /api/assistants/doctors
+const getAssistantDoctors = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Assistant email is required" });
+    }
+    const profileModel =
+      req.user.role === "assistant" ? Assistant : HeadAssistant;
+    const assistant = await profileModel
+      .findOne({ email }, { doctors: 1, _id: 0 })
+      .lean();
+    if (!assistant) {
+      return res.status(404).json({
+        message: `${req.user.role === "head_assistant" ? "head " : ""}assistant not found`,
+      });
+    }
+    const accessEntries = assistant.doctors || [];
+    const doctorEmails = accessEntries.map((d) => d.doctorEmail);
+    const doctorDetailsMap = await DoctorsProfile.find(
+      { email: { $in: doctorEmails } },
+      { email: 1, firstName: 1, middleName: 1, lastName: 1 },
+    )
+      .lean()
+      .then((doctors) =>
+        doctors.reduce((acc, doc) => {
+          acc[doc.email] = doc;
+          return acc;
+        }, {}),
+      );
+    const merged = accessEntries
+      .map((entry) => ({
+        ...entry,
+        name: doctorDetailsMap[entry.doctorEmail]
+          ? {
+              en:
+                [
+                  doctorDetailsMap[entry.doctorEmail].lastName?.en,
+                  doctorDetailsMap[entry.doctorEmail].firstName?.en,
+                  doctorDetailsMap[entry.doctorEmail].middleName?.en,
+                ]
+                  .filter(Boolean)
+                  .join(" ") || entry.doctorEmail,
+              ru:
+                [
+                  doctorDetailsMap[entry.doctorEmail].lastName?.ru,
+                  doctorDetailsMap[entry.doctorEmail].firstName?.ru,
+                  doctorDetailsMap[entry.doctorEmail].middleName?.ru,
+                ]
+                  .filter(Boolean)
+                  .join(" ") || entry.doctorEmail,
+            }
+          : { en: entry.doctorEmail, ru: entry.doctorEmail },
+      }))
+      .sort((a, b) => new Date(b.startDateTime) - new Date(a.startDateTime));
+    return res.json(merged);
+  } catch (err) {
+    console.error("Error fetching assistant doctors:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+// Create AccessRequest
+const createAccessRequest = async (req, res) => {
+  try {
+    const { assistantEmail, doctorEmail, startDateTime, endDateTime } =
+      req.body;
+    if (!assistantEmail || !doctorEmail || !startDateTime || !endDateTime) {
+      return res.status(400).json({
+        message:
+          "assistantEmail, doctorEmail, startDateTime, and endDateTime are required",
+      });
+    }
+    const profileModel =
+      req.user.role === "assistant" ? Assistant : HeadAssistant;
+    const assistant = await profileModel.findOne({ email: assistantEmail });
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+    const newStart = new Date(startDateTime);
+    const newEnd = new Date(endDateTime);
+    const alreadyAssigned = assistant.doctors.some((d) => {
+      if (d.doctorEmail !== doctorEmail) return false;
+      const existingStart = new Date(d.startDateTime);
+      const existingEnd = new Date(d.endDateTime);
+      return newStart <= existingEnd && newEnd >= existingStart;
+    });
+    if (alreadyAssigned) {
+      return res.json({
+        ok: false,
+        message: "You already have access to this doctor during this period.",
+      });
+    }
+    await profileModel.updateOne(
+      { email: assistantEmail },
+      {
+        $push: {
+          doctors: {
+            doctorEmail,
+            startDateTime: newStart,
+            endDateTime: newEnd,
+            status: "Request Sent",
+          },
+        },
+      },
+      { runValidators: true },
+    );
+    const updated = await profileModel
+      .findOne({ email: assistantEmail }, { doctors: 1, _id: 0 })
+      .lean();
+    return res.json({ ok: true, doctors: updated?.doctors || [] });
+  } catch (err) {
+    console.error("Create access request error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// grantAssistantAccess
+const grantAssistantAccess = async (req, res) => {
+  try {
+    const { assistantEmail, doctorEmail, startDateTime, endDateTime } =
+      req.body;
+    if (!assistantEmail || !doctorEmail || !startDateTime || !endDateTime) {
+      return res.status(400).json({
+        message:
+          "assistantEmail, doctorEmail, startDateTime, and endDateTime are required",
+      });
+    }
+    const assistant = await Assistant.findOne({ email: assistantEmail });
+    if (!assistant) {
+      return res.status(404).json({ message: "Assistant not found" });
+    }
+    const newStart = new Date(startDateTime);
+    const newEnd = new Date(endDateTime);
+    const alreadyAssigned = assistant.doctors.some((d) => {
+      if (d.doctorEmail !== doctorEmail) return false;
+      const existingStart = new Date(d.startDateTime);
+      const existingEnd = new Date(d.endDateTime);
+      return newStart <= existingEnd && newEnd >= existingStart;
+    });
+    if (alreadyAssigned) {
+      return res.json({
+        ok: false,
+        message:
+          "Assistant already have access to this doctor during this period.",
+      });
+    }
+    await Assistant.updateOne(
+      { email: assistantEmail },
+      {
+        $push: {
+          doctors: {
+            doctorEmail,
+            startDateTime: newStart,
+            endDateTime: newEnd,
+            status: "Access Granted",
+          },
+        },
+      },
+      { runValidators: true },
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("Grant assistant access error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+// create availability
+const createAvailability = async (req, res) => {
+  try {
+    const { start, end, status, notes } = req.body;
+    if (!start || !end || !status) {
+      return res
+        .status(400)
+        .json({ message: "Start, end, and status required." });
+    }
+    const headAssistantEmail = req.user.email;
+    if (!headAssistantEmail) {
+      return res
+        .status(400)
+        .json({ message: "Head Assistant email not available in token." });
+    }
+    const newSlot = new HeadAssistantAvailability({
+      headAssistantEmail,
+      start,
+      end,
+      status,
+      notes,
+    });
+    await newSlot.save();
+    res.status(201).json({ message: "Availability saved.", slot: newSlot });
+  } catch (err) {
+    console.error("Save availability error:", err);
+    res.status(500).json({ message: "Server error saving availability." });
+  }
+}
+
+// get availability
+const getAvailability = async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res
+        .status(400)
+        .json({ message: "Start and end query params required." });
+    }
+    const headAssistantEmail = req.user.email;
+    if (!headAssistantEmail) {
+      return res
+        .status(400)
+        .json({ message: "Head Assistant email missing in token." });
+    }
+    const slots = await HeadAssistantAvailability.find({
+      headAssistantEmail,
+      start: { $lt: new Date(end) },
+      end: { $gt: new Date(start) },
+    });
+    res.json(slots);
+  } catch (err) {
+    console.error("Get availability error:", err);
+    res.status(500).json({ message: "Server error retrieving availability." });
+  }
+}
+
+// Delete availability
+const deleteAvailability = async (req, res) => {
+  try {
+    const headAssistantEmail = req.query.email || req.user.email;
+    if (!headAssistantEmail) {
+      return res.status(400).json({ message: "Head Assistant email missing." });
+    }
+    const slot = await HeadAssistantAvailability.findOneAndDelete({
+      _id: req.params.id,
+      headAssistantEmail,
+    });
+    if (!slot) {
+      return res
+        .status(404)
+        .json({ message: "Slot not found or not owned by this email." });
+    }
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error("Delete error", err);
+    res.status(500).json({ message: "Server error deleting slot." });
+  }
+}
 
 // Create assistant
 const createAssistant = async (req, res) => {
@@ -350,6 +644,38 @@ const createAssistant = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// get assistants
+const getAssistants = async (req, res) => {
+  try {
+    const assistantModel =
+      req.user.role === "assistant" ? Assistant : HeadAssistant;
+    const assistant = await assistantModel.findOne({ email: req.user.email });
+    if (!assistant) {
+      return res.status(400).json({ message: "Assistant not found" });
+    }
+    const [assistants, headAssistants] = await Promise.all([
+      Assistant.find({ branches: { $in: assistant.branches } }).select(
+        "firstName middleName branches lastName email role",
+      ),
+      HeadAssistant.find({ branches: { $in: assistant.branches } }).select(
+        "firstName middleName branches lastName email role",
+      ),
+    ]);
+    const allAssistants = [
+      ...assistants.map((a) => ({ ...a._doc, role: a.role || "assistant" })),
+      ...headAssistants.map((h) => ({
+        ...h._doc,
+        role: h.role || "head_assistant",
+        
+      })),
+    ];
+    res.status(200).json({ assistants: allAssistants });
+  } catch (error) {
+    console.error("Error fetching assistants:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+}
 
 // Get all assistants (both regular and head assistants)
 const getAssistantsList = async (req, res) => {
@@ -1082,4 +1408,15 @@ module.exports = {
   grantAccess,
   revokeAccess,
   updateAccessTime,
+  getMe,
+  updateMe,
+  uploadProfileImage,
+  getImageById,
+  getAssistantDoctors,
+  createAccessRequest,
+  grantAssistantAccess,
+  createAvailability,
+  getAvailability,
+  deleteAvailability,
+  getAssistants,
 };

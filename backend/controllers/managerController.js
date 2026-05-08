@@ -1,7 +1,7 @@
-const bcrypt = require("bcryptjs");
+﻿const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const { transporter, sendManagerAccountEmail, sendForgotPasswordEmail } = require('../utils/emailService');
 const User = require("../models/User");
 const Manager = require("../models/Manager");
 const ContentManager = require("../models/ContentManager");
@@ -11,152 +11,9 @@ const { getGfs } = require("../gridfs");
 const { getIO } = require("../socket");
 const { generateHashedPassword } = require("../utils/passwordUtils");
 
-// Email configuration
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
-
-// Test email configuration on startup
-transporter.verify(function(error, success) {
-  if (error) {
-  } else {
-  }
-});
-
-// Function to send account creation email with bold formatting and login link
-const sendManagerAccountCreationEmail = async (email, password, fullName, notificationLanguage = 'en') => {
-  try {
-    const loginLink = 'https://manager.sophos-med.ru/manager-signin';
-
-    const templates = {
-      en: {
-        subject: 'Your Manager Account Has Been Created',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Welcome to SOPHOS</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${fullName},</p>
-                <p>Your <strong>Manager</strong> account has been successfully created. Below are your login credentials:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Email:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Password:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Click the button below to log in to your account:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Log In Now</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Or copy and paste this link: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Important: Please change your password after your first login for security purposes.</p>
-
-                <div class="footer">
-                  <p>Best regards,<br>TEAM SOPHOS</p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      },
-      ru: {
-        subject: 'Ваш аккаунт менеджера создан',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Добро пожаловать в СОФОС</h1>
-              </div>
-              <div class="content">
-                <p>Уважаемый(-ая) ${fullName},</p>
-                <p>Ваш аккаунт <strong>Менеджера</strong> был успешно создан. Ниже указаны ваши учетные данные для входа:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Электронная почта:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Пароль:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Нажмите на кнопку ниже, чтобы войти в свой аккаунт:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Войти</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Или скопируйте и вставьте эту ссылку: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Важно: Пожалуйста, смените пароль после первого входа в систему из соображений безопасности.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      }
-    };
-
-    const template = templates[notificationLanguage] || templates['en'];
-
-    const mailOptions = {
-      from: "Медицинский центр СОФОС",
-      to: email,
-      subject: template.subject,
-      html: template.html,
-    };
-
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    throw error;
-  }
-};
-
+// Delegate to shared email utility (utils/emailService.js)
+const sendManagerAccountCreationEmail = (email, password, fullName, lang = 'en') =>
+  sendManagerAccountEmail(email, password, fullName, lang);
 const createAccessToken = (user) =>
   jwt.sign(
     {
@@ -289,74 +146,9 @@ const forgotPassword = async (req, res) => {
     // Create reset URL
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
-    // Email templates by language
-    const templates = {
-      en: {
-        subject: 'Password Reset - SOPHOS Manager',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #0A2E5D;">Password Reset Request</h2>
-            <p>Hello,</p>
-            <p>We received a request to reset your password for your SOPHOS Manager account.</p>
-            <p>Click the button below to reset your password:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}"
-                 style="background-color: #0A2E5D; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block;">
-                 Reset Password
-              </a>
-            </div>
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="color: #666; word-break: break-all;">${resetUrl}</p>
-            <p><strong>This link will expire in 1 hour.</strong></p>
-            <p>If you didn't request this password reset, please ignore this email and contact your administrator.</p>
-            <hr style="border: 1px solid #eee; margin: 30px 0;">
-            <p style="color: #999; font-size: 12px;">
-              TEAM SOPHOS
-            </p>
-          </div>
-        `
-      },
-      ru: {
-        subject: 'Сброс пароля - СОФОС Менеджер',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #0A2E5D;">Запрос на сброс пароля</h2>
-            <p>Здравствуйте,</p>
-            <p>Мы получили запрос на сброс пароля для вашей учетной записи СОФОС Менеджер.</p>
-            <p>Нажмите на кнопку ниже, чтобы сбросить пароль:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}"
-                 style="background-color: #0A2E5D; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block;">
-                 Сбросить пароль
-              </a>
-            </div>
-            <p>Или скопируйте и вставьте эту ссылку в браузер:</p>
-            <p style="color: #666; word-break: break-all;">${resetUrl}</p>
-            <p><strong>Срок действия ссылки истекает через 1 час.</strong></p>
-            <p>Если вы не запрашивали сброс пароля, проигнорируйте это письмо и свяжитесь с администратором.</p>
-            <hr style="border: 1px solid #eee; margin: 30px 0;">
-            <p style="color: #999; font-size: 12px;">
-              Команда СОФОС
-            </p>
-          </div>
-        `
-      }
-    };
-
-    // Get template based on language
-    const template = templates[language] || templates.en;
-
-    // Email content
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: template.subject,
-      html: template.html
-    };
-
-    // Send email
+    // Send forgot-password email via shared utility
     try {
-      const info = await transporter.sendMail(mailOptions);
+      await sendForgotPasswordEmail(email, resetUrl, language);
 
       res.json({
         success: true,
@@ -365,8 +157,6 @@ const forgotPassword = async (req, res) => {
           : 'Password reset link has been sent to your email.'
       });
     } catch (emailError) {
-
-
       res.status(500).json({
         success: false,
         message: language === 'ru'
@@ -374,7 +164,6 @@ const forgotPassword = async (req, res) => {
           : 'Failed to send password reset email. Please try again later.'
       });
     }
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -830,5 +619,5 @@ module.exports = {
   getManagersData,
   createManager,
   updateManager,
-  deleteManager,
+  deleteManager
 };

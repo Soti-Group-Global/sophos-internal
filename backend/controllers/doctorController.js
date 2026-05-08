@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
+const { sendDoctorAccountEmail } = require('../utils/emailService');
 const { Readable } = require('stream');
 
-const Doctor = require('../models/Doctor');
+const Doctor = require('../models/DoctorsProfile');
 const User = require('../models/User');
+const Assistant = require('../models/Assistant');
+const HeadAssistant = require('../models/HeadAssistant');
 const DoctorBreak = require('../models/DoctorBreak');
+const DoctorMessage = require('../models/DoctorMessage');
+const { ObjectId } = mongoose.Types;
 const { getGfs } = require('../gridfs');
 const { getIO } = require('../socket');
 const { generateHashedPassword } = require('../utils/passwordUtils');
@@ -28,143 +32,11 @@ const generatePassword = (email) => {
   return `${emailFragment}${randomString}!`;
 };
 
-// Configure nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+// Delegate to shared email utility (utils/emailService.js)
+const sendAccountCreationEmail = (email, password, fullName, language = 'en') =>
+  sendDoctorAccountEmail(email, password, fullName, language);
 
-// Function to send account creation email
-const sendAccountCreationEmail = async (email, password, fullName, language = 'en') => {
-  try {
-    const loginLink = 'https://doctor.health-direct.ru/';
 
-    const templates = {
-      en: {
-        subject: 'Your Doctor Account Has Been Created',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Welcome to SOPHOS</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${fullName},</p>
-                <p>Your <strong>Doctor (Врач)</strong> account has been successfully created. Below are your login credentials:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Email:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Password:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Click the button below to log in to your account:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Log In Now</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Or copy and paste this link: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Important: Please change your password after your first login for security purposes.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      },
-      ru: {
-        subject: 'Ваш аккаунт врача создан',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-              .content { background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px; }
-              .credentials { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1e40af; }
-              .credential-label { font-weight: normal; color: #64748b; margin-bottom: 5px; }
-              .credential-value { font-weight: bold; font-size: 16px; color: #1e293b; margin-bottom: 15px; }
-              .login-button { display: inline-block; background: #1e40af; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-              .login-button:hover { background: #1e3a8a; }
-              .footer { text-align: center; margin-top: 20px; color: #64748b; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Добро пожаловать в СОФОС</h1>
-              </div>
-              <div class="content">
-                <p>Уважаемый(-ая) ${fullName},</p>
-                <p>Ваш аккаунт <strong>Врача</strong> был успешно создан. Ниже указаны ваши учетные данные для входа:</p>
-
-                <div class="credentials">
-                  <div class="credential-label">Электронная почта:</div>
-                  <div class="credential-value">${email}</div>
-                  <div class="credential-label">Пароль:</div>
-                  <div class="credential-value">${password}</div>
-                </div>
-
-                <p>Нажмите на кнопку ниже, чтобы войти в свой аккаунт:</p>
-                <div style="text-align: center;">
-                  <a href="${loginLink}" class="login-button">Войти</a>
-                </div>
-                <p style="color: #64748b; font-size: 14px;">Или скопируйте и вставьте эту ссылку: ${loginLink}</p>
-
-                <p style="color: #ef4444; font-weight: bold;">Важно: Пожалуйста, смените пароль после первого входа в систему из соображений безопасности.</p>
-
-                <div class="footer">
-                  <p>С уважением,<br><strong>Команда СОФОС</strong></p>
-                </div>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-      }
-    };
-
-    const template = templates[language] || templates['ru'];
-
-    const mailOptions = {
-      from: `"Медицинский центр СОФОС" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: template.subject,
-      html: template.html,
-    };
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    throw error;
-  }
-};
 
 // Create doctor
 const createDoctor = async (req, res) => {
@@ -732,6 +604,62 @@ const getDoctorByEmail = async (req, res) => {
   }
 };
 
+// Get doctor profile image by GridFS file ID
+// Get doctor profile image by GridFS file ID or doctor ID
+const getDoctorImageById = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+
+    if (!ObjectId.isValid(fileId)) {
+      return res.status(400).json({ message: 'Invalid file ID' });
+    }
+
+    const gfs = getGfs();
+
+    const tryReadFile = async (id) => {
+      const files = await gfs.find({ _id: new ObjectId(id) }).toArray();
+      if (!files || files.length === 0) {
+        return null;
+      }
+
+      const file = files[0];
+      res.set('Content-Type', file.contentType || 'application/octet-stream');
+      res.set('Content-Disposition', `inline; filename="${file.filename}"`);
+      res.set('Cache-Control', 'public, max-age=31536000');
+
+      return await new Promise((resolve, reject) => {
+        const readStream = gfs.openDownloadStream(file._id);
+        readStream.on('error', reject);
+        readStream.on('end', resolve);
+        readStream.pipe(res);
+      });
+    };
+
+    const directFile = await tryReadFile(fileId);
+    if (directFile !== null) {
+      return;
+    }
+
+    const doctor = await Doctor.findOne({
+      $or: [{ profileFileId: fileId }, { _id: new ObjectId(fileId) }],
+    }).select('profileFileId');
+
+    if (doctor?.profileFileId && doctor.profileFileId !== fileId) {
+      const doctorFile = await tryReadFile(doctor.profileFileId);
+      if (doctorFile !== null) {
+        return;
+      }
+    }
+
+    return res.status(404).json({ message: 'Image not found' });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error fetching image',
+      error: error.message,
+    });
+  }
+};
+
 // Get breaks for a doctor on a specific date
 const getDoctorBreaks = async (req, res) => {
   try {
@@ -757,29 +685,27 @@ const getDoctorBreaks = async (req, res) => {
   }
 };
 
-// Update or create breaks for a doctor on a specific date
-const createOrUpdateBreaks = async (req, res) => {
+// Update or create breaks for the currently authenticated doctor (doctor interface)
+const createOrUpdateMyBreaks = async (req, res) => {
   try {
-    const { doctorEmail, date, breaks, comment } = req.body;
-
-    // Validate required fields
-    if (!doctorEmail || !date) {
-      return res.status(400).json({
-        message: 'Doctor email and date are required',
-      });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    // Validate breaks format
-    if (breaks && !Array.isArray(breaks)) {
-      return res.status(400).json({
-        message: 'Breaks must be an array',
-      });
+    const { date, breaks, comment } = req.body;
+    const doctorEmail = (req.user.role === 'doctor' ? req.user.email : (req.body.doctorEmail || req.user.email)).toLowerCase();
+
+    if (!date) {
+      return res.status(400).json({ message: 'Date is required' });
     }
 
-    // Validate each break slot
-    if (breaks) {
+    if (breaks !== undefined && !Array.isArray(breaks)) {
+      return res.status(400).json({ message: 'Breaks must be an array' });
+    }
+
+    if (Array.isArray(breaks)) {
       for (const breakSlot of breaks) {
-        if (!breakSlot.startTime || !breakSlot.endTime) {
+        if (!breakSlot?.startTime || !breakSlot?.endTime) {
           return res.status(400).json({
             message: 'Each break must have startTime and endTime',
           });
@@ -787,63 +713,365 @@ const createOrUpdateBreaks = async (req, res) => {
       }
     }
 
-    // Find existing break record or create new one
-    let doctorBreak = await DoctorBreak.findOne({
-      doctorEmail: doctorEmail.toLowerCase(),
-      date: date,
-    });
+    let doctorBreak = await DoctorBreak.findOne({ doctorEmail, date });
 
     if (doctorBreak) {
-      // Update existing record
-      doctorBreak.breaks = breaks || [];
-      doctorBreak.comment = comment || '';
+      doctorBreak.breaks = Array.isArray(breaks) ? breaks : doctorBreak.breaks;
+      if (comment !== undefined) doctorBreak.comment = comment || '';
       doctorBreak.updatedAt = new Date();
       await doctorBreak.save();
     } else {
-      // Create new record
       doctorBreak = new DoctorBreak({
-        doctorEmail: doctorEmail.toLowerCase(),
-        date: date,
-        breaks: breaks || [],
+        doctorEmail,
+        date,
+        breaks: Array.isArray(breaks) ? breaks : [],
         comment: comment || '',
       });
       await doctorBreak.save();
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Breaks updated successfully',
       data: doctorBreak,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error updating my breaks:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// Delete breaks for a doctor on a specific date
-const deleteBreaks = async (req, res) => {
+// Partial update of a break record by id for the currently authenticated doctor
+const updateMyBreakById = async (req, res) => {
   try {
-    const { doctorEmail, date } = req.params;
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
 
-    const result = await DoctorBreak.findOneAndDelete({
-      doctorEmail: doctorEmail.toLowerCase(),
-      date: date,
+    const { breakId } = req.params;
+    const { date, breaks, comment } = req.body || {};
+
+    const doctorBreak = await DoctorBreak.findById(breakId);
+    if (!doctorBreak) {
+      return res.status(404).json({ message: 'Break record not found' });
+    }
+
+    if (req.user.role === 'doctor' && doctorBreak.doctorEmail !== req.user.email.toLowerCase()) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (breaks !== undefined && !Array.isArray(breaks)) {
+      return res.status(400).json({ message: 'Breaks must be an array' });
+    }
+
+    if (Array.isArray(breaks)) {
+      for (const breakSlot of breaks) {
+        if (!breakSlot?.startTime || !breakSlot?.endTime) {
+          return res.status(400).json({
+            message: 'Each break must have startTime and endTime',
+          });
+        }
+      }
+      doctorBreak.breaks = breaks;
+    }
+
+    if (date !== undefined) doctorBreak.date = date;
+    if (comment !== undefined) doctorBreak.comment = comment || '';
+
+    doctorBreak.updatedAt = new Date();
+    await doctorBreak.save();
+
+    return res.status(200).json({
+      message: 'Breaks updated successfully',
+      data: doctorBreak,
     });
+  } catch (error) {
+    console.error('Error updating break by id:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
-    if (!result) {
-      return res.status(404).json({
-        message: 'No breaks found for this doctor on this date',
-      });
+// Delete a break record by id for the currently authenticated doctor
+const deleteMyBreakById = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const { breakId } = req.params;
+
+    const doctorBreak = await DoctorBreak.findById(breakId);
+    if (!doctorBreak) {
+      return res.status(404).json({ message: 'Break record not found' });
+    }
+
+    if (req.user.role === 'doctor' && doctorBreak.doctorEmail !== req.user.email.toLowerCase()) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    await DoctorBreak.deleteOne({ _id: doctorBreak._id });
+
+    return res.json({ message: 'Breaks deleted successfully', data: doctorBreak });
+  } catch (error) {
+    console.error('Error deleting break by id:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+
+// Get current authenticated doctor's profile
+const getMe = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    // Fetch doctor profile using authenticated user's email
+    const doctor = await Doctor.findOne({ email: req.user.email });
+    
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor profile not found' });
+    }
+
+    // Get profile picture if exists
+    let profilePicture = null;
+    if (doctor.profileFileId) {
+      const gfs = getGfs();
+      try {
+        const file = await gfs.find({ _id: new mongoose.Types.ObjectId(doctor.profileFileId) }).toArray();
+        if (file.length > 0) {
+          const readStream = gfs.openDownloadStream(file[0]._id);
+          const chunks = [];
+          await new Promise((resolve, reject) => {
+            readStream.on('data', (chunk) => chunks.push(chunk));
+            readStream.on('end', () => {
+              profilePicture = Buffer.concat(chunks).toString('base64');
+              resolve();
+            });
+            readStream.on('error', reject);
+          });
+        }
+      } catch (fileError) {
+        console.error('Error fetching profile picture:', fileError);
+        // Continue without profile picture
+      }
     }
 
     res.json({
-      message: 'Breaks deleted successfully',
-      data: result,
+      doctor: { ...doctor.toObject(), profilePicture }
     });
   } catch (error) {
+    console.error('Error fetching doctor profile:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
+// Get current doctor's breaks for a specific date (optional)
+const getMyBreaks = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const doctorEmail = req.user.email.toLowerCase();
+    const { date } = req.query;
+
+    const query = { doctorEmail };
+    if (date) query.date = date;
+
+    const breakDocs = await DoctorBreak.find(query).sort({ date: 1 }).lean();
+
+    // Frontend expects an array of DoctorBreak documents under `breaks`
+    return res.json({
+      doctorEmail,
+      breaks: breakDocs,
+    });
+  } catch (error) {
+    console.error('Error fetching doctor breaks:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get list of all branches
+const getDoctorBranchesList = async (req, res) => {
+  try {
+    // For DoctorsProfile model, branches might be embedded differently
+    // Let's just return an empty array or a default branch list
+    const branches = ['Main Branch', 'Secondary Branch', 'Online'];
+    res.json({ branches });
+  } catch (error) {
+    console.error('Error fetching doctor branches:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// GET /api/doctors/messages
+const getMessage = async (req, res) => {
+  try {
+    const docMsg = await DoctorMessage.findOne({ email: req.user.email });
+    res.json({ messages: docMsg ? docMsg.messages : [] });
+  } catch (err) {
+    console.error('Fetch messages error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+// DELETE /api/doctors/messages/:messageId
+const deleteMessage = async (req, res) => {
+  const { messageId } = req.params;
+  try {
+    const docMsg = await DoctorMessage.findOne({ email: req.user.email });
+    if (!docMsg) return res.status(404).json({ message: 'Message list not found' });
+    const before = docMsg.messages.length;
+    docMsg.messages = docMsg.messages.filter((m) => m._id.toString() !== messageId);
+    const after = docMsg.messages.length;
+    if (before === after) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    await docMsg.save();
+    res.status(200).json({ message: 'Message deleted successfully' });
+  } catch (err) {
+    console.error('Delete message error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+// POST /api/doctors/messages/upload
+const uploadMessageFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    const bucket = req.app.locals.messageBucket;
+    const filename = `${Date.now()}_${req.file.originalname}`;
+    const uploadStream = bucket.openUploadStream(filename, {
+      contentType: req.file.mimetype,
+      metadata: { uploadedBy: req.user.id, originalName: req.file.originalname },
+    });
+    const fileId = uploadStream.id;
+    uploadStream.end(req.file.buffer);
+    uploadStream.on('finish', () => {
+      res.status(200).json({
+        success: true,
+        fileId,
+        fileUrl: `/api/doctors/file-by-id/${fileId}`,
+        fileType: req.file.mimetype.startsWith('image/') ? 'image' : 'document',
+        fileName: req.file.originalname,
+      });
+    });
+    uploadStream.on('error', (err) => {
+      console.error('Upload stream error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: 'File upload failed', error: err.message });
+      }
+    });
+  } catch (err) {
+    console.error('Upload processing error:', err);
+    res.status(500).json({ success: false, message: 'File processing failed', error: err.message });
+  }
+}
+// GET /api/doctors/lite
+const getDoctorsLite = async (req, res) => {
+  try {
+    console.log("[getDoctorsLite] starting...");
+    const doctors = await Doctor.find({}, { _id: 1, firstName: 1, middleName: 1, lastName: 1, email: 1 })
+      .lean();
+    console.log("[getDoctorsLite] found doctors count:", doctors.length);
+    
+    const formatted = doctors.map((d) => {
+      const pickLang = (field, lang) => {
+        if (!field) return '';
+        if (typeof field === 'string') return field;
+        if (typeof field === 'object') return field[lang] || '';
+        return '';
+      };
+      const buildName = (lang) =>
+        [pickLang(d.lastName, lang), pickLang(d.firstName, lang), pickLang(d.middleName, lang)]
+          .filter(Boolean).join(' ');
+      return {
+        _id: d._id,
+        name: {
+          ru: buildName('ru') || buildName('en') || 'N/A',
+          en: buildName('en') || buildName('ru') || 'N/A',
+        },
+        email: d.email,
+      };
+    });
+    console.log("[getDoctorsLite] formatted count:", formatted.length, "first:", formatted[0]);
+    res.json(formatted);
+  } catch (err) {
+    console.error('Error fetching doctors (lite):', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}
+// GET /api/doctors/messages/allDoctors
+const getAllDoctorsForMessages = async (req, res) => {
+   try {
+    const assistantModel = req.user.role === 'assistant' ? Assistant : HeadAssistant;
+    const assistant = await assistantModel.findOne({ email: req.user.email });
+    if (!assistant) {
+      return res.status(400).json({ message: 'Assistant not found' });
+    }
+    const doctors = await Doctor.find({ 'branches.en': { $in: assistant.branches } });
+    const doctorsWithImages = await Promise.all(
+      doctors.map(async (doctor) => {
+        let profilePicture = null;
+        if (doctor.profileFileId) {
+          const gfs = req.app.locals.profileBucket;
+          const file = await gfs
+            .find({ _id: new mongoose.Types.ObjectId(doctor.profileFileId) })
+            .toArray();
+          if (file.length > 0) {
+            const readStream = gfs.openDownloadStream(file[0]._id);
+            const chunks = [];
+            await new Promise((resolve, reject) => {
+              readStream.on('data', (chunk) => chunks.push(chunk));
+              readStream.on('end', () => {
+                profilePicture = Buffer.concat(chunks).toString('base64');
+                resolve();
+              });
+              readStream.on('error', reject);
+            });
+          }
+        }
+        return { ...doctor.toObject(), profilePicture };
+      })
+    );
+    res.json({ doctors: doctorsWithImages });
+  } catch (error) {
+    console.error('Error fetching doctors:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+//------------- Assistant related functions -------------//
+//get doctors for particular assistant
+const getDoctorsForAssistant = async (req, res) => {
+  try {
+    const assistantEmail = req.query.assistantEmail;
+    if (!assistantEmail) {
+      return res.status(400).json({ message: 'assistantEmail is required' });
+    }
+    const assistantModel = req.user.role === 'head_assistant' ? HeadAssistant : Assistant;
+    const assistant = await assistantModel.findOne({ email: assistantEmail });
+    if (!assistant) {
+      return res.status(404).json({ message: 'Assistant not found' });
+    }
+    const now = new Date();
+    const activeDoctorEmails = assistant.doctors
+      .filter((d) => {
+        const start = new Date(d.startDateTime);
+        const end = new Date(d.endDateTime);
+        return start <= now && end >= now;
+      })
+      .map((d) => d.doctorEmail);
+    if (activeDoctorEmails.length === 0) {
+      return res.status(200).json({ doctors: [] });
+    }
+    const doctors = await Doctor.find({ email: { $in: activeDoctorEmails } });
+    res.status(200).json({ doctors });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+} 
 module.exports = {
   createDoctor,
   getDoctors,
@@ -853,7 +1081,19 @@ module.exports = {
   updateDoctor,
   deleteDoctor,
   getDoctorByEmail,
+  getDoctorImageById,
   getDoctorBreaks,
-  createOrUpdateBreaks,
-  deleteBreaks,
+  createOrUpdateMyBreaks,
+  updateMyBreakById,
+  deleteMyBreakById,
+  getMe,
+  getMyBreaks,
+  getDoctorBranchesList,
+  getDoctorsForAssistant,
+  getMessage,
+  deleteMessage,
+  uploadMessageFile,
+  getDoctorsLite,
+  getAllDoctorsForMessages,
+  getDoctorImageById
 };

@@ -18,13 +18,14 @@
   background: var(--app-detail-bg);
   font-family: "Inter Tight", sans-serif;
   color: var(--app-detail-text);
-  height: 100%;
+  min-height: 100%;
   width: 100%;
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
   box-sizing: border-box;
+  padding-top: 68px; /* Height of the fixed header */
 }
 
 .app-detail-patient-title-row.swapped-layout .app-detail-back-btn {
@@ -120,6 +121,7 @@
   gap: 24px;
   overflow: hidden; /* hide any stray scrollbars here */
   padding-left: 24px; /* spacing between panel and right area */
+  min-height: 0;
 }
 
 .app-detail-content-area.right-scroll {
@@ -474,6 +476,7 @@
 .app-detail-content-area {
   flex: 1;
   min-width: 0; /* prevent flex overflow */
+  min-height: 0; /* allow flex child to shrink for scrolling */
   width: 100%;
   margin-top: 0;
   padding-top: 0;
@@ -1411,7 +1414,7 @@
   .app-detail-main-container {
     flex-direction: column;
   }
-
+  
   .app-detail-icon-navigation {
     flex-direction: row;
     width: 100%;
@@ -2994,6 +2997,11 @@
   gap: 16px;
   min-height: 68px;
   flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 210;
 }
 
 .apd-top-bar-left {
@@ -3456,6 +3464,85 @@
   cursor: pointer;
 }
 
+/* Final: vertical iconic tabs (ensure placement and stacking) */
+.apd-tabs-bar { display: none !important; } /* hide top tabs on desktop */
+
+.apd-vertical-tabs {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
+  width: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 8px 6px;
+  background: transparent;
+  position: fixed; /* fixed to viewport like a main sidebar */
+  left: 15px;
+  top: 68px; /* moved upward to align below header */
+  height: calc(100vh - 68px);
+  z-index: 30;
+  margin-top: -5px;
+}
+
+.apd-vert-tab {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.apd-vert-tab:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(10,46,93,0.06); }
+
+.apd-vert-tab.active {
+  color: #0a2e5d;
+  border-left: 5px solid #0a2e5d;  /* Thick gold left border */
+}
+
+/* divider to the right of the vertical icon bar */
+.apd-vertical-tabs::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: #e4e7ec;
+  border-radius: 1px;
+    height: calc(120% - 13px);
+}
+
+.app-detail-page-layout { display: flex !important; gap: 18px; align-items: flex-start; }
+
+/* when the vertical nav is visible, shift right column so content doesn't overlap */
+.hide-global-sidebar .app-detail-page-layout {
+  margin-left: 88px; /* space for the fixed icon bar and divider */
+}
+
+@media (max-width: 768px) {
+  .apd-vertical-tabs { display: none !important; }
+  .apd-tabs-bar { display: flex !important; } /* fallback to top tabs on mobile */
+}
+
+/* Hide global sidebar when viewing appointment details (scoped via body class) */
+.hide-global-sidebar .sidebar {
+  display: none !important;
+}
+
+/* Ensure main content takes full width when sidebar hidden */
+.hide-global-sidebar .app-root,
+.hide-global-sidebar .main-content,
+.hide-global-sidebar .page-content {
+  margin-left: -15px !important;
+  padding-left: 16px !important;
+}
+
 .app-detail-doc-status-badge.under-review:hover {
   background: #fde68a;
 }
@@ -3609,3 +3696,4 @@
   background: #d1fae5;
   color: #065f46;
 }
+

@@ -61,8 +61,9 @@ const Patients = () => {
           recordsPerPage,
           search,
         );
-        setPatients(data || []);
-        setTotalRecords(data.length || 0);
+        const patientList = Array.isArray(data) ? data : data?.patients ?? [];
+        setPatients(patientList);
+        setTotalRecords(patientList.length);
       } catch (err) {
         setError(err.message || t("patients.somethingWentWrong"));
       } finally {

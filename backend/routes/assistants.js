@@ -19,7 +19,27 @@ const {
   grantAccess,
   revokeAccess,
   updateAccessTime,
+  getMe,
+  updateMe,
+  uploadProfileImage,
+  getImageById,
+  getAssistantDoctors,
+  createAccessRequest,
+  grantAssistantAccess,
+  createAvailability,
+  getAvailability,
+  deleteAvailability,
+  getAssistants,
 } = require("../controllers/assistantController");
+const { assistantSignIn } = require("../controllers/authController");
+
+// Middleware: check if user is head assistant
+const headAssistantOnly = (req, res, next) => {
+  if (req.user?.role !== "head_assistant") {
+    return res.status(403).json({ message: "Access denied. Head assistant only." });
+  }
+  next();
+};
 
 // Configure multer with memory storage
 const storage = multer.memoryStorage();
@@ -58,11 +78,23 @@ const assistantValidation = [
     .withMessage("Invalid gender"),
 ];
 
+// Assistant sign-in route
+router.post("/assistant-signin", assistantSignIn);
+
+router.get('/me', auth, getMe);
+router.put('/me', auth, updateMe);
+router.post('/upload/profile-image', auth, upload, uploadProfileImage);
+router.get('/image-by-id/:id', auth, getImageById);
+router.get('/doctors', auth, getAssistantDoctors);
+router.post('/access-requests', auth, createAccessRequest);
+router.post('/grant-assistant-access', auth, headAssistantOnly, grantAssistantAccess);
+router.post('/availability', auth, createAvailability);
+router.get('/availability', auth, getAvailability);
+router.delete('/availability/:id', auth, deleteAvailability);
+router.get('/getAssistants', auth, getAssistants);
+
 // Create assistant
 router.post("/", [auth, upload, ...assistantValidation], createAssistant);
-
-// Get all assistants (both regular and head assistants)
-router.get("/getAssistants", auth, getAssistantsList);
 
 // Get all assistants (optionally filtered by branch name)
 router.get("/", auth, getAllAssistants);

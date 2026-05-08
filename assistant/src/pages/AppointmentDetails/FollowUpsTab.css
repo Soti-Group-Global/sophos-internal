@@ -1,0 +1,227 @@
+/* ══════════════════════════════════════════════════════════
+   FollowUpsTab.css
+   ══════════════════════════════════════════════════════════ */
+
+.fut-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 80px;
+}
+
+/* ── Card shell ── */
+.fut-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Summary card variant ── */
+.fut-card--summary {
+  gap: 0;
+}
+
+.fut-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.fut-summary-icon {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.fut-summary-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.fut-summary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.fut-summary-row:last-child {
+  border-bottom: none;
+}
+
+.fut-summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 120px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.fut-summary-value {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* ── Booked badge ── */
+.fut-booked-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+}
+.fut-booked-badge--yes {
+  background: #dcfce7;
+  color: #15803d;
+}
+.fut-booked-badge--no {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+/* ── Link button ── */
+.fut-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d4ed8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+.fut-link-btn:hover {
+  color: #1e40af;
+}
+
+/* ── Empty state ── */
+.fut-empty {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 52px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.fut-empty-icon {
+  color: #c8cfd9;
+}
+
+.fut-empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.fut-empty-text {
+  margin: 0;
+  font-size: 13px;
+  color: #9ca3af;
+  max-width: 320px;
+}
+
+.fut-require-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #0c3870;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.fut-require-btn:hover {
+  background: #0a2f60;
+}
+
+/* ── Form inside card ── */
+.fut-card-heading {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.fut-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #1f2937;
+  background: #f9fafb;
+  border: 1.5px solid #d0d5db;
+  border-radius: 8px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.fut-textarea:focus {
+  border-color: #0c3870;
+  background: #fff;
+}
+
+/* ── Form actions ── */
+.fut-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.fut-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.fut-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.fut-btn--cancel {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.fut-btn--cancel:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+.fut-btn--save {
+  background: #0c3870;
+  color: #fff;
+}
+.fut-btn--save:hover:not(:disabled) {
+  background: #0a2f60;
+}

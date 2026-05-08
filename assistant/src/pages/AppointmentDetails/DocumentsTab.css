@@ -1,0 +1,344 @@
+/* ══════════════════════════════════════════════════════════
+   DocumentsTab.css  –  Documents tab styling
+   ══════════════════════════════════════════════════════════ */
+
+.dt-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 80px;
+}
+
+/* ── Toolbar row ── */
+.dt-toolbar {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Mode toggle group ── */
+.dt-mode-group {
+  display: flex;
+  align-items: center;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.dt-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+  color: #6b7280;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.dt-mode-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+.dt-mode-btn--active {
+  background: #0c3870;
+  color: #fff;
+}
+.dt-mode-btn--active:hover {
+  background: #0a2f60;
+  color: #fff;
+}
+
+/* ── File picker label ── */
+.dt-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0c3870;
+  background: #fff;
+  border: 1.5px solid #d0d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s;
+}
+.dt-file-label:hover {
+  border-color: #9ab9e0;
+  background: #f8fbff;
+}
+.dt-file-label--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.dt-file-input {
+  display: none;
+}
+
+/* ── URL input ── */
+.dt-url-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #1f2937;
+  background: #fff;
+  border: 1.5px solid #d0d5db;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.dt-url-input:focus {
+  border-color: #0c3870;
+}
+.dt-url-input::placeholder {
+  color: #b0b7c3;
+}
+.dt-url-input:disabled {
+  opacity: 0.5;
+}
+
+/* ── Add button ── */
+.dt-add-btn {
+  padding: 8px 22px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: #0c3870;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, opacity 0.15s;
+}
+.dt-add-btn:hover:not(:disabled) {
+  background: #0a2f60;
+}
+.dt-add-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Empty state ── */
+.dt-empty {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 52px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.dt-empty-icon {
+  color: #c8cfd9;
+}
+.dt-empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #374151;
+}
+.dt-empty-text {
+  margin: 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* ── Document list ── */
+.dt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Single document row ── */
+.dt-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: box-shadow 0.15s;
+}
+.dt-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Type chip ── */
+.dt-item-icon-col {
+  flex-shrink: 0;
+}
+
+.dt-type-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.dt-type-chip--pdf {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.dt-type-chip--image {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+.dt-type-chip--word {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.dt-type-chip--excel {
+  background: #f0fdf4;
+  color: #15803d;
+}
+.dt-type-chip--file {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ── Body: name + meta ── */
+.dt-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dt-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dt-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dt-item-date {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ── Verification status badge ── */
+.dt-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.dt-status--verified {
+  background: #dcfce7;
+  color: #15803d;
+}
+.dt-status--review {
+  background: #fef9c3;
+  color: #92400e;
+}
+.dt-status--disapproved {
+  background: #fee2e2;
+  color: #dc2626;
+}
+.dt-status--default {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* ── Action buttons ── */
+.dt-item-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dt-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.dt-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dt-action-btn--view {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.dt-action-btn--view:hover:not(:disabled) {
+  background: #dbeafe;
+}
+.dt-action-btn--download {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+.dt-action-btn--download:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .dt-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .dt-url-input,
+  .dt-file-label {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+  .dt-add-btn {
+    width: 100%;
+  }
+  .dt-item {
+    flex-wrap: wrap;
+  }
+  .dt-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+}

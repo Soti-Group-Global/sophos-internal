@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
 const api = axios.create({
-  baseURL: "http://localhost:3003/api",
+  baseURL: "http://localhost:5002/api",
   withCredentials: false,
 });
 
@@ -708,6 +708,17 @@ export const getApplications = async (params = {}) => {
   }
 };
 
+//Get All applications by patient ID
+export const getApplicationsByPatientId = async (patientId) => {
+  try {
+    const encodedPatientId = encodeURIComponent(patientId);
+    const response = await api.get(`/applications/by-patient-id/${encodedPatientId}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Get all applications
 export const getApplicationsCalender = async (params = {}) => {
   try {
@@ -815,6 +826,16 @@ export const getDoctorLeaves = async (params = {}) => {
 export const updateDoctorLeaveStatus = async (id, status, reviewComment = "") => {
   try {
     const response = await api.patch(`/doctor-leaves/${id}/status`, { status, reviewComment });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Delete doctor leave
+export const deleteDoctorLeave = async (id) => {
+  try {
+    const response = await api.delete(`/doctor-leaves/${id}`);
     return response;
   } catch (error) {
     throw error;
@@ -3774,6 +3795,98 @@ export const deleteContactRequest = async (requestId) => {
   }
 };
 
+// ── Doctor Weekly Schedule ──
+export const getDoctorWeeklySchedule = async (doctorEmail) => {
+  try {
+    const response = await api.get(`/doctor-availability/weekly-schedule/${doctorEmail}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const saveDoctorWeeklySchedule = async (doctorEmail, scheduleData) => {
+  try {
+    const response = await api.post(`/doctor-availability/weekly-schedule`, {
+      doctorEmail,
+      schedule: scheduleData,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ── Doctor Date Override ──
+export const getDoctorDateOverride = async (doctorEmail, date) => {
+  try {
+    const response = await api.get(`/doctor-availability/date-override/${doctorEmail}/${date}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const saveDoctorDateOverride = async (doctorEmail, date, overrideData) => {
+  try {
+    const response = await api.post(`/doctor-availability/date-override`, {
+      doctorEmail,
+      date,
+      ...overrideData,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteDoctorDateOverride = async (doctorEmail, date) => {
+  try {
+    const response = await api.delete(`/doctor-availability/date-override/${doctorEmail}/${date}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ── Doctor Break By ID ──
+export const deleteDoctorBreakById = async (breakId) => {
+  try {
+    const response = await api.delete(`/doctor-availability/breaks/by-id/${breakId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ── Day Closure Status ──
+export const getDayClosureStatus = async (doctorEmail, date) => {
+  try {
+    const response = await api.get(`/doctor-availability/day-closure/${doctorEmail}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const closeDaySchedule = async (doctorEmail, reason = '') => {
+  try {
+    const response = await api.post(`/doctor-availability/day-closure`, { doctorEmail, reason });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const reopenDaySchedule = async (doctorEmail) => {
+  try {
+    const response = await api.delete(`/doctor-availability/day-closure/${doctorEmail}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 
 export const getContactRequestsByVacancy = async (vacancyId) => {
   try {
@@ -4227,5 +4340,453 @@ export const deleteBoardNote = async (id) => {
   try { return await api.delete(`/board/${id}`); } catch (e) { throw e; }
 };
 
+
+
+// Get Application Instrumental Analysis by ID
+export const getApplicationInstrumentalAnalysisById = async (id) => {
+  try {
+    const response = await api.get(`/application-instrumental-analysis/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Update Application Instrumental Analysis
+export const updateApplicationInstrumentalAnalysis = async (id, data) => {
+  try {
+    const response = await api.put(`/application-instrumental-analysis/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Delete Application Instrumental Analysis
+export const deleteApplicationInstrumentalAnalysis = async (id) => {
+  try {
+    const response = await api.delete(`/application-instrumental-analysis/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Create Application Laboratory Test
+export const createApplicationLaboratoryTest = async (data) => {
+  try {
+    const response = await api.post("/application-laboratory-test", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get all Application Laboratory Tests
+export const getAllApplicationLaboratoryTests = async (params = {}) => {
+  try {
+    const response = await api.get("/application-laboratory-test", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadApplicationLaboratoryTestFile = async (id, file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(`/application-laboratory-test/${id}/upload-file`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const removeApplicationLaboratoryTestFile = async (id, fileId) => {
+  try {
+    const path = `/application-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchApplicationLaboratoryTestFile = async (id, fileId) => {
+  try {
+    const path = `/application-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.get(path, { responseType: "blob" });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addApplicationLaboratoryTestNote = async (id, data) => {
+  try {
+    const response = await api.patch(`/application-laboratory-test/${id}/note`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateApplicationLaboratoryTestNote = async (id, noteId, data) => {
+  try {
+    const response = await api.patch(`/application-laboratory-test/${id}/note/${noteId}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteApplicationLaboratoryTestNote = async (id, noteId) => {
+  try {
+    const path = noteId ? `/application-laboratory-test/${id}/note/${noteId}` : `/application-laboratory-test/${id}/note`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get Application Laboratory Test by ID
+export const getApplicationLaboratoryTestById = async (id) => {
+  try {
+    const response = await api.get(`/application-laboratory-test/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Update Application Laboratory Test
+export const updateApplicationLaboratoryTest = async (id, data) => {
+  try {
+    const response = await api.put(`/application-laboratory-test/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Delete Application Laboratory Test
+export const deleteApplicationLaboratoryTest = async (id) => {
+  try {
+    const response = await api.delete(`/application-laboratory-test/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
+// Create Application Instrumental Analysis
+export const createApplicationInstrumentalAnalysis = async (data) => {
+  try {
+    const response = await api.post("/application-instrumental-analysis", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadApplicationInstrumentalAnalysisFile = async (id, file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(`/application-instrumental-analysis/${id}/upload-file`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const removeApplicationInstrumentalAnalysisFile = async (id, fileId) => {
+  try {
+    const path = `/application-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchApplicationInstrumentalAnalysisFile = async (id, fileId) => {
+  try {
+    const path = `/application-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.get(path, { responseType: "blob" });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addApplicationInstrumentalAnalysisNote = async (id, data) => {
+  try {
+    const response = await api.patch(`/application-instrumental-analysis/${id}/note`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateApplicationInstrumentalAnalysisNote = async (id, noteId, data) => {
+  try {
+    const response = await api.patch(`/application-instrumental-analysis/${id}/note/${noteId}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteApplicationInstrumentalAnalysisNote = async (id, noteId) => {
+  try {
+    const path = noteId ? `/application-instrumental-analysis/${id}/note/${noteId}` : `/application-instrumental-analysis/${id}/note`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get all Application Instrumental Analysis
+export const getAllApplicationInstrumentalAnalysis = async (params = {}) => {
+  try {
+    const response = await api.get("/application-instrumental-analysis", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/* ---------------- Service Manager ---------------- */
+
+// Categories
+export const getAllServiceCategories = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/categories", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Backward-compatible category list helper
+export const getAllCategories = async (params = {}) => getAllServiceCategories(params);
+
+export const getServiceCategoryById = async (id) => {
+  try {
+    const response = await api.get(`/service-manager/categories/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServiceCategoryBreadcrumb = async (id) => {
+  try {
+    const response = await api.get(`/service-manager/categories/${id}/breadcrumb`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createServiceCategory = async (data) => {
+  try {
+    const response = await api.post("/service-manager/categories", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateServiceCategory = async (id, data) => {
+  try {
+    const response = await api.put(`/service-manager/categories/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteServiceCategory = async (id) => {
+  try {
+    const response = await api.delete(`/service-manager/categories/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const moveServiceCategory = async (id, parent = null) => {
+  try {
+    const response = await api.patch(`/service-manager/categories/${id}/move`, { parent });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServiceCategoryFolderContents = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/folder", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportServiceCategories = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const importServiceCategories = async (rows) => {
+  try {
+    const response = await api.post("/service-manager/import", { rows });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Positions
+export const getAllServicePositions = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/positions/positions", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServicePositionById = async (id) => {
+  try {
+    const response = await api.get(`/service-manager/positions/positions/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createServicePosition = async (data) => {
+  try {
+    const response = await api.post("/service-manager/positions/positions", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateServicePosition = async (id, data) => {
+  try {
+    const response = await api.put(`/service-manager/positions/positions/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteServicePosition = async (id) => {
+  try {
+    const response = await api.delete(`/service-manager/positions/positions/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const moveServicePosition = async (id, category = null) => {
+  try {
+    const response = await api.patch(`/service-manager/positions/positions/${id}/move`, {
+      category,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServicePositionFolderContents = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/positions/folder", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportServicePositions = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/positions/export", {
+      params,
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const importServicePositions = async (rows) => {
+  try {
+    const response = await api.post("/service-manager/positions/import", { rows });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/* ── Application Service Positions ────────────────────────────────────── */
+
+// Get all service positions added to an application
+export const getApplicationServicePositions = async (applicationId) => {
+  try {
+    const response = await api.get(`/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Add a service position to an application
+export const addApplicationServicePosition = async (applicationId, positionId) => {
+  try {
+    const response = await api.post(
+      `/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions`,
+      { positionId }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Remove a service position from an application
+export const removeApplicationServicePosition = async (applicationId, positionId) => {
+  try {
+    const response = await api.delete(
+      `/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions/${encodeURIComponent(positionId)}`
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export default api;

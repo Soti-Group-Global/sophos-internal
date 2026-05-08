@@ -70,6 +70,20 @@ const toDateOnly = (date) => {
   return `${y}-${m}-${day}`;
 };
 
+const resolveEntityId = (value) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" || typeof value === "number") return String(value);
+
+  if (typeof value === "object") {
+    if (typeof value.toHexString === "function") return value.toHexString();
+    if (typeof value.$oid === "string") return value.$oid;
+    if (typeof value._id === "string" || typeof value._id === "number") return String(value._id);
+    if (typeof value.id === "string" || typeof value.id === "number") return String(value.id);
+  }
+
+  return "";
+};
+
 /* Collapsible Section wrapper */
 const Section = ({ title, children, defaultOpen = true }) => {
   const [open, setOpen] = useState(defaultOpen);
@@ -3168,7 +3182,9 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveAll = useCallback(async () => {
-    if (!patient?._id) {
+    const patientId = resolveEntityId(patient?._id) || resolveEntityId(patient?.id) || resolveEntityId(patient);
+
+    if (!patientId) {
       toast.error(t("footer.patient_not_found"));
       return;
     }
@@ -3188,7 +3204,7 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
       
-      const updatedPatient = await patchPatient(patient._id, payload);
+      const updatedPatient = await patchPatient(patientId, payload);
       legalRepRef.current?.commitEdit?.();
       
       // Update local state if onSave callback is provided
@@ -3207,7 +3223,9 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
   const navigate = useNavigate();
 
   const handleSaveAndClose = useCallback(async () => {
-    if (!patient?._id) {
+    const patientId = resolveEntityId(patient?._id) || resolveEntityId(patient?.id) || resolveEntityId(patient);
+
+    if (!patientId) {
       toast.error(t("footer.patient_not_found"));
       return;
     }
@@ -3227,7 +3245,7 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
       
-      const updatedPatient = await patchPatient(patient._id, payload);
+      const updatedPatient = await patchPatient(patientId, payload);
       legalRepRef.current?.commitEdit?.();
       
       // Update local state if onSave callback is provided

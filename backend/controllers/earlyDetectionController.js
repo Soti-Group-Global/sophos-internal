@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const EarlyDetectionBooking = require('../models/EarlyDetectionBooking');
 const Patient = require('../models/Patient');
+const DoctorsProfile = require('../models/DoctorsProfile');
 const EarlyDetectionLaboratoryTest = require('../models/EarlyDetectionLaboratoryTest');
 const EarlyDetectionInstrumentalAnalysis = require('../models/EarlyDetectionInstrumentalAnalysis');
 const telegramBot = require('../services/telegramBot');
@@ -79,6 +80,18 @@ const toDateValue = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const toObjectIdString = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (typeof value === 'object') {
+    if (typeof value.toHexString === 'function') return value.toHexString();
+    if (value._id && typeof value._id.toHexString === 'function') return value._id.toHexString();
+    if (typeof value._id === 'string' || typeof value._id === 'number') return String(value._id);
+    if (typeof value.id === 'string' || typeof value.id === 'number') return String(value.id);
+  }
+  return null;
+};
+
 const createLegacyCustomerView = (patientDoc) => {
   const base = patientDoc
     ? {
@@ -145,7 +158,7 @@ const normalizeHistoryForm = (historyForm = {}) => {
 const normalizeFileEntry = (file = {}) => ({
   filename: file?.filename || "",
   customName: file?.customName || "",
-  fileId: file?.fileId || null,
+  fileId: toObjectIdString(file?.fileId),
   url: file?.url || "",
   uploadedAt: toDateValue(file?.uploadedAt) || undefined,
 });
@@ -161,7 +174,7 @@ const normalizeConsultationItem = (item = {}) => ({
   date: toDateValue(item?.date),
   startTime: item?.startTime || "",
   endTime: item?.endTime || "",
-  doctor: item?.doctor || item?.doctorId || null,
+  doctor: toObjectIdString(item?.doctor) || toObjectIdString(item?.doctorId),
   historyForm: normalizeHistoryForm(item?.historyForm || {}),
 });
 
@@ -184,7 +197,7 @@ const buildSchedule = (scheduleInput = {}, legacyAppointmentDate = null, legacyA
     ? scheduleInput.laboratoryTests
         .filter((entry) => entry?.item || entry?.itemId)
         .map((entry) => ({
-          item: entry.item || entry.itemId,
+          item: toObjectIdString(entry.item) || toObjectIdString(entry.itemId),
           files: Array.isArray(entry?.files) ? entry.files.map(normalizeFileEntry) : [],
         }))
     : [];
@@ -193,7 +206,7 @@ const buildSchedule = (scheduleInput = {}, legacyAppointmentDate = null, legacyA
     ? scheduleInput.instrumentalAnalysis
         .filter((entry) => entry?.item || entry?.itemId)
         .map((entry) => ({
-          item: entry.item || entry.itemId,
+          item: toObjectIdString(entry.item) || toObjectIdString(entry.itemId),
           files: Array.isArray(entry?.files) ? entry.files.map(normalizeFileEntry) : [],
         }))
     : [];
@@ -1402,10 +1415,24 @@ exports.checkPaymentStatus = async (req, res) => {
 // @access  Public
 exports.getBookingById = async (req, res) => {
   try {
+    const bookingIdentifier = req.params.id || req.params.bookingId;
+
+    if (!bookingIdentifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking identifier is required'
+      });
+    }
+
+    const bookingIdQuery = mongoose.Types.ObjectId.isValid(bookingIdentifier)
+      ? [{ _id: bookingIdentifier }]
+      : [];
+
     const booking = await EarlyDetectionBooking.findOne({
       $or: [
-        { bookingNumber: req.params.id },
-        { invoiceNumber: req.params.id }
+        ...bookingIdQuery,
+        { bookingNumber: bookingIdentifier },
+        { invoiceNumber: bookingIdentifier }
       ]
     }).select('-__v');
 
@@ -1430,6 +1457,119 @@ exports.getBookingById = async (req, res) => {
     });
   }
 };
+
+const getWeeklyBookingsOnCalendar = async (req, res) => {
+  try {
+    const doctorEmail = req.query.doctorEmail || req.user?.email;
+    let query = {};
+
+    console.log("[CALENDAR] === getWeeklyBookingsOnCalendar START ===");
+    console.log("[CALENDAR] doctorEmail:", doctorEmail);
+
+    // For doctors/managers: show ALL ED bookings (not just ones where they're assigned)
+    // The query is intentionally empty to return all bookings
+    // Filtering by specific doctor assignment happens in UI logic, not backend
+    
+    let bookings = await EarlyDetectionBooking.find(query)
+      .populate("patient")
+      .sort({ createdAt: -1 })
+      .limit(1000);
+    
+    console.log("[CALENDAR] Bookings found:", bookings.length, "for doctor:", doctorEmail);
+
+    // Manually populate doctor refs in specialist consultations for all bookings
+    for (let b of bookings) {
+      if (b.schedule && b.schedule.specialistConsultations) {
+        for (let i = 0; i < b.schedule.specialistConsultations.length; i++) {
+          const spec = b.schedule.specialistConsultations[i];
+          if (spec.doctor && mongoose.Types.ObjectId.isValid(spec.doctor)) {
+            spec.doctor = await DoctorsProfile.findById(spec.doctor);
+          }
+        }
+      }
+    }
+
+    // Transform bookings to match expected frontend format
+    const transformedBookings = bookings.flatMap((booking) => {
+      const results = [];
+      
+      console.log("[CALENDAR] Processing booking:", booking._id, booking.bookingNumber);
+      console.log("[CALENDAR] - Patient:", booking.patient?._id, booking.patient?.email);
+      console.log("[CALENDAR] - Schedule specialistConsultations length:", booking.schedule?.specialistConsultations?.length);
+      
+      if (booking.schedule && booking.schedule.specialistConsultations && booking.schedule.specialistConsultations.length > 0) {
+        // Create one result entry per specialist consultation
+        booking.schedule.specialistConsultations.forEach((consultation, idx) => {
+          const transformed = {
+            _id: booking._id,
+            bookingId: booking._id,
+            bookingNumber: booking.bookingNumber,
+            invoiceNumber: booking.invoiceNumber,
+            applicationId: booking.bookingNumber,
+            patientId: booking.patient?._id,
+            patientEmail: booking.patient?.email || null,
+            patientName: booking.patient?.firstName || booking.patient?.name || "Unknown",
+            appointmentStatus: booking.status,
+            date: consultation.date,
+            startTime: consultation.startTime,
+            endTime: consultation.endTime,
+            specialistTitle: consultation.title,
+            doctorId: consultation.doctor?._id,
+            doctorEmail: consultation.doctor?.email,
+            doctorName: consultation.doctor?.firstName || consultation.doctor?.name,
+            serviceType: "specialist-consultation",
+            totalAmount: booking.totalAmount || 0,
+            paymentStatus: booking.payment?.status || "pending",
+          };
+          results.push(transformed);
+          
+          console.log(`[CALENDAR] - Specialist ${idx} (${consultation.title}):`, {
+            date: consultation.date,
+            startTime: consultation.startTime,
+            doctorEmail: consultation.doctor?.email,
+          });
+        });
+      } else {
+        // If no consultations, still create base entry showing the booking exists
+        const transformed = {
+          _id: booking._id,
+          bookingId: booking._id,
+          bookingNumber: booking.bookingNumber,
+          invoiceNumber: booking.invoiceNumber,
+          applicationId: booking.bookingNumber,
+          patientId: booking.patient?._id,
+          patientEmail: booking.patient?.email || null,
+          patientName: booking.patient?.firstName || booking.patient?.name || "Unknown",
+          appointmentStatus: booking.status,
+          date: null,
+          startTime: null,
+          endTime: null,
+          specialistTitle: null,
+          doctorId: null,
+          doctorEmail: null,
+          doctorName: null,
+          serviceType: "booking",
+          totalAmount: booking.totalAmount || 0,
+          paymentStatus: booking.payment?.status || "pending",
+        };
+        results.push(transformed);
+        console.log("[CALENDAR] - No specialist consultations found, showing booking only");
+      }
+      
+      return results;
+    });
+
+    console.log("[CALENDAR] Transformed results count:", transformedBookings.length);
+    console.log("[CALENDAR] === getWeeklyBookingsOnCalendar END ===");
+
+    res.json(transformedBookings);
+  } catch (error) {
+    console.error("Error fetching bookings for calendar:", error);
+    res.status(500).json({ message: "Failed to fetch bookings for calendar", error: error.message });
+  }
+};
+
+exports.getWeeklyBookingsOnCalendar = getWeeklyBookingsOnCalendar;
 
 // @desc    Get invoice by number
 // @route   GET /api/early-detection/invoice/:invoiceNumber
@@ -1552,13 +1692,7 @@ exports.updateBookingStatus = async (req, res) => {
     }
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -1641,13 +1775,7 @@ exports.updatePaymentStatus = async (req, res) => {
     }
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -1788,13 +1916,7 @@ exports.markAsPaid = async (req, res) => {
     const { transactionId, paymentMethod, notes } = req.body;
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -1888,13 +2010,7 @@ exports.cancelBooking = async (req, res) => {
     const { reason, refundAmount } = req.body;
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -1972,13 +2088,7 @@ exports.updateBooking = async (req, res) => {
     const { getPackagePriceById, getAddOnById, calculateTotal, EARLY_DETECTION_PACKAGES } = require('../models/EarlyDetectionBooking');
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -2665,13 +2775,7 @@ exports.generatePaymentLink = async (req, res) => {
     }
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -2893,13 +2997,7 @@ exports.validatePaymentLink = async (req, res) => {
     const { id } = req.params;
 
     // Find booking by ID, booking number, or invoice number
-    let booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    let booking = await findBookingByIdentifier(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -3035,20 +3133,106 @@ exports.validatePaymentLink = async (req, res) => {
   }
 };
 
+const getInternalNotes = async (req, res) => {
+  try {
+    const bookingId = req.params.bookingId || req.params.id;
+    const booking = await findBooking(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    const safeNotes = (booking.internalNotes || []).map((n) => ({
+      _id: n._id,
+      note: n.note,
+      addedBy: formatAddedBy(n.addedBy),
+      addedAt: n.addedAt,
+    }));
+
+    res.json({ internalNotes: safeNotes });
+  } catch (error) {
+    console.error("Error fetching internal notes:", error);
+    res.status(500).json({ message: "Failed to fetch internal notes", error: error.message });
+  }
+};
+
+exports.getInternalNotes = getInternalNotes;
+
+const normalizeTextInput = (value) =>
+  value === null || value === undefined ? "" : String(value).trim();
+
+// Convert various possible `addedBy` formats to a readable string
+const formatAddedBy = (val) => {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "string") return val.trim();
+  if (typeof val === "object") {
+    if (val.email) return String(val.email).trim();
+    if (val.addedBy) return formatAddedBy(val.addedBy);
+    if (val.author) return formatAddedBy(val.author);
+    if (val.firstName || val.lastName || val.middleName) {
+      const parts = [val.firstName, val.middleName, val.lastName].filter(Boolean).map(String);
+      if (parts.length) return parts.join(" ").trim();
+    }
+    if (val.fullName) {
+      if (typeof val.fullName === "string") return val.fullName.trim();
+      if (val.fullName.en) return String(val.fullName.en).trim();
+      if (val.fullName.ru) return String(val.fullName.ru).trim();
+    }
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+  return String(val);
+};
+
+const findBookingForNotes = async (rawId) => {
+  const id = normalizeTextInput(rawId);
+  if (!id) return null;
+
+  const orConditions = [
+    { bookingNumber: id },
+    { invoiceNumber: id },
+  ];
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    orConditions.unshift({ _id: id });
+  }
+
+  return EarlyDetectionBooking.findOne({ $or: orConditions });
+};
+
+const findBookingByIdentifier = async (rawId) => {
+  const id = normalizeTextInput(rawId);
+  if (!id) return null;
+
+  const orConditions = [
+    { bookingNumber: id },
+    { invoiceNumber: id },
+  ];
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    orConditions.unshift({ _id: id });
+  }
+
+  return EarlyDetectionBooking.findOne({ $or: orConditions });
+};
+
 // Add internal note to booking
 exports.addInternalNote = async (req, res) => {
   try {
     const { id } = req.params;
     const { note, addedBy } = req.body;
+    const normalizedNote = normalizeTextInput(note);
+    const addedByFinal = formatAddedBy(addedBy || req.user || "");
 
-    if (!note || !note.trim()) {
+    if (!normalizedNote) {
       return res.status(400).json({
         success: false,
         message: 'Note content is required'
       });
     }
 
-    if (!addedBy || !addedBy.trim()) {
+    if (!addedByFinal) {
       return res.status(400).json({
         success: false,
         message: 'Note author is required'
@@ -3056,13 +3240,7 @@ exports.addInternalNote = async (req, res) => {
     }
 
     // Find booking
-    const booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    const booking = await findBookingForNotes(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -3077,8 +3255,8 @@ exports.addInternalNote = async (req, res) => {
     }
 
     booking.internalNotes.push({
-      note: note.trim(),
-      addedBy: addedBy.trim(),
+      note: normalizedNote,
+      addedBy: addedByFinal,
       addedAt: new Date()
     });
 
@@ -3104,8 +3282,9 @@ exports.updateInternalNote = async (req, res) => {
   try {
     const { id, noteId } = req.params;
     const { note } = req.body;
+    const normalizedNote = normalizeTextInput(note);
 
-    if (!note || !note.trim()) {
+    if (!normalizedNote) {
       return res.status(400).json({
         success: false,
         message: 'Note content is required'
@@ -3113,13 +3292,7 @@ exports.updateInternalNote = async (req, res) => {
     }
 
     // Find booking
-    const booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    const booking = await findBookingForNotes(id);
 
     if (!booking) {
       return res.status(404).json({
@@ -3137,7 +3310,7 @@ exports.updateInternalNote = async (req, res) => {
       });
     }
 
-    noteToUpdate.note = note.trim();
+    noteToUpdate.note = normalizedNote;
     await booking.save();
 
     res.status(200).json({
@@ -3161,13 +3334,7 @@ exports.deleteInternalNote = async (req, res) => {
     const { id, noteId } = req.params;
 
     // Find booking
-    const booking = await EarlyDetectionBooking.findOne({
-      $or: [
-        { _id: id },
-        { bookingNumber: id },
-        { invoiceNumber: id }
-      ]
-    });
+    const booking = await findBookingForNotes(id);
 
     if (!booking) {
       return res.status(404).json({

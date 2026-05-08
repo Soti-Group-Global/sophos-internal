@@ -47,7 +47,9 @@ const updateTemplate = async (req, res) => {
 // DELETE /api/early-detection/templates/:id
 const deleteTemplate = async (req, res) => {
   try {
-    const template = await EarlyDetectionTemplate.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "Template ID is required" });
+    const template = await EarlyDetectionTemplate.findByIdAndDelete(id);
     if (!template) return res.status(404).json({ message: "Template not found" });
     res.json({ message: "Template deleted", id: req.params.id });
   } catch (err) {

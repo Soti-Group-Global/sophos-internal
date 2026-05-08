@@ -11,6 +11,7 @@ i18next
     resources: {
       en: {
         translation: en,
+        serviceManager: en.serviceManager,
         calendar: en.calendar,
         notifications: en.notifications,
         user: en.user,
@@ -61,6 +62,7 @@ i18next
       },
       ru: {
         translation: ru,
+        serviceManager: ru.serviceManager,
         calendar: ru.calendar,
         notifications: ru.notifications,
         user: ru.user,
@@ -114,6 +116,7 @@ i18next
     lng: 'ru', // Explicitly set default language to Russian
     ns: [
       'translation',
+      'serviceManager',
       'calendar',
       'notifications',
       'user',

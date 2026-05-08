@@ -1,10 +1,17 @@
 ﻿const SupplierItem = require("../models/Inventory/supplierItem");
 const Supplier = require("../models/Inventory/Supplier");
+const HeadAssistant = require("../models/HeadAssistant");
+
 
 // Get all supplier items
 exports.getSupplierItems = async (req, res) => {
   try {
     const { branch } = req.query;
+
+    const headAssistant = await HeadAssistant.findOne({ email: req.user.email });
+    if(!headAssistant) {
+      return res.status(400).json({ message: 'Head assistant not found!' });
+    }
 
     // Base query
     const query = {};
@@ -33,17 +40,19 @@ exports.getSupplierItems = async (req, res) => {
   }
 };
 
-
-
 // Create a new supplier item and auto-assign branch from supplier
 exports.createSupplierItem = async (req, res) => {
   try {
     const { supplier, item, price } = req.body;
-
     // Ensure supplier exists
     const supplierData = await Supplier.findById(supplier);
     if (!supplierData) {
       return res.status(404).json({ message: "Supplier not found" });
+    }
+
+    const headAssistant = await HeadAssistant.findOne({ email: req.user.email });
+    if(!headAssistant) {
+      return res.status(400).json({ message: 'Head assistant not found!' });
     }
 
     // Extract branch from supplier (can be string or object)

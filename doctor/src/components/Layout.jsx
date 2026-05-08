@@ -9,7 +9,8 @@ const Layout = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
   const location = useLocation();
   const isAppointmentDetails = /^\/appointments\/[^/]+$/.test(location.pathname);
-  const isMeetingRoom = location.pathname === "/meeting-room";
+  const isEarlyDetectionDetails = /^\/early-detection-bookings\/[^/]+$/.test(location.pathname);
+  const isMeetingRoom = location.pathname === "/meeting-room" || isEarlyDetectionDetails || isAppointmentDetails;
 
   useEffect(() => {
     const handleResize = () => {
@@ -49,7 +50,7 @@ const Layout = () => {
         </>
       )}
 
-      <div className={`main-content ${collapsed ? "collapsed" : "expanded"}`}>
+      <div className={`main-content${(isEarlyDetectionDetails || isAppointmentDetails) ? "" : collapsed ? " collapsed" : " expanded"}`}>
         {!isMeetingRoom && (
           <Header toggleSidebar={toggleSidebar} isMobile={isMobile} />
         )}

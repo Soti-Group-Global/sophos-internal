@@ -1,0 +1,440 @@
+/* ══════════════════════════════════════════════════════════
+   HistoryTab.css  –  Medical history form styling
+   ══════════════════════════════════════════════════════════ */
+
+.ht-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 80px;
+}
+
+/* ── First appointment checkbox bar ── */
+.ht-first-appt-bar {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.ht-first-appt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  user-select: none;
+}
+
+.ht-first-appt-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+.ht-first-appt-checkbox:checked {
+  background: #0c3870;
+  border-color: #0c3870;
+}
+.ht-first-appt-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* ── Main section card ── */
+.ht-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.ht-section:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Section header ── */
+.ht-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  user-select: none;
+  background: linear-gradient(135deg, #f8f9fb 0%, #ffffff 100%);
+}
+.ht-section-header--clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ht-section-header--clickable:hover {
+  background: #f3f4f6;
+}
+
+.ht-section--editing {
+  border-color: #c7d2fe;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.06);
+}
+
+/* Verified section — subtle green left border */
+.ht-section--verified {
+  border-left: 3px solid #16a34a;
+}
+
+/* ── Verification control (badge + button) ── */
+.ht-verify-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ht-verify-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.ht-verify-badge--verified {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.ht-verify-badge--pending {
+  background: #fef9c3;
+  color: #a16207;
+  border: 1px solid #fde68a;
+}
+
+.ht-verify-btn {
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid #0A2E5D;
+  background: #0A2E5D;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.ht-verify-btn:hover {
+  background: #1a4a8a;
+}
+.ht-verify-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.ht-verify-btn--unverify {
+  background: transparent;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+.ht-verify-btn--unverify:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.ht-section-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1a1a2e;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+/* ── Actions row — template picker + edit toggle ── */
+.ht-section-header-actions,
+.ht-field-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Section body ── */
+.ht-section-body {
+  padding: 16px 20px 22px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ── Sub-section ── */
+.ht-subsection {
+  background: #f9fafb;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+.ht-subsection:first-child {
+  margin-top: 18px;
+}
+
+.ht-subsection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  user-select: none;
+  background: linear-gradient(135deg, #f1f3f5 0%, #f9fafb 100%);
+}
+
+.ht-subsection-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.2px;
+  line-height: 1.4;
+}
+
+.ht-subsection .ht-section-body {
+  padding: 14px 16px 18px;
+  border-top: 1px solid #e9ecef;
+}
+
+/* ── Fields ── */
+.ht-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ht-field {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.ht-field:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.ht-field--editing {
+  border-color: #c7d2fe;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.06);
+}
+
+.ht-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8f9fb 0%, #ffffff 100%);
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.ht-field-header:hover {
+  background: #f3f4f6;
+}
+
+.ht-field-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.ht-field-toggle {
+  font-size: 14px;
+  color: #9ca3af;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.ht-field-header:hover .ht-field-toggle {
+  color: #6366f1;
+}
+.ht-field-toggle--active {
+  color: #6b7280;
+}
+.ht-field-header:hover .ht-field-toggle--active {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.ht-field-body {
+  padding: 12px 16px 16px;
+}
+
+/* ── Preview (read-only) mode ── */
+.ht-preview {
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: #1f2937;
+  line-height: 1.65;
+  min-height: 48px;
+  cursor: pointer;
+  border-radius: 0 0 9px 9px;
+  transition: background 0.15s;
+}
+.ht-preview:hover {
+  background: #f9fafb;
+}
+.ht-preview p {
+  margin: 0 0 6px;
+}
+.ht-preview p:last-child {
+  margin-bottom: 0;
+}
+.ht-preview--empty {
+  min-height: 48px;
+}
+.ht-preview-placeholder {
+  color: #c0c5cc;
+  font-style: italic;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Responsive – History Tab
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  .ht-section-header {
+    padding: 12px 14px;
+  }
+  .ht-section-body {
+    padding: 14px 14px 18px;
+  }
+  .ht-first-appt-bar {
+    padding: 10px 14px;
+  }
+}
+
+/* ── Medium screens (≤ 768px) ── */
+@media (max-width: 768px) {
+  .ht-section-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 12px;
+  }
+  .ht-section-title {
+    font-size: 11.5px;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .ht-section-header-actions,
+  .ht-field-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+  .ht-section-body {
+    padding: 12px 12px 16px;
+  }
+  .ht-subsection-header {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  .ht-subsection-title {
+    flex: 1 1 100%;
+  }
+  .ht-field-header {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  .ht-field-label {
+    flex: 1 1 100%;
+  }
+  .ht-field-body {
+    padding: 10px 12px 14px;
+  }
+  .ht-preview {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* ── Small mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .ht-container {
+    gap: 8px;
+    padding: 8px 0 60px;
+  }
+  .ht-section-header {
+    padding: 10px 10px;
+    gap: 6px;
+  }
+  .ht-section-title {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+  }
+  .ht-section-header-actions,
+  .ht-field-actions {
+    gap: 4px;
+  }
+  .ht-verify-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  .ht-verify-btn {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+  .ht-section-body {
+    padding: 10px 10px 14px;
+  }
+  .ht-subsection-header {
+    padding: 8px 10px;
+  }
+  .ht-subsection-title {
+    font-size: 11px;
+  }
+  .ht-field-header {
+    padding: 8px 10px;
+  }
+  .ht-field-label {
+    font-size: 10.5px;
+  }
+  .ht-field-body {
+    padding: 8px 10px 12px;
+  }
+  .ht-preview {
+    padding: 8px 10px;
+    font-size: 12.5px;
+    min-height: 40px;
+  }
+  .ht-first-appt-bar {
+    padding: 8px 10px;
+  }
+  .ht-first-appt-label {
+    font-size: 12px;
+    gap: 8px;
+  }
+}

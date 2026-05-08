@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
+import { useLayoutEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -14,10 +15,11 @@ import {
 } from "../utils/api";
 import { getApptStatusClass } from "../utils/appointmentStatus";
 import LoadingComponent from "../components/Loading/LoadingComponent";
-import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo, FiFileText, FiSettings } from "react-icons/fi";
 import { MdOutlinePerson } from "react-icons/md";
 import { LuClipboardList } from "react-icons/lu";
 import "./AppointmentDetailsPage.css";
+import { useLayoutTopBar } from "../context/LayoutTopBarContext";
 import GeneralInformationTab from "./AppointmentDetails/GeneralInformationTab";
 import MedicalHistoryTab from "./AppointmentDetails/MedicalHistoryTab";
 import HistoryTab from "./AppointmentDetails/HistoryTab";
@@ -26,6 +28,8 @@ import DocumentsTab from "./AppointmentDetails/DocumentsTab";
 import FollowUpsTab from "./AppointmentDetails/FollowUpsTab";
 import TelemedicineTab from "./AppointmentDetails/TelemedicineTab";
 import ComingSoonTab from "./AppointmentDetails/ComingSoonTab";
+import AppointmentReport from "../pages/AppointmentReport";
+import Service from "./Service";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
@@ -55,10 +59,58 @@ const formatDOB = (dateStr, locale = "ru") => {
   }
 };
 
+const AppointmentDetailsSystemHeader = ({
+  t,
+  navigate,
+  loading,
+  patientDisplayName,
+  applicationId,
+  createdAt,
+  dob,
+}) => (
+  <div className="adp-top-header adp-top-header--system">
+    <button className="adp-back-btn" onClick={() => navigate(-1)}>
+      <FiArrowLeft size={14} />
+      <span>{loading ? t("loading") : t("back_to_schedule")}</span>
+    </button>
+
+    <div className="adp-header-divider" />
+
+    <div className="adp-header-center">
+      <div className="adp-header-name-row">
+        <h1 className="adp-patient-title">
+          {loading ? (
+            t("loading")
+          ) : (
+            <>
+              {t("patient_label")} <strong>{patientDisplayName}</strong>
+            </>
+          )}
+        </h1>
+        {!loading && <span className="adp-status-badge-header">{t("status_active")}</span>}
+      </div>
+      {!loading && (
+        <span className="adp-added-date">
+          {t("app_id_prefix")}
+          {applicationId} &nbsp;·&nbsp; {t("added_to_system")} {createdAt}
+        </span>
+      )}
+    </div>
+
+    {!loading && dob && (
+      <div className="adp-header-right">
+        <span className="adp-dob-value">{dob}</span>
+        <span className="adp-dob-label">{t("date_of_birth")}</span>
+      </div>
+    )}
+  </div>
+);
+
 const AppointmentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation("appointment_details_page");
+  const { setTopBarContent } = useLayoutTopBar();
 
   const TABS = [
     { key: "general",   label: t("tabs.general"),   icon: <MdOutlinePerson size={16} /> },
@@ -68,6 +120,8 @@ const AppointmentDetailsPage = () => {
     { key: "documents", label: t("tabs.documents", "Documents"), icon: <FiFolder size={15} /> },
     // { key: "telemedicine", label: t("tabs.telemedicine", "Telemedicine"), icon: <FiVideo size={15} /> },
     { key: "followups", label: t("tabs.followups", "Follow-ups"), icon: <FiRepeat size={15} /> },
+    { key: "report", label: t("tabs.report", "Report"), icon: <FiFileText size={15} /> },
+    { key:"service", label: t("tabs.service", "Service"), icon: <FiSettings size={15} /> }
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -85,6 +139,12 @@ const AppointmentDetailsPage = () => {
   const [doctorsMap, setDoctorsMap] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const prevPatientEmailRef = useRef(null);
+
+  useEffect(() => {
+    // Hide global app sidebar to give room for the left iconic tabs
+    document.body.classList.add("hide-global-sidebar");
+    return () => document.body.classList.remove("hide-global-sidebar");
+  }, []);
 
   const saveCurrentTabData = async () => {
     if (activeTab === "general") {
@@ -194,17 +254,42 @@ const AppointmentDetailsPage = () => {
     return () => socket.off("application:history-updated", handler);
   }, [id]);
 
-  if (loading) return <LoadingComponent message={t("loading")} />;
-  if (!application) return <div className="adp-error">{t("appointment_not_found")}</div>;
-
   const patientDisplayName = patient
     ? [patient.firstName, patient.middleName, patient.lastName].filter(Boolean).join(" ").trim() ||
       patient.email ||
       t("unknown_patient")
-    : application.patientName || t("unknown_patient");
+    : application?.patientName || t("unknown_patient");
 
-  const createdAt = formatDate(application.createdAt);
+  const createdAt = formatDate(application?.createdAt);
   const dob = formatDOB(patient?.dateOfBirth, i18n.language);
+
+  useLayoutEffect(() => {
+    setTopBarContent(
+      <AppointmentDetailsSystemHeader
+        t={t}
+        navigate={navigate}
+        loading={loading}
+        patientDisplayName={patientDisplayName}
+        applicationId={application?.applicationId}
+        createdAt={createdAt}
+        dob={dob}
+      />,
+    );
+  }, [
+    setTopBarContent,
+    t,
+    navigate,
+    loading,
+    patientDisplayName,
+    application?.applicationId,
+    createdAt,
+    dob,
+  ]);
+
+  useEffect(() => () => setTopBarContent(null), [setTopBarContent]);
+
+  if (loading) return <LoadingComponent message={t("loading")} />;
+  if (!application) return <div className="adp-error">{t("appointment_not_found")}</div>;
 
   const renderTab = () => {
     switch (activeTab) {
@@ -237,6 +322,11 @@ const AppointmentDetailsPage = () => {
             onApplicationUpdate={(updated) => setApplication(updated)}
           />
         );
+      case "report":
+      case "conclusion":
+        return <AppointmentReport booking={application} />;
+      case "service":
+        return <Service applicationId={application?.applicationId} />;
       default: {
         const tabLabel = TABS.find((t) => t.key === activeTab)?.label || activeTab;
         return <ComingSoonTab tabLabel={tabLabel} />;
@@ -246,33 +336,20 @@ const AppointmentDetailsPage = () => {
 
   return (
     <div className="adp-page">
-      <div className="adp-top-header">
-        <button className="adp-back-btn" onClick={() => navigate(-1)}>
-          <FiArrowLeft size={14} />
-          <span>{t("back_to_schedule")}</span>
-        </button>
-
-        <div className="adp-header-divider" />
-
-        <div className="adp-header-center">
-          <div className="adp-header-name-row">
-            <h1 className="adp-patient-title">
-              {t("patient_label")} <strong>{patientDisplayName}</strong>
-            </h1>
-            <span className="adp-status-badge-header">{t("status_active")}</span>
-          </div>
-          <span className="adp-added-date">
-            {t("app_id_prefix")}{application?.applicationId} &nbsp;·&nbsp; {t("added_to_system")} {createdAt}
-          </span>
-        </div>
-
-        {dob && (
-          <div className="adp-header-right">
-            <span className="adp-dob-value">{dob}</span>
-            <span className="adp-dob-label">{t("date_of_birth")}</span>
-          </div>
-        )}
-      </div>
+      {/* Left vertical iconic tabs (replace top tab bar visually) */}
+      <nav className="apd-vertical-tabs" aria-label="Appointment sections">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className={`apd-vert-tab ${activeTab === tab.key ? "active" : ""}`}
+            onClick={() => setActiveTab(tab.key)}
+            title={tab.label}
+            aria-pressed={activeTab === tab.key}
+          >
+            <span className="apd-vert-icon">{tab.icon}</span>
+          </button>
+        ))}
+      </nav>
 
       <div className="adp-tab-bar">
         {TABS.map((tab) => (
@@ -350,13 +427,6 @@ const AppointmentDetailsPage = () => {
         </aside>
 
         <div className="adp-content-scroll">
-          <button
-            className="adp-sidebar-open-btn"
-            onClick={() => setSidebarOpen((v) => !v)}
-            aria-label="Toggle appointments sidebar">
-            {sidebarOpen ? <FiChevronUp size={14} /> : <FiChevronDown size={14} />}
-            <span>{t("sidebar_title")}</span>
-          </button>
           <div className="adp-content">{renderTab()}</div>
         </div>
       </div>

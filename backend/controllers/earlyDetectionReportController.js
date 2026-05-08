@@ -5,7 +5,9 @@ const EarlyDetectionBooking = require("../models/EarlyDetectionBooking");
 const getReport = async (req, res) => {
   try {
     const { bookingId } = req.params;
-
+    if(!bookingId){
+      return res.status(400).json({ message: "Booking ID is required" });
+    }
     let report = await EarlyDetectionReport.findOne({ booking: bookingId }).lean();
 
     if (!report) {

@@ -28,6 +28,10 @@
   z-index: 200;
 }
 
+.layout-container.no-sidebar .layout-top-bar {
+  left: 0;
+}
+
 /* Minimized state: Sidebar minimized (72px) */
 .layout-top-bar.sidebar-minimized {
   left: 72px;
@@ -44,6 +48,14 @@
   bottom: 0;
   overflow: hidden;
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout-container.no-sidebar .layout-content {
+  left: 0;
+}
+
+.layout-container.no-header .layout-content {
+  top: 0;
 }
 
 /* Minimized state: Sidebar minimized (72px) */
@@ -63,6 +75,11 @@
   padding: 0;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.layout-container.no-header .layout-main {
+  border-radius: 0;
+  border: none;
 }
 
 

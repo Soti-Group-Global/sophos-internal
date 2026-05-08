@@ -4,6 +4,7 @@ const cors = require("cors");
 const http = require("http");
 require("dotenv").config();
 const auditLogger = require("./middleware/auditLogger");
+const auth = require("./middleware/auth");
 
 const { initSocket } = require("./socket");
 
@@ -17,6 +18,7 @@ const patientRoutes = require("./routes/patients");
 const applicationRoutes = require("./routes/applications");
 const messagesRoutes = require("./routes/messages");
 const availabilityRoutes = require("./routes/availability");
+const doctorAvailabilityRoutes = require("./routes/doctorAvailabilityRoutes");
 const whatsappRoutes = require("./routes/whatsappRoutes");
 const telegramRoutes = require("./routes/telegramRoutes");
 const notificationsRoutes = require("./routes/notificationsRoutes");
@@ -25,7 +27,6 @@ const assistantRoutes = require("./routes/assistants");
 const specialtyRoutes = require("./routes/specialties");
 const vendorRoutes = require("./routes/vendors");
 const orderRoutes = require("./routes/orders");
-const earlyDetectionRoutes = require("./routes/earlydetections");
 const headDoctorRoutes = require("./routes/headDoctor");
 const headAssistantRoutes = require("./routes/headAssistant");
 const specialistRoutes = require("./routes/specialist");
@@ -47,6 +48,9 @@ const applicationAnalyticsRoutes = require("./routes/applicationAnalyticsRoutes"
 
 const maxRoutes = require("./routes/maxRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+
+// Import managers list controller for direct route
+const { getManagersData } = require("./controllers/managerController");
 
 // Task routes
 const projectRoutes = require("./routes/projectRoutes");
@@ -88,6 +92,14 @@ const auditLogsRoutes = require("./routes/auditLogs");
 const corporateRegisterRoutes = require('./routes/website/corporateRegisterRoutes');
 const corporateFormRegistrationRoutes = require('./routes/website/corporateFormRegistrationRoutes');
 
+//Instumental analysis and laboratory test routes
+const applicationLaboratoryTestRoutes = require("./routes/applicationLaboratoryTestRoutes");
+const applicationInstrumentalAnalysisRoutes = require("./routes/applicationInstrumentalAnalysisRoutes");
+
+//Categories and services routes
+const serviceCategoryRoutes = require("./routes/serviceCategoryRoutes");
+const servicePositionRoutes = require("./routes/servicePositionRoutes");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -100,6 +112,10 @@ app.set("io", io);
 // MongoDB Connection
 const connectDB = async () => {
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error("MONGODB_URI is not defined");
+    }
+
     await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
@@ -107,6 +123,7 @@ const connectDB = async () => {
       minPoolSize: 2,
     });
   } catch (err) {
+    console.error("Failed to start backend:", err.message);
     process.exit(1);
   }
 };
@@ -180,9 +197,16 @@ app.get("/api/health", (req, res) => {
 // Routes
 app.use("/api/applications", applicationRoutes);
 app.use("/api/auth", managerRoutes);
+
+// Managers list endpoint (for sidebar and UI lists)
+const managersListRouter = express.Router();
+managersListRouter.get("/", auth, getManagersData);
+app.use("/api/managers", managersListRouter);
+
 app.use("/api/profile", profileRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/doctors-profile", doctorProfileRoutes);
+app.use("/api/doctor-availability", doctorAvailabilityRoutes);
 app.use("/api/doctor-leaves", doctorLeaveRoutes);
 
 app.use("/api/patients", patientRoutes);
@@ -197,7 +221,9 @@ app.use("/api/assistants", assistantRoutes);
 app.use("/api/specialties", specialtyRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/early-detection", earlyDetectionRoutes);
+app.use("/api/application-laboratory-test", applicationLaboratoryTestRoutes);
+app.use("/api/application-instrumental-analysis", applicationInstrumentalAnalysisRoutes);
+app.use("/api/early-detection", earlyDetectionFormRoutes);
 app.use("/api/head-doctors", headDoctorRoutes);
 app.use("/api/head-assistants", headAssistantRoutes);
 app.use("/api/specialists-doctor", specialistRoutes);
@@ -234,6 +260,8 @@ app.use("/api/telemedicine", bbbTelemedicineRoutes);
 // Services apis
 app.use("/api/services", serviceRoutes);
 app.use("/api/sub-services", subServiceRoutes);
+app.use("/api/service-manager", serviceCategoryRoutes);
+app.use("/api/service-manager/positions", servicePositionRoutes);
 
 app.use('/api/vacancies', vacancyRoutes);
 app.use('/api/vacancies', vacancyApplicationRoutes);

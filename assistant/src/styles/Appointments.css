@@ -1,0 +1,649 @@
+﻿
+/* ── Page wrapper ── */
+.appt-page {
+  font-family: 'Inter Tight', 'Inter', sans-serif;
+  min-height: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  min-width: 0;          /* allow shrinking inside flex parent */
+}
+
+/* Calendar mode — constrain height so only calendar body scrolls */
+.appt-page--calendar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: unset;
+}
+
+/* When calendar is active, prevent parent layout-content from scrolling */
+.layout-content:has(.appt-page--calendar) {
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.appt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.appt-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appt-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.appt-total-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.appt-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* ── Search box ── */
+.appt-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.appt-search-icon {
+  position: absolute;
+  left: 11px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.appt-search-input {
+  padding: 8px 12px 8px 34px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #1e293b;
+  background: #fff;
+  width: 220px;
+  max-width: 100%;
+  min-width: 0;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.appt-search-input:focus {
+  border-color: #0A2E5D;
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.12);
+}
+
+.appt-search-input::placeholder {
+  color: #b0bac8;
+}
+
+/* ── Doctor select ── */
+.appt-doctor-select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #334155;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.appt-doctor-select:focus {
+  border-color: #0A2E5D;
+}
+
+/* ── Export button ── */
+.appt-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: #0A2E5D;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.appt-export-btn:hover {
+  background: #1a4a8a;
+}
+
+/* ── View toggle ── */
+.appt-view-toggle {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.appt-view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.appt-view-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.appt-view-btn.active {
+  background: #0A2E5D;
+  color: #fff;
+}
+
+/* ── Calendar view container ── */
+.appt-page .edcv2-layout {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+/* ── Filter tabs ── */
+.appt-filter-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 4px;
+  width: fit-content;
+}
+
+.appt-tab {
+  padding: 6px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.appt-tab:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.appt-tab.active {
+  background: #0A2E5D;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Table wrapper ── */
+.appt-table-wrap {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Table ── */
+.appt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.appt-table thead tr {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.appt-table th {
+  padding: 13px 18px;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.appt-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #334155;
+}
+
+.appt-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.appt-row {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.appt-row:hover td {
+  background: #f8fafc;
+}
+
+/* ── Column: Appointment ID ── */
+.appt-cell-id {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0A2E5D;
+  letter-spacing: -0.2px;
+}
+
+/* ── Column: Person cell ── */
+.appt-person-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appt-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.appt-avatar--patient {
+  background: #0A2E5D;
+  color: #fff;
+}
+
+.appt-avatar--doctor {
+  background: #0A2E5D;
+  color: #fff;
+}
+
+.appt-person-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+
+.appt-person-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Column: Date & Time ── */
+.appt-datetime-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.appt-date-row,
+.appt-time-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.appt-date-row {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.appt-time-row {
+  color: #64748b;
+}
+
+.appt-date-row svg,
+.appt-time-row svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* ── Column: Doctor & Service ── */
+.appt-service-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: #f0f9ff;
+  color: #0369a1;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* ── Column: Status ── */
+.appt-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.appt-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.appt-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.appt-mode-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.appt-mode-tag--telemedicine,
+.appt-mode-tag--online,
+.appt-mode-tag--virtual {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.appt-mode-tag--in-person,
+.appt-mode-tag--in-clinic {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+/* ── Footer ── */
+.appt-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 4px 4px;
+}
+
+.appt-results-count {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ── Pagination ── */
+.appt-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.appt-page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.appt-page-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.appt-page-btn.active {
+  background: #0A2E5D;
+  border-color: #0A2E5D;
+  color: #fff;
+  font-weight: 700;
+}
+
+.appt-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── State screens (loading / error / empty) ── */
+.appt-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 14px;
+  text-align: center;
+}
+
+.appt-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0A2E5D;
+  border-radius: 50%;
+  animation: appt-spin 0.8s linear infinite;
+}
+
+@keyframes appt-spin {
+  to { transform: rotate(360deg); }
+}
+
+.appt-state-text {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.appt-empty-icon {
+  color: #cbd5e1;
+  margin-bottom: 4px;
+}
+
+.appt-state-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.appt-error-msg {
+  font-size: 14px;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.appt-action-btn {
+  padding: 8px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.appt-action-btn:hover {
+  background: #f1f5f9;
+}
+
+/* ══════════════════════════════════════════
+   Responsive — Appointments Table
+   ══════════════════════════════════════════ */
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+  .appt-page { padding: 20px 16px; }
+
+  .appt-header { gap: 10px; margin-bottom: 16px; }
+
+  /* Right controls wrap to second line */
+  .appt-header-right { flex-wrap: wrap; gap: 8px; }
+  .appt-search-box   { flex: 1 1 160px; min-width: 0; }
+  .appt-search-input { width: 100%; }
+  .appt-doctor-select { flex: 1 1 140px; min-width: 0; }
+
+  /* Filter tabs scroll horizontally */
+  .appt-filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .appt-filter-tabs::-webkit-scrollbar { display: none; }
+
+  .appt-table th,
+  .appt-table td { padding: 12px 14px; }
+
+  .appt-table { min-width: 750px; }
+}
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  .appt-page {
+    padding: 16px 14px;
+    overflow-x: hidden;     /* prevent table from widening the page */
+  }
+
+  /* Title row */
+  .appt-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* Row 1: Search + export + view toggle
+     Row 2: Doctor select full width */
+  .appt-header-right {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .appt-search-box    { flex: 1 1 0; min-width: 120px; order: 1; }
+  .appt-search-input  { width: 100%; }
+  .appt-export-btn    { flex-shrink: 0; order: 2; }
+  .appt-view-toggle   { flex-shrink: 0; order: 3; }
+  .appt-doctor-select { flex: 1 1 100%; order: 4; min-width: 0; }
+
+  /* Export — icon only */
+  .appt-export-label { display: none; }
+  .appt-export-btn { padding: 8px 12px; }
+
+  /* Filter tabs */
+  .appt-filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    margin-bottom: 12px;
+  }
+  .appt-filter-tabs::-webkit-scrollbar { display: none; }
+  .appt-tab { padding: 6px 12px; font-size: 12.5px; }
+
+  /* Table — force min-width so all 5 columns are visible via scroll */
+  .appt-table { min-width: 700px; }
+
+  /* Footer */
+  .appt-footer {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-top: 10px;
+  }
+  .appt-results-count { font-size: 12.5px; }
+  .appt-page-btn { min-width: 30px; height: 30px; font-size: 12px; }
+}
+
+/* ── Small Mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .appt-page  { padding: 12px 10px; }
+  .appt-title { font-size: 18px; }
+  .appt-tab   { padding: 5px 10px; font-size: 12px; }
+  .appt-table { min-width: 650px; }
+  .appt-table th,
+  .appt-table td { padding: 10px 10px; font-size: 12px; }
+  .appt-person-name { font-size: 13px; }
+  .appt-person-sub  { font-size: 11px; }
+  .appt-cell-id     { font-size: 12px; }
+}
+

@@ -11,7 +11,11 @@ const {
   deleteSpecialty,
   getAllTests,
   getSpecialtyByName,
+  addMultipleTest,
+  addTest,
+  getOrdersByApplicationId,
 } = require('../controllers/specialtiesController');
+const { getOrdersByApplication } = require('../controllers/orderController');
 const router = express.Router();
 
 router.post(
@@ -23,8 +27,16 @@ router.post(
   createSpecialty
 );
 router.get('/', auth, getAllSpecialties);
+router.get('/all', auth, getAllSpecialties);
+router.get('/all-tests', auth, getAllTests);
 router.get('/tests', auth, getAllTests);
 router.get('/name/:name', auth, getSpecialtyByName);
+router.get('/orders/:applicationId', auth, getOrdersByApplicationId);
+
+// Add test(s) to an application/appointment
+router.post('/:applicationId/tests/multiple', auth, addMultipleTest);
+router.post('/:applicationId/test', auth, addTest);
+
 router.get('/:id', auth, getSpecialtyById);
 router.put(
   '/:id',

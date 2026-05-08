@@ -15,12 +15,20 @@ const {
   updateManager,
   deleteManager,
 } = require("../controllers/managerController");
+const {
+  assistantSignIn,
+  assistantLogout,
+  refreshAuthToken,
+} = require("../controllers/authController");
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Auth routes
 router.post("/manager-signin", managerSignIn);
+router.post("/assistant-signin", assistantSignIn);
+router.post("/assistant-logout", assistantLogout);
+router.post("/refresh", refreshAuthToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/refresh-token", refreshToken);

@@ -37,6 +37,28 @@ exports.createTask = async (req, res) => {
   }
 };
 
+// Debug-only: inspect payload and return task + siblings without mutating
+exports.reorderTasksDebug = async (req, res) => {
+  try {
+    console.log("[reorderTasksDebug] payload:", JSON.stringify(req.body));
+    const { source, destination, taskId } = req.body || {};
+    if (!taskId || !source || !destination) {
+      return res.status(400).json({ success: false, message: "taskId, source and destination are required" });
+    }
+
+    const task = await Task.findById(taskId).lean();
+    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
+
+    const sourceSiblings = await Task.find({ projectId: task.projectId, status: source.droppableId }).sort({ order: 1 }).lean();
+    const destSiblings = await Task.find({ projectId: task.projectId, status: destination.droppableId }).sort({ order: 1 }).lean();
+
+    return res.json({ success: true, payload: req.body, task, sourceSiblings, destSiblings });
+  } catch (err) {
+    console.error("[reorderTasksDebug] error:", err.stack || err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // Get all tasks by projectId
 exports.getTasksByProject = async (req, res) => {
   try {
@@ -74,27 +96,93 @@ exports.deleteTask = async (req, res) => {
 // Reorder tasks (for drag & drop)
 exports.reorderTasks = async (req, res) => {
   try {
-    const { source, destination, taskId } = req.body;
+    console.log("[reorderTasks] payload:", JSON.stringify(req.body));
+    const { source, destination, taskId } = req.body || {};
+
+    if (!taskId || !source || !destination) {
+      console.error("[reorderTasks] missing required fields", { taskId, source, destination });
+      return res.status(400).json({ success: false, message: "taskId, source and destination are required" });
+    }
+
     const task = await Task.findById(taskId);
+    if (!task) return res.status(404).json({ success: false, message: "Task not found" });
 
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    // Normalize values
+    const fromCol = source.droppableId;
+    const toCol = destination.droppableId;
+    const fromIndex = Number.isFinite(Number(source.index)) ? Number(source.index) : 0;
+    const toIndex = Number.isFinite(Number(destination.index)) ? Number(destination.index) : 0;
 
-    // Update task's status if moved to another column
-    task.status = destination.droppableId;
-    task.order = destination.index;
-    await task.save();
+    // If moved within same column, shift orders between indices
+    if (fromCol === toCol) {
+      // Remove the task from its current ordering and re-insert at new position
+      const siblings = await Task.find({ projectId: task.projectId, status: fromCol }).sort({ order: 1 }).exec();
+      // Remove the moved task from list
+      const filtered = siblings.filter((s) => s._id.toString() !== task._id.toString());
+      // Clamp destination index
+      const insertIndex = Math.max(0, Math.min(toIndex, filtered.length));
+      // Insert at destination index
+      filtered.splice(insertIndex, 0, task);
 
-    // Optionally reorder other tasks in the destination column
-    await Task.updateMany(
-      {
-        projectId: task.projectId,
-        status: task.status,
-        _id: { $ne: task._id },
-      },
-      { $inc: { order: 1 } }
-    );
+      // Reassign orders sequentially with logging
+      try {
+        console.log("[reorderTasks] resequencing same-column, count:", filtered.length);
+        await Promise.all(
+          filtered.map((t, idx) => Task.findByIdAndUpdate(t._id, { order: idx }, { new: true }))
+        );
+      } catch (err) {
+        console.error("[reorderTasks] error resequencing same-column:", err.stack || err);
+        return res.status(500).json({ success: false, message: "Error updating task order" });
+      }
 
-    res.json({ success: true, message: "Task reordered successfully" });
+      // Ensure the moved task has the correct status & order
+      task.status = toCol;
+      task.order = insertIndex;
+      await task.save();
+
+      return res.json({ success: true, message: "Task reordered successfully" });
+    }
+
+    // Moving across columns
+    // Decrement order of tasks after the source index in the source column
+    try {
+      console.log("[reorderTasks] shifting source column down", { projectId: task.projectId, fromCol, fromIndex });
+      await Task.updateMany(
+        { projectId: task.projectId, status: fromCol, order: { $gt: fromIndex } },
+        { $inc: { order: -1 } }
+      );
+      console.log("[reorderTasks] shifted source column down successfully");
+    } catch (err) {
+      console.error("[reorderTasks] error shifting source column:", err.stack || err);
+      return res.status(500).json({ success: false, message: "Error updating source column orders" });
+    }
+
+    // Increment order of tasks at or after destination index in the target column
+    try {
+      console.log("[reorderTasks] shifting destination column up", { projectId: task.projectId, toCol, toIndex });
+      await Task.updateMany(
+        { projectId: task.projectId, status: toCol, order: { $gte: toIndex } },
+        { $inc: { order: 1 } }
+      );
+      console.log("[reorderTasks] shifted destination column up successfully");
+    } catch (err) {
+      console.error("[reorderTasks] error shifting destination column:", err.stack || err);
+      return res.status(500).json({ success: false, message: "Error updating destination column orders" });
+    }
+
+    // Move the task
+    task.status = toCol;
+    task.order = toIndex;
+    try {
+      await task.save();
+      console.log("[reorderTasks] task saved successfully", { taskId: task._id.toString(), status: task.status, order: task.order });
+    } catch (err) {
+      console.error("[reorderTasks] error saving moved task:", err.stack || err, err);
+      return res.status(500).json({ success: false, message: "Error saving moved task" });
+    }
+
+    console.log("[reorderTasks] move across columns completed");
+    return res.json({ success: true, message: "Task moved across columns successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

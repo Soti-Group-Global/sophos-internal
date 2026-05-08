@@ -1,15 +1,8 @@
-const nodemailer = require("nodemailer");
+﻿const { transporter } = require('../../utils/emailService');
 const CorporateFormRegistration = require("../../models/website/CorporateFormRegistration");
 const CorporateRegister = require("../../models/website/CorporateRegister");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: { rejectUnauthorized: false },
-});
+
 
 // Generate coupon: SPH-<COMPANYSHORT>-<4 random digits>
 const generateCoupon = (corporateName) => {

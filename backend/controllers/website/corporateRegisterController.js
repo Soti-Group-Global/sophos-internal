@@ -1,17 +1,9 @@
-const nodemailer = require("nodemailer");
+﻿const { transporter } = require('../../utils/emailService');
 const crypto = require("crypto");
 const CorporateRegister = require("../../models/website/CorporateRegister");
 
 const generatePassword = () => crypto.randomBytes(10).toString("base64url").slice(0, 12);
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: { rejectUnauthorized: false },
-});
 
 const sendCorporateWelcomeEmail = async ({ email, hrName, link, password }) => {
   const formUrl = `https://forms.sophos-med.ru/${link}`;

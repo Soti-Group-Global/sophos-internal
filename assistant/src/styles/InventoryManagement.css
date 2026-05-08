@@ -1,0 +1,50 @@
+.inventory-container {
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.inventory-header {
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.inventory-tabs {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.inventory-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.inventory-tab.active {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+
+}
+
+.inventory-tab:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.inventory-content {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
