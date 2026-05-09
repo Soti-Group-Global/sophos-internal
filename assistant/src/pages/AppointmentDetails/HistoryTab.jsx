@@ -1,20 +1,44 @@
-import React, { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle, useContext } from "react";
+import React, { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { FiCheckCircle, FiCircle } from "react-icons/fi";
+import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX } from "react-icons/fi";
 import {
-  updateHistoryForm,
-  verifyHistoryField,
+  updateHistoryFieldVerify,
   getHistoryTemplates,
   createHistoryTemplate,
   updateHistoryTemplate,
   deleteHistoryTemplate,
-  getEmailFromToken,
+  getApplicationsByPatientId,
+  getAllApplicationLaboratoryTests,
+  createApplicationLaboratoryTest,
+  updateApplicationLaboratoryTest,
+  deleteApplicationLaboratoryTest,
+  uploadApplicationLaboratoryTestFile,
+  removeApplicationLaboratoryTestFile,
+  fetchApplicationLaboratoryTestFile,
+  addApplicationLaboratoryTestNote,
+  updateApplicationLaboratoryTestNote,
+  deleteApplicationLaboratoryTestNote,
+  getAllApplicationInstrumentalAnalysis,
+  createApplicationInstrumentalAnalysis,
+  updateApplicationInstrumentalAnalysis,
+  deleteApplicationInstrumentalAnalysis,
+  uploadApplicationInstrumentalAnalysisFile,
+  removeApplicationInstrumentalAnalysisFile,
+  fetchApplicationInstrumentalAnalysisFile,
+  addApplicationInstrumentalAnalysisNote,
+  updateApplicationInstrumentalAnalysisNote,
+  deleteApplicationInstrumentalAnalysisNote,
+  getApplicationSection,
+  uploadApplicationSectionFile,
+  removeApplicationSectionFile,
+  updateApplicationSectionComment,
 } from "../../utils/api";
-import { AuthContext } from "../../context/AuthContext";
 import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
 import TemplatePicker from "../../components/RichTextEditor/TemplatePicker";
+import AppointmentReport from "../AppointmentReport";
 import "./HistoryTab.css";
 
 /* ────────────────────────────────────────────────────────────
@@ -117,6 +141,15 @@ const collectKeys = (sections) => {
 };
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
+const HISTORY_NAV_ITEMS = [
+  { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", icon: <FiChevronDown size={14} />, sectionId: "complaints" },
+  { id: "laboratoryAnalysis", labelKey: "sidebar.laboratoryAnalysis", sectionId: "examinationPlan" },
+  { id: "studiesManipulations", labelKey: "sidebar.studiesManipulations", sectionId: "physicalExam" },
+  { id: "morphologicalResearch", labelKey: "sidebar.morphologicalResearch", sectionId: "examinationResults" },
+  { id: "proceduresManipulations", labelKey: "sidebar.proceduresManipulations", sectionId: "treatmentPlan" },
+  { id: "conclusion", labelKey: "sidebar.conclusion", sectionId: "clinicalDiagnosis" },
+];
+
 /* ────────────────────────────────────────────────────────────
    RichTextField — dual-mode: preview (read) ↔ edit (RichTextEditor)
    ──────────────────────────────────────────────────────────── */
@@ -155,73 +188,463 @@ const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, p
 /* ================================================================
    HistoryTab component
    ================================================================ */
-// Helper: extract the HTML value from a field that may be String (old) or { value } (new)
-const fieldValue = (raw) => {
-  if (!raw) return "";
-  if (typeof raw === "string") return raw;
-  return raw.value || "";
-};
-
-const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
+const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const { t } = useTranslation("history_tab");
-  const { user } = useContext(AuthContext);
-  const isDoctor = user?.role === "doctor";
 
   /* Initialise from application.historyForm (per-appointment), fallback to patient.historyForm */
   const initForm = () => {
     const saved = application?.historyForm || patient?.historyForm || {};
     const form = { isFirstAppointment: saved.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? false };
     ALL_KEYS.forEach((k) => {
-      form[k] = fieldValue(saved[k]);
+      const f = saved[k];
+      form[k] = {
+        value: (typeof f === "object" ? f?.value : f) || "",
+        isVerified: f?.isVerified || false,
+        verifiedBy: f?.verifiedBy || null,
+        verifiedAt: f?.verifiedAt || null,
+      };
     });
     return form;
   };
 
   const [form, setForm] = useState(initForm);
-  // verification state: { [fieldKey]: { isVerified, verifiedBy, verifiedAt } }
-  const [verifications, setVerifications] = useState(() => {
-    const saved = application?.historyForm || {};
-    const v = {};
-    ALL_KEYS.forEach((k) => {
-      const raw = saved[k];
-      v[k] = {
-        isVerified: raw?.isVerified ?? false,
-        verifiedBy: raw?.verifiedBy ?? null,
-        verifiedAt: raw?.verifiedAt ?? null,
-      };
-    });
-    return v;
-  });
-  const [verifyingField, setVerifyingField] = useState(null);
 
-  /* Re-sync form whenever the saved historyForm from the server changes
-     (e.g. after save in parent, or socket push from another session) */
+  /* Re-sync form whenever the saved historyForm from the server changes */
   useEffect(() => {
     const saved = application?.historyForm || patient?.historyForm || {};
     setForm((prev) => {
       const next = { ...prev, isFirstAppointment: saved.isFirstAppointment ?? prev.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? prev.isRepetitiveAppointment ?? false };
       ALL_KEYS.forEach((k) => {
-        next[k] = fieldValue(saved[k]) ?? prev[k] ?? "";
+        const f = saved[k];
+        next[k] = {
+          value: (typeof f === "object" ? f?.value : f) || prev[k]?.value || "",
+          isVerified: f?.isVerified ?? prev[k]?.isVerified ?? false,
+          verifiedBy: f?.verifiedBy ?? prev[k]?.verifiedBy ?? null,
+          verifiedAt: f?.verifiedAt ?? prev[k]?.verifiedAt ?? null,
+        };
       });
       return next;
     });
-    setVerifications(() => {
-      const v = {};
-      ALL_KEYS.forEach((k) => {
-        const raw = saved[k];
-        v[k] = {
-          isVerified: raw?.isVerified ?? false,
-          verifiedBy: raw?.verifiedBy ?? null,
-          verifiedAt: raw?.verifiedAt ?? null,
-        };
-      });
-      return v;
-    });
-  }, [application?.historyForm]);
+  }, [application?.historyForm, patient?.historyForm]);
 
   /* Track which individual fields are in edit mode */
   const [editingFields, setEditingFields] = useState({});
   const containerRef = useRef(null);
+  const sectionRefs = useRef({});
+  const [activeNavItem, setActiveNavItem] = useState(HISTORY_NAV_ITEMS[0].id);
+  const [patientAppointments, setPatientAppointments] = useState([]);
+  const [isAppointmentsPanelOpen, setIsAppointmentsPanelOpen] = useState(false);
+  const [isAppointmentsLoading, setIsAppointmentsLoading] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState(null);
+  const [labTests, setLabTests] = useState([]);
+  const [studyTests, setStudyTests] = useState([]);
+  const [selectedLabTests, setSelectedLabTests] = useState({});
+  const [selectedStudyTests, setSelectedStudyTests] = useState({});
+  const [isLabPanelOpen, setIsLabPanelOpen] = useState(false);
+  const [isStudyPanelOpen, setIsStudyPanelOpen] = useState(false);
+  const [labPopupOpen, setLabPopupOpen] = useState(false);
+  const [labPopupMode, setLabPopupMode] = useState(null);
+  const [newTestNameEN, setNewTestNameEN] = useState("");
+  const [newTestNameRU, setNewTestNameRU] = useState("");
+  const [editingTestId, setEditingTestId] = useState(null);
+  const [deleteConfirmTest, setDeleteConfirmTest] = useState(null);
+  const [selectedTest, setSelectedTest] = useState(null);
+  const [selectedTestMode, setSelectedTestMode] = useState(null);
+  const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
+  const [testNoteDraft, setTestNoteDraft] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [isUploadingTestFile, setIsUploadingTestFile] = useState(false);
+  const [testFileUploadError, setTestFileUploadError] = useState(null);
+  const fileInputRef = useRef(null);
+  const [sectionData, setSectionData] = useState({
+    morphologicalResearch: { files: [], comment: {} },
+    proceduresManipulations: { files: [], comment: {} },
+  });
+  const [sectionUploading, setSectionUploading] = useState({});
+  const [sectionDirty, setSectionDirty] = useState({});
+  const morphFileRef = useRef(null);
+  const procFileRef = useRef(null);
+
+  const formatDate = useCallback((dateStr) => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }, []);
+
+  const formatTime = useCallback((timeStr) => {
+    if (!timeStr) return "";
+    const parsed = new Date(timeStr);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleTimeString("ru-RU", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+    return timeStr;
+  }, []);
+
+  const loadPatientAppointments = useCallback(async () => {
+    const patientId = patient?.patientId || patient?._id || application?.patientId;
+    if (!patientId) {
+      toast.error(t("history_tab.patient_id_missing", { defaultValue: "Patient ID is not available" }));
+      return;
+    }
+
+    setIsAppointmentsLoading(true);
+    setAppointmentsError(null);
+
+    try {
+      const response = await getApplicationsByPatientId(patientId);
+      const apps = Array.isArray(response?.data) ? response.data : [];
+      const filtered = apps.filter(
+        (appt) => (appt.applicationId || appt._id) !== (application?.applicationId || application?._id),
+      );
+      setPatientAppointments(filtered);
+      setIsAppointmentsPanelOpen(true);
+    } catch (error) {
+      const message = error?.response?.data?.message || t("history_tab.failed_loading_other_appointments", { defaultValue: "Failed to load other appointments" });
+      setAppointmentsError(message);
+      toast.error(message);
+    } finally {
+      setIsAppointmentsLoading(false);
+    }
+  }, [application, patient, t]);
+
+  const handleSidebarItemClick = useCallback(async (item, _e) => {
+    setActiveNavItem(item.id);
+    setSelectedTest(null);
+
+    if (item.id === "specialistConsultation") {
+      if (isAppointmentsPanelOpen) {
+        setIsAppointmentsPanelOpen(false);
+      } else {
+        await loadPatientAppointments();
+      }
+    } else if (item.id === "laboratoryAnalysis") {
+      setIsLabPanelOpen((prev) => !prev);
+    } else if (item.id === "studiesManipulations") {
+      setIsStudyPanelOpen((prev) => !prev);
+    }
+  }, [isAppointmentsPanelOpen, loadPatientAppointments]);
+
+  const appId = application?.applicationId;
+
+  const SECTION_SCHEMA = {
+    morphologicalResearch: "morphologicalResearch",
+    proceduresManipulations: "proceduresAndManipulations",
+  };
+  const PANEL_NAV_IDS = Object.keys(SECTION_SCHEMA);
+
+  useEffect(() => {
+    if (!PANEL_NAV_IDS.includes(activeNavItem)) return;
+    const schemaKey = SECTION_SCHEMA[activeNavItem];
+    getApplicationSection(appId, schemaKey)
+      .then((data) => {
+        setSectionData((prev) => ({ ...prev, [activeNavItem]: data }));
+        setSectionDirty((prev) => ({ ...prev, [activeNavItem]: false }));
+      })
+      .catch(() => {});
+  }, [activeNavItem, appId]);
+
+  const handleSectionFileChange = useCallback(async (navId, e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    const schemaKey = SECTION_SCHEMA[navId];
+    setSectionUploading((prev) => ({ ...prev, [navId]: true }));
+    try {
+      for (const file of files) {
+        const result = await uploadApplicationSectionFile(appId, schemaKey, file);
+        setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Upload failed");
+    } finally {
+      setSectionUploading((prev) => ({ ...prev, [navId]: false }));
+    }
+  }, [appId]);
+
+  const handleSectionFileRemove = useCallback(async (navId, fileId) => {
+    const schemaKey = SECTION_SCHEMA[navId];
+    try {
+      const result = await removeApplicationSectionFile(appId, schemaKey, fileId);
+      setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to remove file");
+    }
+  }, [appId]);
+
+  const handleSectionCommentSave = useCallback(async (navId, value) => {
+    const schemaKey = SECTION_SCHEMA[navId];
+    try {
+      const result = await updateApplicationSectionComment(appId, schemaKey, value);
+      setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+      setSectionDirty((prev) => ({ ...prev, [navId]: false }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to save comment");
+    }
+  }, [appId]);
+
+  const openLabAnalysisPopup = useCallback((mode, e) => {
+    if (e?.stopPropagation) e.stopPropagation();
+    setLabPopupMode(mode);
+    setLabPopupOpen(true);
+    setEditingTestId(null);
+  }, []);
+
+  const closeLabAnalysisPopup = useCallback(() => {
+    setLabPopupOpen(false);
+    setLabPopupMode(null);
+    setNewTestNameEN("");
+    setNewTestNameRU("");
+    setEditingTestId(null);
+    setDeleteConfirmTest(null);
+  }, []);
+
+  const openEditTest = useCallback((test) => {
+    setEditingTestId(test._id);
+    setNewTestNameEN(test.name?.en || "");
+    setNewTestNameRU(test.name?.ru || "");
+  }, []);
+
+  const cancelEditTest = useCallback(() => {
+    setEditingTestId(null);
+    setNewTestNameEN("");
+    setNewTestNameRU("");
+  }, []);
+
+  const handleSaveTest = useCallback(async () => {
+    if (!newTestNameEN.trim() || !newTestNameRU.trim()) {
+      toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter both EN and RU names." }));
+      return;
+    }
+
+    const payload = { name: { en: newTestNameEN.trim(), ru: newTestNameRU.trim() } };
+
+    try {
+      if (editingTestId) {
+        const response = labPopupMode === "studiesManipulations"
+          ? await updateApplicationInstrumentalAnalysis(editingTestId, payload)
+          : await updateApplicationLaboratoryTest(editingTestId, payload);
+        const updated = response?.data || response;
+
+        if (labPopupMode === "studiesManipulations") {
+          setStudyTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
+        } else {
+          setLabTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
+        }
+
+        toast.success(t("history_tab.test_updated", { defaultValue: "Test updated" }));
+      } else {
+        const response = labPopupMode === "studiesManipulations"
+          ? await createApplicationInstrumentalAnalysis(payload)
+          : await createApplicationLaboratoryTest(payload);
+        const created = response?.data || response;
+
+        if (created) {
+          if (labPopupMode === "studiesManipulations") {
+            setStudyTests((prev) => [...prev, created]);
+            setSelectedStudyTests((prev) => ({ ...prev, [created._id]: true }));
+          } else {
+            setLabTests((prev) => [...prev, created]);
+            setSelectedLabTests((prev) => ({ ...prev, [created._id]: true }));
+          }
+          toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
+        }
+      }
+
+      setEditingTestId(null);
+      setNewTestNameEN("");
+      setNewTestNameRU("");
+    } catch (err) {
+      toast.error(editingTestId ? t("history_tab.failed_update_test", { defaultValue: "Failed to update test" }) : t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
+    }
+  }, [editingTestId, labPopupMode, newTestNameEN, newTestNameRU, t]);
+
+  const openDeleteConfirm = useCallback((test) => {
+    setDeleteConfirmTest(test);
+  }, []);
+
+  const closeDeleteConfirm = useCallback(() => {
+    setDeleteConfirmTest(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteConfirmTest) return;
+    try {
+      await (labPopupMode === "studiesManipulations"
+        ? deleteApplicationInstrumentalAnalysis(deleteConfirmTest._id)
+        : deleteApplicationLaboratoryTest(deleteConfirmTest._id));
+
+      if (labPopupMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
+        setSelectedStudyTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
+      } else {
+        setLabTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
+        setSelectedLabTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
+      }
+
+      if (editingTestId === deleteConfirmTest._id) cancelEditTest();
+
+      setDeleteConfirmTest(null);
+      toast.success(t("history_tab.test_deleted", { defaultValue: "Test deleted" }));
+    } catch (err) {
+      toast.error(t("history_tab.failed_delete_test", { defaultValue: "Failed to delete test" }));
+    }
+  }, [cancelEditTest, deleteConfirmTest, editingTestId, labPopupMode, t]);
+
+  const handleToggleLabTest = useCallback((id, useStudyMode = false) => {
+    if (useStudyMode || labPopupMode === "studiesManipulations") {
+      setSelectedStudyTests((prev) => ({ ...prev, [id]: !prev[id] }));
+    } else {
+      setSelectedLabTests((prev) => ({ ...prev, [id]: !prev[id] }));
+    }
+  }, [labPopupMode]);
+
+  const handleSelectTest = useCallback((test, mode) => {
+    setSelectedTest(test);
+    setSelectedTestMode(mode);
+    setShowTestNoteEditor(false);
+    setTestNoteDraft(test?.note || "");
+    setTestFileUploadError(null);
+  }, []);
+
+  const handleCloseSelectedTest = useCallback(() => {
+    setSelectedTest(null);
+    setSelectedTestMode(null);
+    setShowTestNoteEditor(false);
+    setTestNoteDraft("");
+    setTestFileUploadError(null);
+  }, []);
+
+  const selectedTestFiles = React.useMemo(() => {
+    if (!selectedTest) return [];
+    if (Array.isArray(selectedTest.files) && selectedTest.files.length > 0) return selectedTest.files;
+    if (selectedTest.fileId) {
+      return [{
+        fileId: selectedTest.fileId,
+        fileName: selectedTest.fileName || selectedTest.originalName || t("history_tab.unknown_file", { defaultValue: "Unknown file" }),
+        fileMimeType: selectedTest.fileMimeType || "",
+        fileSize: selectedTest.fileSize || 0,
+        uploadedAt: selectedTest.uploadedAt || null,
+      }];
+    }
+    return [];
+  }, [selectedTest, t]);
+
+  const handleTestFileUpload = useCallback(async (file) => {
+    if (!selectedTest || !selectedTestMode || !file) return;
+    setIsUploadingTestFile(true);
+    setTestFileUploadError(null);
+
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await uploadApplicationInstrumentalAnalysisFile(selectedTest._id, file)
+        : await uploadApplicationLaboratoryTestFile(selectedTest._id, file);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.file_uploaded", { defaultValue: "File uploaded" }));
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_upload_file", { defaultValue: "Failed to upload file" });
+      setTestFileUploadError(message);
+      toast.error(message);
+    } finally {
+      setIsUploadingTestFile(false);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleTestFileChange = useCallback(async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+    for (const file of files) await handleTestFileUpload(file);
+    event.target.value = "";
+  }, [handleTestFileUpload]);
+
+  const selectedTestNotes = React.useMemo(() => {
+    if (!selectedTest) return [];
+    const notes = Array.isArray(selectedTest.notes) ? selectedTest.notes : [];
+    if (notes.length > 0) return notes;
+    if (selectedTest.note) return [{ _id: "legacy-note", content: selectedTest.note, createdAt: selectedTest.updatedAt || selectedTest.createdAt || new Date(), updatedAt: selectedTest.updatedAt || selectedTest.createdAt || new Date() }];
+    return [];
+  }, [selectedTest]);
+
+  const handleOpenTestNoteEditor = useCallback(() => { setShowTestNoteEditor(true); setEditingNoteId(null); setTestNoteDraft(""); }, []);
+  const handleEditTestNote = useCallback((note) => { setShowTestNoteEditor(true); setEditingNoteId(note._id); setTestNoteDraft(note.content || ""); }, []);
+
+  const handleSaveTestNote = useCallback(async () => {
+    if (!selectedTest || !selectedTestMode || !testNoteDraft.trim()) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? editingNoteId ? await updateApplicationInstrumentalAnalysisNote(selectedTest._id, editingNoteId, { note: testNoteDraft }) : await addApplicationInstrumentalAnalysisNote(selectedTest._id, { note: testNoteDraft })
+        : editingNoteId ? await updateApplicationLaboratoryTestNote(selectedTest._id, editingNoteId, { note: testNoteDraft }) : await addApplicationLaboratoryTestNote(selectedTest._id, { note: testNoteDraft });
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.note_saved", { defaultValue: "Note saved" }));
+      setShowTestNoteEditor(false); setEditingNoteId(null); setTestNoteDraft("");
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_save_note", { defaultValue: "Failed to save note" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, testNoteDraft, editingNoteId, t]);
+
+  const handleRemoveTestFile = useCallback(async (fileId) => {
+    if (!selectedTest || !selectedTestMode || !fileId) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
+        : await removeApplicationLaboratoryTestFile(selectedTest._id, fileId);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.file_removed", { defaultValue: "File removed" }));
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_remove_file", { defaultValue: "Failed to remove file" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleViewTestFile = useCallback(async (fileId) => {
+    if (!selectedTest || !selectedTestMode || !fileId) return;
+    try {
+      const blob = selectedTestMode === "studiesManipulations"
+        ? await fetchApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
+        : await fetchApplicationLaboratoryTestFile(selectedTest._id, fileId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_view_file", { defaultValue: "Failed to open file" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleDeleteTestNote = useCallback(async (noteId) => {
+    if (!selectedTest || !selectedTestMode || !noteId) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, noteId)
+        : await deleteApplicationLaboratoryTestNote(selectedTest._id, noteId);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.note_deleted", { defaultValue: "Note deleted" }));
+      setShowTestNoteEditor(false);
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_delete_note", { defaultValue: "Failed to delete note" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
 
   /* Close all editing fields when clicking outside any field */
   useEffect(() => {
@@ -249,7 +672,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
   /* Editor change handler */
   const handleEditorChange = useCallback((key, html) => {
-    setForm((prev) => ({ ...prev, [key]: html }));
+    setForm((prev) => ({ ...prev, [key]: { ...prev[key], value: html } }));
   }, []);
 
   /* ── Templates ── */
@@ -321,8 +744,8 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
   const makeTemplatePicker = useCallback((fieldKey) => (
     <TemplatePicker
       templates={getFieldTemplates(fieldKey)}
-      currentValue={form[fieldKey] || ""}
-      editorOpen={!!editingFields[fieldKey]}
+      currentValue={form[fieldKey]?.value || ""}
+      isEditing={!!editingFields[fieldKey]}
       onApply={(content) => {
         handleEditorChange(fieldKey, content);
         setFieldEditing(fieldKey, true);
@@ -336,13 +759,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
   /* Expose data for parent save — send as { value } objects */
   useImperativeHandle(ref, () => ({
-    getData: () => ({
-      historyForm: Object.fromEntries(
-        Object.entries(form).map(([k, v]) =>
-          k === "isFirstAppointment" || k === "isRepetitiveAppointment" ? [k, v] : [k, { value: v }]
-        )
-      ),
-    }),
+    getData: () => ({ historyForm: { ...form } }),
   }));
 
   const navigate = useNavigate();
@@ -357,7 +774,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     try {
       // Wrap each field as { value } so backend can detect content changes
       const payload = { isFirstAppointment: form.isFirstAppointment, isRepetitiveAppointment: form.isRepetitiveAppointment };
-      ALL_KEYS.forEach((k) => { payload[k] = { value: form[k] }; });
+      ALL_KEYS.forEach((k) => { payload[k] = { value: form[k]?.value || "" }; });
       const res = await updateHistoryForm(application.applicationId, payload);
       toast.success(t("footer.save_success", { ns: "appointment_details_general" }));
       onSaved?.(res?.historyForm ?? payload);
@@ -371,34 +788,17 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     }
   }, [application, form, t]);
 
-  /* Doctor-only: toggle verification on a single field */
-  const handleVerifyField = useCallback(async (fieldKey, currentlyVerified) => {
-    if (!isDoctor || !application?.applicationId) return;
-    setVerifyingField(fieldKey);
+  /* Verify toggle handler — calls backend directly */
+  const handleVerifyToggle = useCallback(async (key) => {
+    const newVal = !form[key]?.isVerified;
+    setForm((prev) => ({ ...prev, [key]: { ...prev[key], isVerified: newVal } }));
+    if (!application?.applicationId) return;
     try {
-      const doctorEmail = getEmailFromToken();
-      const res = await verifyHistoryField(
-        application.applicationId,
-        fieldKey,
-        !currentlyVerified,
-        doctorEmail
-      );
-      const updated = res.historyForm?.[fieldKey];
-      setVerifications((prev) => ({
-        ...prev,
-        [fieldKey]: {
-          isVerified: updated?.isVerified ?? !currentlyVerified,
-          verifiedBy: updated?.verifiedBy ?? null,
-          verifiedAt: updated?.verifiedAt ?? null,
-        },
-      }));
-      toast.success(!currentlyVerified ? t("verify.toast_verified") : t("verify.toast_unverified"));
-    } catch {
-      toast.error(t("verify.toast_error"));
-    } finally {
-      setVerifyingField(null);
+      await updateHistoryFieldVerify(application.applicationId, key, newVal);
+    } catch (err) {
+      toast.error("Failed to update verification");
     }
-  }, [isDoctor, application]);
+  }, [application, form]);
 
   const handleSaveAll = useCallback(async () => {
     await doSave();
@@ -416,7 +816,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
         <RichTextField
           key={f.key}
           label={f.labelKey ? t(f.labelKey) : undefined}
-          value={form[f.key] || ""}
+          value={form[f.key]?.value || ""}
           editing={!!editingFields[f.key]}
           onToggle={() => setFieldEditing(f.key, !editingFields[f.key])}
           onChange={(html) => handleEditorChange(f.key, html)}
@@ -428,35 +828,20 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     </div>
   );
 
-  /** Renders the verify badge + button for a single field key */
-  const renderVerifyControl = useCallback((fieldKey) => {
-    const v = verifications[fieldKey] || {};
-    const isVerified = !!v.isVerified;
-    const busy = verifyingField === fieldKey;
+  /* Verify toggle badge */
+  const VerifyBadge = ({ fieldKey }) => {
+    const verified = !!form[fieldKey]?.isVerified;
     return (
-      <div className="ht-verify-control">
-        {isVerified ? (
-          <span className="ht-verify-badge ht-verify-badge--verified">
-            <FiCheckCircle size={12} /> {t("verify.badge_verified")}
-          </span>
-        ) : (
-          <span className="ht-verify-badge ht-verify-badge--pending">
-            <FiCircle size={12} /> {t("verify.badge_pending")}
-          </span>
-        )}
-        {isDoctor && (
-          <button
-            className={`ht-verify-btn${isVerified ? " ht-verify-btn--unverify" : ""}`}
-            disabled={busy}
-            onClick={(e) => { e.stopPropagation(); handleVerifyField(fieldKey, isVerified); }}
-            title={isVerified ? t("verify.btn_unverify_title") : t("verify.btn_verify_title")}
-          >
-            {busy ? "…" : isVerified ? t("verify.btn_unverify") : t("verify.btn_verify")}
-          </button>
-        )}
-      </div>
+      <button
+        type="button"
+        className={`ht-verify-btn${verified ? " ht-verify-btn--verified" : " ht-verify-btn--pending"}`}
+        onClick={(e) => { e.stopPropagation(); handleVerifyToggle(fieldKey); }}
+        title={verified ? t("verify_title_verified") : t("verify_title_pending")}
+      >
+        {verified ? t("verify_verified") : t("verify_pending")}
+      </button>
     );
-  }, [verifications, verifyingField, isDoctor, handleVerifyField]);
+  };
 
   const renderSection = (section, level = 0) => {
     const isSingleField = section.fields?.length === 1 && !section.fields[0].labelKey && !section.subsections?.length;
@@ -466,7 +851,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     return (
       <div
         key={section.id}
-        className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}${singleKey && verifications[singleKey]?.isVerified ? " ht-section--verified" : ""}`}
+        className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}`}
       >
         {/* ── Header — clickable for single-field sections ── */}
         <div
@@ -478,7 +863,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
           </span>
           {isSingleField && (
             <div className="ht-section-header-actions">
-              {renderVerifyControl(singleKey)}
+              {(form[singleKey]?.value || "").replace(/<[^>]*>/g, "").trim() && <VerifyBadge fieldKey={singleKey} />}
               {makeTemplatePicker(singleKey)}
               <span className={`ht-field-toggle ${singleEditing ? "ht-field-toggle--active" : ""}`}>
                 {singleEditing ? "\u2715" : "\u270E"}
@@ -494,7 +879,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
             singleEditing ? (
               <div data-ht-field>
                 <RichTextEditor
-                  value={form[singleKey] || ""}
+                  value={form[singleKey]?.value || ""}
                   onChange={(html) => handleEditorChange(singleKey, html)}
                   placeholder={t("enter_text")}
                 />
@@ -502,9 +887,9 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
             ) : (
               <div
                 data-ht-field
-                className={`ht-preview${!form[singleKey] ? " ht-preview--empty" : ""}`}
+                className={`ht-preview${!form[singleKey]?.value ? " ht-preview--empty" : ""}`}
                 onClick={() => setFieldEditing(singleKey, true)}
-                dangerouslySetInnerHTML={{ __html: form[singleKey] || `<span class='ht-preview-placeholder'>${t("click_to_edit")}</span>` }}
+                dangerouslySetInnerHTML={{ __html: form[singleKey]?.value || `<span class='ht-preview-placeholder'>${t("click_to_edit")}</span>` }}
               />
             )
           ) : (
@@ -520,38 +905,167 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
   return (
     <>
-      <div className="ht-container">
-        {/* ── Appointment type checkboxes (mutually exclusive) ── */}
-        <div className="ht-first-appt-bar">
-          <label className="ht-first-appt-label">
-            <input
-              type="checkbox"
-              className="ht-first-appt-checkbox"
-              checked={!!form.isFirstAppointment}
-              onChange={() => setForm((prev) => ({
-                ...prev,
-                isFirstAppointment: !prev.isFirstAppointment,
-                isRepetitiveAppointment: prev.isFirstAppointment ? prev.isRepetitiveAppointment : false,
-              }))}
-            />
-            <span>{t("first_appointment")}</span>
-          </label>
-          <label className="ht-first-appt-label">
-            <input
-              type="checkbox"
-              className="ht-first-appt-checkbox"
-              checked={!!form.isRepetitiveAppointment}
-              onChange={() => setForm((prev) => ({
-                ...prev,
-                isRepetitiveAppointment: !prev.isRepetitiveAppointment,
-                isFirstAppointment: prev.isRepetitiveAppointment ? prev.isFirstAppointment : false,
-              }))}
-            />
-            <span>{t("repetitive_appointment")}</span>
-          </label>
-        </div>
+      <div className="ht-shell">
+        <aside className="ht-sub-sidebar" aria-label={t("sidebar_title")}>
+          <div className="ht-sub-sidebar-list">
+            {HISTORY_NAV_ITEMS.map((item) => (
+              <React.Fragment key={item.id}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`ht-sub-sidebar-item${activeNavItem === item.id ? " ht-sub-sidebar-item--active" : ""}`}
+                  onClick={(e) => handleSidebarItemClick(item, e)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") handleSidebarItemClick(item, e);
+                  }}
+                >
+                  <span className="ht-sub-sidebar-label">{t(item.labelKey)}</span>
+                  <span className="ht-sub-sidebar-actions">
+                    {(item.id === "laboratoryAnalysis" || item.id === "studiesManipulations") && (
+                      <button
+                        type="button"
+                        className="ht-sub-sidebar-setting-btn"
+                        onClick={(e) => openLabAnalysisPopup(item.id, e)}
+                        aria-label={t("history_tab.manage_lab_tests", { defaultValue: "Manage tests" })}
+                      >
+                        <FiSettings size={14} />
+                      </button>
+                    )}
+                    {item.icon && (
+                      <span className="ht-sub-sidebar-icon" aria-hidden="true">
+                        {item.icon}
+                      </span>
+                    )}
+                  </span>
+                </div>
 
-        {HISTORY_SECTIONS.map((s) => renderSection(s))}
+                {item.id === "laboratoryAnalysis" && isLabPanelOpen && (
+                  <div className="ht-tests-panel">
+                    {labTests.length === 0 ? (
+                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
+                    ) : (
+                      labTests.map((test) => (
+                        <button
+                          key={test._id}
+                          type="button"
+                          className="ht-tests-panel-item"
+                          onClick={() => handleSelectTest(test, "laboratoryAnalysis")}
+                        >
+                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {item.id === "studiesManipulations" && isStudyPanelOpen && (
+                  <div className="ht-tests-panel">
+                    {studyTests.length === 0 ? (
+                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
+                    ) : (
+                      studyTests.map((test) => (
+                        <button
+                          key={test._id}
+                          type="button"
+                          className="ht-tests-panel-item"
+                          onClick={() => handleSelectTest(test, "studiesManipulations")}
+                        >
+                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
+                  <div className="ht-appointments-panel">
+                    {isAppointmentsLoading ? (
+                      <div className="ht-appointments-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}</div>
+                    ) : appointmentsError ? (
+                      <div className="ht-appointments-error">{appointmentsError}</div>
+                    ) : (
+                      <ul className="ht-appointments-list">
+                        {application && (() => {
+                          const name =
+                            application.service?.name?.ru ||
+                            application.service?.name?.en ||
+                            (Array.isArray(application.services) && application.services[0]?.name?.ru) ||
+                            (Array.isArray(application.services) && application.services[0]?.name?.en) ||
+                            t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                          const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
+                          const time = application.startTime
+                            ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}`
+                            : "";
+                          return (
+                            <li className="ht-appointment-item ht-appointment-item--current">
+                              <div className="ht-appointment-current-row">
+                                <span className="ht-appointment-name">{name}</span>
+                                <span className="ht-appointment-current-badge">{t("history_tab.current_badge", { defaultValue: "Current" })}</span>
+                              </div>
+                              <span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span>
+                            </li>
+                          );
+                        })()}
+                        {patientAppointments.map((appt) => {
+                          const patientName = appt.patient
+                            ? [appt.patient.firstName, appt.patient.middleName, appt.patient.lastName]
+                              .filter(Boolean)
+                              .join(" ")
+                              .trim() || appt.patient.email || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" })
+                            : appt.patientName || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" });
+                          const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
+                          const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
+                          return (
+                            <li key={appt.applicationId || appt._id} className="ht-appointment-item">
+                              <span className="ht-appointment-name">{patientName}</span>
+                              <span className="ht-appointment-meta">{appointmentDate}{appointmentTime ? ` · ${appointmentTime}` : ""}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </aside>
+
+        <div className="ht-main-column" ref={containerRef}>
+          <div className="ht-container">
+            {/* ── Appointment type checkboxes (mutually exclusive) ── */}
+            <div className="ht-first-appt-bar">
+              <label className="ht-first-appt-label">
+                <input
+                  type="checkbox"
+                  className="ht-first-appt-checkbox"
+                  checked={!!form.isFirstAppointment}
+                  onChange={() => setForm((prev) => ({
+                    ...prev,
+                    isFirstAppointment: !prev.isFirstAppointment,
+                    isRepetitiveAppointment: prev.isFirstAppointment ? prev.isRepetitiveAppointment : false,
+                  }))}
+                />
+                <span>{t("first_appointment")}</span>
+              </label>
+              <label className="ht-first-appt-label">
+                <input
+                  type="checkbox"
+                  className="ht-first-appt-checkbox"
+                  checked={!!form.isRepetitiveAppointment}
+                  onChange={() => setForm((prev) => ({
+                    ...prev,
+                    isRepetitiveAppointment: !prev.isRepetitiveAppointment,
+                    isFirstAppointment: prev.isRepetitiveAppointment ? prev.isFirstAppointment : false,
+                  }))}
+                />
+                <span>{t("repetitive_appointment")}</span>
+              </label>
+            </div>
+
+            {HISTORY_SECTIONS.map((s) => renderSection(s))}
+          </div>
+        </div>
       </div>
 
       {/* Sticky footer — same pattern as GeneralInformationTab */}

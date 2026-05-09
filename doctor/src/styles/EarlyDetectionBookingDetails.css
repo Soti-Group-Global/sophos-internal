@@ -14,7 +14,7 @@
   width: calc(100% + 40px);
 }
 .ed-appointments-sidebar-list.adp-app-sidebar-list {
-  width: 12%;
+  width: 10%;
 }
 
 .booking-details-content {
@@ -147,10 +147,9 @@
 
 
 .ed-medical-history-sidebar {
-  background: #f5f7fa;
+  background: #ffff;
   border-right: 1px solid #e4e7ec;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 2px;
 }
 
 .ed-medical-history-content {
@@ -165,18 +164,19 @@
 
 /* When medical history outside sidebar is present, expand the details body grid */
 .ed-details-body.ed-details-body--with-med-sidebar {
-  grid-template-columns: 96px 240px minmax(0, 1fr);
+  grid-template-columns: 96px 280px minmax(0, 1fr);
 }
 
 .ed-medical-history-outside {
   position: sticky;
   align-self: start;
-  width: 220px;
-  background: #f5f7fa;
+  width: 240px;
+  background: #ffffff;
   border-right: 1px solid #e4e7ec;
   padding: 12px;
   height: calc(100vh - var(--ed-app-topbar-h) - 32px);
   overflow-y: auto;
+  margin-left:-31px
 }
 
 .ed-medical-history-outside .ed-sidebar-medical-tabs {
@@ -184,11 +184,13 @@
   flex-direction: column;
   gap: 8px;
   align-items: stretch;
+  margin-left:-12px;
+  margin-top:-13px;
 }
 
 .ed-sidebar-icon-btn {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -199,12 +201,15 @@
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-top:5px;
 }
 
 .ed-sidebar-icon-btn.active {
   background: #ffffff;
   color: #0c3870;
-  border-left: 4px solid #0c3870;
+  border-left: 3px solid #0c3870;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 2px 8px rgba(12, 56, 112, 0.08);
 }
 
 .ed-sidebar-subtabs {
@@ -326,9 +331,68 @@
 .ed-sidebar-medical-tab-btn.active {
   background: #ffffff;
   color: #0c3870;
-  border-color: #0c3870;
-  border-left: 4px solid #0c3870;
-  padding-left: 10px;
+  border-left: 3px solid #0c3870;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 2px 8px rgba(12, 56, 112, 0.08);
+}
+
+.ed-subnav-test-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 10px 16px;
+  margin: -2px 0 6px 0;
+  border-left: 1px solid #e5e7eb;
+}
+
+.ed-subnav-test-item {
+  width: 117%;
+  border: none;
+  background: transparent;
+  color: #475569;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left:-16px;
+  margin-top:-8px;
+}
+
+.ed-subnav-test-item:hover {
+  background: #f8fafc;
+  color: #0c3870;
+}
+
+.ed-subnav-test-item--active {
+  background: #eef4ff;
+  color: #0c3870;
+  border-color: #c7d7ef;
+  border-left:2px solid #0c3870;
+}
+
+.ed-subnav-test-item--done {
+  color: #166534;
+}
+
+.ed-subnav-test-item--done.ed-subnav-test-item--active {
+  color: #0c3870;
+}
+
+.ed-subnav-test-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ed-subnav-test-check {
+  flex-shrink: 0;
+  color: inherit;
 }
 
 .ed-appointments-sidebar-empty {
@@ -978,6 +1042,254 @@
   margin: 0;
 }
 
+.ed-test-list-item {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ed-test-list-item:hover {
+  border-color: #bfd2f0;
+  box-shadow: 0 4px 12px rgba(12, 56, 112, 0.08);
+  transform: translateY(-1px);
+}
+
+.ed-test-list-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.ed-test-list-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: #d1d5db;
+}
+
+.ed-test-list-status--done {
+  color: #22c55e;
+}
+
+.ed-test-status-circle {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+}
+
+.ed-test-list-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.ed-test-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.ed-test-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ed-test-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ed-test-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ed-td-btn {
+  border: 1px solid #d7e2f0;
+  background: #ffffff;
+  color: #0c3870;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ed-td-btn:hover {
+  background: #eff6ff;
+  border-color: #b7cae4;
+  border:1px solid #0a2d5e
+}
+
+.ed-td-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ed-td-empty {
+  padding: 16px;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.ed-td-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ed-td-item--note {
+  align-items: start;
+}
+
+.ed-td-badge {
+  min-width: 40px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ed-td-badge--pdf {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.ed-td-badge--doc,
+.ed-td-badge--docx {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.ed-td-badge--xlsx,
+.ed-td-badge--xls {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.ed-td-item-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ed-td-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ed-td-item-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.ed-td-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ed-td-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: transparent;
+  border:none;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ed-td-icon-btn:hover {
+  background: #eff6ff;
+  border-color: #bfd2f0;
+  color: #0c3870;
+}
+.ed-td-icon-btn--delete:hover{
+  background: #fee2e2;
+  border-color: #bfd2f0;
+  color: red;
+}
+.ed-td-note-editor {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+}
+
+.ed-td-note-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ed-td-save-btn,
+.ed-td-cancel-btn {
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ed-td-save-btn {
+  border: 1px solid #0c3870;
+  background: #0c3870;
+  color: #fff;
+}
+
+.ed-td-cancel-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #334155;
+}
+
 .ed-section-card {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -1175,11 +1487,14 @@
   color: #6b7280;
 }
 
-.ed-test-file-actions .ed-file-link-btn {
+.ed-test-file-actions .ed-file-link-btn,
+.ed-td-item-actions .ed-file-link-btn {
   min-width: 30px;
   width: 30px;
   height: 30px;
   padding: 0;
+  border:none;
+  cursor: pointer;
 }
 
 /* ── SpecialistHistoryForm wrapper ── */
@@ -1267,12 +1582,14 @@
   background: #eff6ff;
   border-color: #3b82f6;
   color: #1d4ed8;
+  border:none;
 }
 
 .ed-file-link-btn--download:hover {
   background: #ecfdf5;
   border-color: #10b981;
   color: #047857;
+  border:none;
 }
 
 .ed-manage-tests-modal {
@@ -3258,7 +3575,7 @@
 
 .booking-details-page .ed-appointments-sidebar {
   position: static;
-  width: 70px;
+  width: 65px;
   max-height: none;
   padding: 18px 14px;
   border-right: 1px solid #e5e7eb;

@@ -43,7 +43,11 @@ import {
   getDoctorBreaks,
   getDoctorLeaves,
   uploadEarlyDetectionScheduleFile,
+  fetchEarlyDetectionScheduleFile,
   getEarlyDetectionScheduleFileUrl,
+  addEarlyDetectionTestEntryNote,
+  updateEarlyDetectionTestEntryNote,
+  deleteEarlyDetectionTestEntryNote,
   saveEarlyDetectionSpecialistHistoryForm,
   getPatientByEmail,
   getEarlyDetectionBookingById,
@@ -266,20 +270,29 @@ const EarlyDetectionBookingDetails = () => {
     return tabFromUrl && allowedTabs.has(tabFromUrl) ? tabFromUrl : "patient";
   });
   const [activeScheduleTab, setActiveScheduleTab] = useState("laboratoryTests");
+  const [activeTestId, setActiveTestId] = useState(null);
+  const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
+  const [testNoteDraft, setTestNoteDraft] = useState("");
+  const [editingTestNoteId, setEditingTestNoteId] = useState(null);
+  const [isSavingTestNote, setIsSavingTestNote] = useState(false);
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
 
   useEffect(() => {
     if (activeTab !== "medicalHistory" && activeScheduleTab !== "laboratoryTests") {
       setActiveScheduleTab("laboratoryTests");
+      setActiveTestId(null);
     }
-  }, [activeTab, activeScheduleTab]);
+  }, [activeTab]);
   const [editedScheduleItems, setEditedScheduleItems] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [managedTests, setManagedTests] = useState({
     laboratoryTests: [],
     instrumentalAnalysis: [],
+    morphologicalResearch: [],
+    proceduresAndManipulations: [],
   });
+  const managedSectionTabs = ["laboratoryTests", "instrumentalAnalysis"];
   const [showTestSettingsModal, setShowTestSettingsModal] = useState(false);
   const [settingsSection, setSettingsSection] = useState("laboratoryTests");
   const [testDraft, setTestDraft] = useState({ en: "", ru: "" });
@@ -434,6 +447,8 @@ const EarlyDetectionBookingDetails = () => {
   useEffect(() => {
     loadManagedTests("laboratoryTests");
     loadManagedTests("instrumentalAnalysis");
+    loadManagedTests("morphologicalResearch");
+    loadManagedTests("proceduresAndManipulations");
   }, []);
 
   useEffect(() => {
@@ -698,17 +713,28 @@ const EarlyDetectionBookingDetails = () => {
   const loadManagedTests = async (section) => {
     try {
       const response = await getEarlyDetectionManagedTests(section);
-      const list = Array.isArray(response?.data) ? response.data : [];
+      const list = Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
       setManagedTests((prev) => ({ ...prev, [section]: list }));
+      return list;
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to load tests");
+      return [];
     }
   };
 
-  const openTestSettingsModal = (section) => {
+  const openTestSettingsModal = async (section) => {
     setSettingsSection(section);
     setEditingManagedTestId("");
     setTestDraft({ en: "", ru: "" });
+    try {
+      await loadManagedTests(section);
+    } catch (err) {
+      // loadManagedTests will show toast on error
+    }
     setShowTestSettingsModal(true);
   };
 
@@ -723,6 +749,7 @@ const EarlyDetectionBookingDetails = () => {
 
     setSavingManagedTest(true);
     try {
+      let savedTest = null;
       if (editingManagedTestId) {
         await updateEarlyDetectionManagedTest(
           settingsSection,
@@ -731,15 +758,38 @@ const EarlyDetectionBookingDetails = () => {
             name: { en: nameEn, ru: nameRu },
           },
         );
+        // refresh list after update
+        await loadManagedTests(settingsSection);
       } else {
-        await createEarlyDetectionManagedTest(settingsSection, {
+        const res = await createEarlyDetectionManagedTest(settingsSection, {
           name: { en: nameEn, ru: nameRu },
         });
+        savedTest = res?.data?.data || res?.data || res;
+        // reload list from server to ensure IDs and ordering are correct
+        const fresh = await loadManagedTests(settingsSection);
+        // if upload modal is open, refresh its tests too if it's for the same section
+        if (showUploadModal && uploadSection === settingsSection) {
+          // state should already be updated by loadManagedTests above
+          // set auto-select the newly created test
+          const createdId = normalizeId(savedTest?._id) || normalizeId(savedTest?.id);
+          let pickId = createdId;
+          if (!pickId && Array.isArray(fresh) && fresh.length > 0) {
+            pickId = normalizeId(fresh[fresh.length - 1]?._id || fresh[fresh.length - 1]?.id);
+          }
+          if (pickId) {
+            setUploadItemId(pickId);
+          }
+        } else if (showUploadModal && uploadSection !== settingsSection) {
+          // If upload modal is for a different section, also refresh that section's tests
+          await loadManagedTests(uploadSection);
+        }
       }
 
-      await loadManagedTests(settingsSection);
       setEditingManagedTestId("");
       setTestDraft({ en: "", ru: "" });
+      // close settings modal after save
+      setShowTestSettingsModal(false);
+
       toast.success("Saved");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to save test");
@@ -771,6 +821,16 @@ const EarlyDetectionBookingDetails = () => {
     "proceduresAndManipulations",
   ];
 
+
+
+  const formatFileSize = (file) => {
+    const bytes = Number(file?.size || file?.fileSize || file?.length || 0);
+    if (!bytes || Number.isNaN(bytes)) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const openUploadSectionModal = (section) => {
     setUploadSection(section);
     setUploadItemId("");
@@ -778,6 +838,9 @@ const EarlyDetectionBookingDetails = () => {
     setUploadFile(null);
     if (multiUploadSections.includes(section)) {
       setUploadFiles([]);
+    }
+    if (sectionsWithTestSelection.includes(section)) {
+      loadManagedTests(section);
     }
     setShowUploadModal(true);
   };
@@ -947,97 +1010,6 @@ const EarlyDetectionBookingDetails = () => {
           : item,
       ),
     );
-  };
-
-  const handleEditToggle = () => {
-    if (isEditing) {
-      const currentSchedule = Array.isArray(
-        booking?.schedule?.specialistConsultations,
-      )
-        ? booking.schedule.specialistConsultations
-        : [];
-      setEditedScheduleItems(
-        currentSchedule.map((item) => ({
-          ...(item || {}),
-          date: toLocalDateOnly(item?.date),
-          doctor:
-            typeof item?.doctor === "object"
-              ? item?.doctor?._id || item?.doctor
-              : item?.doctor || null,
-        })),
-      );
-    }
-    setIsEditing((prev) => !prev);
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const updateData = {
-        schedule: {
-          specialistConsultations: editedScheduleItems.map((item) => ({
-            ...item,
-            date: item?.date ? `${item.date}T00:00:00` : null,
-            doctor:
-              typeof item?.doctor === "object"
-                ? item?.doctor?._id || null
-                : item?.doctor || null,
-          })),
-        },
-      };
-
-      const response = await updateEarlyDetectionBooking(id, updateData);
-
-      if (response.success && response.data) {
-        setBooking(response.data);
-        const nextSchedule = Array.isArray(
-          response.data?.schedule?.specialistConsultations,
-        )
-          ? response.data.schedule.specialistConsultations
-          : [];
-        setEditedScheduleItems(
-          nextSchedule.map((item) => ({
-            ...(item || {}),
-            date: toLocalDateOnly(item?.date),
-            doctor:
-              typeof item?.doctor === "object"
-                ? item?.doctor?._id || item?.doctor
-                : item?.doctor || null,
-          })),
-        );
-        toast.success(t("earlyDiagnosis.bookingUpdatedSuccessfully"));
-      } else {
-        toast.success(t("earlyDiagnosis.bookingUpdatedSuccessfully"));
-        await loadBookingDetails();
-      }
-
-      setIsEditing(false);
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          t("earlyDiagnosis.failedToUpdateBooking"),
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCopyPaymentLink = () => {
-    const paymentLink =
-      booking?.payment?.paymentLink || booking?.payment?.tbank?.paymentUrl;
-    if (paymentLink) {
-      navigator.clipboard.writeText(paymentLink);
-      setCopiedPaymentLink(true);
-      toast.success(t("earlyDiagnosis.paymentLinkCopied"));
-      setTimeout(() => setCopiedPaymentLink(false), 2000);
-    }
-  };
-
-  const handleCopySpecificLink = (linkId, url) => {
-    navigator.clipboard.writeText(url);
-    setCopiedLinkId(linkId);
-    toast.success(t("earlyDiagnosis.paymentLinkCopied"));
-    setTimeout(() => setCopiedLinkId(null), 2000);
   };
 
   const handleGeneratePaymentLink = async () => {
@@ -1613,12 +1585,375 @@ const EarlyDetectionBookingDetails = () => {
     return match ? match[1].toLowerCase() : "file";
   };
 
-  const formatFileSize = (file) => {
-    const bytes = Number(file?.size || file?.fileSize || file?.length || 0);
-    if (!bytes || Number.isNaN(bytes)) return "";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const getFilenameFromContentDisposition = (contentDisposition, fallbackName) => {
+    if (!contentDisposition) return fallbackName || "download";
+    const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)$|filename="?([^";]+)"?/i);
+    if (filenameMatch) return decodeURIComponent(filenameMatch[1] || filenameMatch[2] || fallbackName || "download");
+    return fallbackName || "download";
+  };
+
+  const handleProtectedFileAction = async (file, download = false) => {
+    const fileId = normalizeId(file?.fileId);
+    if (!fileId) {
+      const fileUrl = getSectionFileUrl(file, download);
+      if (!fileUrl) return;
+      if (download) {
+        window.location.href = fileUrl;
+      } else {
+        window.open(fileUrl, "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
+
+    try {
+      const response = await fetchEarlyDetectionScheduleFile(fileId);
+      const filename = getFilenameFromContentDisposition(response.headers["content-disposition"], getFileLabel(file));
+      const blob = new Blob([response.data], { type: response.data.type || "application/octet-stream" });
+      const objectUrl = URL.createObjectURL(blob);
+
+      if (download) {
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        window.open(objectUrl, "_blank", "noopener,noreferrer");
+      }
+
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+    } catch (error) {
+      console.error("Failed to open protected file", error);
+      toast.error(t("earlyDiagnosis.fileOpenFailed", "Could not open file. Please try again."));
+    }
+  };
+
+  const renderFileActionButtons = (file) => {
+    const isProtectedFile = !!normalizeId(file?.fileId);
+    return (
+      <>
+        {isProtectedFile ? (
+          <button
+            type="button"
+            className="ed-file-link-btn ed-file-link-btn--view"
+            title={t("earlyDiagnosis.view", "View")}
+            onClick={() => handleProtectedFileAction(file, false)}
+          >
+            <Eye size={15} />
+          </button>
+        ) : (
+          getSectionFileUrl(file, false) && (
+            <a
+              href={getSectionFileUrl(file, false)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ed-file-link-btn ed-file-link-btn--view"
+              title={t("earlyDiagnosis.view", "View")}
+            >
+              <Eye size={15} />
+            </a>
+          )
+        )}
+
+        {isProtectedFile ? (
+          <button
+            type="button"
+            className="ed-file-link-btn ed-file-link-btn--download"
+            title={t("earlyDiagnosis.download", "Download")}
+            onClick={() => handleProtectedFileAction(file, true)}
+          >
+            <Download size={15} />
+          </button>
+        ) : (
+          getSectionFileUrl(file, true) && (
+            <a
+              href={getSectionFileUrl(file, true)}
+              download
+              className="ed-file-link-btn ed-file-link-btn--download"
+              title={t("earlyDiagnosis.download", "Download")}
+            >
+              <Download size={15} />
+            </a>
+          )
+        )}
+      </>
+    );
+  };
+
+  const buildScheduleWithoutFile = (section, entryId, fileId) => {
+    const nextSchedule = { ...(booking?.schedule || {}) };
+    const sectionEntries = Array.isArray(nextSchedule?.[section]) ? [...nextSchedule[section]] : [];
+
+    nextSchedule[section] = sectionEntries
+      .map((entry) => {
+        if (normalizeId(entry?._id) !== normalizeId(entryId)) return entry;
+        const nextFiles = Array.isArray(entry?.files)
+          ? entry.files.filter((file) => normalizeId(file?.fileId) !== normalizeId(fileId) && normalizeId(file?._id) !== normalizeId(fileId))
+          : [];
+        return {
+          ...entry,
+          files: nextFiles,
+        };
+      })
+      .filter(Boolean);
+
+    return nextSchedule;
+  };
+
+  const refreshBookingFromResponse = (response) => {
+    const responseData = response?.data;
+    const bookingData = responseData?.success ? responseData.data : responseData;
+    if (bookingData) {
+      setBooking(bookingData);
+    } else {
+      loadBookingDetails();
+    }
+  };
+
+  const handleDeleteSelectedTestFile = async (section, entryId, file) => {
+    if (!file || !entryId) return;
+
+    try {
+      const nextSchedule = buildScheduleWithoutFile(section, entryId, file?.fileId || file?._id);
+      const response = await updateEarlyDetectionBooking(booking._id || id, {
+        schedule: nextSchedule,
+      });
+      refreshBookingFromResponse(response);
+      toast.success(t("earlyDiagnosis.deleted", "Deleted"));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || t("earlyDiagnosis.failedToDeleteFile", "Failed to delete file"));
+    }
+  };
+
+  const handleSaveTestNote = async (section, itemId) => {
+    if (!String(testNoteDraft || "").trim() || !itemId) return;
+
+    setIsSavingTestNote(true);
+    try {
+      const selectedEntries = getManagedTestEntries(section, itemId);
+      const targetEntry = selectedEntries[0];
+
+      const response = editingTestNoteId && targetEntry
+        ? await updateEarlyDetectionTestEntryNote(booking._id || id, section, targetEntry._id, editingTestNoteId, testNoteDraft)
+        : await addEarlyDetectionTestEntryNote(booking._id || id, section, itemId, testNoteDraft);
+
+      refreshBookingFromResponse(response);
+      setShowTestNoteEditor(false);
+      setTestNoteDraft("");
+      setEditingTestNoteId(null);
+      toast.success(t("earlyDiagnosis.saved", "Saved"));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || t("earlyDiagnosis.failedToSaveNote", "Failed to save note"));
+    } finally {
+      setIsSavingTestNote(false);
+    }
+  };
+
+  const handleDeleteTestNote = async (section, itemId, noteId) => {
+    const selectedEntries = getManagedTestEntries(section, itemId);
+    const targetEntry = selectedEntries[0];
+    if (!targetEntry || !noteId) return;
+
+    setIsSavingTestNote(true);
+    try {
+      const response = await deleteEarlyDetectionTestEntryNote(booking._id || id, section, targetEntry._id, noteId);
+      refreshBookingFromResponse(response);
+      if (editingTestNoteId === noteId) {
+        setShowTestNoteEditor(false);
+        setTestNoteDraft("");
+        setEditingTestNoteId(null);
+      }
+      toast.success(t("earlyDiagnosis.deleted", "Deleted"));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || t("earlyDiagnosis.failedToDeleteNote", "Failed to delete note"));
+    } finally {
+      setIsSavingTestNote(false);
+    }
+  };
+
+  const getManagedTestEntries = (section, testId) => {
+    const sectionEntries = Array.isArray(booking?.schedule?.[section]) ? booking.schedule[section] : [];
+    return sectionEntries.filter((entry) => normalizeId(entry?.item?._id) === testId);
+  };
+
+  const renderManagedTestSection = (section) => {
+    const tests = Array.isArray(managedTests?.[section]) ? managedTests[section] : [];
+
+    if (activeTestId) {
+      const selectedTest = tests.find((test) => normalizeId(test?._id) === activeTestId);
+      if (selectedTest) {
+        const selectedEntries = getManagedTestEntries(section, activeTestId);
+        const selectedFiles = selectedEntries.flatMap((entry) => entry?.files || []);
+        const selectedNotes = selectedEntries.flatMap((entry) => (Array.isArray(entry?.notes) ? entry.notes.map((note) => ({ ...note, entryId: entry?._id })) : []));
+
+        const noteEditorVisible = showTestNoteEditor;
+
+        return (
+          <div className="ed-test-detail-page">
+            <div className="ed-test-detail-header">
+              <h2 className="ed-test-detail-title">{readLocalizedName(selectedTest?.name)}</h2>
+            </div>
+
+            <div className="ed-test-detail-actions">
+              <button
+                type="button"
+                className="ed-td-btn"
+                onClick={() => {
+                  setUploadSection(section);
+                  setUploadItemId(activeTestId);
+                  setUploadFiles([]);
+                  setShowUploadModal(true);
+                }}
+              >
+                <Plus size={14} />
+                {t("earlyDiagnosis.uploadFile", "Upload file")}
+              </button>
+              <button
+                type="button"
+                className="ed-td-btn"
+                onClick={() => {
+                  setShowTestNoteEditor(true);
+                  setEditingTestNoteId(null);
+                  setTestNoteDraft("");
+                }}
+              >
+                <FileText size={14} />
+                {t("earlyDiagnosis.addText", "Add text")}
+              </button>
+            </div>
+
+            <div className="ed-td-list">
+              {selectedFiles.length === 0 ? (
+                <div className="ed-td-empty">{t("earlyDiagnosis.noFiles", "No files")}</div>
+              ) : (
+                selectedFiles.map((file, fileIndex) => {
+                  const entry = selectedEntries.find((item) => (item?.files || []).some((entryFile) => normalizeId(entryFile?.fileId) === normalizeId(file?.fileId) || normalizeId(entryFile?._id) === normalizeId(file?._id)));
+                  const entryId = entry?._id || selectedEntries[0]?._id;
+                  return (
+                  <div key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-td-item">
+                    <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
+                    <div className="ed-td-item-info">
+                      <span className="ed-td-item-name">{getFileLabel(file)}</span>
+                      <span className="ed-td-item-meta">
+                        <Clock size={11} />
+                        {formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)}
+                      </span>
+                    </div>
+                    <div className="ed-td-item-actions">
+                      {renderFileActionButtons(file)}
+                      <button
+                        type="button"
+                        className="ed-td-icon-btn ed-td-icon-btn--delete"
+                        title={t("earlyDiagnosis.delete", "Delete")}
+                        onClick={() => handleDeleteSelectedTestFile(section, entryId, file)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                  );
+                })
+              )}
+
+              {!selectedNotes.length && !showTestNoteEditor ? (
+                <div className="ed-td-empty">{t("earlyDiagnosis.noEntries", "No entries yet")}</div>
+              ) : null}
+
+              {selectedNotes.map((note) => (
+                <div key={String(note._id)} className="ed-td-item ed-td-item--note">
+                  <span className="ed-td-note-icon"><FileText size={18} /></span>
+                  <div className="ed-td-item-info">
+                    <div className="ed-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
+                    <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(note?.createdAt)}</span>
+                  </div>
+                  <div className="ed-td-item-actions">
+                    <button
+                      type="button"
+                      className="ed-td-icon-btn"
+                      onClick={() => {
+                        setEditingTestNoteId(note._id);
+                        setTestNoteDraft(note.content || "");
+                        setShowTestNoteEditor(true);
+                      }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className="ed-td-icon-btn ed-td-icon-btn--delete"
+                      onClick={() => handleDeleteTestNote(section, note.entryId || selectedEntries[0]?._id, note._id)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {noteEditorVisible && (
+              <div className="ed-td-note-editor">
+                <RichTextEditor
+                  value={testNoteDraft}
+                  onChange={setTestNoteDraft}
+                  placeholder={t("history_tab.enter_text", "Enter text…")}
+                />
+                <div className="ed-td-note-editor-actions">
+                  <button
+                    type="button"
+                    className="ed-td-save-btn"
+                    disabled={isSavingTestNote || !String(testNoteDraft || "").trim()}
+                    onClick={() => handleSaveTestNote(section, activeTestId)}
+                  >
+                    {isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
+                  </button>
+                  <button
+                    type="button"
+                    className="ed-td-cancel-btn"
+                    onClick={() => {
+                      setShowTestNoteEditor(false);
+                      setTestNoteDraft("");
+                      setEditingTestNoteId(null);
+                    }}
+                  >
+                    {t("earlyDiagnosis.cancel", "Cancel")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+    }
+
+    return (
+      <div className="ed-schedule-section-list">
+        {tests.length === 0 ? (
+          <div className="ed-schedule-empty">{t("earlyDiagnosis.noTests", "No tests configured")}</div>
+        ) : (
+          tests.map((test) => {
+            const testId = normalizeId(test?._id);
+            const isDone = getManagedTestEntries(section, testId).some((entry) => Array.isArray(entry?.files) && entry.files.length > 0);
+
+            return (
+              <button
+                key={testId}
+                type="button"
+                className="ed-test-list-item"
+                onClick={() => setActiveTestId(testId)}
+              >
+                <div className="ed-test-list-item-header">
+                  <span className={`ed-test-list-status${isDone ? " ed-test-list-status--done" : ""}`}>
+                    {isDone ? <CheckCircle size={15} /> : <span className="ed-test-status-circle" />}
+                  </span>
+                  <span className="ed-test-list-name">{readLocalizedName(test?.name)}</span>
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
+    );
   };
 
   const scheduleItems = Array.isArray(
@@ -1650,7 +1985,6 @@ const EarlyDetectionBookingDetails = () => {
     });
   };
 
-  const managedSectionTabs = ["laboratoryTests", "instrumentalAnalysis"];
 
   const handleSaveSpecialistForm = async (idx, formData) => {
     setSpecialistFormSaving((prev) => ({ ...prev, [idx]: true }));
@@ -1880,7 +2214,7 @@ const EarlyDetectionBookingDetails = () => {
 
       <div className="booking-details-content edb-booking-details-content">
         <div
-          className={`ed-details-body edb-details-body${isConclusionTabActive ? " edb-details-body--conclusion-full ed-details-body--full-width" : ""}`}
+          className={`ed-details-body edb-details-body`}
         >
 
 
@@ -1890,7 +2224,7 @@ const EarlyDetectionBookingDetails = () => {
             {/* Left Column */}
             {!showSidebarTabs && (
               <div
-                className={`booking-details-main edb-booking-details-main${isConclusionTabActive ? " edb-booking-details-main--conclusion-full" : ""}`}
+                className={`booking-details-main edb-booking-details-main`}
               >
                 {/*
           <div className="booking-status-header">
@@ -2363,642 +2697,207 @@ const EarlyDetectionBookingDetails = () => {
                 )}
 
                 {activeTab === "medicalHistory" && (
-                  <>
-                    <div className="ed-medical-history-layout">
-                      <aside className="ed-medical-history-sidebar">
-                        <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
+                  <div className="ed-medical-history-layout">
+                    <aside className="ed-medical-history-sidebar">
+                      <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
                         {[
-                          [
-                            "laboratoryTests",
-                            t(
-                              "earlyDiagnosis.laboratoryTests",
-                              "Laboratory analysis",
-                            ),
-                          ],
-                          [
-                            "instrumentalAnalysis",
-                            t(
-                              "earlyDiagnosis.instrumentalAnalysis",
-                              "Исследования/манипуляции",
-                            ),
-                          ],
-                          [
-                            "morphologicalResearch",
-                            t(
-                              "earlyDiagnosis.morphologicalResearch",
-                              "Morphological research",
-                            ),
-                          ],
-                          [
-                            "proceduresAndManipulations",
-                            t(
-                              "earlyDiagnosis.proceduresAndManipulations",
-                              "Procedures and manipulations",
-                            ),
-                          ],
-                          [
-                            "specialistConsultation",
-                            t(
-                              "earlyDiagnosis.specialistConsultation",
-                              "Specialist Consultation",
-                            ),
-                          ],
-                          [
-                            "conclusion",
-                            t(
-                              "earlyDiagnosis.conclusion",
-                              "Conclusion",
-                            ),
-                          ],
+                          ["laboratoryTests", t("earlyDiagnosis.laboratoryTests", "Laboratory analysis")],
+                          ["instrumentalAnalysis", t("earlyDiagnosis.instrumentalAnalysis", "Исследования/манипуляции")],
+                          ["morphologicalResearch", t("earlyDiagnosis.morphologicalResearch", "Morphological research")],
+                          ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations", "Procedures and manipulations")],
+                          ["specialistConsultation", t("earlyDiagnosis.specialistConsultation", "Specialist Consultation")],
+                          ["conclusion", t("earlyDiagnosis.conclusion", "Conclusion")],
                         ].map(([key, label]) => (
-                          <button
-                            key={key}
-                            type="button"
-                            className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
-                            onClick={() => setActiveScheduleTab(key)}
-                          >
-                            <span>{label}</span>
-                            {managedSectionTabs.includes(key) && (
-                              <span
-                                className="ed-tab-settings-btn"
-                                role="button"
-                                tabIndex={0}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openTestSettingsModal(key);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
+                          <React.Fragment key={key}>
+                            <button
+                              type="button"
+                              className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
+                              onClick={() => {
+                                setActiveScheduleTab(key);
+                                setActiveTestId(null);
+                              }}
+                            >
+                              <span>{label}</span>
+                              {["laboratoryTests", "instrumentalAnalysis"].includes(key) && (
+                                <span
+                                  className="ed-tab-settings-btn"
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
                                     e.stopPropagation();
                                     openTestSettingsModal(key);
-                                  }
-                                }}
-                                title={t(
-                                  "earlyDiagnosis.manageTests",
-                                  "Manage tests",
-                                )}
-                              >
-                                <Settings size={14} />
-                              </span>
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      openTestSettingsModal(key);
+                                    }
+                                  }}
+                                  title={t("earlyDiagnosis.manageTests", "Manage tests")}
+                                >
+                                  <Settings size={14} />
+                                </span>
+                              )}
+                            </button>
+
+                            {/* Sub-nav for managed tests - show for all categories that have tests */}
+                            {managedSectionTabs.includes(key) && (managedTests?.[key] || []).length > 0 && (
+                              <div className="ed-subnav-test-list">
+                                {(managedTests?.[key] || []).map((test) => {
+                                  const testId = normalizeId(test?._id);
+                                  const isActive = activeScheduleTab === key && activeTestId === testId;
+                                  return (
+                                    <button
+                                      key={testId}
+                                      className={`ed-subnav-test-item ${isActive ? "active" : ""}`}
+                                      onClick={() => {
+                                        setActiveScheduleTab(key);
+                                        setActiveTestId(testId);
+                                      }}
+                                    >
+                                      {readLocalizedName(test?.name)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             )}
-                          </button>
+                          </React.Fragment>
                         ))}
-                        </div>
-                      </aside>
+                      </div>
+                    </aside>
 
-                      <div className="ed-medical-history-content">
-                        <div className="detail-section">
+                    <div className="ed-medical-history-content">
+                      <div className="detail-section">
+                        {activeScheduleTab === "laboratoryTests" && renderManagedTestSection("laboratoryTests")}
+                        {activeScheduleTab === "instrumentalAnalysis" && renderManagedTestSection("instrumentalAnalysis")}
 
-                      {activeScheduleTab === "laboratoryTests" && (
-                        <div className="ed-schedule-section-list">
-                          <div className="ed-section-actions-row">
-                            <button
-                              type="button"
-                              className="ed-upload-btn"
-                              onClick={() =>
-                                openUploadSectionModal("laboratoryTests")
-                              }
-                            >
-                              {t("earlyDiagnosis.uploadFile", "Upload file")}
-                            </button>
-                          </div>
-                          {(booking?.schedule?.laboratoryTests || []).length ===
-                          0 ? (
-                            <div className="ed-schedule-empty">
-                              {t("earlyDiagnosis.noFiles", "No files")}
+                        {activeScheduleTab === "morphologicalResearch" && (
+                          <div className="ed-schedule-section-list">
+                            <div className="ed-section-actions-row">
+                              <button
+                                type="button"
+                                className="ed-upload-btn"
+                                onClick={() => openUploadSectionModal("morphologicalResearch")}
+                              >
+                                {t("earlyDiagnosis.uploadFile")}
+                              </button>
                             </div>
-                          ) : (
-                            (booking?.schedule?.laboratoryTests || []).map(
-                              (entry, index) => (
-                                <div
-                                  className="ed-section-card ed-test-card"
-                                  key={entry?._id || `lab-${index}`}
-                                >
-                                  <div className="ed-test-card-head">
-                                    <div className="ed-test-icon-wrap">
-                                      <FileText size={18} />
-                                    </div>
-                                    <div className="ed-test-head-main">
-                                      <div className="ed-section-title">
-                                        {getManagedTestTitle(
-                                          entry,
-                                          "laboratoryTests",
-                                        )}
+                            {(booking?.schedule?.morphologicalResearch?.files || []).length === 0 ? (
+                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noFiles")}</div>
+                            ) : (
+                              <div className="ed-section-card ed-test-card">
+                                <ul className="ed-files-list ed-test-files-list">
+                                  {(booking?.schedule?.morphologicalResearch?.files || []).map((file, fileIndex) => (
+                                    <li key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-file-row ed-test-file-row">
+                                      <div className="ed-test-file-left">
+                                        <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
+                                          {getFileExtension(file).toUpperCase()}
+                                        </span>
+                                        <span className="ed-test-file-meta">
+                                          <span className="ed-test-file-name">{getFileLabel(file)}</span>
+                                          <span className="ed-test-file-subtext">
+                                            {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy || file?.uploadedByDoctorName].filter(Boolean).join(" • ")}
+                                          </span>
+                                        </span>
                                       </div>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="ed-test-more-btn"
-                                      aria-label="More"
-                                    >
-                                      <MoreVertical size={16} />
-                                    </button>
-                                  </div>
+                                      <span className="ed-file-actions ed-test-file-actions">
+                                        {renderFileActionButtons(file)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
 
-                                  {Array.isArray(entry?.files) &&
-                                    entry.files.length > 0 && (
-                                      <ul className="ed-files-list ed-test-files-list">
-                                        {entry.files.map((file, fileIndex) => (
-                                          <li
-                                            key={
-                                              normalizeId(file?.fileId) ||
-                                              file?._id ||
-                                              fileIndex
-                                            }
-                                            className="ed-file-row ed-test-file-row"
-                                          >
-                                            <div className="ed-test-file-left">
-                                              <span
-                                                className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                                              >
-                                                {getFileExtension(
-                                                  file,
-                                                ).toUpperCase()}
-                                              </span>
-                                              <span className="ed-test-file-meta">
-                                                <span className="ed-test-file-name">
-                                                  {getFileLabel(file)}
-                                                </span>
-                                                <span className="ed-test-file-subtext">
-                                                  {[
-                                                    formatFileSize(file),
-                                                    file?.uploadedByName ||
-                                                      file?.uploadedBy ||
-                                                      file?.uploadedByDoctorName,
-                                                  ]
-                                                    .filter(Boolean)
-                                                    .join(" • ")}
-                                                </span>
-                                              </span>
-                                            </div>
-                                            <span className="ed-file-actions ed-test-file-actions">
-                                              {getSectionFileUrl(file) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    false,
-                                                  )}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="ed-file-link-btn ed-file-link-btn--view"
-                                                  title={t(
-                                                    "earlyDiagnosis.view",
-                                                    "View",
-                                                  )}
-                                                >
-                                                  <Eye size={14} />
-                                                </a>
-                                              )}
-                                              {getSectionFileUrl(
-                                                file,
-                                                true,
-                                              ) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    true,
-                                                  )}
-                                                  download
-                                                  className="ed-file-link-btn ed-file-link-btn--download"
-                                                  title={t(
-                                                    "earlyDiagnosis.download",
-                                                    "Download",
-                                                  )}
-                                                >
-                                                  <Download size={14} />
-                                                </a>
-                                              )}
-                                            </span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
+                            <div className="ed-section-card">
+                              <div className="ed-section-head-row">
+                                <div className="ed-section-title">{t("earlyDiagnosis.morphologicalResearch")}</div>
+                                <div className="ed-history-actions">
+                                  <button
+                                    type="button"
+                                    className="save-btn"
+                                    onClick={() => handleSaveManagedSectionComment("morphologicalResearch")}
+                                    disabled={!!sectionEditors?.morphologicalResearch?.saving}
+                                  >
+                                    {sectionEditors?.morphologicalResearch?.saving ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.save")}
+                                  </button>
                                 </div>
-                              ),
-                            )
-                          )}
-                        </div>
-                      )}
-
-                      {activeScheduleTab === "instrumentalAnalysis" && (
-                        <div className="ed-schedule-section-list">
-                          <div className="ed-section-actions-row">
-                            <button
-                              type="button"
-                              className="ed-upload-btn"
-                              onClick={() =>
-                                openUploadSectionModal("instrumentalAnalysis")
-                              }
-                            >
-                              {t("earlyDiagnosis.uploadFile", "Upload file")}
-                            </button>
-                          </div>
-                          {(booking?.schedule?.instrumentalAnalysis || [])
-                            .length === 0 ? (
-                            <div className="ed-schedule-empty">
-                              {t("earlyDiagnosis.noFiles", "No files")}
+                              </div>
+                              <div className="ed-history-rich-editor">
+                                <RichTextEditor
+                                  value={sectionEditors?.morphologicalResearch?.value || ""}
+                                  onChange={(html) => updateSectionEditor("morphologicalResearch", { value: html })}
+                                  placeholder={t("history_tab.enter_text")}
+                                />
+                              </div>
                             </div>
-                          ) : (
-                            (booking?.schedule?.instrumentalAnalysis || []).map(
-                              (entry, index) => (
-                                <div
-                                  className="ed-section-card ed-test-card"
-                                  key={entry?._id || `inst-${index}`}
-                                >
-                                  <div className="ed-test-card-head">
-                                    <div className="ed-test-icon-wrap">
-                                      <FileText size={18} />
-                                    </div>
-                                    <div className="ed-test-head-main">
-                                      <div className="ed-section-title">
-                                        {getManagedTestTitle(
-                                          entry,
-                                          "instrumentalAnalysis",
-                                        )}
+                          </div>
+                        )}
+
+                        {activeScheduleTab === "proceduresAndManipulations" && (
+                          <div className="ed-schedule-section-list">
+                            <div className="ed-section-actions-row">
+                              <button
+                                type="button"
+                                className="ed-upload-btn"
+                                onClick={() => openUploadSectionModal("proceduresAndManipulations")}
+                              >
+                                {t("earlyDiagnosis.uploadFile")}
+                              </button>
+                            </div>
+
+                            {(booking?.schedule?.proceduresAndManipulations?.files || []).length === 0 ? (
+                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noFiles")}</div>
+                            ) : (
+                              <div className="ed-section-card ed-test-card">
+                                <ul className="ed-files-list ed-test-files-list">
+                                  {(booking?.schedule?.proceduresAndManipulations?.files || []).map((file, fileIndex) => (
+                                    <li key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-file-row ed-test-file-row">
+                                      <div className="ed-test-file-left">
+                                        <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
+                                          {getFileExtension(file).toUpperCase()}
+                                        </span>
+                                        <span className="ed-test-file-meta">
+                                          <span className="ed-test-file-name">{getFileLabel(file)}</span>
+                                          <span className="ed-test-file-subtext">
+                                            {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy || file?.uploadedByDoctorName].filter(Boolean).join(" • ")}
+                                          </span>
+                                        </span>
                                       </div>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="ed-test-more-btn"
-                                      aria-label="More"
-                                    >
-                                      <MoreVertical size={16} />
-                                    </button>
-                                  </div>
+                                      <span className="ed-file-actions ed-test-file-actions">
+                                        {renderFileActionButtons(file)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
 
-                                  {Array.isArray(entry?.files) &&
-                                    entry.files.length > 0 && (
-                                      <ul className="ed-files-list ed-test-files-list">
-                                        {entry.files.map((file, fileIndex) => (
-                                          <li
-                                            key={
-                                              normalizeId(file?.fileId) ||
-                                              file?._id ||
-                                              fileIndex
-                                            }
-                                            className="ed-file-row ed-test-file-row"
-                                          >
-                                            <div className="ed-test-file-left">
-                                              <span
-                                                className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                                              >
-                                                {getFileExtension(
-                                                  file,
-                                                ).toUpperCase()}
-                                              </span>
-                                              <span className="ed-test-file-meta">
-                                                <span className="ed-test-file-name">
-                                                  {getFileLabel(file)}
-                                                </span>
-                                                <span className="ed-test-file-subtext">
-                                                  {[
-                                                    formatFileSize(file),
-                                                    file?.uploadedByName ||
-                                                      file?.uploadedBy ||
-                                                      file?.uploadedByDoctorName,
-                                                  ]
-                                                    .filter(Boolean)
-                                                    .join(" • ")}
-                                                </span>
-                                              </span>
-                                            </div>
-                                            <span className="ed-file-actions ed-test-file-actions">
-                                              {getSectionFileUrl(file) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    false,
-                                                  )}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="ed-file-link-btn ed-file-link-btn--view"
-                                                  title={t(
-                                                    "earlyDiagnosis.view",
-                                                    "View",
-                                                  )}
-                                                >
-                                                  <Eye size={14} />
-                                                </a>
-                                              )}
-                                              {getSectionFileUrl(
-                                                file,
-                                                true,
-                                              ) && (
-                                                <a
-                                                  href={getSectionFileUrl(
-                                                    file,
-                                                    true,
-                                                  )}
-                                                  download
-                                                  className="ed-file-link-btn ed-file-link-btn--download"
-                                                  title={t(
-                                                    "earlyDiagnosis.download",
-                                                    "Download",
-                                                  )}
-                                                >
-                                                  <Download size={14} />
-                                                </a>
-                                              )}
-                                            </span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
+                            <div className="ed-section-card">
+                              <div className="ed-section-head-row">
+                                <div className="ed-section-title">{t("earlyDiagnosis.proceduresAndManipulations")}</div>
+                                <div className="ed-history-actions">
+                                  <button
+                                    type="button"
+                                    className="save-btn"
+                                    onClick={() => handleSaveManagedSectionComment("proceduresAndManipulations")}
+                                    disabled={!!sectionEditors?.proceduresAndManipulations?.saving}
+                                  >
+                                    {sectionEditors?.proceduresAndManipulations?.saving ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.save")}
+                                  </button>
                                 </div>
-                              ),
-                            )
-                          )}
-                        </div>
-                      )}
-
-                      {activeScheduleTab === "morphologicalResearch" && (
-                        <div className="ed-schedule-section-list">
-                          <div className="ed-section-actions-row">
-                            <button
-                              type="button"
-                              className="ed-upload-btn"
-                              onClick={() =>
-                                openUploadSectionModal("morphologicalResearch")
-                              }
-                            >
-                              {t("earlyDiagnosis.uploadFile", "Upload file")}
-                            </button>
-                          </div>
-
-                          {(
-                            booking?.schedule?.morphologicalResearch?.files ||
-                            []
-                          ).length === 0 ? (
-                            <div className="ed-schedule-empty">
-                              {t("earlyDiagnosis.noFiles", "No files")}
-                            </div>
-                          ) : (
-                            <div className="ed-section-card ed-test-card">
-                              <ul className="ed-files-list ed-test-files-list">
-                                {(
-                                  booking?.schedule?.morphologicalResearch
-                                    ?.files || []
-                                ).map((file, fileIndex) => (
-                                  <li
-                                    key={
-                                      normalizeId(file?.fileId) ||
-                                      file?._id ||
-                                      fileIndex
-                                    }
-                                    className="ed-file-row ed-test-file-row"
-                                  >
-                                    <div className="ed-test-file-left">
-                                      <span
-                                        className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                                      >
-                                        {getFileExtension(file).toUpperCase()}
-                                      </span>
-                                      <span className="ed-test-file-meta">
-                                        <span className="ed-test-file-name">
-                                          {getFileLabel(file)}
-                                        </span>
-                                        <span className="ed-test-file-subtext">
-                                          {[
-                                            formatFileSize(file),
-                                            file?.uploadedByName ||
-                                              file?.uploadedBy ||
-                                              file?.uploadedByDoctorName,
-                                          ]
-                                            .filter(Boolean)
-                                            .join(" • ")}
-                                        </span>
-                                      </span>
-                                    </div>
-                                    <span className="ed-file-actions ed-test-file-actions">
-                                      {getSectionFileUrl(file) && (
-                                        <a
-                                          href={getSectionFileUrl(file, false)}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="ed-file-link-btn ed-file-link-btn--view"
-                                          title={t(
-                                            "earlyDiagnosis.view",
-                                            "View",
-                                          )}
-                                        >
-                                          <Eye size={14} />
-                                        </a>
-                                      )}
-                                      {getSectionFileUrl(file, true) && (
-                                        <a
-                                          href={getSectionFileUrl(file, true)}
-                                          download
-                                          className="ed-file-link-btn ed-file-link-btn--download"
-                                          title={t(
-                                            "earlyDiagnosis.download",
-                                            "Download",
-                                          )}
-                                        >
-                                          <Download size={14} />
-                                        </a>
-                                      )}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <div className="ed-section-card">
-                            <div className="ed-section-head-row">
-                              <div className="ed-section-title">
-                                {t(
-                                  "earlyDiagnosis.morphologicalResearch",
-                                  "Morphological research",
-                                )}
                               </div>
-                              <div className="ed-history-actions">
-                                <button
-                                  type="button"
-                                  className="save-btn"
-                                  onClick={() =>
-                                    handleSaveManagedSectionComment(
-                                      "morphologicalResearch",
-                                    )
-                                  }
-                                  disabled={
-                                    !!sectionEditors?.morphologicalResearch
-                                      ?.saving
-                                  }
-                                >
-                                  {sectionEditors?.morphologicalResearch?.saving
-                                    ? t("earlyDiagnosis.saving", "Saving...")
-                                    : t("earlyDiagnosis.save", "Save")}
-                                </button>
+                              <div className="ed-history-rich-editor">
+                                <RichTextEditor
+                                  value={sectionEditors?.proceduresAndManipulations?.value || ""}
+                                  onChange={(html) => updateSectionEditor("proceduresAndManipulations", { value: html })}
+                                  placeholder={t("history_tab.enter_text")}
+                                />
                               </div>
                             </div>
-                            <div className="ed-history-rich-editor">
-                              <RichTextEditor
-                                value={
-                                  sectionEditors?.morphologicalResearch
-                                    ?.value || ""
-                                }
-                                onChange={(html) =>
-                                  updateSectionEditor("morphologicalResearch", {
-                                    value: html,
-                                  })
-                                }
-                                placeholder={t(
-                                  "history_tab.enter_text",
-                                  "Enter text...",
-                                )}
-                              />
-                            </div>
                           </div>
-                        </div>
-                      )}
-
-                      {activeScheduleTab === "proceduresAndManipulations" && (
-                        <div className="ed-schedule-section-list">
-                          <div className="ed-section-actions-row">
-                            <button
-                              type="button"
-                              className="ed-upload-btn"
-                              onClick={() =>
-                                openUploadSectionModal(
-                                  "proceduresAndManipulations",
-                                )
-                              }
-                            >
-                              {t("earlyDiagnosis.uploadFile", "Upload file")}
-                            </button>
-                          </div>
-
-                          {(
-                            booking?.schedule?.proceduresAndManipulations
-                              ?.files || []
-                          ).length === 0 ? (
-                            <div className="ed-schedule-empty">
-                              {t("earlyDiagnosis.noFiles", "No files")}
-                            </div>
-                          ) : (
-                            <div className="ed-section-card ed-test-card">
-                              <ul className="ed-files-list ed-test-files-list">
-                                {(
-                                  booking?.schedule?.proceduresAndManipulations
-                                    ?.files || []
-                                ).map((file, fileIndex) => (
-                                  <li
-                                    key={
-                                      normalizeId(file?.fileId) ||
-                                      file?._id ||
-                                      fileIndex
-                                    }
-                                    className="ed-file-row ed-test-file-row"
-                                  >
-                                    <div className="ed-test-file-left">
-                                      <span
-                                        className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                                      >
-                                        {getFileExtension(file).toUpperCase()}
-                                      </span>
-                                      <span className="ed-test-file-meta">
-                                        <span className="ed-test-file-name">
-                                          {getFileLabel(file)}
-                                        </span>
-                                        <span className="ed-test-file-subtext">
-                                          {[
-                                            formatFileSize(file),
-                                            file?.uploadedByName ||
-                                              file?.uploadedBy ||
-                                              file?.uploadedByDoctorName,
-                                          ]
-                                            .filter(Boolean)
-                                            .join(" • ")}
-                                        </span>
-                                      </span>
-                                    </div>
-                                    <span className="ed-file-actions ed-test-file-actions">
-                                      {getSectionFileUrl(file) && (
-                                        <a
-                                          href={getSectionFileUrl(file, false)}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="ed-file-link-btn ed-file-link-btn--view"
-                                          title={t(
-                                            "earlyDiagnosis.view",
-                                            "View",
-                                          )}
-                                        >
-                                          <Eye size={14} />
-                                        </a>
-                                      )}
-                                      {getSectionFileUrl(file, true) && (
-                                        <a
-                                          href={getSectionFileUrl(file, true)}
-                                          download
-                                          className="ed-file-link-btn ed-file-link-btn--download"
-                                          title={t(
-                                            "earlyDiagnosis.download",
-                                            "Download",
-                                          )}
-                                        >
-                                          <Download size={14} />
-                                        </a>
-                                      )}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <div className="ed-section-card">
-                            <div className="ed-section-head-row">
-                              <div className="ed-section-title">
-                                {t(
-                                  "earlyDiagnosis.proceduresAndManipulations",
-                                  "Procedures and manipulations",
-                                )}
-                              </div>
-                              <div className="ed-history-actions">
-                                <button
-                                  type="button"
-                                  className="save-btn"
-                                  onClick={() =>
-                                    handleSaveManagedSectionComment(
-                                      "proceduresAndManipulations",
-                                    )
-                                  }
-                                  disabled={
-                                    !!sectionEditors?.proceduresAndManipulations
-                                      ?.saving
-                                  }
-                                >
-                                  {sectionEditors?.proceduresAndManipulations
-                                    ?.saving
-                                    ? t("earlyDiagnosis.saving", "Saving...")
-                                    : t("earlyDiagnosis.save", "Save")}
-                                </button>
-                              </div>
-                            </div>
-                            <div className="ed-history-rich-editor">
-                              <RichTextEditor
-                                value={
-                                  sectionEditors?.proceduresAndManipulations
-                                    ?.value || ""
-                                }
-                                onChange={(html) =>
-                                  updateSectionEditor(
-                                    "proceduresAndManipulations",
-                                    { value: html },
-                                  )
-                                }
-                                placeholder={t(
-                                  "history_tab.enter_text",
-                                  "Enter text...",
-                                )}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                        )}
 
                       {activeScheduleTab === "specialistConsultation" && (
                         <div className="detail-section">
@@ -3139,10 +3038,9 @@ const EarlyDetectionBookingDetails = () => {
                           <EarlyDetectionReportTab booking={booking} />
                         </div>
                       )}
-                        </div>
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             )}
@@ -3151,316 +3049,6 @@ const EarlyDetectionBookingDetails = () => {
             {showSidebarTabs && (
               <div className="booking-details-sidebar booking-details-sidebar--full">
                 {/* Payment Summary */}
-                {false && activeTab === "payments" && (
-                  <div className="sidebar-section">
-                    <div className="sidebar-header">
-                      <h3 className="sidebar-title">
-                        {t("earlyDiagnosis.paymentSummary").toUpperCase()}
-                      </h3>
-                      {booking.payment?.status !== "paid" && (
-                        <div className="new-payment-dropdown-wrapper">
-                          <button
-                            onClick={() => setShowPaymentDropdown((v) => !v)}
-                            disabled={isGeneratingPayment}
-                            className="generate-payment-btn"
-                          >
-                            <Plus size={16} />
-                            {isGeneratingPayment
-                              ? t("earlyDiagnosis.generating")
-                              : t("earlyDiagnosis.newPayment")}
-                            <ChevronDown size={14} />
-                          </button>
-                          {showPaymentDropdown && (
-                            <div className="new-payment-dropdown">
-                              <button
-                                className="dropdown-item"
-                                onClick={() => {
-                                  setShowPaymentDropdown(false);
-                                  handleGeneratePaymentLink();
-                                }}
-                              >
-                                <Globe size={14} />
-                                {t("earlyDiagnosis.onlinePayment") || "Online"}
-                              </button>
-                              <button
-                                className="dropdown-item"
-                                onClick={() => {
-                                  setShowPaymentDropdown(false);
-                                  openManualPaymentModal();
-                                }}
-                              >
-                                <Pencil size={14} />
-                                {t("earlyDiagnosis.manualPayment") || "Manual"}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Payment Links Table — shows paymentLinks + paymentHistory fallback */}
-                    {(() => {
-                      const linkRows = booking.payment?.paymentLinks || [];
-                      // Fallback: build rows from paymentHistory for old/manual records not in paymentLinks
-                      const historyRows = (booking.paymentHistory || [])
-                        .filter(
-                          (h) =>
-                            !linkRows.some(
-                              (l) => l.paymentId === h.transactionId,
-                            ),
-                        )
-                        .map((h, i) => ({
-                          paymentId: h.transactionId || `hist-${i}`,
-                          orderId: booking.invoiceNumber || "",
-                          paymentUrl: "",
-                          amount:
-                            (booking.totalAmount ||
-                              booking.package?.price ||
-                              0) * 100,
-                          status: h.status,
-                          createdAt: h.changedAt,
-                          notes: h.notes,
-                          isHistory: true,
-                        }));
-
-                      // Fallback: synthesize a row from payment.tbank / payment.paymentLink
-                      // when paymentLinks array is empty but a payment link exists
-                      const tbankFallback = [];
-                      if (
-                        linkRows.length === 0 &&
-                        historyRows.length === 0 &&
-                        (booking.payment?.paymentLink ||
-                          booking.payment?.tbank?.paymentId ||
-                          booking.payment?.transactionId)
-                      ) {
-                        tbankFallback.push({
-                          paymentId:
-                            booking.payment?.tbank?.paymentId ||
-                            booking.payment?.transactionId ||
-                            `pay-${booking._id}`,
-                          orderId:
-                            booking.payment?.tbank?.orderId ||
-                            booking.invoiceNumber ||
-                            "",
-                          paymentUrl:
-                            booking.payment?.paymentLink ||
-                            booking.payment?.tbank?.paymentUrl ||
-                            "",
-                          amount:
-                            booking.payment?.tbank?.amount ||
-                            (booking.totalAmount ||
-                              booking.package?.price ||
-                              0) * 100,
-                          status: booking.payment?.status,
-                          createdAt:
-                            booking.payment?.paidAt ||
-                            booking.updatedAt ||
-                            booking.createdAt,
-                          notes: "",
-                          isTbankFallback: true,
-                        });
-                      }
-
-                      const tableRows = [
-                        ...linkRows,
-                        ...historyRows,
-                        ...tbankFallback,
-                      ];
-                      if (tableRows.length === 0) return null;
-                      return (
-                        <div className="payment-links-table">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>{t("earlyDiagnosis.created")}</th>
-                                <th>{t("earlyDiagnosis.amount")}</th>
-                                <th>{t("earlyDiagnosis.status")}</th>
-                                <th>{t("earlyDiagnosis.actions")}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {tableRows.map((link, index) => {
-                                const isEditingThis =
-                                  editingRowId === (link.paymentId || index);
-                                const hasUrl = !!link.paymentUrl;
-                                return (
-                                  <tr key={link.paymentId || index}>
-                                    <td>
-                                      {new Date(link.createdAt).toLocaleString(
-                                        i18n.language === "ru"
-                                          ? "ru-RU"
-                                          : "en-US",
-                                        {
-                                          month: "short",
-                                          day: "numeric",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        },
-                                      )}
-                                    </td>
-                                    <td>
-                                      {(
-                                        (link.amount || 0) / 100
-                                      ).toLocaleString()}{" "}
-                                      ₽
-                                    </td>
-                                    <td>
-                                      {isEditingThis ? (
-                                        <select
-                                          value={editingRowStatus}
-                                          onChange={(e) =>
-                                            setEditingRowStatus(e.target.value)
-                                          }
-                                          className="row-status-select"
-                                        >
-                                          <option value="pending">
-                                            {t(
-                                              "earlyDiagnosis.status_pending",
-                                            ) || "Pending"}
-                                          </option>
-                                          <option value="paid">
-                                            {t("earlyDiagnosis.status_paid") ||
-                                              "Paid"}
-                                          </option>
-                                          <option value="processing">
-                                            {t(
-                                              "earlyDiagnosis.status_processing",
-                                            ) || "Processing"}
-                                          </option>
-                                          <option value="failed">
-                                            {t(
-                                              "earlyDiagnosis.status_failed",
-                                            ) || "Failed"}
-                                          </option>
-                                          <option value="refunded">
-                                            {t(
-                                              "earlyDiagnosis.status_refunded",
-                                            ) || "Refunded"}
-                                          </option>
-                                        </select>
-                                      ) : (
-                                        <span
-                                          className={`appt-status-badge ${getApptStatusClass(link.status)}`}
-                                        >
-                                          {(
-                                            t(
-                                              `earlyDiagnosis.status_${link.status?.toLowerCase()}`,
-                                            ) ||
-                                            link.status ||
-                                            ""
-                                          ).toUpperCase()}
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td>
-                                      <div className="payment-actions">
-                                        {isEditingThis ? (
-                                          <button
-                                            onClick={() =>
-                                              handleRowEditSave(link)
-                                            }
-                                            className="action-btn save-row-btn"
-                                            title="Save"
-                                          >
-                                            <Save size={14} />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={() => {
-                                              setEditingRowId(
-                                                link.paymentId || index,
-                                              );
-                                              setEditingRowStatus(
-                                                link.status || "pending",
-                                              );
-                                            }}
-                                            className="action-btn edit-row-btn"
-                                            title="Edit"
-                                          >
-                                            <Edit2 size={14} />
-                                          </button>
-                                        )}
-                                        {hasUrl && (
-                                          <>
-                                            <button
-                                              onClick={() =>
-                                                handleCopySpecificLink(
-                                                  link.paymentId,
-                                                  link.paymentUrl,
-                                                )
-                                              }
-                                              className="action-btn copy-btn"
-                                              title="Copy link"
-                                            >
-                                              {copiedLinkId ===
-                                              link.paymentId ? (
-                                                <Check size={14} />
-                                              ) : (
-                                                <Copy size={14} />
-                                              )}
-                                            </button>
-                                            <a
-                                              href={link.paymentUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="action-btn open-btn"
-                                              title="Open link"
-                                            >
-                                              <ExternalLink size={14} />
-                                            </a>
-                                          </>
-                                        )}
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      );
-                    })()}
-
-                    <div className="payment-row">
-                      <span className="payment-label">
-                        {t("earlyDiagnosis.packagePrice")}
-                      </span>
-                      <span className="payment-value">
-                        {(booking.package?.price || 0).toLocaleString()} ₽
-                      </span>
-                    </div>
-                    {booking.addOns &&
-                      booking.addOns.length > 0 &&
-                      booking.addOns.map((addon, idx) => (
-                        <div className="payment-row" key={addon.id || idx}>
-                          <span className="payment-label">{addon.name}</span>
-                          <span className="payment-value">
-                            {(addon.price || 0).toLocaleString()} ₽
-                          </span>
-                        </div>
-                      ))}
-                    <div className="payment-row">
-                      <span className="payment-label">
-                        {t("earlyDiagnosis.taxesFees")}
-                      </span>
-                      <span className="payment-value">0 ₽</span>
-                    </div>
-                    <div className="payment-divider"></div>
-                    <div className="payment-total">
-                      <span className="total-label">
-                        {t("earlyDiagnosis.totalPaid")}
-                      </span>
-                      <span className="total-value">
-                        {(
-                          booking.totalAmount ||
-                          booking.package?.price ||
-                          0
-                        ).toLocaleString()}{" "}
-                        ₽
-                      </span>
-                    </div>
-                  </div>
-                )}
 
                 {/* History & Logs */}
                 {activeTab === "history" && (
@@ -3763,15 +3351,15 @@ const EarlyDetectionBookingDetails = () => {
                             </p>
                           </div>
                         )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
       {showTestSettingsModal &&
         createPortal(

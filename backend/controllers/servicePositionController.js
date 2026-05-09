@@ -374,7 +374,9 @@ exports.importCSV = async (req, res) => {
 exports.getPositions = async (req, res) => {
   try {
     const applicationId = req.params.applicationId;
-    const application = await Application.findOne({ applicationId }).populate("addedServicePositions").lean();
+    const application = await Application.findOne({ applicationId })
+      .populate({ path: "addedServicePositions", strictPopulate: false })
+      .lean();
     if (!application) return res.status(404).json({ message: "Application not found" });
     res.json({ positions: application.addedServicePositions || [] });
   }

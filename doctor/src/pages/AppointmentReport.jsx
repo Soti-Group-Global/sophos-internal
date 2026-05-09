@@ -210,7 +210,7 @@ function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4 }) {
   );
 }
 
-export default function AppointmentReport({ booking, className = "" }) {
+export default function AppointmentReport({ booking }) {
   const reportRef = useRef(null);
   const [generating, setGenerating] = useState(false);
 
@@ -330,7 +330,7 @@ export default function AppointmentReport({ booking, className = "" }) {
 
 
   return (
-    <div className={`ed-report-tab ${className}`.trim()}>
+    <div className="ed-report-tab">
 
       {/* ── Toolbar ── */}
       <div className="ed-report-toolbar">

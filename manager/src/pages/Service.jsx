@@ -224,12 +224,12 @@ const Service = ({ applicationId }) => {
 													<span className="service-position-card__name">
 														{position.serviceCode || position.pmuCode || position.code || t("service.unnamedPosition", "Unnamed position")}
 													</span>
-													<span className="service-position-card__meta">
+													{/* <span className="service-position-card__meta">
 														{position.name && <span>{position.name}</span>}
 														{position.serviceCode && position.name && <span>•</span>}
 														{position.serviceCode && <span>{position.serviceCode}</span>}
 														{position.pmuCode && <span>{position.pmuCode}</span>}
-													</span>
+													</span> */}
 												</div>
 												<div className="service-position-card__right">
 													<span className="service-position-card__price">{formatPrice(position.price)}</span>

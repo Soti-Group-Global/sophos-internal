@@ -1,108 +1,68 @@
 import React, { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
-import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX } from "react-icons/fi";
 import {
-  updatePatientHistoryForm as updateHistoryForm,
+  updateHistoryFieldVerify,
   getHistoryTemplates,
   createHistoryTemplate,
   updateHistoryTemplate,
-  deleteHistoryTemplate, 
+  deleteHistoryTemplate,
+  getApplicationsByPatientId,
+  getAllApplicationLaboratoryTests,
+  createApplicationLaboratoryTest,
+  updateApplicationLaboratoryTest,
+  deleteApplicationLaboratoryTest,
+  uploadApplicationLaboratoryTestFile,
+  removeApplicationLaboratoryTestFile,
+  fetchApplicationLaboratoryTestFile,
+  addApplicationLaboratoryTestNote,
+  updateApplicationLaboratoryTestNote,
+  deleteApplicationLaboratoryTestNote,
+  getAllApplicationInstrumentalAnalysis,
+  createApplicationInstrumentalAnalysis,
+  updateApplicationInstrumentalAnalysis,
+  deleteApplicationInstrumentalAnalysis,
+  uploadApplicationInstrumentalAnalysisFile,
+  removeApplicationInstrumentalAnalysisFile,
+  fetchApplicationInstrumentalAnalysisFile,
+  addApplicationInstrumentalAnalysisNote,
+  updateApplicationInstrumentalAnalysisNote,
+  deleteApplicationInstrumentalAnalysisNote,
+  getApplicationSection,
+  uploadApplicationSectionFile,
+  removeApplicationSectionFile,
+  updateApplicationSectionComment,
 } from "../utils/api";
 import RichTextEditor from "./RichTextEditor";
 import TemplatePicker from "./TemplatePicker";
+import AppointmentReport from "../pages/AppointmentReport";
 import "./HistoryTab.css";
 
-/* ────────────────────────────────────────────────────────────
-   Schema — each section has:
-     id, titleKey (i18n key), fields[]  (key, labelKey?)
-     optional subsections[] with the same shape
-   ──────────────────────────────────────────────────────────── */
 const HISTORY_SECTIONS = [
-  /* 1 */
-  {
-    id: "complaints",
-    titleKey: "history_tab.sections.complaints",
-    fields: [{ key: "complaints" }],
-  },
-  /* 2 */
-  {
-    id: "anamnesisMorbi",
-    titleKey: "history_tab.sections.anamnesisMorbi",
-    fields: [{ key: "anamnesisMorbi" }],
-  },
-  /* 3 */
-  {
-    id: "anamnesisVitae",
-    titleKey: "history_tab.sections.anamnesisVitae",
-    fields: [{ key: "anamnesisVitae" }],
-  },
-  /* 4 */
+  { id: "complaints", titleKey: "sections.complaints", fields: [{ key: "complaints" }] },
+  { id: "anamnesisMorbi", titleKey: "sections.anamnesisMorbi", fields: [{ key: "anamnesisMorbi" }] },
+  { id: "anamnesisVitae", titleKey: "sections.anamnesisVitae", fields: [{ key: "anamnesisVitae" }] },
   {
     id: "physicalExam",
-    titleKey: "history_tab.sections.physicalExam",
+    titleKey: "sections.physicalExam",
     fields: [{ key: "physicalExam" }],
     subsections: [
-      {
-        id: "respiratory",
-        titleKey: "history_tab.subsections.respiratory",
-        fields: [{ key: "respiratory" }],
-      },
-      {
-        id: "circulatory",
-        titleKey: "history_tab.subsections.circulatory",
-        fields: [{ key: "circulatory" }],
-      },
-      {
-        id: "digestive",
-        titleKey: "history_tab.subsections.digestive",
-        fields: [{ key: "digestive" }],
-      },
-      {
-        id: "urinary",
-        titleKey: "history_tab.subsections.urinary",
-        fields: [{ key: "urinary" }],
-      },
-      {
-        id: "endocrine",
-        titleKey: "history_tab.subsections.endocrine",
-        fields: [{ key: "endocrine" }],
-      },
+      { id: "respiratory", titleKey: "subsections.respiratory", fields: [{ key: "respiratory" }] },
+      { id: "circulatory", titleKey: "subsections.circulatory", fields: [{ key: "circulatory" }] },
+      { id: "digestive", titleKey: "subsections.digestive", fields: [{ key: "digestive" }] },
+      { id: "urinary", titleKey: "subsections.urinary", fields: [{ key: "urinary" }] },
+      { id: "endocrine", titleKey: "subsections.endocrine", fields: [{ key: "endocrine" }] },
     ],
   },
-  /* 5 */
-  {
-    id: "preliminaryDiagnosis",
-    titleKey: "history_tab.sections.preliminaryDiagnosis",
-    fields: [{ key: "preliminaryDiagnosis" }],
-  },
-  /* 6 */
-  {
-    id: "examinationPlan",
-    titleKey: "history_tab.sections.examinationPlan",
-    fields: [{ key: "examinationPlan" }],
-  },
-  /* 7 */
-  {
-    id: "examinationResults",
-    titleKey: "history_tab.sections.examinationResults",
-    fields: [{ key: "examinationResults" }],
-  },
-  /* 8 */
-  {
-    id: "clinicalDiagnosis",
-    titleKey: "history_tab.sections.clinicalDiagnosis",
-    fields: [{ key: "clinicalDiagnosis" }],
-  },
-  /* 9 */
-  {
-    id: "treatmentPlan",
-    titleKey: "history_tab.sections.treatmentPlan",
-    fields: [{ key: "treatmentPlan" }],
-  },
+  { id: "preliminaryDiagnosis", titleKey: "sections.preliminaryDiagnosis", fields: [{ key: "preliminaryDiagnosis" }] },
+  { id: "examinationPlan", titleKey: "sections.examinationPlan", fields: [{ key: "examinationPlan" }] },
+  { id: "examinationResults", titleKey: "sections.examinationResults", fields: [{ key: "examinationResults" }] },
+  { id: "clinicalDiagnosis", titleKey: "sections.clinicalDiagnosis", fields: [{ key: "clinicalDiagnosis" }] },
+  { id: "treatmentPlan", titleKey: "sections.treatmentPlan", fields: [{ key: "treatmentPlan" }] },
 ];
 
-/* ── Collect every field key from the schema ── */
 const collectKeys = (sections) => {
   const keys = [];
   sections.forEach((s) => {
@@ -113,17 +73,26 @@ const collectKeys = (sections) => {
 };
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
-/* ────────────────────────────────────────────────────────────
-   RichTextField — dual-mode: preview (read) ↔ edit (RichTextEditor)
-   ──────────────────────────────────────────────────────────── */
-const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, placeholder, emptyPlaceholder }) => (
+const HISTORY_NAV_ITEMS = [
+  { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", icon: <FiChevronDown size={14} />, sectionId: "complaints" },
+  { id: "laboratoryAnalysis", labelKey: "sidebar.laboratoryAnalysis", sectionId: "examinationPlan" },
+  { id: "studiesManipulations", labelKey: "sidebar.studiesManipulations", sectionId: "physicalExam" },
+  { id: "morphologicalResearch", labelKey: "sidebar.morphologicalResearch", sectionId: "examinationResults" },
+  { id: "proceduresManipulations", labelKey: "sidebar.proceduresManipulations", sectionId: "treatmentPlan" },
+  { id: "conclusion", labelKey: "sidebar.conclusion", sectionId: "clinicalDiagnosis" },
+];
+
+const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, placeholder, emptyPlaceholder, templatePicker }) => (
   <div className={`ht-field${editing ? " ht-field--editing" : ""}`} data-ht-field>
     {label && (
       <div className="ht-field-header" onClick={onToggle}>
         <label className="ht-field-label">{label}</label>
-        <span className={`ht-field-toggle ${editing ? "ht-field-toggle--active" : ""}`}>
-          {editing ? "✕" : "✎"}
-        </span>
+        <div className="ht-field-actions">
+          {templatePicker}
+          <span className={`ht-field-toggle ${editing ? "ht-field-toggle--active" : ""}`}>
+            {editing ? "✕" : "✎"}
+          </span>
+        </div>
       </div>
     )}
     {editing ? (
@@ -145,195 +114,442 @@ const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, p
   </div>
 ));
 
-/* ================================================================
-   HistoryTab component
-   ================================================================ */
 const HistoryTab = forwardRef(({ application, patient }, ref) => {
-  const { t } = useTranslation();
-
-  /* Initialise from application.historyForm (per-appointment), fallback to patient.historyForm */
-  const STORAGE_KEY = application?.applicationId
-    ? `historyDraft_${application.applicationId}`
-    : null;
+  const { t } = useTranslation("history_tab");
 
   const initForm = () => {
     const saved = application?.historyForm || patient?.historyForm || {};
-    const form = {};
+    const form = { isFirstAppointment: saved.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? false };
     ALL_KEYS.forEach((k) => {
-      const field = saved[k];
-      form[k] = (field && typeof field === "object") ? (field.value || "") : (field || "");
+      const f = saved[k];
+      form[k] = {
+        value: (typeof f === "object" ? f?.value : f) || "",
+        isVerified: f?.isVerified || false,
+        verifiedBy: f?.verifiedBy || null,
+        verifiedAt: f?.verifiedAt || null,
+      };
     });
-    form.isFirstAppointment = !!saved.isFirstAppointment;
-    form.isRepetitiveAppointment = !!saved.isRepetitiveAppointment;
-
-    // merge any draft from localStorage
-    if (STORAGE_KEY) {
-      try {
-        const draft = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (draft && draft.form) {
-          Object.assign(form, draft.form);
-          if (draft.isFirstAppointment !== undefined) {
-            form.isFirstAppointment = draft.isFirstAppointment;
-          }
-          if (draft.isRepetitiveAppointment !== undefined) {
-            form.isRepetitiveAppointment = draft.isRepetitiveAppointment;
-          }
-        }
-      } catch (e) {
-        console.warn("Failed to parse history draft", e);
-      }
-    }
-
     return form;
   };
 
-  const initVerified = () => {
-    const saved = application?.historyForm || patient?.historyForm || {};
-    const vs = {};
-    ALL_KEYS.forEach((k) => {
-      const field = saved[k];
-      vs[k] = field?.isVerified ?? false;
-    });
-
-    // Override with localStorage draft so pending state survives refresh
-    if (STORAGE_KEY) {
-      try {
-        const draft = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (draft?.verifiedStatus) {
-          ALL_KEYS.forEach((k) => {
-            if (draft.verifiedStatus[k] !== undefined) {
-              vs[k] = draft.verifiedStatus[k];
-            }
-          });
-        }
-      } catch (e) {
-        console.warn("Failed to parse history draft for verifiedStatus", e);
-      }
-    }
-
-    return vs;
-  };
-
   const [form, setForm] = useState(initForm);
-  const [verifiedStatus, setVerifiedStatus] = useState(initVerified);
 
-  // persist drafts whenever form or verifiedStatus changes
-  useEffect(() => {
-    if (!STORAGE_KEY) return;
-    const payload = { form, verifiedStatus, isFirstAppointment: form.isFirstAppointment, isRepetitiveAppointment: form.isRepetitiveAppointment };
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch (e) {
-      console.warn("Unable to save history draft", e);
-    }
-  }, [form, verifiedStatus, STORAGE_KEY]);
-
-  // templates stored per field key
-  const [templatesByField, setTemplatesByField] = useState({});
-
-  // load all templates on mount (could be optimized to load on demand)
-  useEffect(() => {
-    ALL_KEYS.forEach(async (key) => {
-      try {
-        const data = await getHistoryTemplates(key);
-        setTemplatesByField((prev) => ({ ...prev, [key]: data }));
-      } catch (err) {
-        console.error("Failed to load templates for", key, err);
-      }
-    });
-  }, []);
-
-  // helpers for template CRUD
-  const handleTemplateSave = async (fieldKey, name, content) => {
-    const tpl = await createHistoryTemplate({ fieldKey, name, content });
-    setTemplatesByField((prev) => {
-      const arr = prev[fieldKey] || [];
-      return { ...prev, [fieldKey]: [...arr, tpl] };
-    });
-    return tpl;
-  };
-
-  const handleTemplateUpdate = async (fieldKey, id, data) => {
-    const updated = await updateHistoryTemplate(id, data);
-    setTemplatesByField((prev) => {
-      const arr = prev[fieldKey] || [];
-      return {
-        ...prev,
-        [fieldKey]: arr.map((t) => (t._id === id ? updated : t)),
-      };
-    });
-    return updated;
-  };
-
-  const handleTemplateDelete = async (fieldKey, id) => {
-    await deleteHistoryTemplate(id);
-    setTemplatesByField((prev) => {
-      const arr = prev[fieldKey] || [];
-      return { ...prev, [fieldKey]: arr.filter((t) => t._id !== id) };
-    });
-  };
-
-  /* Re-sync form + verified status whenever the saved historyForm changes.
-     Always prefer any existing localStorage draft over the DB values so that
-     in-progress edits survive navigation / refresh. */
   useEffect(() => {
     const saved = application?.historyForm || patient?.historyForm || {};
-
-    // Load draft once so we can prefer it over the DB snapshot
-    let draft = null;
-    if (STORAGE_KEY) {
-      try { draft = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
-    }
-
     setForm((prev) => {
-      const next = { ...prev };
+      const next = { ...prev, isFirstAppointment: saved.isFirstAppointment ?? prev.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? prev.isRepetitiveAppointment ?? false };
       ALL_KEYS.forEach((k) => {
-        if (draft?.form?.[k] !== undefined) {
-          // Draft exists for this key — keep the user's edited value
-          next[k] = draft.form[k];
-        } else {
-          const field = saved[k];
-          next[k] = (field && typeof field === "object") ? (field.value ?? prev[k] ?? "") : (field ?? prev[k] ?? "");
-        }
-      });
-      next.isFirstAppointment =
-        draft?.form?.isFirstAppointment !== undefined
-          ? draft.form.isFirstAppointment
-          : (saved.isFirstAppointment ?? prev.isFirstAppointment ?? false);
-      next.isRepetitiveAppointment =
-        draft?.form?.isRepetitiveAppointment !== undefined
-          ? draft.form.isRepetitiveAppointment
-          : (saved.isRepetitiveAppointment ?? prev.isRepetitiveAppointment ?? false);
-      return next;
-    });
-    setVerifiedStatus((prev) => {
-      const next = { ...prev };
-      ALL_KEYS.forEach((k) => {
-        if (draft?.verifiedStatus?.[k] !== undefined) {
-          // Preserve the pending/verified state the user last set
-          next[k] = draft.verifiedStatus[k];
-        } else {
-          const field = saved[k];
-          next[k] = field?.isVerified ?? prev[k] ?? false;
-        }
+        const f = saved[k];
+        next[k] = {
+          value: (typeof f === "object" ? f?.value : f) || prev[k]?.value || "",
+          isVerified: f?.isVerified ?? prev[k]?.isVerified ?? false,
+          verifiedBy: f?.verifiedBy ?? prev[k]?.verifiedBy ?? null,
+          verifiedAt: f?.verifiedAt ?? prev[k]?.verifiedAt ?? null,
+        };
       });
       return next;
     });
   }, [application?.historyForm]);
 
-  /* Track which individual fields are in edit mode */
   const [editingFields, setEditingFields] = useState({});
   const containerRef = useRef(null);
+  const sectionRefs = useRef({});
+  const [activeNavItem, setActiveNavItem] = useState(HISTORY_NAV_ITEMS[0].id);
+  const [patientAppointments, setPatientAppointments] = useState([]);
+  const [isAppointmentsPanelOpen, setIsAppointmentsPanelOpen] = useState(false);
+  const [isAppointmentsLoading, setIsAppointmentsLoading] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState(null);
+  const [labTests, setLabTests] = useState([]);
+  const [studyTests, setStudyTests] = useState([]);
+  const [selectedLabTests, setSelectedLabTests] = useState({});
+  const [selectedStudyTests, setSelectedStudyTests] = useState({});
+  const [isLabPanelOpen, setIsLabPanelOpen] = useState(false);
+  const [isStudyPanelOpen, setIsStudyPanelOpen] = useState(false);
+  const [labPopupOpen, setLabPopupOpen] = useState(false);
+  const [labPopupMode, setLabPopupMode] = useState(null);
+  const [newTestNameEN, setNewTestNameEN] = useState("");
+  const [newTestNameRU, setNewTestNameRU] = useState("");
+  const [editingTestId, setEditingTestId] = useState(null);
+  const [deleteConfirmTest, setDeleteConfirmTest] = useState(null);
+  const [selectedTest, setSelectedTest] = useState(null);
+  const [selectedTestMode, setSelectedTestMode] = useState(null);
+  const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
+  const [testNoteDraft, setTestNoteDraft] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [isUploadingTestFile, setIsUploadingTestFile] = useState(false);
+  const [testFileUploadError, setTestFileUploadError] = useState(null);
+  const fileInputRef = useRef(null);
+  const [sectionData, setSectionData] = useState({ morphologicalResearch: { files: [], comment: {} }, proceduresManipulations: { files: [], comment: {} } });
+  const [sectionUploading, setSectionUploading] = useState({});
+  const [sectionDirty, setSectionDirty] = useState({});
+  const morphFileRef = useRef(null);
+  const procFileRef = useRef(null);
 
-  /* Close all editing fields when clicking outside any field */
+  const formatDate = useCallback((dateStr) => {
+    if (!dateStr) return "—";
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+  }, []);
+
+  const formatTime = useCallback((timeStr) => {
+    if (!timeStr) return "";
+    const parsed = new Date(timeStr);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleTimeString("ru-RU", { hour: "numeric", minute: "2-digit" });
+    }
+    return timeStr;
+  }, []);
+
+  const loadPatientAppointments = useCallback(async () => {
+    const patientId = patient?.patientId || patient?._id || application?.patientId;
+    if (!patientId) {
+      toast.error(t("history_tab.patient_id_missing", { defaultValue: "Patient ID is not available" }));
+      return;
+    }
+
+    setIsAppointmentsLoading(true);
+    setAppointmentsError(null);
+
+    try {
+      const response = await getApplicationsByPatientId(patientId);
+      const apps = Array.isArray(response?.data) ? response.data : [];
+      const filtered = apps.filter((appt) => (appt.applicationId || appt._id) !== (application?.applicationId || application?._id));
+      setPatientAppointments(filtered);
+      setIsAppointmentsPanelOpen(true);
+    } catch (error) {
+      const message = error?.response?.data?.message || t("history_tab.failed_loading_other_appointments", { defaultValue: "Failed to load other appointments" });
+      setAppointmentsError(message);
+      toast.error(message);
+    } finally {
+      setIsAppointmentsLoading(false);
+    }
+  }, [application, patient, t]);
+
+  const handleSidebarItemClick = useCallback(async (item, _e) => {
+    setActiveNavItem(item.id);
+    setSelectedTest(null);
+
+    if (item.id === "specialistConsultation") {
+      if (isAppointmentsPanelOpen) {
+        setIsAppointmentsPanelOpen(false);
+      } else {
+        await loadPatientAppointments();
+      }
+    } else if (item.id === "laboratoryAnalysis") {
+      setIsLabPanelOpen((prev) => !prev);
+    } else if (item.id === "studiesManipulations") {
+      setIsStudyPanelOpen((prev) => !prev);
+    }
+  }, [isAppointmentsPanelOpen, loadPatientAppointments]);
+
+  const appId = application?.applicationId;
+
+  const SECTION_SCHEMA = { morphologicalResearch: "morphologicalResearch", proceduresManipulations: "proceduresAndManipulations" };
+  const PANEL_NAV_IDS = Object.keys(SECTION_SCHEMA);
+
+  useEffect(() => {
+    if (!PANEL_NAV_IDS.includes(activeNavItem)) return;
+    const schemaKey = SECTION_SCHEMA[activeNavItem];
+    getApplicationSection(appId, schemaKey)
+      .then((data) => {
+        setSectionData((prev) => ({ ...prev, [activeNavItem]: data }));
+        setSectionDirty((prev) => ({ ...prev, [activeNavItem]: false }));
+      })
+      .catch(() => {});
+  }, [activeNavItem, appId]);
+
+  const handleSectionFileChange = useCallback(async (navId, e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    const schemaKey = SECTION_SCHEMA[navId];
+    setSectionUploading((prev) => ({ ...prev, [navId]: true }));
+    try {
+      for (const file of files) {
+        const result = await uploadApplicationSectionFile(appId, schemaKey, file);
+        setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Upload failed");
+    } finally {
+      setSectionUploading((prev) => ({ ...prev, [navId]: false }));
+    }
+  }, [appId]);
+
+  const handleSectionFileRemove = useCallback(async (navId, fileId) => {
+    const schemaKey = SECTION_SCHEMA[navId];
+    try {
+      const result = await removeApplicationSectionFile(appId, schemaKey, fileId);
+      setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to remove file");
+    }
+  }, [appId]);
+
+  const handleSectionCommentSave = useCallback(async (navId, value) => {
+    const schemaKey = SECTION_SCHEMA[navId];
+    try {
+      const result = await updateApplicationSectionComment(appId, schemaKey, value);
+      setSectionData((prev) => ({ ...prev, [navId]: result.section }));
+      setSectionDirty((prev) => ({ ...prev, [navId]: false }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Failed to save comment");
+    }
+  }, [appId]);
+
+  const openLabAnalysisPopup = useCallback((mode, e) => {
+    if (e?.stopPropagation) e.stopPropagation();
+    setLabPopupMode(mode);
+    setLabPopupOpen(true);
+    setEditingTestId(null);
+  }, []);
+
+  const closeLabAnalysisPopup = useCallback(() => {
+    setLabPopupOpen(false);
+    setLabPopupMode(null);
+    setNewTestNameEN("");
+    setNewTestNameRU("");
+    setEditingTestId(null);
+    setDeleteConfirmTest(null);
+  }, []);
+
+  const openEditTest = useCallback((test) => {
+    setEditingTestId(test._id);
+    setNewTestNameEN(test.name?.en || "");
+    setNewTestNameRU(test.name?.ru || "");
+  }, []);
+
+  const cancelEditTest = useCallback(() => {
+    setEditingTestId(null);
+    setNewTestNameEN("");
+    setNewTestNameRU("");
+  }, []);
+
+  const handleSaveTest = useCallback(async () => {
+    if (!newTestNameEN.trim() || !newTestNameRU.trim()) {
+      toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter both EN and RU names." }));
+      return;
+    }
+
+    const payload = { name: { en: newTestNameEN.trim(), ru: newTestNameRU.trim() } };
+
+    try {
+      if (editingTestId) {
+        const response = labPopupMode === "studiesManipulations"
+          ? await updateApplicationInstrumentalAnalysis(editingTestId, payload)
+          : await updateApplicationLaboratoryTest(editingTestId, payload);
+        const updated = response?.data || response;
+
+        if (labPopupMode === "studiesManipulations") {
+          setStudyTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
+        } else {
+          setLabTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
+        }
+
+        toast.success(t("history_tab.test_updated", { defaultValue: "Test updated" }));
+      } else {
+        const response = labPopupMode === "studiesManipulations"
+          ? await createApplicationInstrumentalAnalysis(payload)
+          : await createApplicationLaboratoryTest(payload);
+        const created = response?.data || response;
+
+        if (created) {
+          if (labPopupMode === "studiesManipulations") {
+            setStudyTests((prev) => [...prev, created]);
+            setSelectedStudyTests((prev) => ({ ...prev, [created._id]: true }));
+          } else {
+            setLabTests((prev) => [...prev, created]);
+            setSelectedLabTests((prev) => ({ ...prev, [created._id]: true }));
+          }
+          toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
+        }
+      }
+
+      setEditingTestId(null);
+      setNewTestNameEN("");
+      setNewTestNameRU("");
+    } catch (err) {
+      toast.error(editingTestId ? t("history_tab.failed_update_test", { defaultValue: "Failed to update test" }) : t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
+    }
+  }, [editingTestId, labPopupMode, newTestNameEN, newTestNameRU, t]);
+
+  const openDeleteConfirm = useCallback((test) => { setDeleteConfirmTest(test); }, []);
+  const closeDeleteConfirm = useCallback(() => { setDeleteConfirmTest(null); }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteConfirmTest) return;
+    try {
+      await (labPopupMode === "studiesManipulations"
+        ? deleteApplicationInstrumentalAnalysis(deleteConfirmTest._id)
+        : deleteApplicationLaboratoryTest(deleteConfirmTest._id));
+
+      if (labPopupMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
+        setSelectedStudyTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
+      } else {
+        setLabTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
+        setSelectedLabTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
+      }
+
+      if (editingTestId === deleteConfirmTest._id) cancelEditTest();
+
+      setDeleteConfirmTest(null);
+      toast.success(t("history_tab.test_deleted", { defaultValue: "Test deleted" }));
+    } catch (err) {
+      toast.error(t("history_tab.failed_delete_test", { defaultValue: "Failed to delete test" }));
+    }
+  }, [cancelEditTest, deleteConfirmTest, editingTestId, labPopupMode, t]);
+
+  const handleToggleLabTest = useCallback((id, useStudyMode = false) => {
+    if (useStudyMode || labPopupMode === "studiesManipulations") {
+      setSelectedStudyTests((prev) => ({ ...prev, [id]: !prev[id] }));
+    } else {
+      setSelectedLabTests((prev) => ({ ...prev, [id]: !prev[id] }));
+    }
+  }, [labPopupMode]);
+
+  const handleSelectTest = useCallback((test, mode) => {
+    setSelectedTest(test);
+    setSelectedTestMode(mode);
+    setShowTestNoteEditor(false);
+    setTestNoteDraft(test?.note || "");
+    setTestFileUploadError(null);
+  }, []);
+
+  const handleCloseSelectedTest = useCallback(() => {
+    setSelectedTest(null);
+    setSelectedTestMode(null);
+    setShowTestNoteEditor(false);
+    setTestNoteDraft("");
+    setTestFileUploadError(null);
+  }, []);
+
+  const selectedTestFiles = React.useMemo(() => {
+    if (!selectedTest) return [];
+    if (Array.isArray(selectedTest.files) && selectedTest.files.length > 0) return selectedTest.files;
+    if (selectedTest.fileId) return [{ fileId: selectedTest.fileId, fileName: selectedTest.fileName || selectedTest.originalName || t("history_tab.unknown_file", { defaultValue: "Unknown file" }), fileMimeType: selectedTest.fileMimeType || "", fileSize: selectedTest.fileSize || 0, uploadedAt: selectedTest.uploadedAt || null }];
+    return [];
+  }, [selectedTest, t]);
+
+  const handleTestFileUpload = useCallback(async (file) => {
+    if (!selectedTest || !selectedTestMode || !file) return;
+    setIsUploadingTestFile(true);
+    setTestFileUploadError(null);
+
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await uploadApplicationInstrumentalAnalysisFile(selectedTest._id, file)
+        : await uploadApplicationLaboratoryTestFile(selectedTest._id, file);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.file_uploaded", { defaultValue: "File uploaded" }));
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_upload_file", { defaultValue: "Failed to upload file" });
+      setTestFileUploadError(message);
+      toast.error(message);
+    } finally {
+      setIsUploadingTestFile(false);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleTestFileChange = useCallback(async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+    for (const file of files) await handleTestFileUpload(file);
+    event.target.value = "";
+  }, [handleTestFileUpload]);
+
+  const selectedTestNotes = React.useMemo(() => {
+    if (!selectedTest) return [];
+    const notes = Array.isArray(selectedTest.notes) ? selectedTest.notes : [];
+    if (notes.length > 0) return notes;
+    if (selectedTest.note) return [{ _id: "legacy-note", content: selectedTest.note, createdAt: selectedTest.updatedAt || selectedTest.createdAt || new Date(), updatedAt: selectedTest.updatedAt || selectedTest.createdAt || new Date() }];
+    return [];
+  }, [selectedTest]);
+
+  const handleOpenTestNoteEditor = useCallback(() => { setShowTestNoteEditor(true); setEditingNoteId(null); setTestNoteDraft(""); }, []);
+  const handleEditTestNote = useCallback((note) => { setShowTestNoteEditor(true); setEditingNoteId(note._id); setTestNoteDraft(note.content || ""); }, []);
+
+  const handleSaveTestNote = useCallback(async () => {
+    if (!selectedTest || !selectedTestMode || !testNoteDraft.trim()) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? editingNoteId ? await updateApplicationInstrumentalAnalysisNote(selectedTest._id, editingNoteId, { note: testNoteDraft }) : await addApplicationInstrumentalAnalysisNote(selectedTest._id, { note: testNoteDraft })
+        : editingNoteId ? await updateApplicationLaboratoryTestNote(selectedTest._id, editingNoteId, { note: testNoteDraft }) : await addApplicationLaboratoryTestNote(selectedTest._id, { note: testNoteDraft });
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.note_saved", { defaultValue: "Note saved" }));
+      setShowTestNoteEditor(false); setEditingNoteId(null); setTestNoteDraft("");
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_save_note", { defaultValue: "Failed to save note" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, testNoteDraft, editingNoteId, t]);
+
+  const handleRemoveTestFile = useCallback(async (fileId) => {
+    if (!selectedTest || !selectedTestMode || !fileId) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
+        : await removeApplicationLaboratoryTestFile(selectedTest._id, fileId);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.file_removed", { defaultValue: "File removed" }));
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_remove_file", { defaultValue: "Failed to remove file" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleViewTestFile = useCallback(async (fileId) => {
+    if (!selectedTest || !selectedTestMode || !fileId) return;
+    try {
+      const blob = selectedTestMode === "studiesManipulations"
+        ? await fetchApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
+        : await fetchApplicationLaboratoryTestFile(selectedTest._id, fileId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_view_file", { defaultValue: "Failed to open file" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
+  const handleDeleteTestNote = useCallback(async (noteId) => {
+    if (!selectedTest || !selectedTestMode || !noteId) return;
+    try {
+      const response = selectedTestMode === "studiesManipulations"
+        ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, noteId)
+        : await deleteApplicationLaboratoryTestNote(selectedTest._id, noteId);
+      const updated = response?.data || response;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
+      toast.success(t("history_tab.note_deleted", { defaultValue: "Note deleted" }));
+      setShowTestNoteEditor(false);
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_delete_note", { defaultValue: "Failed to delete note" });
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
-      /* If click is inside any field card or inside a dropdown/color picker, ignore */
       if (
         e.target.closest("[data-ht-field]") ||
         e.target.closest(".ht-section-header--clickable") ||
         e.target.closest(".rte-color-dropdown") ||
-        e.target.closest(".rte-select")
+        e.target.closest(".rte-select") ||
+        e.target.closest(".tp-wrap") ||
+        e.target.closest(".tp-dropdown")
       ) return;
 
       setEditingFields({});
@@ -343,117 +559,84 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const setFieldEditing = useCallback((fieldKey, value) => {
-    setEditingFields((prev) => ({ ...prev, [fieldKey]: value }));
-   
-  }, []);
-
-
-  /* Editor change handler */
-  const handleEditorChange = useCallback((key, html) => {
-    setForm((prev) => ({ ...prev, [key]: html }));
-  }, []);
-
-  /* Expose data for parent save */
-  useImperativeHandle(ref, () => ({
-    getData: () => ({ historyForm: { ...form } }),
-  }));
-
-  const navigate = useNavigate();
-  const [isSaving, setIsSaving] = useState(false);
-  const [showSaveCloseConfirm, setShowSaveCloseConfirm] = useState(false);
-
-  /* Toggle a single field's verified status and persist immediately */
-  const handleToggleVerify = useCallback(async (key) => {
+  const setFieldEditing = useCallback((fieldKey, value) => { setEditingFields((prev) => ({ ...prev, [fieldKey]: value })); }, []);
+  const handleEditorChange = useCallback((key, html) => { setForm((prev) => ({ ...prev, [key]: { ...prev[key], value: html } })); }, []);
+  const handleVerifyToggle = useCallback(async (key) => {
+    const newVal = !form[key]?.isVerified;
+    setForm((prev) => ({ ...prev, [key]: { ...prev[key], isVerified: newVal } }));
     if (!application?.applicationId) return;
-    if (!navigator.onLine) {
-      toast.error(t("history_tab.footer.no_connection"));
-      return;
-    }
-    // if already verified, do not allow toggling back to pending
-    if (verifiedStatus[key]) return;
+    try { await updateHistoryFieldVerify(application.applicationId, key, newVal); } catch (err) { toast.error("Failed to update verification"); }
+  }, [application, form]);
 
-    const newVerified = true; // only transition pending -> verified
-    setVerifiedStatus((prev) => ({ ...prev, [key]: newVerified }));
-    try {
-      await updateHistoryForm(application.applicationId, {
-        [key]: { value: form[key] || "", isVerified: newVerified },
-      });
-    } catch (err) {
-      console.error("Verify toggle failed:", err);
-      toast.error(t("history_tab.footer.save_error") || "Unable to save");
-      // revert on error
-      setVerifiedStatus((prev) => ({ ...prev, [key]: false }));
-    }
-  }, [application, form, verifiedStatus, t]);
+  const [templates, setTemplates] = useState([]);
+  useEffect(() => { const fetchTemplates = async () => { try { const data = await getHistoryTemplates(); setTemplates(Array.isArray(data) ? data : []); } catch (err) {} }; fetchTemplates(); }, []);
 
-  const doSave = useCallback(async () => {
-    if (!application?.applicationId) {
-      toast.error(t("history_tab.footer.patient_not_found"));
-      return false;
-    }
-    if (!navigator.onLine) {
-      toast.error(t("history_tab.footer.no_connection"));
-      return false;
-    }
-    setIsSaving(true);
-    try {
-      // Wrap each field as { value, isVerified: true } — saving auto-verifies
-      const payload = {};
-      ALL_KEYS.forEach((k) => {
-        payload[k] = { value: form[k] || "", isVerified: !!(form[k]) };
-      });
-      payload.isFirstAppointment = form.isFirstAppointment;
-      payload.isRepetitiveAppointment = form.isRepetitiveAppointment;
-      await updateHistoryForm(application.applicationId, payload);
-      // Update local verified state
-      setVerifiedStatus((prev) => {
-        const next = { ...prev };
-        ALL_KEYS.forEach((k) => { if (form[k]) next[k] = true; });
-        return next;
-      });
-      // also clear draft after verifying
-      if (STORAGE_KEY) localStorage.removeItem(STORAGE_KEY);
-      toast.success(t("history_tab.footer.save_success"));
-      // clear draft storage on successful save
-      if (STORAGE_KEY) localStorage.removeItem(STORAGE_KEY);
-      return true;
-    } catch (err) {
-      console.error("Save history error:", err);
-      toast.error(err?.response?.data?.error || t("history_tab.footer.save_error"));
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [application, form, t]);
+  useEffect(() => {
+    const fetchLabTests = async () => {
+      try {
+        const response = await getAllApplicationLaboratoryTests();
+        const tests = Array.isArray(response?.data) ? response.data : response || [];
+        setLabTests(tests);
+        setSelectedLabTests(tests.reduce((acc, test) => { acc[test._id] = false; return acc; }, {}));
+      } catch (err) { console.error("Failed to load laboratory tests", err); }
+    };
 
-  const handleSaveAll = useCallback(async () => {
-    await doSave();
-  }, [doSave]);
+    const fetchStudyTests = async () => {
+      try {
+        const response = await getAllApplicationInstrumentalAnalysis();
+        const tests = Array.isArray(response?.data) ? response.data : response || [];
+        setStudyTests(tests);
+        setSelectedStudyTests(tests.reduce((acc, test) => { acc[test._id] = false; return acc; }, {}));
+      } catch (err) { console.error("Failed to load study tests", err); }
+    };
 
-  const performSaveAndClose = useCallback(async () => {
-    const ok = await doSave();
-    if (ok) navigate(-1);
-    setShowSaveCloseConfirm(false);
-  }, [doSave, navigate]);
-
-  const handleSaveAndClose = useCallback(() => {
-    setShowSaveCloseConfirm(true);
+    fetchLabTests();
+    fetchStudyTests();
   }, []);
 
-  /* ── Render helpers ── */
+  const getFieldTemplates = useCallback((fieldKey) => templates.filter((t) => t.fieldKey === fieldKey), [templates]);
+  const handleSaveTemplate = useCallback(async (fieldKey, name, content) => { const tpl = await createHistoryTemplate({ fieldKey, name, content }); setTemplates((prev) => [tpl, ...prev]); toast.success(t("toast.template_saved")); }, []);
+  const handleUpdateTemplate = useCallback(async (id, changes) => { try { const updated = await updateHistoryTemplate(id, changes); setTemplates((prev) => prev.map((t) => (t._id === id ? { ...t, ...updated } : t))); } catch (err) { toast.error(t("toast.template_update_failed")); } }, []);
+  const handleDeleteTemplate = useCallback(async (id) => { try { await deleteHistoryTemplate(id); setTemplates((prev) => prev.filter((t) => t._id !== id)); toast.success(t("toast.template_deleted")); } catch (err) { toast.error(t("toast.template_delete_failed")); } }, []);
+  const handleDuplicateTemplate = useCallback(async (tpl) => { try { const newTpl = await createHistoryTemplate({ fieldKey: tpl.fieldKey, name: `${tpl.name} (copy)`, content: tpl.content, isDefault: false }); setTemplates((prev) => [newTpl, ...prev]); toast.success(t("toast.template_duplicated")); } catch (err) { toast.error(t("toast.template_duplicate_failed")); } }, []);
+
+  const makeTemplatePicker = useCallback((fieldKey) => (
+    <TemplatePicker
+      templates={getFieldTemplates(fieldKey)}
+      currentValue={form[fieldKey]?.value || ""}
+      isEditing={!!editingFields[fieldKey]}
+      onApply={(content) => { handleEditorChange(fieldKey, content); setFieldEditing(fieldKey, true); }}
+      onSave={(name, content) => handleSaveTemplate(fieldKey, name, content)}
+      onUpdate={(id, changes) => handleUpdateTemplate(id, changes)}
+      onDelete={(id) => handleDeleteTemplate(id)}
+      onDuplicate={(tpl) => handleDuplicateTemplate(tpl)}
+    />
+  ), [getFieldTemplates, form, editingFields, handleEditorChange, setFieldEditing, handleSaveTemplate, handleUpdateTemplate, handleDeleteTemplate, handleDuplicateTemplate]);
+
+  useImperativeHandle(ref, () => ({ getData: () => ({ historyForm: { ...form } }) }));
+
+  const VerifyBadge = ({ fieldKey }) => {
+    const verified = !!form[fieldKey]?.isVerified;
+    return (
+      <button type="button" className={`ht-verify-btn${verified ? " ht-verify-btn--verified" : " ht-verify-btn--pending"}`} onClick={(e) => { e.stopPropagation(); handleVerifyToggle(fieldKey); }} title={verified ? t("verify_title_verified") : t("verify_title_pending") }>
+        {verified ? t("verify_verified") : t("verify_pending")}
+      </button>
+    );
+  };
+
   const renderFields = (fields) => (
     <div className="ht-fields">
       {fields.map((f) => (
         <RichTextField
           key={f.key}
           label={f.labelKey ? t(f.labelKey) : undefined}
-          value={form[f.key] || ""}
+          value={form[f.key]?.value || ""}
           editing={!!editingFields[f.key]}
           onToggle={() => setFieldEditing(f.key, !editingFields[f.key])}
           onChange={(html) => handleEditorChange(f.key, html)}
-          placeholder={t("history_tab.enter_text")}
-          emptyPlaceholder={t("history_tab.click_to_edit")}
+          placeholder={t("enter_text")}
+          emptyPlaceholder={t("click_to_edit")}
+          templatePicker={makeTemplatePicker(f.key)}
         />
       ))}
     </div>
@@ -463,80 +646,55 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     const isSingleField = section.fields?.length === 1 && !section.fields[0].labelKey && !section.subsections?.length;
     const singleKey = isSingleField ? section.fields[0].key : null;
     const singleEditing = singleKey ? !!editingFields[singleKey] : false;
-    const fieldKey = section.id;
-    const hasContent = !!(form[fieldKey]);
-    const isVerified = verifiedStatus[fieldKey];
 
     return (
-      <div
-        key={section.id}
-        className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}`}
-      >
-        {/* ── Header ── */}
-        <div
-          className={`ht-section-header${level > 0 ? " ht-subsection-header" : ""}${isSingleField ? " ht-section-header--clickable" : ""}`}
-          onClick={isSingleField ? () => setFieldEditing(singleKey, !singleEditing) : undefined}
-        >
-          <span className={level > 0 ? "ht-subsection-title" : "ht-section-title"}>
-            {t(section.titleKey)}
-          </span>
-
-          {/* Right-side actions: status badge → template picker → edit icon */}
-          <div className="ht-header-actions">
-            {(hasContent && (templatesByField[section.id] || []).length > 0) && (
-              <span
-                className={`ht-status-badge ${isVerified ? "ht-status-verified" : "ht-status-pending"}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (!isVerified) handleToggleVerify(fieldKey);
-                }}
-                title={isVerified ? "Verified" : "Pending — click to mark as verified"}
-              >
-                {isVerified ? "✓ Verified" : "🟡"+t("pending")}
-              </span>
-            )}
-            <TemplatePicker
-              templates={templatesByField[section.id] || []}
-              currentValue={form[section.id] || ""}
-              onApply={(html) => handleEditorChange(section.id, html)}
-              onSave={(name, content) => handleTemplateSave(section.id, name, content)}
-              onUpdate={(id, data) => handleTemplateUpdate(section.id, id, data)}
-              onDelete={(id) => handleTemplateDelete(section.id, id)}
-            />
-            {isSingleField && (
-              <span
-                className={`ht-field-toggle ${singleEditing ? "ht-field-toggle--active" : ""}`}
-                onClick={(e) => { e.stopPropagation(); setFieldEditing(singleKey, !singleEditing); }}
-              >
-                {singleEditing ? "\u2715" : "\u270E"}
-              </span>
-            )}
-          </div>
+      <div key={section.id} ref={(node) => { if (level === 0) sectionRefs.current[section.id] = node; }} className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}`}>
+        <div className={`ht-section-header${level > 0 ? " ht-subsection-header" : ""}${isSingleField ? " ht-section-header--clickable" : ""}`} onClick={isSingleField ? () => setFieldEditing(singleKey, !singleEditing) : undefined}>
+          <span className={level > 0 ? "ht-subsection-title" : "ht-section-title"}>{t(section.titleKey)}</span>
+          {isSingleField && (
+            <div className="ht-section-header-actions">
+              {form[singleKey]?.value?.replace(/<[^>]*>/g, "").trim() && <VerifyBadge fieldKey={singleKey} />}
+              {makeTemplatePicker(singleKey)}
+              <span className={`ht-field-toggle ${singleEditing ? "ht-field-toggle--active" : ""}`}>{singleEditing ? "\u2715" : "\u270E"}</span>
+            </div>
+          )}
         </div>
 
-        {/* ── Body ── */}
         <div className="ht-section-body">
           {isSingleField ? (
-            /* Single field: editor or preview directly, no extra card */
             singleEditing ? (
               <div data-ht-field>
-                <RichTextEditor
-                  value={form[singleKey] || ""}
-                  onChange={(html) => handleEditorChange(singleKey, html)}
-                  placeholder={t("history_tab.enter_text")}
-                />
+                <RichTextEditor value={form[singleKey]?.value || ""} onChange={(html) => handleEditorChange(singleKey, html)} placeholder={t("enter_text")} />
               </div>
             ) : (
-              <div
-                data-ht-field
-                className={`ht-preview${!form[singleKey] ? " ht-preview--empty" : ""}`}
-                onClick={() => setFieldEditing(singleKey, true)}
-                dangerouslySetInnerHTML={{ __html: form[singleKey] || `<span class='ht-preview-placeholder'>${t("history_tab.click_to_edit")}</span>` }}
-              />
+              <div data-ht-field className={`ht-preview${!form[singleKey]?.value ? " ht-preview--empty" : ""}`} onClick={() => setFieldEditing(singleKey, true)} dangerouslySetInnerHTML={{ __html: form[singleKey]?.value || `<span class='ht-preview-placeholder'>${t("click_to_edit")}</span>` }} />
             )
           ) : (
             <>
               {section.fields && renderFields(section.fields)}
+              {((section.id === "examinationPlan" && activeNavItem === "laboratoryAnalysis") || (section.id === "physicalExam" && activeNavItem === "studiesManipulations")) && (
+                <div className="ht-lab-analysis-panel">
+                  <div className="ht-lab-analysis-header">
+                    <span>{activeNavItem === "laboratoryAnalysis" ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" }) : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}</span>
+                    <button type="button" className="ht-lab-analysis-manage-btn" onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}>{t("history_tab.manage_tests", { defaultValue: "Manage tests" })}</button>
+                  </div>
+                  {((activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).length > 0) ? (
+                    <div className="ht-lab-analysis-grid">
+                      {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).map((test) => (
+                        <div key={test._id} className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}>
+                          <label><input type="checkbox" checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]} onChange={(e) => { e.stopPropagation(); handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); }} onClick={(e) => e.stopPropagation()} /></label>
+                          <div className="ht-lab-analysis-item-label" onClick={() => handleSelectTest(test, activeNavItem)}>
+                            <span>{test.name?.en || ""}</span>
+                            <span>{test.name?.ru || ""}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="ht-lab-analysis-empty">{t(activeNavItem === "laboratoryAnalysis" ? "history_tab.no_lab_tests" : "history_tab.no_studies_tests", { defaultValue: activeNavItem === "laboratoryAnalysis" ? "No laboratory tests available." : "No studies/manipulations available." })}</p>
+                  )}
+                </div>
+              )}
               {section.subsections?.map((sub) => renderSection(sub, level + 1))}
             </>
           )}
@@ -547,137 +705,162 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   return (
     <>
-      <div className="ht-container">
-        {/* first‑appointment toggle — doctor can mark/unmark */}
-        <div className="check-box">
-          <div className="ht-first-appointment">
-          <label>
-            <input
-              type="checkbox"
-              checked={form.isFirstAppointment}
-              onChange={async (e) => {
-                const checked = e.target.checked;
-                setForm(prev => ({
-                  ...prev,
-                  isFirstAppointment: checked,
-                  ...(checked ? { isRepetitiveAppointment: false } : {}),
-                }));
-                toast.info(
-                  checked
-                    ? t("history_tab.toast.markedFirst")
-                    : t("history_tab.toast.unmarkedFirst")
-                );
-                // persist immediately
-                if (application?.applicationId) {
-                  try {
-                    await updateHistoryForm(application.applicationId, {
-                      isFirstAppointment: checked,
-                    });
-                  } catch (err) {
-                    console.error("Failed to update firstAppointment", err);
-                    toast.error(
-                      t("history_tab.toast.updateError") ||
-                        "Unable to save flag"
-                    );
-                  }
-                }
-              }}
-            />
-            {t("history_tab.firstAppointment")}
-          </label>
+      <div className="ht-shell">
+        <aside className="ht-sub-sidebar" aria-label={t("sidebar_title")}>
+          <div className="ht-sub-sidebar-list">
+            {HISTORY_NAV_ITEMS.map((item) => (
+              <React.Fragment key={item.id}>
+                <div role="button" tabIndex={0} className={`ht-sub-sidebar-item${activeNavItem === item.id ? " ht-sub-sidebar-item--active" : ""}`} onClick={(e) => handleSidebarItemClick(item, e)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSidebarItemClick(item, e); }}>
+                  <span className="ht-sub-sidebar-label">{t(item.labelKey)}</span>
+                  <span className="ht-sub-sidebar-actions">
+                    {(item.id === "laboratoryAnalysis" || item.id === "studiesManipulations") && (
+                      <button type="button" className="ht-sub-sidebar-setting-btn" onClick={(e) => openLabAnalysisPopup(item.id, e)} aria-label={t("history_tab.manage_lab_tests", { defaultValue: "Manage tests" })}><FiSettings size={14} /></button>
+                    )}
+                    {item.icon && <span className="ht-sub-sidebar-icon" aria-hidden="true">{item.icon}</span>}
+                  </span>
+                </div>
+
+                {item.id === "laboratoryAnalysis" && isLabPanelOpen && (
+                  <div className="ht-tests-panel">
+                    {labTests.length === 0 ? (<p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>) : (labTests.map((test) => (<button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "laboratoryAnalysis")}><span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span></button>)))}
+                  </div>
+                )}
+
+                {item.id === "studiesManipulations" && isStudyPanelOpen && (
+                  <div className="ht-tests-panel">
+                    {studyTests.length === 0 ? (<p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>) : (studyTests.map((test) => (<button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "studiesManipulations")}><span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span></button>)))}
+                  </div>
+                )}
+
+                {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
+                  <div className="ht-appointments-panel">
+                    {isAppointmentsLoading ? (<div className="ht-appointments-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}</div>) : appointmentsError ? (<div className="ht-appointments-error">{appointmentsError}</div>) : (
+                      <ul className="ht-appointments-list">
+                        {application && (() => {
+                          const name = application.service?.name?.ru || application.service?.name?.en || (Array.isArray(application.services) && application.services[0]?.name?.ru) || (Array.isArray(application.services) && application.services[0]?.name?.en) || t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                          const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
+                          const time = application.startTime ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}` : "";
+                          return (<li className="ht-appointment-item ht-appointment-item--current"><div className="ht-appointment-current-row"><span className="ht-appointment-name">{name}</span><span className="ht-appointment-current-badge">{t("history_tab.current_badge", { defaultValue: "Current" })}</span></div><span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span></li>);
+                        })()}
+                        {patientAppointments.map((appt) => {
+                          const patientName = appt.patient ? [appt.patient.firstName, appt.patient.middleName, appt.patient.lastName].filter(Boolean).join(" ").trim() || appt.patient.email || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" }) : appt.patientName || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" });
+                          const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
+                          const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
+                          return (<li key={appt.applicationId || appt._id} className="ht-appointment-item"><span className="ht-appointment-name">{patientName}</span><span className="ht-appointment-meta">{appointmentDate}{appointmentTime ? ` · ${appointmentTime}` : ""}</span></li>);
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </aside>
+
+        <div className="ht-main-column" ref={containerRef}>
+          {selectedTest ? (
+            <div className="ht-td-page">
+              <div className="ht-td-header">
+                <div className="ht-td-title-group"><h2 className="ht-td-title">{selectedTest.name?.ru || selectedTest.name?.en || ""}</h2>{selectedTest.name?.en && selectedTest.name?.ru && (<span className="ht-td-subtitle">{selectedTest.name.en}</span>)}</div>
+                <button type="button" className="ht-td-close" onClick={handleCloseSelectedTest} aria-label="Close"><FiX size={18} /></button>
+              </div>
+
+              <div className="ht-td-actions">
+                <button type="button" className="ht-td-btn" onClick={() => fileInputRef.current?.click()}><FiUpload size={14} />{t("history_tab.upload_file", { defaultValue: "Upload file" })}</button>
+                <button type="button" className="ht-td-btn" onClick={handleOpenTestNoteEditor}><FiFileText size={14} />{t("history_tab.add_text", { defaultValue: "Add text" })}</button>
+              </div>
+
+              <input ref={fileInputRef} type="file" multiple className="ht-hidden-file-input" onChange={handleTestFileChange} />
+              {testFileUploadError && <div className="ht-error-message">{testFileUploadError}</div>}
+              {isUploadingTestFile && <div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>}
+
+              <div className="ht-td-list">
+                {selectedTestFiles.map((file) => {
+                  const ext = (file.fileName || "").split(".").pop().toUpperCase().slice(0, 5);
+                  const dt = file.uploadedAt ? new Date(file.uploadedAt) : null;
+                  const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                  const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                  return (
+                    <div key={String(file.fileId)} className="ht-td-item">
+                      <span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span>
+                      <div className="ht-td-item-info"><span className="ht-td-item-name">{file.fileName}</span>{dateStr && (<span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>)}</div>
+                      <div className="ht-td-item-actions"><button type="button" className="ht-td-icon-btn" onClick={() => handleViewTestFile(file.fileId)} aria-label="View"><FiEye size={14} /></button><button type="button" className="ht-td-icon-btn" onClick={() => handleRemoveTestFile(file.fileId)} aria-label="Delete"><FiTrash2 size={14} /></button></div>
+                    </div>
+                  );
+                })}
+
+                {selectedTestNotes.map((note) => {
+                  const dt = note.createdAt ? new Date(note.createdAt) : null;
+                  const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                  const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                  return (
+                    <div key={String(note._id)} className="ht-td-item">
+                      <span className="ht-td-note-icon"><FiFileText size={16} /></span>
+                      <div className="ht-td-item-info"><div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />{dateStr && (<span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>)}</div>
+                      <div className="ht-td-item-actions"><button type="button" className="ht-td-icon-btn" onClick={() => handleEditTestNote(note)} aria-label="Edit"><FiEdit2 size={14} /></button><button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote(note._id)} aria-label="Delete"><FiTrash2 size={14} /></button></div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {showTestNoteEditor && (
+                <div className="ht-td-note-editor">
+                  <RichTextEditor value={testNoteDraft} onChange={(value) => setTestNoteDraft(value)} placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })} />
+                  <div className="ht-td-note-editor-actions"><button type="button" className="ht-td-save-btn" onClick={handleSaveTestNote}>{t("history_tab.save", { defaultValue: "Save" })}</button><button type="button" className="ht-td-cancel-btn" onClick={() => setShowTestNoteEditor(false)}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button></div>
+                </div>
+              )}
+            </div>
+          ) : activeNavItem === "conclusion" ? (
+            <div className="ht-conclusion-wrap"><AppointmentReport booking={application} /></div>
+          ) : PANEL_NAV_IDS.includes(activeNavItem) ? (() => {
+            const sid = activeNavItem; const fileRef = sid === "morphologicalResearch" ? morphFileRef : procFileRef; const sec = sectionData[sid] || { files: [], comment: {} }; const files = sec.files || []; const commentValue = sec.comment?.value || "";
+            return (
+              <div className="ht-sp-page">
+                <div className="ht-sp-section">
+                  <div className="ht-sp-section-header"><span className="ht-sp-section-title">{t("history_tab.files_title", { defaultValue: "FILES" })}</span><button type="button" className="ht-sp-upload-btn" onClick={() => fileRef.current?.click()}><FiUpload size={13} />{t("history_tab.upload_file", { defaultValue: "Upload file" })}</button></div>
+                  <input ref={fileRef} type="file" multiple className="ht-hidden-file-input" onChange={(e) => handleSectionFileChange(sid, e)} />
+                  {sectionUploading[sid] && (<div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>)}
+                  {files.length === 0 ? (<div className="ht-sp-files-empty">{t("history_tab.no_files_uploaded", { defaultValue: "No files uploaded yet" })}</div>) : (
+                    <div className="ht-sp-files-list">{files.map((file) => {
+                      const name = file.filename || file.fileName || ""; const ext = name.split(".").pop().toUpperCase().slice(0, 5); const dt = file.uploadedAt ? new Date(file.uploadedAt) : null; const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : ""; const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : ""; const fid = String(file._id || file.fileId);
+                      return (<div key={fid} className="ht-sp-file-row"><span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span><div className="ht-sp-file-info"><span className="ht-sp-file-name">{name}</span>{dateStr && (<span className="ht-sp-file-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>)}</div><button type="button" className="ht-td-icon-btn" onClick={() => handleSectionFileRemove(sid, fid)} aria-label="Remove"><FiTrash2 size={14} /></button></div>);
+                    })}</div>
+                  )}
+                </div>
+
+                <div className="ht-sp-section">
+                  <div className="ht-sp-section-header"><span className="ht-sp-section-title">{t("history_tab.comment_title", { defaultValue: "COMMENT" })}</span>{sectionDirty[sid] && (<button type="button" className="ht-sp-save-btn" onClick={() => handleSectionCommentSave(sid, sectionData[sid]?.comment?.value || "") }><FiFileText size={13} />{t("history_tab.save", { defaultValue: "Save" })}</button>)}</div>
+                  <div className="ht-sp-comment-editor"><RichTextEditor value={commentValue} onChange={(val) => { setSectionData((prev) => ({ ...prev, [sid]: { ...prev[sid], comment: { ...prev[sid]?.comment, value: val } } })); setSectionDirty((prev) => ({ ...prev, [sid]: true })); }} placeholder={t("history_tab.enter_comment", { defaultValue: "Enter comment..." })} /></div>
+                </div>
+              </div>
+            );
+          })() : (
+            <>
+              <div className="ht-container">
+                <div className="ht-first-appt-bar">
+                  <label className="ht-first-appt-label"><input type="checkbox" className="ht-first-appt-checkbox" checked={!!form.isFirstAppointment} onChange={(e) => setForm((prev) => ({ ...prev, isFirstAppointment: e.target.checked, isRepetitiveAppointment: e.target.checked ? false : prev.isRepetitiveAppointment }))} /><span>{t("first_appointment")}</span></label>
+                  <label className="ht-first-appt-label"><input type="checkbox" className="ht-first-appt-checkbox" checked={!!form.isRepetitiveAppointment} onChange={(e) => setForm((prev) => ({ ...prev, isRepetitiveAppointment: e.target.checked, isFirstAppointment: e.target.checked ? false : prev.isFirstAppointment }))} /><span>{t("repetitive_appointment")}</span></label>
+                </div>
+                {HISTORY_SECTIONS.map((s) => renderSection(s))}
+              </div>
+            </>
+          )}
         </div>
-        <div className="ht-first-appointment">
-          <label>
-            <input
-              type="checkbox"
-              checked={form.isRepetitiveAppointment}
-              onChange={async (e) => {
-                const checked = e.target.checked;
-                setForm(prev => ({
-                  ...prev,
-                  isRepetitiveAppointment: checked,
-                  ...(checked ? { isFirstAppointment: false } : {}),
-                }));
-                toast.info(
-                  checked
-                    ? t("history_tab.toast.markedRepetitive")
-                    : t("history_tab.toast.unmarkedRepetitive")
-                );
-                // persist immediately
-                if (application?.applicationId) {
-                  try {
-                    await updateHistoryForm(application.applicationId, {
-                      isRepetitiveAppointment: checked,
-                    });
-                  } catch (err) {
-                    console.error("Failed to update isRepetitiveAppointment", err);
-                    toast.error(
-                      t("history_tab.toast.updateError") ||
-                        "Unable to save flag"
-                    );
-                  }
-                }
-              }}
-            />
-            {t("history_tab.repetitiveAppointment")}
-          </label>
-        </div>
-        </div>
-        
-        {HISTORY_SECTIONS.map((s) => renderSection(s))}
-      </div>
-      {/* Always-visible sticky footer */}
-      <div className="adp-sticky-footer">
-        <button
-          className="adp-btn-save-outline"
-          onClick={handleSaveAll}
-          disabled={isSaving}
-        >
-          {isSaving
-            ? t("history_tab.footer.saving")
-            : t("history_tab.footer.save")}
-        </button>
-        <button
-          className="adp-btn-save-primary"
-          onClick={handleSaveAndClose}
-          disabled={isSaving}
-        >
-          {isSaving
-            ? t("history_tab.footer.saving")
-            : t("history_tab.footer.save_and_close")}
-        </button>
       </div>
 
-      {showSaveCloseConfirm && (
-        <div className="custom-confirm-overlay">
-          <div className="custom-confirm-modal">
-            <h3>{t("history_tab.footer.confirm_title", "Confirm Save and Close")}</h3>
-            <p>
-              {t(
-                "history_tab.footer.confirm_save_and_close",
-                "Do you want to save changes and close this window?",
-              )}
-            </p>
-            <div className="custom-confirm-actions">
-              <button
-                className="adp-btn-save-outline"
-                onClick={() => setShowSaveCloseConfirm(false)}
-                disabled={isSaving}
-              >
-                {t("footer.cancel", "Cancel")}
-              </button>
-              <button
-                className="adp-btn-save-primary"
-                onClick={performSaveAndClose}
-                disabled={isSaving}
-              >
-                {isSaving
-                  ? t("history_tab.footer.saving")
-                  : t("footer.confirm", "Confirm")}
-              </button>
-            </div>
+      {labPopupOpen && createPortal(
+        <div className="ht-portal-overlay" onClick={closeLabAnalysisPopup}>
+          <div className="ht-portal-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ht-portal-header"><h2 className="ht-portal-title">{labPopupMode === "studiesManipulations" ? t("history_tab.manage_study_tests", { defaultValue: "Studies / Manipulations" }) : t("history_tab.manage_tests", { defaultValue: "Laboratory Analysis" })}</h2><button className="ht-portal-close" type="button" onClick={closeLabAnalysisPopup} aria-label="Close">×</button></div>
+            <div className="ht-portal-form"><div className="ht-portal-inputs"><input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_ru", { defaultValue: "Name (RU)" })} value={newTestNameRU} onChange={(e) => setNewTestNameRU(e.target.value)} /><input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_en", { defaultValue: "Name (EN)" })} value={newTestNameEN} onChange={(e) => setNewTestNameEN(e.target.value)} /></div><button className="ht-portal-add-btn" type="button" onClick={handleSaveTest}><span className="ht-portal-add-plus">+</span><span>{editingTestId ? t("history_tab.save", { defaultValue: "Save" }) : t("history_tab.add_btn", { defaultValue: "Add" })}</span></button></div>
+            {editingTestId && (<button className="ht-portal-cancel-btn" type="button" onClick={cancelEditTest}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>)}
+            <div className="ht-portal-list">{(labPopupMode === "studiesManipulations" ? studyTests : labTests).length > 0 ? ((labPopupMode === "studiesManipulations" ? studyTests : labTests).map((test) => (<div key={test._id} className="ht-portal-item" role="button" onClick={() => { handleSelectTest(test, labPopupMode); closeLabAnalysisPopup(); }}><div className="ht-portal-item-info"><span className="ht-portal-item-name">{test.name?.ru || test.name?.en || ""}</span>{test.name?.en && test.name?.ru && (<span className="ht-portal-item-sub">{test.name.en}</span>)}</div><div className="ht-portal-item-actions"><button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openEditTest(test); }} aria-label="Edit"><FiEdit2 size={14} /></button><button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openDeleteConfirm(test); }} aria-label="Delete"><FiTrash2 size={14} /></button></div></div>))) : (<p className="ht-portal-empty">{t("history_tab.no_tests_yet", { defaultValue: "No items yet" })}</p>)}</div>
           </div>
-        </div>
+        </div>, document.body
+      )}
+
+      {deleteConfirmTest && createPortal(
+        <div className="ht-delete-confirm-overlay"><div className="ht-delete-confirm-card"><p>{t("history_tab.confirm_delete_message", { defaultValue: "Are you sure you want to delete this test? This action cannot be undone." })}</p><div className="ht-delete-confirm-actions"><button type="button" className="ht-cancel-delete-btn" onClick={closeDeleteConfirm}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button><button type="button" className="ht-confirm-delete-btn" onClick={handleConfirmDelete}>{t("history_tab.delete", { defaultValue: "Delete" })}</button></div></div></div>, document.body
       )}
     </>
   );

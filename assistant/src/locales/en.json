@@ -1307,8 +1307,17 @@
     "click_to_edit": "Click to edit…",
     "enter_text": "Enter text…",
     "view_only": "View Only",
+    "sidebar_title": "History sections",
     "first_appointment": "First appointment",
     "repetitive_appointment": "Repetitive appointment",
+    "sidebar": {
+      "specialistConsultation": "Specialist consultation",
+      "laboratoryAnalysis": "Laboratory analysis",
+      "studiesManipulations": "Studies and manipulations",
+      "morphologicalResearch": "Morphological research",
+      "proceduresManipulations": "Procedures and manipulations",
+      "conclusion": "Conclusion"
+    },
     "dtp_back": "Back",
     "dtp_title": "History Templates",
     "dtp_total": "total",

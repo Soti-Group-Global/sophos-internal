@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Trash2, X } from "lucide-react";
+import { Check, Trash2, X, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { getAllServicePositions, getApplicationServicePositions, addApplicationServicePosition, removeApplicationServicePosition } from "../utils/api";
@@ -21,6 +21,7 @@ const Service = ({ applicationId }) => {
     const [positions, setPositions] = useState([]);
     const [selectedPositionIds, setSelectedPositionIds] = useState([]);
     const [addedPositions, setAddedPositions] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Load added positions from backend (application field)
     useEffect(() => {
@@ -72,6 +73,63 @@ const Service = ({ applicationId }) => {
                 : [...prev, positionId]
         ));
     };
+
+    const handleSelectPosition = (position) => {
+        if (!position?._id) return;
+
+        const isSelected = selectedPositionIds.includes(position._id);
+
+        if (isSelected) {
+            // remove
+            setSelectedPositionIds((prev) => prev.filter((id) => id !== position._id));
+            setAddedPositions((prev) => prev.filter((p) => p._id !== position._id));
+
+            if (!applicationId) return;
+            (async () => {
+                try {
+                    await removeApplicationServicePosition(applicationId, position._id);
+                    toast.success(t("service.remove", "Removed"));
+                } catch (err) {
+                    toast.error(t("service.removeFailed", "Failed to remove on server"));
+                }
+            })();
+            return;
+        }
+
+        // add immediately (match manager behavior)
+        setSelectedPositionIds((prev) => (prev.includes(position._id) ? prev : [...prev, position._id]));
+        setAddedPositions((prev) => (prev.some((existing) => existing._id === position._id) ? prev : [...prev, position]));
+
+        if (!applicationId) {
+            toast.info(t("service.positionAddedLocal", "Position added locally (no application selected)"));
+            return;
+        }
+
+        (async () => {
+            try {
+                await addApplicationServicePosition(applicationId, position._id);
+                toast.success(t("service.positionAdded", "Position added"));
+            } catch (err) {
+                toast.error(t("service.saveFailed", "Failed to save to server"));
+            }
+        })();
+    };
+
+    const formatPrice = (price) => {
+        if (price == null || price === "") return "—";
+        const n = Number(price);
+        if (Number.isNaN(n)) return String(price);
+        return n.toLocaleString("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 });
+    };
+
+    const filteredPositions = (positions || []).filter((p) => {
+        if (!searchQuery) return true;
+        const q = searchQuery.toLowerCase();
+        return (p.name || "").toLowerCase().includes(q)
+            || (p.serviceCode || "").toLowerCase().includes(q)
+            || (p.pmuCode || "").toLowerCase().includes(q)
+            || (p.code || "").toLowerCase().includes(q);
+    });
 
     const handleAddSelected = () => {
         if (!selectedPositionIds.length) {
@@ -170,95 +228,101 @@ const Service = ({ applicationId }) => {
                     )}
                 </div>
 
-            {isOpen && createPortal(
-                <div
-                    className="service-modal-overlay"
-                    onClick={(event) => event.target === event.currentTarget && setIsOpen(false)}
-                >
-                    <div className="service-modal" role="dialog" aria-modal="true" aria-label={t("service.addServices", "Add service")}>
-                        <div className="service-modal-header">
-                            <h2>{t("service.addServices", "Add service")}</h2>
-                            <button
-                                type="button"
-                                className="service-modal-close"
-                                onClick={() => setIsOpen(false)}
-                                aria-label={t("close", "Close")}
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
+           {isOpen && createPortal(
+				<div
+					className="service-modal-overlay"
+					onClick={(event) => event.target === event.currentTarget && setIsOpen(false)}
+				>
+					<div className="service-modal" role="dialog" aria-modal="true" aria-label={t("service.addServices", "Add service")}>
+						<div className="service-modal-header">
+							<h2>{t("service.addServices", "Add service")}</h2>
+							<button
+								type="button"
+								className="service-modal-close"
+								onClick={() => setIsOpen(false)}
+								aria-label={t("close", "Close")}
+							>
+								<X size={16} />
+							</button>
+						</div>
 
-                        <div className="service-modal-body">
-                            <div className="service-modal-section-title">
-                                {t("service.addedPositions", "Added Positions")}
-                            </div>
+						<div className="service-modal-search">
+							<div className="service-modal-search__row">
+								<Search size={15} className="service-modal-search__icon" />
+								<input
+									type="text"
+									className="service-modal-search__input"
+									placeholder={t("search", "Search...")}
+									value={searchQuery}
+									onChange={(e) => setSearchQuery(e.target.value)}
+								/>
+							</div>
+						</div>
 
-                            {loading ? (
-                                <div className="service-modal-state">{t("loading", "Loading...")}</div>
-                            ) : positions.length === 0 ? (
-                                <div className="service-modal-state">{t("service.noPositions", "No positions added yet.")}</div>
-                            ) : (
-                                <div className="service-position-list">
-                                    {positions.map((position) => (
-                                        <div
-                                            key={position._id || position.id || position.serviceCode || position.name}
-                                            className={`service-position-card${selectedPositionIds.includes(position._id) ? " selected" : ""}`}
-                                            onClick={() => toggleSelectedPosition(position._id)}
-                                            tabIndex={0}
-                                            role="button"
-                                            onKeyDown={(event) => {
-                                                if (event.key === "Enter" || event.key === " ") {
-                                                    event.preventDefault();
-                                                    toggleSelectedPosition(position._id);
-                                                }
-                                            }}
-                                        >
-                                            <div className="service-position-card__top">
-                                                <strong>{position.name || t("service.unnamedPosition", "Unnamed position")}</strong>
-                                            </div>
-                                            <div className="service-position-card__meta">
-                                                {position.serviceCode ? <span>{position.serviceCode}</span> : null}
-                                                {position.pmuCode ? <span>{position.pmuCode}</span> : null}
-                                            </div>
-                                            {position.description ? (
-                                                <p>{position.description}</p>
-                                            ) : null}
-                                            <div className="service-position-card__actions">
-                                                {selectedPositionIds.includes(position._id) ? (
-                                                    <span className="service-position-card__selected-actions">
-                                                        <Check size={16} className="service-position-card__tick" />
-                                                        <button
-                                                            type="button"
-                                                            className="service-position-card__unselect-btn"
-                                                            onClick={(event) => {
-                                                                event.stopPropagation();
-                                                                toggleSelectedPosition(position._id);
-                                                            }}
-                                                            aria-label={t("service.unselect", "Unselect")}
-                                                        >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="service-modal-footer">
-                            <button type="button" className="service-modal-close-btn" onClick={() => setIsOpen(false)}>
-                                {t("close", "Close")}
-                            </button>
-                            <button type="button" className="service-modal-add-btn" onClick={handleAddSelected}>
-                                {t("service.add", "Add")}
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body,
-            )}
+						<div className="service-modal-body">
+							{loading ? (
+								<div className="service-modal-state">{t("loading", "Loading...")}</div>
+							) : filteredPositions.length === 0 ? (
+								<div className="service-modal-state">{t("service.noPositions", "No positions added yet.")}</div>
+							) : (
+								<div className="service-position-list">
+									{filteredPositions.map((position) => {
+										const isSelected = selectedPositionIds.includes(position._id);
+										return (
+											<div
+												key={position._id || position.id || position.serviceCode || position.name}
+												className={`service-position-card${isSelected ? " selected" : ""}`}
+												onClick={() => handleSelectPosition(position)}
+												tabIndex={0}
+												role="button"
+												onKeyDown={(e) => {
+													if (e.key === "Enter" || e.key === " ") {
+														e.preventDefault();
+														handleSelectPosition(position);
+													}
+												}}
+											>
+												<div className="service-position-card__left">
+													<span className="service-position-card__name">
+														{position.serviceCode || position.pmuCode || position.code || t("service.unnamedPosition", "Unnamed position")}
+													</span>
+													{/* <span className="service-position-card__meta">
+														{position.name && <span>{position.name}</span>}
+														{position.serviceCode && position.name && <span>•</span>}
+														{position.serviceCode && <span>{position.serviceCode}</span>}
+														{position.pmuCode && <span>{position.pmuCode}</span>}
+													</span> */}
+												</div>
+												<div className="service-position-card__right">
+													{isSelected && (
+														<>
+															<span className="service-position-card__check">
+																<Check size={15} />
+															</span>
+															<button
+																type="button"
+																className="service-position-card__trash"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	handleDeleteAddedPosition(position._id);
+																}}
+																aria-label={t("service.unselect", "Unselect")}
+															>
+																<Trash2 size={14} />
+															</button>
+														</>
+													)}
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							)}
+						</div>
+					</div>
+				</div>,
+				document.body,
+			)}
         </div>
     );
 };

@@ -1372,6 +1372,15 @@
   "notDefined":"Не определено",
 
   "history_tab": {
+    "sidebar": {
+      "specialistConsultation": "Консультация специалиста",
+      "laboratoryAnalysis": "Лабораторные анализы",
+      "studiesManipulations": "Исследования и манипуляции",
+      "morphologicalResearch": "Морфологические исследования",
+      "proceduresManipulations": "Процедуры и манипуляции",
+      "conclusion": "Заключение"
+    },
+    "sidebar_title": "Разделы истории",
     "sections": {
       "complaints": "Жалобы",
       "anamnesisMorbi": "Анамнез заболевания",
@@ -1407,13 +1416,21 @@
       "save_and_close": "Сохранить и закрыть"
     },
     "firstAppointment": "Первичный прием",
+    "first_appointment": "Первичный прием",
     "repetitiveAppointment": "Повторный прием",
+    "repetitive_appointment": "Повторный прием",
     "toast": {
       "markedFirst": "Прием отмечен как первичный",
       "unmarkedFirst": "Флаг первичного приема снят",
       "markedRepetitive": "Прием отмечен как повторный",
       "unmarkedRepetitive": "Флаг повторного приема снят",
-      "updateError": "Не удалось сохранить флаг первичного приема"
+      "updateError": "Не удалось сохранить флаг первичного приема",
+      "template_saved": "Шаблон сохранен",
+      "template_update_failed": "Не удалось обновить шаблон",
+      "template_deleted": "Шаблон удален",
+      "template_delete_failed": "Не удалось удалить шаблон",
+      "template_duplicated": "Шаблон продублирован",
+      "template_duplicate_failed": "Не удалось продублировать шаблон"
     }
   },
   "taskBoard": {
