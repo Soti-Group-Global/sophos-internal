@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
 const api = axios.create({
-  baseURL: "http://localhost:3003/api",
+  baseURL: "http://localhost:5002/api",
   withCredentials: false,
 });
 

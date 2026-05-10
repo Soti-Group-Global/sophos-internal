@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getApptStatusClass } from "../utils/appointmentStatus";
@@ -540,7 +540,11 @@ const EarlyDetectionBookingDetails = () => {
   const loadManagedTests = async (section) => {
     try {
       const response = await getEarlyDetectionManagedTests(section);
-      const list = Array.isArray(response?.data) ? response.data : [];
+      const list = Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
       setManagedTests((prev) => ({ ...prev, [section]: list }));
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to load tests");

@@ -1312,8 +1312,17 @@
     "click_to_edit": "Нажмите чтобы редактировать…",
     "enter_text": "Введите текст…",
     "view_only": "Только просмотр",
+    "sidebar_title": "Разделы истории",
     "first_appointment": "Первичный приём",
     "repetitive_appointment": "Повторный приём",
+    "sidebar": {
+      "specialistConsultation": "Консультация специалиста",
+      "laboratoryAnalysis": "Лабораторный анализ",
+      "studiesManipulations": "Исследования и манипуляции",
+      "morphologicalResearch": "Морфологические исследования",
+      "proceduresManipulations": "Процедуры и манипуляции",
+      "conclusion": "Заключение"
+    },
     "dtp_back": "Назад",
     "dtp_title": "Шаблоны истории болезни",
     "dtp_total": "всего",

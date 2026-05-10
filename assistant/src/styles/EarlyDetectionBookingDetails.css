@@ -994,7 +994,12 @@
   background: #fff;
   padding-left: 20px; /* Space for the vertical tab bar */
   border-top-left-radius: 20px;
-  border:1px solid #eef2f7;
+  border: 1px solid #eef2f7;
+  width: calc(100% + 2px);
+  margin-left: 1px;
+  overflow: visible;
+  box-sizing: border-box;
+  border-bottom:  1px solid #eef2f7;
 }
 
 .booking-details-page--compact .edb-booking-details-content {
@@ -1002,6 +1007,9 @@
   padding-left: 64px;
 }
 
+.adp-header-right{
+  margin-left:-1000px
+}
 .booking-details-page--compact .edb-tab-bar {
   position: fixed;
   top: 0;
@@ -1009,7 +1017,7 @@
   bottom: 0;
   width: 64px;
   z-index: 210;
-  background: #f5f6f8;
+  background: #fff;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #e5e7eb;
@@ -1019,7 +1027,7 @@
   gap: 12px;
   margin: 0;
   border-radius: 0;
-  margin-top: 68px;
+  margin-top: 66px;
   height: 120%;
 }
 
@@ -1050,9 +1058,11 @@
 }
 
 .booking-details-page--compact .edb-tab.active {
-  border-left:4px solid #0f3f7f ;
+  border-left: 3px solid #0f3f7f ;
   color:#0f3f7f;
-  background: #f5f7fa;
+  background: #ffff;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 4px 6px rgba(15, 63, 127, 0.1);
 }
 
 .booking-details-page--compact .edb-tab:not(.active):hover {
@@ -1143,6 +1153,8 @@ body.hide-global-sidebar .adp-app-sidebar {
   flex-direction: column;
   overflow: hidden;
   background: #f5f7fa;
+  margin-top: -20px;
+  
 }
 
 .edb-tab-bar {
@@ -1223,6 +1235,8 @@ body.hide-global-sidebar .adp-app-sidebar {
   padding: 24px 28px 90px;
   scrollbar-width: thin;
   scrollbar-color: #98a2b3 #eef2f7;
+  margin-top:-20px;
+  width: 95%;
 }
 
 .edb-details-body--conclusion-full {
@@ -3293,6 +3307,7 @@ body.hide-global-sidebar .adp-app-sidebar {
     height: auto;
     min-height: auto;
     overflow: visible;
+    margin-top: -16px;
   }
 
   .ed-details-body {
@@ -3450,6 +3465,7 @@ body.hide-global-sidebar .adp-app-sidebar {
   display: grid;
   grid-template-columns: 1fr;
   gap: 18px;
+  margin-top:20px
 }
 
 .ed-medical-history-section {
@@ -3544,7 +3560,6 @@ body.hide-global-sidebar .adp-app-sidebar {
   gap: 8px;
   margin-top: 10px;
   margin-bottom: 14px;
-  margin-left: 20px
 }
 
 .ed-medical-history-layout {
@@ -3556,18 +3571,21 @@ body.hide-global-sidebar .adp-app-sidebar {
 }
 
 .ed-medical-history-sidebar {
-  background: #f5f7fa;
+  background: white;
   border-right: 1px solid #e4e7ec;
   padding: 12px;
   position: sticky;
   top: 0;
   align-self: start;
-  min-height: 0;
-  margin-top: -30px;
+  min-height: 1200px;
+  margin-top: -12px;
+  margin-left: -27px;
+  width: 200px;
 }
 
 .ed-medical-history-content {
   min-width: 0;
+  margin-top:20px;
 }
 
 .ed-schedule-tabs--vertical {
@@ -3581,6 +3599,7 @@ body.hide-global-sidebar .adp-app-sidebar {
   overflow-x: visible;
   overflow-y: auto;
   max-height: calc(100vh - 180px);
+  margin-left: -10px;
 }
 
 .ed-schedule-tab-btn {
@@ -3617,12 +3636,19 @@ body.hide-global-sidebar .adp-app-sidebar {
 }
 
 .ed-schedule-tabs--vertical .ed-schedule-tab-btn.active {
-  background: #f5f7fa;
+  background: #ffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   color: #0c3870;
-  border-left: 4px solid #0c3870;
-  border-radius: 10px;
+  border-left: 3px solid #0c3870;
+  border-radius: 0 12px 12px 0;
   padding-left: 8px;
 }
+
+.ed-schedule-tabs--vertical .ed-schedule-tab-btn:hover {
+  background: #f5f7fa;
+  color: #0c3870;
+  border-radius: 5px;
+  }
 
 /* Locked specialist tab — view only */
 .ed-schedule-tab-btn.ed-specialist-tab-locked {
@@ -3788,4 +3814,308 @@ body.hide-global-sidebar .adp-app-sidebar {
 .ed-upload-btn:hover {
   background: #0a2d5e;
   border-color: #0a2d5e;
+}
+
+/* Sub-navigation test list */
+.ed-subnav-test-list {
+  display: flex;
+  flex-direction: column;
+  padding-left: 24px;
+  margin-top: -4px;
+  margin-bottom: 8px;
+  gap: 2px;
+  margin-left:-10px
+}
+
+.ed-subnav-test-item {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 107%;
+  margin-left: -14px;
+}
+
+.ed-subnav-test-item:hover {
+  background: #f1f5f9;
+  color: #0c3870;
+}
+
+.ed-subnav-test-item.active {
+  background: #edf3ff;
+  color: #0c3870;
+  font-weight: 700;
+  border-left:2px solid #133668;  
+}
+
+/* Test Detail Page */
+.ed-test-detail-page {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ed-test-detail-header {
+  margin-bottom: 20px;
+}
+
+.ed-test-detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.ed-test-detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.ed-td-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ed-td-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.ed-td-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ed-td-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.ed-td-item:hover {
+  border-color: #e2e8f0;
+  background: #f1f5f9;
+}
+
+.ed-td-item--note {
+  align-items: flex-start;
+}
+
+.ed-td-badge {
+  padding: 4px 8px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 4px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.ed-td-badge--pdf { background: #fee2e2; color: #b91c1c; }
+.ed-td-badge--doc, .ed-td-badge--docx { background: #e0e7ff; color: #4338ca; }
+.ed-td-badge--jpg, .ed-td-badge--png { background: #fef3c7; color: #b45309; }
+
+.ed-td-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ed-td-item-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ed-td-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ed-td-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ed-td-icon-btn {
+  padding: 6px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.ed-td-icon-btn:hover {
+  background: #fff;
+  color: #1e293b;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.ed-td-icon-btn--delete:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.ed-td-note-editor {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.ed-td-note-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ed-td-save-btn {
+  padding: 8px 24px;
+  background: #0c3870;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ed-td-cancel-btn {
+  padding: 8px 20px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ed-td-empty {
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+}
+
+/* Full List View Items */
+.ed-test-list-item {
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ed-test-list-item:hover {
+  border-color: #0c3870;
+  background: #f8fbff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.ed-test-list-item-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ed-test-list-status {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.ed-test-list-status--done {
+  color: #10b981;
+}
+
+.ed-test-status-circle {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #cbd5e1;
+  border-radius: 50%;
+}
+
+.ed-test-list-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.ed-file-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ed-file-link-btn:hover {
+  background: #f1f5f9;
+  color: #0c3870;
+}
+
+.ed-file-link-btn--view:hover {
+  background: #eff6ff;
+  color: #2563eb;
+  border:none;
+}
+
+.ed-file-link-btn--download:hover {
+  background: #f0fdf4;
+  color: #16a34a;
+  border:none;
 }

@@ -1418,6 +1418,15 @@
   },
 
   "history_tab": {
+    "sidebar": {
+      "specialistConsultation": "Specialist consultation",
+      "laboratoryAnalysis": "Laboratory analysis",
+      "studiesManipulations": "Studies & manipulations",
+      "morphologicalResearch": "Morphological research",
+      "proceduresManipulations": "Procedures & manipulations",
+      "conclusion": "Conclusion"
+    },
+    "sidebar_title": "History sections",
     "sections": {
       "complaints": "Complaints",
       "anamnesisMorbi": "Anamnesis Morbi",
@@ -1453,13 +1462,21 @@
       "save_and_close": "Save and close"
     },
     "firstAppointment": "First appointment",
+    "first_appointment": "First appointment",
     "repetitiveAppointment": "Repetitive appointment",
+    "repetitive_appointment": "Repetitive appointment",
     "toast": {
       "markedFirst": "Appointment marked as first appointment",
       "unmarkedFirst": "First appointment flag removed",
       "markedRepetitive": "Appointment marked as repetitive",
       "unmarkedRepetitive": "Repetitive appointment flag removed",
-      "updateError": "Failed to save first appointment flag"
+      "updateError": "Failed to save first appointment flag",
+      "template_saved": "Template saved",
+      "template_update_failed": "Failed to update template",
+      "template_deleted": "Template deleted",
+      "template_delete_failed": "Failed to delete template",
+      "template_duplicated": "Template duplicated",
+      "template_duplicate_failed": "Failed to duplicate template"
     }
   },
   "taskBoard": {

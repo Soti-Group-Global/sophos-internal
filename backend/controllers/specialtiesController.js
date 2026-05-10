@@ -1,4 +1,6 @@
 const Specialty = require('../models/Specialty');
+const Application = require('../models/Application');
+const Order = require('../models/Order');
 
 // Create specialty
 const createSpecialty = async (req, res) => {

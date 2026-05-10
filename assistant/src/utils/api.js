@@ -642,6 +642,259 @@ export const deleteHistoryTemplate = async (id) => {
   return res.data;
 };
 
+// ===== Application & Tests helpers (manager-compatible API surface) =====
+export const updateHistoryFieldVerify = async (id, fieldKey, isVerified) => {
+  try {
+    const response = await api.patch(
+      `/applications/${encodeURIComponent(id)}/history/${fieldKey}/verify`,
+      { isVerified }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getApplicationsByPatientId = async (patientId) => {
+  try {
+    const encodedPatientId = encodeURIComponent(patientId);
+    const response = await api.get(`/applications/by-patient-id/${encodedPatientId}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Application Laboratory Tests
+export const createApplicationLaboratoryTest = async (data) => {
+  try {
+    const response = await api.post("/application-laboratory-test", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllApplicationLaboratoryTests = async (params = {}) => {
+  try {
+    const response = await api.get("/application-laboratory-test", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getApplicationLaboratoryTestById = async (id) => {
+  try {
+    const response = await api.get(`/application-laboratory-test/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateApplicationLaboratoryTest = async (id, data) => {
+  try {
+    const response = await api.put(`/application-laboratory-test/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteApplicationLaboratoryTest = async (id) => {
+  try {
+    const response = await api.delete(`/application-laboratory-test/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadApplicationLaboratoryTestFile = async (id, file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(`/application-laboratory-test/${id}/upload-file`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const removeApplicationLaboratoryTestFile = async (id, fileId) => {
+  try {
+    const path = `/application-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchApplicationLaboratoryTestFile = async (id, fileId) => {
+  try {
+    const path = `/application-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.get(path, { responseType: "blob" });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addApplicationLaboratoryTestNote = async (id, data) => {
+  try {
+    const response = await api.patch(`/application-laboratory-test/${id}/note`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateApplicationLaboratoryTestNote = async (id, noteId, data) => {
+  try {
+    const response = await api.patch(`/application-laboratory-test/${id}/note/${noteId}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteApplicationLaboratoryTestNote = async (id, noteId) => {
+  try {
+    const path = noteId ? `/application-laboratory-test/${id}/note/${noteId}` : `/application-laboratory-test/${id}/note`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Application Instrumental Analysis (studies)
+export const createApplicationInstrumentalAnalysis = async (data) => {
+  try {
+    const response = await api.post("/application-instrumental-analysis", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateApplicationInstrumentalAnalysis = async (id, data) => {
+  try {
+    const response = await api.put(`/application-instrumental-analysis/${encodeURIComponent(id)}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadApplicationInstrumentalAnalysisFile = async (id, file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(`/application-instrumental-analysis/${id}/upload-file`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const removeApplicationInstrumentalAnalysisFile = async (id, fileId) => {
+  try {
+    const path = `/application-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchApplicationInstrumentalAnalysisFile = async (id, fileId) => {
+  try {
+    const path = `/application-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
+    const response = await api.get(path, { responseType: "blob" });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addApplicationInstrumentalAnalysisNote = async (id, data) => {
+  try {
+    const response = await api.patch(`/application-instrumental-analysis/${id}/note`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateApplicationInstrumentalAnalysisNote = async (id, noteId, data) => {
+  try {
+    const response = await api.patch(`/application-instrumental-analysis/${id}/note/${noteId}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteApplicationInstrumentalAnalysisNote = async (id, noteId) => {
+  try {
+    const path = noteId ? `/application-instrumental-analysis/${id}/note/${noteId}` : `/application-instrumental-analysis/${id}/note`;
+    const response = await api.delete(path);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllApplicationInstrumentalAnalysis = async (params = {}) => {
+  try {
+    const response = await api.get("/application-instrumental-analysis", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteApplicationInstrumentalAnalysis = async (id) => {
+  try {
+    const response = await api.delete(`/application-instrumental-analysis/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Application sections (morphologicalResearch / proceduresAndManipulations)
+export const getApplicationSection = async (applicationId, section) => {
+  const response = await api.get(`/application-section/${encodeURIComponent(applicationId)}/${section}`);
+  return response.data;
+};
+
+export const uploadApplicationSectionFile = async (applicationId, section, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post(`/application-section/${encodeURIComponent(applicationId)}/${section}/upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+export const removeApplicationSectionFile = async (applicationId, section, fileId) => {
+  const response = await api.delete(`/application-section/${encodeURIComponent(applicationId)}/${section}/file/${fileId}`);
+  return response.data;
+};
+
+export const updateApplicationSectionComment = async (applicationId, section, value) => {
+  const response = await api.patch(`/application-section/${encodeURIComponent(applicationId)}/${section}/comment`, { value });
+  return response.data;
+};
+
 export const joinMeetingByUser = async ({
   applicationId,
   roomId,
@@ -2104,6 +2357,32 @@ export const deleteEarlyDetectionBookingNote = async (bookingId, noteId) => {
   return res.data;
 };
 
+export const fetchEarlyDetectionScheduleFile = async (fileId) => {
+  return api.get(`/early-detection/bookings/files/${encodeURIComponent(fileId)}`, {
+    responseType: "blob",
+  });
+};
+
+export const addEarlyDetectionTestEntryNote = async (bookingId, section, itemId, content) => {
+  return api.post(
+    `/early-detection/bookings/${encodeURIComponent(bookingId)}/schedule/${encodeURIComponent(section)}/items/${encodeURIComponent(itemId)}/notes`,
+    { content },
+  );
+};
+
+export const updateEarlyDetectionTestEntryNote = async (bookingId, section, entryId, noteId, content) => {
+  return api.put(
+    `/early-detection/bookings/${encodeURIComponent(bookingId)}/schedule/${encodeURIComponent(section)}/entries/${encodeURIComponent(entryId)}/notes/${encodeURIComponent(noteId)}`,
+    { content },
+  );
+};
+
+export const deleteEarlyDetectionTestEntryNote = async (bookingId, section, entryId, noteId) => {
+  return api.delete(
+    `/early-detection/bookings/${encodeURIComponent(bookingId)}/schedule/${encodeURIComponent(section)}/entries/${encodeURIComponent(entryId)}/notes/${encodeURIComponent(noteId)}`,
+  );
+};
+
 export const generateEDPaymentLink = async (bookingId) =>
   api.post(`/early-detection/bookings/${encodeURIComponent(bookingId)}/generate-payment-link`);
 
@@ -2112,7 +2391,7 @@ export const updateEarlyDetectionPaymentStatus = async (bookingId, payload) =>
 
 export const getEarlyDetectionManagedTests = async (section) => {
   try {
-    return await api.get(`/early-detection/bookings/tests/${encodeURIComponent(section)}`);
+    return await api.get(`/early-detection/form/bookings/tests/${encodeURIComponent(section)}`);
   } catch (error) {
     // Backend route may not exist in some environments yet.
     // Return empty list so booking details page remains usable.
@@ -2156,13 +2435,13 @@ export const saveEarlyDetectionReport = async (bookingId, payload) => {
 };
 
 export const createEarlyDetectionManagedTest = async (section, payload) =>
-  api.post(`/early-detection/bookings/tests/${encodeURIComponent(section)}`, payload);
+  api.post(`/early-detection/form/bookings/tests/${encodeURIComponent(section)}`, payload);
 
 export const updateEarlyDetectionManagedTest = async (section, testId, payload) =>
-  api.patch(`/early-detection/bookings/tests/${encodeURIComponent(section)}/${encodeURIComponent(testId)}`, payload);
+  api.patch(`/early-detection/form/bookings/tests/${encodeURIComponent(section)}/${encodeURIComponent(testId)}`, payload);
 
 export const deleteEarlyDetectionManagedTest = async (section, testId) =>
-  api.delete(`/early-detection/bookings/tests/${encodeURIComponent(section)}/${encodeURIComponent(testId)}`);
+  api.delete(`/early-detection/form/bookings/tests/${encodeURIComponent(section)}/${encodeURIComponent(testId)}`);
 
 export const getDoctorAppointmentsByDate = async (doctorEmail, date) =>
   api.get(`/calendar/doctor-appointments`, { params: { doctorEmail, date } });

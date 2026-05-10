@@ -1073,52 +1073,52 @@ const AppointmentDetails = () => {
 
       {/* === Page Layout: Left vertical tabs + Right Column === */}
       <div className="app-detail-page-layout">
-        <nav className="apd-vertical-tabs" aria-label="Appointment sections">
+        <nav className="sub-sidebar" aria-label="Appointment sections">
           <button
             title={t("appointment.patient")}
-            className={`apd-vert-tab${activeSubTab === "patient" ? " active" : ""}`}
+            className={`sidebar-tab${activeSubTab === "patient" ? " active" : ""}`}
             onClick={() => setActiveSubTab("patient")}
           >
             <FiUser size={18} />
           </button>
           <button
             title={t("appointment.medicalHistory")}
-            className={`apd-vert-tab${activeSubTab === "history" ? " active" : ""}`}
+            className={`sidebar-tab${activeSubTab === "history" ? " active" : ""}`}
             onClick={() => setActiveSubTab("history")}
           >
             <FiClock size={18} />
           </button>
           <button
             title={t("appointment.documents")}
-            className={`apd-vert-tab${activeSubTab === "documents" ? " active" : ""}`}
+            className={`sidebar-tab${activeSubTab === "documents" ? " active" : ""}`}
             onClick={() => setActiveSubTab("documents")}
           >
             <GrDocumentStore size={18} />
           </button>
           <button
             title={t("appointment.followUp")}
-            className={`apd-vert-tab${activeSubTab === "followup" ? " active" : ""}`}
+            className={`sidebar-tab${activeSubTab === "followup" ? " active" : ""}`}
             onClick={() => setActiveSubTab("followup")}
           >
             <FiCalendar size={18} />
           </button>
           <button
             title={t("appointment.earlyDiagnosis") || "Early diagnosis"}
-            className={`apd-vert-tab${activeSubTab === "overview" ? " active" : ""}`}
+            className={`sidebar-tab${activeSubTab === "overview" ? " active" : ""}`}
             onClick={() => setActiveSubTab("overview")}
           >
             <FiActivity size={18} />
           </button>
           <button
             title={t("appointment.report") || "Report"}
-            className={`apd-vert-tab${activeSubTab === "report" ? " active" : ""}`}
+            className={`sidebar-tab${activeSubTab === "report" ? " active" : ""}`}
             onClick={() => setActiveSubTab("report")}
           >
             <FiFileText size={18} />
           </button>
           <button
             title={t("appointment.service") || "Service"}
-            className={`apd-vert-tab${activeSubTab === "service" ? " active" : ""}`}
+            className={`sidebar-tab${activeSubTab === "service" ? " active" : ""}`}
             onClick={() => setActiveSubTab("service")}
           >
             <FiSettings size={18} />
@@ -1820,9 +1820,9 @@ const AppointmentDetails = () => {
 
                 {
                   activeSubTab === "report" && (
-                    <AppointmentReport
-                      booking={appointment}
-                    />
+                    <div className="doctor-report-wrap">
+                      <AppointmentReport booking={appointment} />
+                    </div>
                   )
                 }
                 {activeSubTab === "service" && (
