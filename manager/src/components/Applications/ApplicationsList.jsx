@@ -271,8 +271,9 @@ const ApplicationsList = () => {
 
   const handleRowClick = (app) => {
     const appId = app.applicationId || app._id;
+    const lang = i18n.language || "ru";
     window.open(
-      `/applications/appointment/${encodeURIComponent(appId)}?tab=general`,
+      `/applications/appointment/${encodeURIComponent(appId)}?tab=general&lang=${lang}`,
       "_blank",
       "noopener,noreferrer",
     );

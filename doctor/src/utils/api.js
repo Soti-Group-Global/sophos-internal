@@ -9,7 +9,7 @@ export const setAuthContext = (ctx) => {
 };
 
 const api = axios.create({
-  baseURL: 'http://localhost:5002/api',
+  baseURL: 'http://localhost:3003/api',
   withCredentials: true,
 });
 
@@ -1283,6 +1283,21 @@ export const addMultipleTestsToEarlyDetectionAppointment = async (
   } catch (error) {
     console.error("Error adding multiple tests to early detection:", error);
     throw error;
+  }
+};
+
+export const getPatientByPatientId = async (patientId) => {
+  try {
+    const res = await api.get(`/patients/by-patient-id/${encodeURIComponent(patientId)}`, {
+      headers: {}
+    });
+    return res.data && res.data.patient ? res.data.patient : res.data;
+  } catch (error) {
+    throw {
+      status: error.response?.status || 500,
+      data: error.response?.data || null,
+      message: error.message || "Failed to fetch patient by patientId",
+    };
   }
 };
 

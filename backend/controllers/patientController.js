@@ -124,6 +124,20 @@ const getPatientById = async (req, res) => {
   }
 };
 
+// Get a single patient by custom patientId field (e.g. "HD-001")
+const getPatientByPatientId = async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ patientId: req.params.patientId });
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    const profilePicture = await readProfilePicture(patient.profileFileId);
+    res.status(200).json({ patient: { ...patient.toObject(), profilePicture } });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch patient', error: error.message });
+  }
+};
+
 // Get a single patient by email
 const getPatientByEmail = async (req, res) => {
   try {
@@ -1042,6 +1056,7 @@ module.exports = {
   getAllPatients,
   getPatientById,
   getPatientByEmail,
+  getPatientByPatientId,
   addPatient,
   createLegalRepresentative,
   updateLegalRepresentative,

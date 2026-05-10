@@ -108,11 +108,25 @@
   margin-left: auto;
   flex-shrink: 0;
 }
+.adp-dob-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .adp-dob-value {
   font-size: 20px;
   font-weight: 700;
   color: #111827;
   line-height: 1.2;
+}
+.adp-age-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0c3870;
+  background: #e8f0fb;
+  border-radius: 20px;
+  padding: 2px 10px;
+  white-space: nowrap;
 }
 .adp-dob-label {
   font-size: 10px;

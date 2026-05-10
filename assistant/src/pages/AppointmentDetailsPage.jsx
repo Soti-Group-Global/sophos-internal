@@ -53,6 +53,25 @@ const formatDOB = (dateStr, locale = "en-US") => {
   }
 };
 
+const calculateAge = (dateStr) => {
+  if (!dateStr) return null;
+  const birth = new Date(dateStr);
+  if (isNaN(birth)) return null;
+  const now = new Date();
+  let years = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) years--;
+  if (years < 1) {
+    const months =
+      (now.getFullYear() - birth.getFullYear()) * 12 +
+      now.getMonth() -
+      birth.getMonth() -
+      (now.getDate() < birth.getDate() ? 1 : 0);
+    return months < 1 ? `${Math.max(0, now.getDate() - birth.getDate())}d` : `${months}mo`;
+  }
+  return years;
+};
+
 const AppointmentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -210,6 +229,7 @@ const AppointmentDetailsPage = () => {
 
   const createdAt = formatDate(application.createdAt);
   const dob = formatDOB(patient?.dateOfBirth, i18n.language);
+  const age = calculateAge(patient?.dateOfBirth);
 
   const renderTab = () => {
     switch (activeTab) {
@@ -273,7 +293,12 @@ const AppointmentDetailsPage = () => {
 
         {dob && (
           <div className="adp-header-right">
-            <span className="adp-dob-value">{dob}</span>
+            <div className="adp-dob-row">
+              <span className="adp-dob-value">{dob}</span>
+              {age !== null && age !== undefined && (
+                <span className="adp-age-badge">{age} y.o.</span>
+              )}
+            </div>
             <span className="adp-dob-label">{t("date_of_birth")}</span>
           </div>
         )}

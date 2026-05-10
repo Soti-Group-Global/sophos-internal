@@ -6,9 +6,9 @@ import { toast } from "react-toastify";
 import { socket } from "../utils/socket";
 import {
   getApplication,
-  getApplications,
-  getPatientByEmail,
-  getMedicalHistoryByEmail,
+  getApplicationsByPatientId,
+  getPatientByPatientId,
+  getMedicalHistoryByPatientId,
   updateApplication,
   updateHistoryForm,
   getAllDoctorsProfiles,
@@ -59,6 +59,31 @@ const formatDOB = (dateStr, locale = "ru") => {
   }
 };
 
+const calculateAge = (dateStr) => {
+  if (!dateStr) return null;
+  try {
+    const birth = new Date(dateStr);
+    const now = new Date();
+    let years = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+      years--;
+    }
+    if (years < 0) return null;
+    if (years === 0) {
+      const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+      if (months <= 0) {
+        const days = Math.floor((now - birth) / 86400000);
+        return `${days}d`;
+      }
+      return `${months}mo`;
+    }
+    return `${years}`;
+  } catch {
+    return null;
+  }
+};
+
 const AppointmentDetailsSystemHeader = ({
   t,
   navigate,
@@ -67,6 +92,7 @@ const AppointmentDetailsSystemHeader = ({
   applicationId,
   createdAt,
   dob,
+  age,
 }) => (
   <div className="adp-top-header adp-top-header--system">
     <button className="adp-back-btn" onClick={() => navigate(-1)}>
@@ -99,7 +125,12 @@ const AppointmentDetailsSystemHeader = ({
 
     {!loading && dob && (
       <div className="adp-header-right">
-        <span className="adp-dob-value">{dob}</span>
+        <div className="adp-dob-row">
+          <span className="adp-dob-value">{dob}</span>
+          {age !== null && age !== undefined && (
+            <span className="adp-age-badge">{age} y.o.</span>
+          )}
+        </div>
         <span className="adp-dob-label">{t("date_of_birth")}</span>
       </div>
     )}
@@ -129,7 +160,17 @@ const AppointmentDetailsPage = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const activeTab = searchParams.get("tab") || "general";
-  const setActiveTab = (key) => setSearchParams({ tab: key }, { replace: true });
+  const setActiveTab = (key) => {
+    const lang = searchParams.get("lang");
+    setSearchParams(lang ? { tab: key, lang } : { tab: key }, { replace: true });
+  };
+
+  useEffect(() => {
+    const lang = searchParams.get("lang");
+    if (lang && (lang === "en" || lang === "ru") && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+    }
+  }, []);
   const [saving, setSaving] = useState(false);
   const [pageSaving, setPageSaving] = useState(false);
   const historyTabRef = useRef(null);
@@ -165,21 +206,39 @@ const AppointmentDetailsPage = () => {
         const app = appRes.data;
         setApplication(app);
 
-        const email = app?.patientEmail || app?.patient?.email;
-        const samePatient = !isInitialLoad && email === prevPatientEmailRef.current;
+        const patientId = app?.patientId || app?.patient?.patientId;
+        const samePatient = !isInitialLoad && patientId === prevPatientEmailRef.current;
 
         if (!samePatient) {
-          // New patient (or first load) — fetch all patient-related data
-          prevPatientEmailRef.current = email ?? null;
+          prevPatientEmailRef.current = patientId ?? null;
 
-          // Fetch all appointments for this patient for the sidebar
-          if (email) {
+          if (app?.patient) {
+            setPatient(app.patient);
+          }
+
+          if (patientId) {
+            // Fetch full patient record
             try {
-              const appsRes = await getApplications({ patientEmail: email, limit: 50 });
-              const list = appsRes?.data?.applications || appsRes?.data || [];
+              const patRes = await getPatientByPatientId(patientId);
+              const fullPatient = patRes?.patient || patRes;
+              if (fullPatient && (fullPatient.firstName || fullPatient.lastName || fullPatient.email)) {
+                setPatient(fullPatient);
+              }
+            } catch { /* keep patient from app.patient */ }
+
+            // Fetch sidebar appointments
+            try {
+              const list = await getApplicationsByPatientId(patientId);
               setPatientApps(Array.isArray(list) ? list : []);
             } catch { /* non-critical */ }
 
+            // Fetch medical history
+            try {
+              const histRes = await getMedicalHistoryByPatientId(patientId);
+              setHistory(Array.isArray(histRes) ? histRes : (histRes?.data || []));
+            } catch {}
+
+            // Fetch doctor profiles map
             try {
               const profiles = await getAllDoctorsProfiles({ limit: 500 });
               const profileList = profiles?.data || profiles || [];
@@ -188,29 +247,7 @@ const AppointmentDetailsPage = () => {
               setDoctorsMap(map);
             } catch { /* non-critical */ }
           }
-
-          if (app?.patient) {
-            setPatient(app.patient);
-          }
-
-          if (email) {
-            try {
-              const patRes = await getPatientByEmail(email);
-              const fullPatient = patRes?.patient || patRes;
-              if (fullPatient && (fullPatient.firstName || fullPatient.lastName || fullPatient.email)) {
-                setPatient(fullPatient);
-              }
-            } catch {
-              /* keep basic patient from app.patient */
-            }
-
-            try {
-              const histRes = await getMedicalHistoryByEmail(email);
-              setHistory(Array.isArray(histRes) ? histRes : (histRes?.data || []));
-            } catch {}
-          }
         }
-        // Same patient → only application data updated, no sidebar/patient/history re-fetch
       } catch (err) {
         toast.error(t("load_error"));
       } finally {
@@ -261,6 +298,7 @@ const AppointmentDetailsPage = () => {
 
   const createdAt = formatDate(application?.createdAt);
   const dob = formatDOB(patient?.dateOfBirth, i18n.language);
+  const age = calculateAge(patient?.dateOfBirth);
 
   useLayoutEffect(() => {
     setTopBarContent(
@@ -272,6 +310,7 @@ const AppointmentDetailsPage = () => {
         applicationId={application?.applicationId}
         createdAt={createdAt}
         dob={dob}
+        age={age}
       />,
     );
   }, [
@@ -283,6 +322,7 @@ const AppointmentDetailsPage = () => {
     application?.applicationId,
     createdAt,
     dob,
+    age,
   ]);
 
   useEffect(() => () => setTopBarContent(null), [setTopBarContent]);

@@ -22,6 +22,7 @@ import {
   downloadDocument,
   viewResultDocument,
   downloadResultDocument,
+  getPatientByPatientId,
   getPatientByEmail,
   getMedicalHistoryByEmail,
   getDoctorEarlyDetectionApplications,
@@ -131,6 +132,25 @@ const AppointmentDetails = () => {
     }
   };
 
+  const calculateAge = (dateStr) => {
+    if (!dateStr) return null;
+    const birth = new Date(dateStr);
+    if (isNaN(birth)) return null;
+    const now = new Date();
+    let years = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) years--;
+    if (years < 1) {
+      const months =
+        (now.getFullYear() - birth.getFullYear()) * 12 +
+        now.getMonth() -
+        birth.getMonth() -
+        (now.getDate() < birth.getDate() ? 1 : 0);
+      return months < 1 ? `${Math.max(0, now.getDate() - birth.getDate())}d` : `${months}mo`;
+    }
+    return years;
+  };
+
   const translateStatus = (s) =>
     t(`appointmentStatus.${(s || "").toLowerCase()}`, s || "");
   const [showTestModal, setShowTestModal] = useState(false);
@@ -222,7 +242,28 @@ const AppointmentDetails = () => {
       if (data.tests?.length > 0) {
         await fetchTestOrders(data.tests);
       }
-      if (data.patientEmail) {
+      const pid = data.patientId || data.patient?.patientId;
+      if (pid) {
+        setPatientLoading(true);
+        try {
+          const patientData = await getPatientByPatientId(pid);
+          setPatientDetails(patientData);
+        } catch {
+          try {
+            if (data.patientEmail) {
+              const patientData = await getPatientByEmail(data.patientEmail);
+              setPatientDetails(patientData);
+            }
+          } catch (err) {
+            toast.error(
+              t("appointment.patientDetailsError") ||
+                "Failed to load patient details",
+            );
+          }
+        } finally {
+          setPatientLoading(false);
+        }
+      } else if (data.patientEmail) {
         setPatientLoading(true);
         try {
           const patientData = await getPatientByEmail(data.patientEmail);
@@ -1019,6 +1060,7 @@ const AppointmentDetails = () => {
   const formattedDob = patientDetails?.dateOfBirth
     ? formatLocalDate(patientDetails.dateOfBirth)
     : null;
+  const age = calculateAge(patientDetails?.dateOfBirth);
 
   return (
     <div className="app-detail-modern-container">
@@ -1063,7 +1105,12 @@ const AppointmentDetails = () => {
         </div>
         {formattedDob && (
           <div className="apd-top-bar-right">
-            <span className="apd-dob-date">{formattedDob}</span>
+            <div className="apd-dob-row">
+              <span className="apd-dob-date">{formattedDob}</span>
+              {age !== null && age !== undefined && (
+                <span className="apd-age-badge">{age} y.o.</span>
+              )}
+            </div>
             <span className="apd-dob-label">
               {t("pdtab.basic.dateOfBirth")}
             </span>
@@ -1137,15 +1184,14 @@ const AppointmentDetails = () => {
                     application={appointment}
                     patient={patientDetails}
                     onRefresh={async () => {
-                      if (appointment?.patientEmail) {
-                        try {
-                          const pd = await getPatientByEmail(
-                            appointment.patientEmail,
-                          );
-                          setPatientDetails(pd);
-                        } catch (e) {
-                          /* silent */
-                        }
+                      const pid = appointment?.patientId || appointment?.patient?.patientId;
+                      try {
+                        const pd = pid
+                          ? await getPatientByPatientId(pid)
+                          : await getPatientByEmail(appointment.patientEmail);
+                        setPatientDetails(pd);
+                      } catch (e) {
+                        /* silent */
                       }
                     }}
                   />

@@ -562,17 +562,25 @@ async function getApplicationById(req, res) {
   try {
     const id = decodeURIComponent(req.params.id);
     await migrateHistoryFormLegacy(id);
-    const application = await Application.findOne({ applicationId: id });
-    if (!application) {
+    const applicationDoc = await Application.findOne({ applicationId: id });
+    if (!applicationDoc) {
       return res.status(404).json({ message: "Application not found" });
     }
 
+    const application = applicationDoc.toObject();
     application.applicationId = application.applicationId || application._id;
-    application.patient = await Patient.findOne({
-      patientId: application.patientId,
-    })
-      .select("firstName middleName lastName email phoneNumber _id")
-      .lean();
+
+    const _patientQuery = application.patientId
+      ? { patientId: application.patientId }
+      : application.patientEmail
+        ? { email: application.patientEmail }
+        : null;
+    application.patient = _patientQuery
+      ? await Patient.findOne(_patientQuery)
+          .select("firstName middleName lastName email phoneNumber _id patientId dateOfBirth gender")
+          .lean()
+      : null;
+
     application.doctor = await DoctorsProfile.findOne({
       email: application.doctorEmail,
     })
@@ -2441,68 +2449,58 @@ async function patchApplication(req,res){
 // Create a new application
 async function createApplication(req, res) {
   try {
-    const { patientEmail, doctors, serviceOrders } = req.body;
+    const { patientId, patientEmail, doctors, serviceOrders } = req.body;
 
-    const patient = await User.findOne({
-      email: patientEmail,
-      role: "patient",
-    });
-    if (!patient) {
+    // Resolve patient by patientId OR email
+    const patientRecord = await Patient.findOne({
+      $or: [
+        ...(patientId ? [{ patientId }] : []),
+        ...(patientEmail ? [{ email: patientEmail }] : []),
+      ],
+    }).lean();
+    if (!patientRecord) {
       return res.status(404).json({ message: "Patient not found" });
     }
+    const resolvedPatientId = patientRecord.patientId || patientId;
+    const resolvedPatientEmail = patientRecord.email || patientEmail;
 
-    // Validate doctors array
+    // Resolve User record for serviceOrders userId
+    const patient = await User.findOne({
+      $or: [
+        ...(resolvedPatientEmail ? [{ email: resolvedPatientEmail }] : []),
+        ...(patientRecord.phoneNumber ? [{ phoneNumber: patientRecord.phoneNumber }] : []),
+      ],
+      role: "patient",
+    }).catch(() => null);
+
     if (!doctors || doctors.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "At least one doctor is required" });
+      return res.status(400).json({ message: "At least one doctor is required" });
     }
 
-    // Validate each doctor in the doctors array
     for (const doctorEntry of doctors) {
       if (doctorEntry.doctorEmail) {
-        const doctor = await DoctorsProfile.findOne({
-          email: doctorEntry.doctorEmail,
-        });
+        const doctor = await DoctorsProfile.findOne({ email: doctorEntry.doctorEmail });
         if (!doctor) {
-          return res
-            .status(404)
-            .json({
-              message: `Doctor with email ${doctorEntry.doctorEmail} not found`,
-            });
+          return res.status(404).json({ message: `Doctor with email ${doctorEntry.doctorEmail} not found` });
         }
-      } else {
       }
     }
 
-    // validate serviceOrders
     if (serviceOrders && serviceOrders.length > 0) {
       for (const serviceOrder of serviceOrders) {
-        // Use patient._id for userId if not provided
         if (!serviceOrder.userId && !serviceOrder.email) {
-          serviceOrder.userId = patient._id;
+          serviceOrder.userId = patient?._id || undefined;
         } else if (serviceOrder.email) {
-          // If email is provided, use patient._id
-          serviceOrder.userId = patient._id;
-          delete serviceOrder.email; // Remove email field, keep userId
+          serviceOrder.userId = patient?._id || undefined;
+          delete serviceOrder.email;
         } else if (serviceOrder.userId) {
-          // Validate userId if provided
           if (typeof serviceOrder.userId === "object") {
-            return res
-              .status(400)
-              .json({ message: "Invalid userId format in serviceOrders" });
+            return res.status(400).json({ message: "Invalid userId format in serviceOrders" });
           }
-
           try {
             const user = await User.findById(serviceOrder.userId);
-            if (
-              !user ||
-              user.role !== "patient" ||
-              user.email !== patientEmail
-            ) {
-              return res
-                .status(400)
-                .json({ message: "Invalid userId in serviceOrders" });
+            if (!user || user.role !== "patient") {
+              return res.status(400).json({ message: "Invalid userId in serviceOrders" });
             }
           } catch (err) {
             return res.status(400).json({ message: "Invalid userId format" });
@@ -2513,22 +2511,13 @@ async function createApplication(req, res) {
 
     // ---------- COUNTER LOGIC ----------
     const date = new Date();
-    const monthYear = `${(date.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}/${date.getFullYear()}`;
+    const monthYear = `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
     let counter = await Counter.findOne({ name: "applicationId" });
 
     if (!counter || counter.monthYear !== monthYear) {
       counter = await Counter.findOneAndUpdate(
         { name: "applicationId" },
-        {
-          $set: {
-            name: "applicationId",
-            monthlyCount: 1,
-            overallCount: counter ? counter.overallCount + 1 : 1,
-            monthYear,
-          },
-        },
+        { $set: { name: "applicationId", monthlyCount: 1, overallCount: counter ? counter.overallCount + 1 : 1, monthYear } },
         { new: true, upsert: true },
       );
     } else {
@@ -2539,24 +2528,52 @@ async function createApplication(req, res) {
       );
     }
 
-    if (!counter)
-      throw new Error("Failed to create or update counter document");
+    if (!counter) throw new Error("Failed to create or update counter document");
 
-    const applicationId = `HD-R${counter.monthlyCount
-      .toString()
-      .padStart(3, "0")}-${monthYear}-${counter.overallCount
-        .toString()
-        .padStart(4, "0")}`;
+    const applicationId = `HD-R${counter.monthlyCount.toString().padStart(3, "0")}-${monthYear}-${counter.overallCount.toString().padStart(4, "0")}`;
 
-    // ---------- PAYMENT LOGIC ----------
-    // Payment creation is now handled separately by the frontend via addPayment endpoint
-    // Do NOT automatically create payments here to avoid duplicates
-    let payments = [];
+    // ---------- BUILD SERVICES ARRAY ----------
+    const seen = new Set();
+    const allServiceIds = [];
+
+    for (const d of (doctors || [])) {
+      if (!d.serviceId || !mongoose.isValidObjectId(d.serviceId)) continue;
+      const key = `${d.serviceId}-${d.doctorEmail || ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const position = await ServicePosition.findById(d.serviceId)
+        .select("price isConsultation consultationDoctors")
+        .lean();
+      if (!position) continue;
+
+      let price = position.price;
+      let doctorProfileId = null;
+
+      if (d.doctorEmail) {
+        const docProfile = await DoctorsProfile.findOne({ email: d.doctorEmail }).select("_id").lean();
+        doctorProfileId = docProfile?._id || null;
+
+        if (position.isConsultation && doctorProfileId) {
+          const match = (position.consultationDoctors || []).find(
+            (cd) => cd.doctor && cd.doctor.toString() === doctorProfileId.toString()
+          );
+          if (match != null) price = match.price;
+        }
+      }
+
+      allServiceIds.push({
+        servicePosition: new mongoose.Types.ObjectId(d.serviceId),
+        doctorProfile: doctorProfileId,
+        price,
+      });
+    }
 
     // ---------- APPLICATION CREATION ----------
     const applicationData = {
       applicationId,
-      patientEmail,
+      patientId: resolvedPatientId,
+      patientEmail: resolvedPatientEmail,
       doctors: doctors || [],
       serviceType: req.body.serviceType,
       branch: req.body.branch || "",
@@ -2564,58 +2581,46 @@ async function createApplication(req, res) {
       date: req.body.date,
       startTime: req.body.startTime,
       endTime: req.body.endTime,
-      payments,
+      payments: [],
       comments: req.body.comments || [],
       documents: req.body.documents || [],
       serviceOrders: serviceOrders || [],
+      services: allServiceIds,
     };
 
     const application = new Application(applicationData);
     await application.save();
 
-    // ---------- POPULATE (your existing population logic) ----------
     const populatedApplication = application.toObject();
     populatedApplication.patient = await Patient.findOne({
-      email: patientEmail,
+      $or: [
+        ...(resolvedPatientId ? [{ patientId: resolvedPatientId }] : []),
+        ...(resolvedPatientEmail ? [{ email: resolvedPatientEmail }] : []),
+      ],
     })
-      .select("firstName middleName lastName email phoneNumber _id")
+      .select("firstName middleName lastName email phoneNumber _id patientId dateOfBirth gender")
       .lean();
 
-    // Populate all doctors
     if (doctors && doctors.length > 0) {
       populatedApplication.doctorProfiles = await Promise.all(
         doctors.map(async (d) => {
-          const doctorProfile = await DoctorsProfile.findOne({
-            email: d.doctorEmail,
-          })
-            .select(
-              "firstName middleName lastName specialty email phoneNumber _id",
-            )
+          return DoctorsProfile.findOne({ email: d.doctorEmail })
+            .select("firstName middleName lastName specialty email phoneNumber _id")
             .lean();
-          return doctorProfile;
         }),
       );
     }
 
     res.status(201).json(populatedApplication);
   } catch (error) {
-    // Send user-friendly error messages
     let errorMessage = "Failed to create application";
-
     if (error.name === "CastError") {
       errorMessage = "Invalid data format. Please check your input.";
     } else if (error.name === "ValidationError") {
       errorMessage = "Validation failed. Please check required fields.";
-    } else if (error.message) {
-      // Use the error message if it's descriptive
-      if (
-        error.message.includes("not found") ||
-        error.message.includes("required")
-      ) {
-        errorMessage = error.message;
-      }
+    } else if (error.message && (error.message.includes("not found") || error.message.includes("required"))) {
+      errorMessage = error.message;
     }
-
     res.status(400).json({ message: errorMessage });
   }
 }
@@ -3574,11 +3579,18 @@ async function getApplicationByAppointmentId(req, res) {
     }
 
     application.applicationId = application.applicationId || application._id;
-    application.patient = await Patient.findOne({
-      patientId: application.patientId,
-    })
-      .select("firstName middleName lastName email phoneNumber _id")
-      .lean();
+
+    const _patientQuery2 = application.patientId
+      ? { patientId: application.patientId }
+      : application.patientEmail
+        ? { email: application.patientEmail }
+        : null;
+    application.patient = _patientQuery2
+      ? await Patient.findOne(_patientQuery2)
+          .select("firstName middleName lastName email phoneNumber _id patientId dateOfBirth gender")
+          .lean()
+      : null;
+
     application.doctor = await DoctorsProfile.findOne({
       email: application.doctorEmail,
     })
@@ -3737,20 +3749,12 @@ async function saveFollowUp(req, res) {
 // Update History Form
 async function updateHistoryForm(req, res) {
   try {
-    const { applicationId } = req.params;
+    const applicationId = decodeURIComponent(req.params.id);
     const { historyForm } = req.body;
     const existing = await Application.findOne({ applicationId }).lean();
     if (!existing) return res.status(404).json({ message: 'Application not found' });
 
-    const existingForm = existing.historyForm || {};
-    const mergedForm = {
-      isFirstAppointment: historyForm.isFirstAppointment ?? existingForm.isFirstAppointment ?? false,
-      isRepetitiveAppointment: historyForm.isRepetitiveAppointment ?? existingForm.isRepetitiveAppointment ?? false,
-    };
-
-    const allowedKeys = [
-      "isFirstAppointment",
-      "isRepetitiveAppointment",
+    const historyFieldKeys = [
       "complaints",
       "anamnesisMorbi",
       "anamnesisVitae",
@@ -3768,14 +3772,23 @@ async function updateHistoryForm(req, res) {
     ];
 
     const update = {};
-    for (const key of allowedKeys) {
+
+    // isFirstAppointment / isRepetitiveAppointment live at Application top level
+    if ('isFirstAppointment' in historyForm) {
+      update['isFirstAppointment'] = Boolean(historyForm.isFirstAppointment);
+    }
+    if ('isRepetitiveAppointment' in historyForm) {
+      update['isRepetitiveAppointment'] = Boolean(historyForm.isRepetitiveAppointment);
+    }
+
+    for (const key of historyFieldKeys) {
       if (key in historyForm) {
         update[`historyForm.${key}`] = historyForm[key];
       }
     }
 
     const application = await Application.findOneAndUpdate(
-      { applicationId: id },
+      { applicationId },
       { $set: update },
       { new: true, runValidators: true },
     );
@@ -3787,7 +3800,7 @@ async function updateHistoryForm(req, res) {
     try {
       const io = req.app.get("io");
       io.emit("application:history-updated", {
-        applicationId: id,
+        applicationId,
         historyForm: application.historyForm,
       });
     } catch (socketError) { }
@@ -3795,6 +3808,8 @@ async function updateHistoryForm(req, res) {
     return res.status(200).json({
       message: "History form updated successfully",
       historyForm: application.historyForm,
+      isFirstAppointment: application.isFirstAppointment,
+      isRepetitiveAppointment: application.isRepetitiveAppointment,
     });
   } catch (err) {
     return res

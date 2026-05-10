@@ -2,8 +2,6 @@
 import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { ChevronDown, ChevronUp, X, Trash2 } from "lucide-react";
 import CustomCalendar from "../CustomCalendar/CustomCalendar";
 import CustomTimePicker from "../CustomTimePicker/CustomTimePicker";
@@ -14,8 +12,9 @@ import {
   addApplication,
   addPayment,
   getApplications,
-  getUserIdByEmail,
   getAllServices,
+  getAllSpecialties,
+  getPositionsBySpeciality,
 } from "../../utils/api";
 import "./CreateAppointmentModal.css";
 import CreateNewPatientModal from "./CreateNewPatientModal";
@@ -54,21 +53,29 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
   const [patientDropdownOpen, setPatientDropdownOpen] = useState(false);
   const [createPatientModalOpen, setCreatePatientModalOpen] = useState(false);
   const [doctors, setDoctors] = useState([]);
-  const [services, setServices] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   const [selectedDoctors, setSelectedDoctors] = useState([{
     doctorEmail: doctorEmail || "",
     doctorName: "",
+    doctorSpecialtyIds: [],
+    specialization: "",
+    specialtyId: "",
     serviceId: "",
     serviceName: "",
     doctorServices: [],
+    specialtyServices: [],
     doctorDropdownOpen: false,
     doctorSearch: "",
+    specialtyDropdownOpen: false,
+    specialtySearch: "",
+    serviceDropdownOpen: false,
+    serviceSearch: "",
   }]);
   
   const [formData, setFormData] = useState({
-    patientEmail: "",
+    patientId: "",
     serviceType: "Physical consultation",
     appointmentStatus: "Unconfirmed",
     branch: "",
@@ -110,7 +117,12 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
     if (isOpen) {
       fetchPatients();
       fetchDoctors();
-      fetchServices();
+      getAllSpecialties()
+        .then((data) => {
+          const list = Array.isArray(data) ? data : (data?.specialties || data?.data || []);
+          setSpecialties(list);
+        })
+        .catch(() => {});
       initialDoctorFetched.current = false;
     }
   }, [isOpen]);
@@ -128,7 +140,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
         setPatientDropdownOpen(false);
       }
       if (doctorDropdownRef.current && !doctorDropdownRef.current.contains(e.target)) {
-        setSelectedDoctors(prev => prev.map(d => ({ ...d, doctorDropdownOpen: false })));
+        setSelectedDoctors(prev => prev.map(d => ({ ...d, doctorDropdownOpen: false, specialtyDropdownOpen: false, serviceDropdownOpen: false })));
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -174,8 +186,8 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
 
   const fetchPatients = async () => {
     try {
-      const response = await getPatients();
-      setPatients(Array.isArray(response) ? response : []);
+      const data = await getPatients();
+      setPatients(Array.isArray(data) ? data : (data?.patients || []));
     } catch (error) {
       toast.error(t("add_application.error_patients"));
     }
@@ -187,14 +199,6 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
       setDoctors(response.data || []);
     } catch (error) {
       toast.error(t("add_application.error_doctors"));
-    }
-  };
-
-  const fetchServices = async () => {
-    try {
-      const response = await getAllServices();
-      setServices(Array.isArray(response) ? response : (response.services || []));
-    } catch (error) {
     }
   };
 
@@ -243,12 +247,15 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
 
   const handlePatientSelect = async (patient) => {
     const fullName = `${patient.firstName || ""} ${patient.middleName || ""} ${patient.lastName || ""}`.trim();
-    setFormData((prev) => ({ ...prev, patientEmail: patient.email }));
-    setPatientSearch(fullName || patient.email || "");
+    setFormData((prev) => ({
+      ...prev,
+      patientId: patient.patientId || "",
+    }));
+    setPatientSearch(fullName || patient.patientId || "");
     setPatientDropdownOpen(false);
 
-    if (errors.patientEmail) {
-      setErrors((prev) => ({ ...prev, patientEmail: "" }));
+    if (errors.patientId) {
+      setErrors((prev) => ({ ...prev, patientId: "" }));
     }
   };
 
@@ -269,11 +276,19 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
     setSelectedDoctors(prev => [...prev, {
       doctorEmail: "",
       doctorName: "",
+      doctorSpecialtyIds: [],
+      specialization: "",
+      specialtyId: "",
       serviceId: "",
       serviceName: "",
       doctorServices: [],
+      specialtyServices: [],
       doctorDropdownOpen: false,
       doctorSearch: "",
+      specialtyDropdownOpen: false,
+      specialtySearch: "",
+      serviceDropdownOpen: false,
+      serviceSearch: "",
     }]);
   };
 
@@ -283,20 +298,64 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
 
   const handleDoctorSelect = async (doctor, index) => {
     const fullName = `${getFieldValue(doctor.firstName, i18n.language) || ""} ${getFieldValue(doctor.middleName, i18n.language) || ""} ${getFieldValue(doctor.lastName, i18n.language) || ""}`.trim();
-    
+    const doctorSpecialtyIds = (doctor.specialtyIds || []).map(s =>
+      typeof s === "object" ? String(s._id) : String(s)
+    );
+
+    console.log("[Doctor Select] doctor object:", doctor);
+    console.log("[Doctor Select] raw specialtyIds:", doctor.specialtyIds);
+    console.log("[Doctor Select] mapped doctorSpecialtyIds:", doctorSpecialtyIds);
+    console.log("[Doctor Select] all loaded specialties:", specialties);
+
     setSelectedDoctors(prev => {
       const updated = [...prev];
       updated[index] = {
         ...updated[index],
         doctorEmail: doctor.email,
         doctorName: fullName,
+        doctorSpecialtyIds,
+        specialization: "",
+        specialtyId: "",
+        serviceId: "",
+        serviceName: "",
+        specialtyServices: [],
         doctorDropdownOpen: false,
         doctorSearch: "",
+        serviceDropdownOpen: false,
+        serviceSearch: "",
       };
       return updated;
     });
 
     await fetchDoctorServices(doctor.email, index);
+  };
+
+  const handleSpecialtySelect = async (specialty, index) => {
+    const name = i18n.language.startsWith("ru") ? specialty.name_ru : specialty.name_en;
+    setSelectedDoctors(prev => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        specialization: name,
+        specialtyId: specialty._id,
+        serviceId: "",
+        serviceName: "",
+        specialtyServices: [],
+        specialtyDropdownOpen: false,
+        specialtySearch: "",
+        serviceDropdownOpen: false,
+        serviceSearch: "",
+      };
+      return updated;
+    });
+    try {
+      const positions = await getPositionsBySpeciality(specialty._id);
+      setSelectedDoctors(prev => {
+        const updated = [...prev];
+        updated[index] = { ...updated[index], specialtyServices: positions };
+        return updated;
+      });
+    } catch { /* ignore */ }
   };
 
   const handleServiceSelect = (service, index) => {
@@ -408,7 +467,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.patientEmail) newErrors.patientEmail = t("add_application.patient_required");
+    if (!formData.patientId) newErrors.patientId = t("add_application.patient_required");
     if (selectedDoctors.length === 0 || !selectedDoctors[0].doctorEmail) {
       newErrors.doctors = t("add_application.doctor_required");
     }
@@ -479,13 +538,15 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
       .map(d => ({
         doctorEmail: d.doctorEmail,
         doctorName: d.doctorName,
+        specialization: d.specialization || "",
         serviceId: d.serviceId || null,
         serviceName: d.serviceName || "",
       }));
 
 
+
     const payload = {
-      patientEmail: formData.patientEmail,
+      patientId: formData.patientId,
       doctors: doctorsData,
       serviceType: formData.serviceType,
       appointmentStatus: formData.appointmentStatus,
@@ -561,7 +622,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
     setPatients((prev) => [newPatient, ...prev]);
     const fullName = `${newPatient.firstName || ""} ${newPatient.middleName || ""} ${newPatient.lastName || ""}`.trim();
     handlePatientSelect(newPatient);
-    setSelectedPatientName(fullName || newPatient.email || newPatient.phone);
+    setSelectedPatientName(fullName || newPatient.patientId || newPatient.email || newPatient.phone);
     setCreatePatientModalOpen(false);
   };
 
@@ -591,7 +652,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
               <label>
                 {t("add_application.patient")} <span className="required">*</span>
               </label>
-              <div ref={patientDropdownRef} className={`patient-select ${errors.patientEmail ? "error" : ""}`}>
+              <div ref={patientDropdownRef} className={`patient-select ${errors.patientId ? "error" : ""}`}>
                 <div
                   className="patient-select-trigger"
                   onClick={() => {
@@ -665,7 +726,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
                   </div>
                 )}
               </div>
-              {errors.patientEmail && <span className="error-text">{errors.patientEmail}</span>}
+              {errors.patientId && <span className="error-text">{errors.patientId}</span>}
             </div>
 
             <div className="form-field">
@@ -697,11 +758,12 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
               <CustomCalendar
                 value={formData.date}
                 onChange={(date) => {
-                  const dateStr = new Date(date).toISOString().split('T')[0];
+                  const d = new Date(date);
+                  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                   setFormData(prev => ({ ...prev, date: dateStr }));
                 }}
                 placeholder={t("add_application.select_date")}
-                dateFormat="yyyy-MM-dd"
+                dateFormat="dd-MM-yyyy"
                 className={errors.date ? "error" : ""}
               />
               {errors.date && <span className="error-text">{errors.date}</span>}
@@ -749,7 +811,8 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
               
               <div ref={doctorDropdownRef} className="doctors-list">
                 {selectedDoctors.map((doctorEntry, index) => (
-                  <div key={index} className="doctor-service-row">
+                  <div key={index}>
+                  <div className="doctor-service-row">
                     <div className="form-field-inline">
                       <div className={`doctor-select`}>
                         <div
@@ -799,23 +862,75 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
                       </div>
                     </div>
 
+                    {/* Specialty dropdown */}
                     {doctorEntry.doctorEmail && (
                       <div className="form-field-inline">
-                        <select
-                          value={doctorEntry.serviceId}
-                          onChange={(e) => {
-                            const service = doctorEntry.doctorServices.find(s => s._id === e.target.value);
-                            if (service) handleServiceSelect(service, index);
-                          }}
-                          className="service-select"
+                        <div className="doctor-select">
+                        <div
+                          className="doctor-select-trigger"
+                          onClick={() => setSelectedDoctors(prev => {
+                            const updated = [...prev];
+                            updated[index] = { ...updated[index], specialtyDropdownOpen: !updated[index].specialtyDropdownOpen };
+                            return updated;
+                          })}
                         >
-                          <option value="">{t("add_application.select_service")}</option>
-                          {doctorEntry.doctorServices.map((service) => (
-                            <option key={service._id} value={service._id}>
-                              {getFieldValue(service.name, i18n.language)}
-                            </option>
-                          ))}
-                        </select>
+                          <span className="doctor-select-value">
+                            {doctorEntry.specialization || t("add_application.select_specialty") || "Select specialty"}
+                          </span>
+                          {doctorEntry.specialtyDropdownOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </div>
+                        {doctorEntry.specialtyDropdownOpen && (
+                          <div className="doctor-options">
+                            <div className="doctor-search-wrapper">
+                              <input
+                                type="text"
+                                className="doctor-search-input"
+                                value={doctorEntry.specialtySearch}
+                                onChange={(e) => setSelectedDoctors(prev => {
+                                  const updated = [...prev];
+                                  updated[index] = { ...updated[index], specialtySearch: e.target.value };
+                                  return updated;
+                                })}
+                                placeholder={t("common.search") || "Search..."}
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                            {(() => {
+                              const q = (doctorEntry.specialtySearch || "").toLowerCase();
+                              console.log("[Specialty Dropdown] doctorSpecialtyIds:", doctorEntry.doctorSpecialtyIds);
+                              console.log("[Specialty Dropdown] total specialties loaded:", specialties.length);
+                              const filtered = specialties.filter(s => {
+                                // filter by doctor's linked specialtyIds
+                                if (doctorEntry.doctorSpecialtyIds.length > 0 &&
+                                    !doctorEntry.doctorSpecialtyIds.includes(String(s._id))) return false;
+                                // filter by search
+                                if (q) {
+                                  const en = (s.name_en || "").toLowerCase();
+                                  const ru = (s.name_ru || "").toLowerCase();
+                                  return en.includes(q) || ru.includes(q);
+                                }
+                                return true;
+                              });
+                              console.log("[Specialty Dropdown] filtered result:", filtered);
+                              if (filtered.length === 0) {
+                                return <div className="no-doctors">{t("common.noResults") || "No specialties"}</div>;
+                              }
+                              return filtered.map(s => (
+                                <div
+                                  key={s._id}
+                                  className="doctor-option"
+                                  onClick={() => handleSpecialtySelect(s, index)}
+                                >
+                                  <div className="doctor-name">
+                                    {i18n.language.startsWith("ru") ? s.name_ru : s.name_en}
+                                  </div>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        )}
+                        </div>
                       </div>
                     )}
 
@@ -829,19 +944,89 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
                         <X size={18} />
                       </button>
                     )}
+                  </div>
 
-                    {index === selectedDoctors.length - 1 && (
-                      <button
-                        type="button"
-                        className="add-doctor-btn-inline"
-                        onClick={handleAddDoctor}
-                        title={t("add_application.add_another_doctor")}
-                      >
-                        +
-                      </button>
-                    )}
+                  {/* Service dropdown — full-width row below doctor + specialty */}
+                  {doctorEntry.specialtyId && (
+                    <div className="doctor-service-second-row">
+                      <div className="doctor-select">
+                        <div
+                          className="doctor-select-trigger"
+                          onClick={() => setSelectedDoctors(prev => {
+                            const updated = [...prev];
+                            updated[index] = {
+                              ...updated[index],
+                              serviceDropdownOpen: !updated[index].serviceDropdownOpen,
+                              serviceSearch: updated[index].serviceDropdownOpen ? updated[index].serviceSearch : "",
+                            };
+                            return updated;
+                          })}
+                        >
+                          <span className="doctor-select-value">
+                            {doctorEntry.serviceName || t("add_application.select_service")}
+                          </span>
+                          {doctorEntry.serviceDropdownOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </div>
+                        {doctorEntry.serviceDropdownOpen && (
+                          <div className="doctor-options">
+                            <div className="doctor-search-wrapper">
+                              <input
+                                type="text"
+                                className="doctor-search-input"
+                                value={doctorEntry.serviceSearch}
+                                onChange={(e) => setSelectedDoctors(prev => {
+                                  const updated = [...prev];
+                                  updated[index] = { ...updated[index], serviceSearch: e.target.value };
+                                  return updated;
+                                })}
+                                placeholder={t("common.search")}
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                            {(() => {
+                              const q = (doctorEntry.serviceSearch || "").toLowerCase();
+                              const filtered = doctorEntry.specialtyServices.filter(p =>
+                                (p.name || "").toLowerCase().includes(q)
+                              );
+                              if (filtered.length === 0) {
+                                return <div className="no-doctors">{t("common.noResults")}</div>;
+                              }
+                              return filtered.map(pos => (
+                                <div
+                                  key={pos._id}
+                                  className={`doctor-option${doctorEntry.serviceId === pos._id ? " selected" : ""}`}
+                                  onClick={() => setSelectedDoctors(prev => {
+                                    const updated = [...prev];
+                                    updated[index] = {
+                                      ...updated[index],
+                                      serviceId: pos._id,
+                                      serviceName: pos.name,
+                                      serviceDropdownOpen: false,
+                                      serviceSearch: "",
+                                    };
+                                    return updated;
+                                  })}
+                                >
+                                  <div className="doctor-name">{pos.name}</div>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   </div>
                 ))}
+                <button
+                  type="button"
+                  className="add-doctor-btn-inline"
+                  onClick={handleAddDoctor}
+                  title={t("add_application.add_another_doctor")}
+                >
+                  + {t("add_application.add_another_doctor") || "Add Doctor"}
+                </button>
               </div>
             </div>
           </div>

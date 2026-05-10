@@ -524,6 +524,15 @@
   background: #f3f4f6;
 }
 
+.doctor-service-second-row {
+  padding: 0 12px 12px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  margin-top: -4px;
+}
+
 .doctor-service-group {
   flex: 1;
   display: flex;
@@ -590,27 +599,25 @@
 }
 
 .add-doctor-btn-inline {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  width: fit-content;
+  height: auto;
+  padding: 7px 16px;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  padding: 0;
-  line-height: 1;
 }
 
 .add-doctor-btn-inline:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 

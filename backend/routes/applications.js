@@ -76,9 +76,9 @@ const upload = multer({
 });
 
 // --- Document routes ---
-router.post("/:id/documents/file", upload.single("file"), uploadDocumentFile);
-router.post("/:id/documents/url", uploadDocumentUrl);
-router.delete("/:id/documents/:filename", auth, deleteDocument);
+router.post("/:id(*)/documents/file", upload.single("file"), uploadDocumentFile);
+router.post("/:id(*)/documents/url", uploadDocumentUrl);
+router.delete("/:id(*)/documents/:filename", auth, deleteDocument);
 
 // --- User lookup ---
 router.get("/user-id/:email", auth, getUserIdByEmail);
@@ -119,53 +119,49 @@ router.get("/media/:id", getMediaById);
 router.post("/webhook/yookassa", yookassaWebhook);
 router.get("/return", paymentReturnHandler);
 
-// --- Single application CRUD ---
-router.get("/:id", auth, getApplicationById);
-router.put("/:id", auth, updateApplication);
-
 // --- All applications (list) ---
 router.get("/", auth, getAllApplications);
 router.post("/", auth, createApplication);
 
 // --- Comments ---
-router.post("/:id/comments", auth, addComment);
+router.post("/:id(*)/comments", auth, addComment);
 router.put("/comments/:commentId", auth, updateComment);
 
 // --- Payments ---
-router.get("/:id/payments", auth, getPayments);
-router.post("/:id/payments", auth, createPayment);
-router.patch("/:id/payments", auth, updatePayment);
+router.get("/:id(*)/payments", auth, getPayments);
+router.post("/:id(*)/payments", auth, createPayment);
+router.patch("/:id(*)/payments", auth, updatePayment);
 router.put(
-  "/:applicationId/payments/:paymentId/mark-paid",
+  "/:applicationId(*)/payments/:paymentId/mark-paid",
   auth,
   markPaymentPaid,
 );
 router.put(
-  "/:applicationId/payments/:paymentId/mark-free",
+  "/:applicationId(*)/payments/:paymentId/mark-free",
   auth,
   markPaymentFree,
 );
-router.put("/:applicationId/payments/:paymentId/cancel", auth, cancelPayment);
+router.put("/:applicationId(*)/payments/:paymentId/cancel", auth, cancelPayment);
 router.get(
-  "/:applicationId/payments/:paymentId/invoice",
+  "/:applicationId(*)/payments/:paymentId/invoice",
   auth,
   getPaymentInvoice,
 );
-router.get("/:applicationId/payments/:paymentId/akt", auth, getPaymentAkt);
+router.get("/:applicationId(*)/payments/:paymentId/akt", auth, getPaymentAkt);
 
 // --- Email ---
-router.post("/:id/emails/send", auth, sendApplicationEmail);
+router.post("/:id(*)/emails/send", auth, sendApplicationEmail);
 
 // --- Prescription & Conclusion ---
-router.put("/:id/prescription", auth, updatePrescription);
-router.put("/:id/conclusion", auth, updateConclusion);
+router.put("/:id(*)/prescription", auth, updatePrescription);
+router.put("/:id(*)/conclusion", auth, updateConclusion);
 
 // --- Follow-up ---
-router.patch("/:id/follow-up", auth, saveFollowUp);
+router.patch("/:id(*)/follow-up", auth, saveFollowUp);
 
 // --- History form ---
-router.patch("/:id/history", auth, updateHistoryForm);
-router.patch("/:id/history/:fieldKey/verify", auth, verifyHistoryField);
+router.patch("/:id(*)/history", auth, updateHistoryForm);
+router.patch("/:id(*)/history/:fieldKey/verify", auth, verifyHistoryField);
 
 //----Doctor related routes---------//
 router.post("/appointments/:id/upload-document", auth, upload.single("file"), uploadDocumentForDoctors);
@@ -173,17 +169,17 @@ router.get('/appointments/document-by-id/:id',auth,getDocumentByIdForDoctors);
 router.get("/",auth,getAllApplicationsForDoctors);
 router.get('/by-application-id/:id',auth,getApplicationByIdForDoctors);
 router.get('/medical-history/by-email/:email',auth,getMedicalHistoryByEmailForDoctors);
-router.put('/:appointmentId/comments/:commentId', auth, updateCommentForDoctors);
-router.put('/:id/comments',auth,addCommentForDoctors);
-router.delete('/:appointmentId/comments/:commentId',auth,deleteCommentForDoctors);
-router.put('/:id/prescription', auth, addDescriptionForDoctors);
-router.put('/:id/conclusion', auth, addConclusionForDoctors);
-router.put('/:id/update-verification',auth,updateVerificationStatusForDoctors);
+router.put('/:appointmentId(*)/comments/:commentId', auth, updateCommentForDoctors);
+router.put('/:id(*)/comments',auth,addCommentForDoctors);
+router.delete('/:appointmentId(*)/comments/:commentId',auth,deleteCommentForDoctors);
+router.put('/:id(*)/prescription', auth, addDescriptionForDoctors);
+router.put('/:id(*)/conclusion', auth, addConclusionForDoctors);
+router.put('/:id(*)/update-verification',auth,updateVerificationStatusForDoctors);
 router.get('/doctor/:email',auth,getAppointmentsByDoctorEmail);
 router.post('/tests/upload-result',auth,uploadTestResult);
 router.get('/results/:id',auth,getTestResult);
-router.put('/:applicationId/follow-up',auth,addFollowUpAppointment);
-router.put('/:applicationId/history-form',auth,updateHistoryFormForDoctor);
+router.put('/:applicationId(*)/follow-up',auth,addFollowUpAppointment);
+router.put('/:applicationId(*)/history-form',auth,updateHistoryFormForDoctor);
 
 // --- Assistant related routes --- //
 router.get('/', auth, getCalendarApplications);
@@ -194,17 +190,20 @@ router.patch('/by-application-id/:applicationId', auth, patchApplication);
 
 
 // Comments
-router.put('/:appointmentId/comments/:commentId',auth,updateCommentAssistant);
-router.put('/:id/comments', auth, addCommentAssistant);
-router.delete('/:appointmentId/comments/:commentId', auth, deleteCommentAssistant);
+router.put('/:appointmentId(*)/comments/:commentId',auth,updateCommentAssistant);
+router.put('/:id(*)/comments', auth, addCommentAssistant);
+router.delete('/:appointmentId(*)/comments/:commentId', auth, deleteCommentAssistant);
 
 // Clinical fields
-router.put('/:id/prescription', auth, updatePrescriptionAssistant);
-router.put('/:id/conclusion', auth, updateConclusionAssistant);
+router.put('/:id(*)/prescription', auth, updatePrescriptionAssistant);
+router.put('/:id(*)/conclusion', auth, updateConclusionAssistant);
 
 router.get('/results/:id',auth,getResultFile);
 // Follow-up
-router.put('/:applicationId/follow-up', auth, updateFollowUp);
+router.put('/:applicationId(*)/follow-up', auth, updateFollowUp);
 
+// --- Single application CRUD (must be last — wildcard catches all remaining GET/PUT) ---
+router.get("/:id(*)", auth, getApplicationById);
+router.put("/:id(*)", auth, updateApplication);
 
 module.exports = router;

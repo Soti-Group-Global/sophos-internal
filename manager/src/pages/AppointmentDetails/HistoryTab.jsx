@@ -34,6 +34,7 @@ import {
   uploadApplicationSectionFile,
   removeApplicationSectionFile,
   updateApplicationSectionComment,
+  updateHistoryForm,
 } from "../../utils/api";
 import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
 import TemplatePicker from "../../components/RichTextEditor/TemplatePicker";
@@ -140,6 +141,15 @@ const collectKeys = (sections) => {
 };
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
+/* ── Map each field key → its i18n title key ── */
+const KEY_TITLE_MAP = {};
+(function buildMap(sections) {
+  sections.forEach((s) => {
+    s.fields?.forEach((f) => { KEY_TITLE_MAP[f.key] = s.titleKey; });
+    if (s.subsections) buildMap(s.subsections);
+  });
+}(HISTORY_SECTIONS));
+
 const HISTORY_NAV_ITEMS = [
   { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", icon: <FiChevronDown size={14} />, sectionId: "complaints" },
   { id: "laboratoryAnalysis", labelKey: "sidebar.laboratoryAnalysis", sectionId: "examinationPlan" },
@@ -193,7 +203,10 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   /* Initialise from application.historyForm (per-appointment), fallback to patient.historyForm */
   const initForm = () => {
     const saved = application?.historyForm || patient?.historyForm || {};
-    const form = { isFirstAppointment: saved.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? false };
+    const form = {
+      isFirstAppointment: application?.isFirstAppointment ?? false,
+      isRepetitiveAppointment: application?.isRepetitiveAppointment ?? false,
+    };
     ALL_KEYS.forEach((k) => {
       const f = saved[k];
       form[k] = {
@@ -208,11 +221,23 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   const [form, setForm] = useState(initForm);
 
-  /* Re-sync form whenever the saved historyForm from the server changes */
+  /* One-time init for checkbox fields once application data arrives (if null on mount) */
+  const checkboxLoadedRef = useRef(false);
+  useEffect(() => {
+    if (checkboxLoadedRef.current || !application?.applicationId) return;
+    checkboxLoadedRef.current = true;
+    setForm((prev) => ({
+      ...prev,
+      isFirstAppointment: application.isFirstAppointment ?? false,
+      isRepetitiveAppointment: application.isRepetitiveAppointment ?? false,
+    }));
+  }, [application?.applicationId, application?.isFirstAppointment, application?.isRepetitiveAppointment]);
+
+  /* Re-sync rich-text fields when historyForm data changes — never touches the checkboxes */
   useEffect(() => {
     const saved = application?.historyForm || patient?.historyForm || {};
     setForm((prev) => {
-      const next = { ...prev, isFirstAppointment: saved.isFirstAppointment ?? prev.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? prev.isRepetitiveAppointment ?? false };
+      const next = { ...prev };
       ALL_KEYS.forEach((k) => {
         const f = saved[k];
         next[k] = {
@@ -232,9 +257,51 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const sectionRefs = useRef({});
   const [activeNavItem, setActiveNavItem] = useState(HISTORY_NAV_ITEMS[0].id);
   const [patientAppointments, setPatientAppointments] = useState([]);
-  const [isAppointmentsPanelOpen, setIsAppointmentsPanelOpen] = useState(false);
+  const [isAppointmentsPanelOpen, setIsAppointmentsPanelOpen] = useState(true);
   const [isAppointmentsLoading, setIsAppointmentsLoading] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState(null);
+  const [selectedConsultationId, setSelectedConsultationId] = useState(null);
+  const [isSavingForm, setIsSavingForm] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true);
+  const editModeInitRef = useRef(false);
+
+  // Auto-select the current appointment once the application data arrives
+  useEffect(() => {
+    if (application?.applicationId) {
+      setSelectedConsultationId((prev) => prev ?? application.applicationId);
+    }
+  }, [application?.applicationId]);
+
+  // One-time: switch to view mode if application already has content
+  useEffect(() => {
+    if (editModeInitRef.current || !application?.applicationId) return;
+    editModeInitRef.current = true;
+    const saved = application?.historyForm || {};
+    const hasContent = ALL_KEYS.some((k) => {
+      const f = saved[k];
+      const val = typeof f === "object" ? f?.value : f;
+      return val?.replace(/<[^>]*>/g, "").trim();
+    });
+    if (hasContent) {
+      setIsEditMode(false);
+    } else {
+      setEditingFields(ALL_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {}));
+    }
+  }, [application?.applicationId, application?.historyForm]);
+
+  const hasAnyContent = useCallback((f = form) =>
+    ALL_KEYS.some((k) => f[k]?.value?.replace(/<[^>]*>/g, "").trim()), [form]);
+
+  const enterEditMode = useCallback(() => {
+    setIsEditMode(true);
+    setEditingFields(ALL_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {}));
+  }, []);
+
+  const enterViewMode = useCallback(() => {
+    if (!hasAnyContent()) return; // nothing to show in view — stay in edit mode
+    setIsEditMode(false);
+    setEditingFields({});
+  }, [hasAnyContent]);
   const [labTests, setLabTests] = useState([]);
   const [studyTests, setStudyTests] = useState([]);
   const [selectedLabTests, setSelectedLabTests] = useState({});
@@ -289,31 +356,31 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   const loadPatientAppointments = useCallback(async () => {
     const patientId = patient?.patientId || patient?._id || application?.patientId;
-    if (!patientId) {
-      toast.error(t("history_tab.patient_id_missing", { defaultValue: "Patient ID is not available" }));
-      return;
-    }
+    if (!patientId) return;
 
     setIsAppointmentsLoading(true);
     setAppointmentsError(null);
 
     try {
       const response = await getApplicationsByPatientId(patientId);
-      const apps = Array.isArray(response?.data) ? response.data : [];
+      const apps = Array.isArray(response?.data) ? response.data :
+                   Array.isArray(response) ? response : [];
       const filtered = apps.filter(
         (appt) => (appt.applicationId || appt._id) !== (application?.applicationId || application?._id),
       );
       setPatientAppointments(filtered);
-      setIsAppointmentsPanelOpen(true);
     } catch (error) {
       const message = error?.response?.data?.message || t("history_tab.failed_loading_other_appointments", { defaultValue: "Failed to load other appointments" });
       setAppointmentsError(message);
-      toast.error(message);
     } finally {
       setIsAppointmentsLoading(false);
     }
   }, [application, patient, t]);
 
+  // Auto-load appointments on mount so the panel is populated by default
+  useEffect(() => {
+    loadPatientAppointments();
+  }, [loadPatientAppointments]);
 
   const handleSidebarItemClick = useCallback(
     async (item, _e) => {
@@ -321,18 +388,14 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       setSelectedTest(null);
 
       if (item.id === "specialistConsultation") {
-        if (isAppointmentsPanelOpen) {
-          setIsAppointmentsPanelOpen(false);
-        } else {
-          await loadPatientAppointments();
-        }
+        setIsAppointmentsPanelOpen((prev) => !prev);
       } else if (item.id === "laboratoryAnalysis") {
         setIsLabPanelOpen((prev) => !prev);
       } else if (item.id === "studiesManipulations") {
         setIsStudyPanelOpen((prev) => !prev);
       }
     },
-    [isAppointmentsPanelOpen, loadPatientAppointments],
+    [],
   );
 
   const appId = application?.applicationId;
@@ -708,10 +771,10 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     }
   }, [selectedTest, selectedTestMode, t]);
 
-  /* Close all editing fields when clicking outside any field */
+  /* Close all editing fields when clicking outside any field (skipped in bulk-edit mode) */
   useEffect(() => {
     const handleClickOutside = (e) => {
-      /* If click is inside any field card, editor dropdown, or template picker, ignore */
+      if (isEditMode) return;
       if (
         e.target.closest("[data-ht-field]") ||
         e.target.closest(".ht-section-header--clickable") ||
@@ -720,13 +783,12 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
         e.target.closest(".tp-wrap") ||
         e.target.closest(".tp-dropdown")
       ) return;
-
       setEditingFields({});
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isEditMode]);
 
   const setFieldEditing = useCallback((fieldKey, value) => {
     setEditingFields((prev) => ({ ...prev, [fieldKey]: value }));
@@ -871,6 +933,30 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   useImperativeHandle(ref, () => ({
     getData: () => ({ historyForm: { ...form } }),
   }));
+
+  const handleSaveForm = useCallback(async () => {
+    if (!application?.applicationId) return;
+    setIsSavingForm(true);
+    try {
+      const result = await updateHistoryForm(application.applicationId, { ...form });
+      if (result) {
+        setForm((prev) => ({
+          ...prev,
+          isFirstAppointment: typeof result.isFirstAppointment === "boolean" ? result.isFirstAppointment : prev.isFirstAppointment,
+          isRepetitiveAppointment: typeof result.isRepetitiveAppointment === "boolean" ? result.isRepetitiveAppointment : prev.isRepetitiveAppointment,
+        }));
+      }
+      toast.success(t("history_tab.saved", { defaultValue: "Saved" }));
+      if (hasAnyContent()) {
+        setIsEditMode(false);
+        setEditingFields({});
+      }
+    } catch {
+      toast.error(t("history_tab.save_error", { defaultValue: "Failed to save" }));
+    } finally {
+      setIsSavingForm(false);
+    }
+  }, [application, form, t]);
 
   /* Verify toggle badge */
   const VerifyBadge = ({ fieldKey }) => {
@@ -1124,8 +1210,15 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                           const time = application.startTime
                             ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}`
                             : "";
+                          const isSelected = selectedConsultationId === application.applicationId;
                           return (
-                            <li className="ht-appointment-item ht-appointment-item--current">
+                            <li
+                              className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setSelectedConsultationId(application.applicationId)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedConsultationId(application.applicationId); }}
+                            >
                               <div className="ht-appointment-current-row">
                                 <span className="ht-appointment-name">{name}</span>
                                 <span className="ht-appointment-current-badge">
@@ -1137,17 +1230,29 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                           );
                         })()}
                         {patientAppointments.map((appt) => {
-                          const patientName = appt.patient
-                            ? [appt.patient.firstName, appt.patient.middleName, appt.patient.lastName]
-                              .filter(Boolean)
-                              .join(" ")
-                              .trim() || appt.patient.email || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" })
-                            : appt.patientName || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" });
+                          const apptId = appt.applicationId || appt._id;
+                          const isSelected = selectedConsultationId === apptId;
                           const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
                           const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
+                          const label = t("history_tab.current_appointment", { defaultValue: "Consultation" });
                           return (
-                            <li key={appt.applicationId || appt._id} className="ht-appointment-item">
-                              <span className="ht-appointment-name">{patientName}</span>
+                            <li
+                              key={apptId}
+                              className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => {
+                                setSelectedConsultationId(apptId);
+                                window.open(`/applications/appointment/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  setSelectedConsultationId(apptId);
+                                  window.open(`/applications/appointment/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
+                                }
+                              }}
+                            >
+                              <span className="ht-appointment-name">{label}</span>
                               <span className="ht-appointment-meta">
                                 {appointmentDate}
                                 {appointmentTime ? ` · ${appointmentTime}` : ""}
@@ -1368,10 +1473,15 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 </div>
               </div>
             );
-          })() : (
+          })() : isEditMode ? (
             <>
+              <div className="ht-edit-toolbar">
+                <button type="button" className="ht-view-mode-btn" onClick={enterViewMode}>
+                  <FiEye size={14} />
+                  {t("history_tab.view", { defaultValue: "View" })}
+                </button>
+              </div>
               <div className="ht-container">
-                {/* ── First appointment checkbox ── */}
                 <div className="ht-first-appt-bar">
                   <label className="ht-first-appt-label">
                     <input
@@ -1392,10 +1502,42 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                     <span>{t("repetitive_appointment")}</span>
                   </label>
                 </div>
-
                 {HISTORY_SECTIONS.map((s) => renderSection(s))}
               </div>
+              <div className="ht-form-save-bar">
+                <button
+                  type="button"
+                  className="ht-form-save-btn"
+                  onClick={handleSaveForm}
+                  disabled={isSavingForm}
+                >
+                  {isSavingForm
+                    ? t("history_tab.saving", { defaultValue: "Saving..." })
+                    : t("history_tab.save", { defaultValue: "Save" })}
+                </button>
+              </div>
             </>
+          ) : (
+            <div className="ht-view-wrap">
+              <div className="ht-view-header">
+                <button type="button" className="ht-view-edit-btn" onClick={enterEditMode}>
+                  <FiEdit2 size={14} />
+                  {t("history_tab.edit", { defaultValue: "Edit" })}
+                </button>
+              </div>
+              <div className="ht-view-fields">
+                {ALL_KEYS.map((key) => {
+                  const val = form[key]?.value;
+                  if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
+                  return (
+                    <div key={key} className="ht-view-field">
+                      <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                      <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       </div>

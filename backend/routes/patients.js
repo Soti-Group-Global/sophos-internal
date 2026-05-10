@@ -28,6 +28,8 @@ router.get('/', auth, patientController.getAllPatients);
 
 // Get a single patient by email (specific routes first to avoid being shadowed by `/:id`)
 router.get('/by-email/:email', auth, patientController.getPatientByEmail);
+// Get a single patient by custom patientId field
+router.get('/by-patient-id/:patientId', auth, patientController.getPatientByPatientId);
 // Older frontend callers expect `/patients/email/:email` — support that path too
 router.get('/email/:email', auth, patientController.getPatientByEmail);
 

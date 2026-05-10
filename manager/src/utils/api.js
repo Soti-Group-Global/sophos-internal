@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
 const api = axios.create({
-  baseURL: "http://localhost:5002/api",
+  baseURL: "http://localhost:3003/api",
   withCredentials: false,
 });
 
@@ -652,6 +652,16 @@ export const getPatient = async (id) => {
   try {
     const response = await api.get(`/patients/${id}`);
     return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get patient by custom patientId field
+export const getPatientByPatientId = async (patientId) => {
+  try {
+    const response = await api.get(`/patients/by-patient-id/${encodeURIComponent(patientId)}`);
+    return response.data;
   } catch (error) {
     throw error;
   }
@@ -1614,6 +1624,18 @@ export const getMedicalHistoryByEmail = async (email) => {
       data: error.response?.data || null,
       message: error.message || "Unknown error",
     };
+  }
+};
+
+// Get medical history by custom patientId
+export const getMedicalHistoryByPatientId = async (patientId) => {
+  try {
+    const res = await api.get(
+      `/applications/medical-history/by-patient-id/${encodeURIComponent(patientId)}`
+    );
+    return res.data;
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -4698,6 +4720,17 @@ export const getAllServicePositions = async (params = {}) => {
   }
 };
 
+export const getPositionsBySpeciality = async (specialityId) => {
+  try {
+    const response = await api.get("/service-manager/positions/positions", {
+      params: { speciality: specialityId, limit: 200 },
+    });
+    return response.data?.positions ?? [];
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getServicePositionById = async (id) => {
   try {
     const response = await api.get(`/service-manager/positions/positions/${id}`);
@@ -4843,5 +4876,7 @@ export const removeApplicationServicePosition = async (applicationId, positionId
     throw error;
   }
 };
+
+
 
 export default api;

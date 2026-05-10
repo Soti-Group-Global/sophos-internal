@@ -34,6 +34,7 @@ import {
   uploadApplicationSectionFile,
   removeApplicationSectionFile,
   updateApplicationSectionComment,
+  updatePatientHistoryForm,
 } from "../utils/api";
 import RichTextEditor from "./RichTextEditor";
 import TemplatePicker from "./TemplatePicker";
@@ -73,6 +74,15 @@ const collectKeys = (sections) => {
 };
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
+/* ── Map each field key → its i18n title key ── */
+const KEY_TITLE_MAP = {};
+(function buildMap(sections) {
+  sections.forEach((s) => {
+    s.fields?.forEach((f) => { KEY_TITLE_MAP[f.key] = s.titleKey; });
+    if (s.subsections) buildMap(s.subsections);
+  });
+}(HISTORY_SECTIONS));
+
 const HISTORY_NAV_ITEMS = [
   { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", icon: <FiChevronDown size={14} />, sectionId: "complaints" },
   { id: "laboratoryAnalysis", labelKey: "sidebar.laboratoryAnalysis", sectionId: "examinationPlan" },
@@ -97,11 +107,7 @@ const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, p
     )}
     {editing ? (
       <div className="ht-field-body">
-        <RichTextEditor
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-        />
+        <RichTextEditor value={value} onChange={onChange} placeholder={placeholder} />
       </div>
     ) : (
       <div
@@ -119,7 +125,10 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   const initForm = () => {
     const saved = application?.historyForm || patient?.historyForm || {};
-    const form = { isFirstAppointment: saved.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? false };
+    const form = {
+      isFirstAppointment: application?.isFirstAppointment ?? false,
+      isRepetitiveAppointment: application?.isRepetitiveAppointment ?? false,
+    };
     ALL_KEYS.forEach((k) => {
       const f = saved[k];
       form[k] = {
@@ -134,10 +143,23 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   const [form, setForm] = useState(initForm);
 
+  /* One-time init for checkbox fields once application data arrives */
+  const checkboxLoadedRef = useRef(false);
+  useEffect(() => {
+    if (checkboxLoadedRef.current || !application?.applicationId) return;
+    checkboxLoadedRef.current = true;
+    setForm((prev) => ({
+      ...prev,
+      isFirstAppointment: application.isFirstAppointment ?? false,
+      isRepetitiveAppointment: application.isRepetitiveAppointment ?? false,
+    }));
+  }, [application?.applicationId, application?.isFirstAppointment, application?.isRepetitiveAppointment]);
+
+  /* Re-sync rich-text fields when historyForm changes — never touches checkboxes */
   useEffect(() => {
     const saved = application?.historyForm || patient?.historyForm || {};
     setForm((prev) => {
-      const next = { ...prev, isFirstAppointment: saved.isFirstAppointment ?? prev.isFirstAppointment ?? false, isRepetitiveAppointment: saved.isRepetitiveAppointment ?? prev.isRepetitiveAppointment ?? false };
+      const next = { ...prev };
       ALL_KEYS.forEach((k) => {
         const f = saved[k];
         next[k] = {
@@ -156,9 +178,52 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const sectionRefs = useRef({});
   const [activeNavItem, setActiveNavItem] = useState(HISTORY_NAV_ITEMS[0].id);
   const [patientAppointments, setPatientAppointments] = useState([]);
-  const [isAppointmentsPanelOpen, setIsAppointmentsPanelOpen] = useState(false);
+  const [isAppointmentsPanelOpen, setIsAppointmentsPanelOpen] = useState(true);
   const [isAppointmentsLoading, setIsAppointmentsLoading] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState(null);
+  const [selectedConsultationId, setSelectedConsultationId] = useState(null);
+  const [isSavingForm, setIsSavingForm] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true);
+  const editModeInitRef = useRef(false);
+
+  /* Auto-select the current appointment once application data arrives */
+  useEffect(() => {
+    if (application?.applicationId) {
+      setSelectedConsultationId((prev) => prev ?? application.applicationId);
+    }
+  }, [application?.applicationId]);
+
+  /* One-time: switch to view mode if application already has content */
+  useEffect(() => {
+    if (editModeInitRef.current || !application?.applicationId) return;
+    editModeInitRef.current = true;
+    const saved = application?.historyForm || {};
+    const hasContent = ALL_KEYS.some((k) => {
+      const f = saved[k];
+      const val = typeof f === "object" ? f?.value : f;
+      return val?.replace(/<[^>]*>/g, "").trim();
+    });
+    if (hasContent) {
+      setIsEditMode(false);
+    } else {
+      setEditingFields(ALL_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {}));
+    }
+  }, [application?.applicationId, application?.historyForm]);
+
+  const hasAnyContent = useCallback((f = form) =>
+    ALL_KEYS.some((k) => f[k]?.value?.replace(/<[^>]*>/g, "").trim()), [form]);
+
+  const enterEditMode = useCallback(() => {
+    setIsEditMode(true);
+    setEditingFields(ALL_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {}));
+  }, []);
+
+  const enterViewMode = useCallback(() => {
+    if (!hasAnyContent()) return;
+    setIsEditMode(false);
+    setEditingFields({});
+  }, [hasAnyContent]);
+
   const [labTests, setLabTests] = useState([]);
   const [studyTests, setStudyTests] = useState([]);
   const [selectedLabTests, setSelectedLabTests] = useState({});
@@ -179,7 +244,10 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const [isUploadingTestFile, setIsUploadingTestFile] = useState(false);
   const [testFileUploadError, setTestFileUploadError] = useState(null);
   const fileInputRef = useRef(null);
-  const [sectionData, setSectionData] = useState({ morphologicalResearch: { files: [], comment: {} }, proceduresManipulations: { files: [], comment: {} } });
+  const [sectionData, setSectionData] = useState({
+    morphologicalResearch: { files: [], comment: {} },
+    proceduresManipulations: { files: [], comment: {} },
+  });
   const [sectionUploading, setSectionUploading] = useState({});
   const [sectionDirty, setSectionDirty] = useState({});
   const morphFileRef = useRef(null);
@@ -203,49 +271,47 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   const loadPatientAppointments = useCallback(async () => {
     const patientId = patient?.patientId || patient?._id || application?.patientId;
-    if (!patientId) {
-      toast.error(t("history_tab.patient_id_missing", { defaultValue: "Patient ID is not available" }));
-      return;
-    }
-
+    if (!patientId) return;
     setIsAppointmentsLoading(true);
     setAppointmentsError(null);
-
     try {
       const response = await getApplicationsByPatientId(patientId);
-      const apps = Array.isArray(response?.data) ? response.data : [];
-      const filtered = apps.filter((appt) => (appt.applicationId || appt._id) !== (application?.applicationId || application?._id));
+      const apps = Array.isArray(response?.data) ? response.data :
+                   Array.isArray(response) ? response : [];
+      const filtered = apps.filter(
+        (appt) => (appt.applicationId || appt._id) !== (application?.applicationId || application?._id),
+      );
       setPatientAppointments(filtered);
-      setIsAppointmentsPanelOpen(true);
     } catch (error) {
       const message = error?.response?.data?.message || t("history_tab.failed_loading_other_appointments", { defaultValue: "Failed to load other appointments" });
       setAppointmentsError(message);
-      toast.error(message);
     } finally {
       setIsAppointmentsLoading(false);
     }
   }, [application, patient, t]);
 
+  useEffect(() => {
+    loadPatientAppointments();
+  }, [loadPatientAppointments]);
+
   const handleSidebarItemClick = useCallback(async (item, _e) => {
     setActiveNavItem(item.id);
     setSelectedTest(null);
-
     if (item.id === "specialistConsultation") {
-      if (isAppointmentsPanelOpen) {
-        setIsAppointmentsPanelOpen(false);
-      } else {
-        await loadPatientAppointments();
-      }
+      setIsAppointmentsPanelOpen((prev) => !prev);
     } else if (item.id === "laboratoryAnalysis") {
       setIsLabPanelOpen((prev) => !prev);
     } else if (item.id === "studiesManipulations") {
       setIsStudyPanelOpen((prev) => !prev);
     }
-  }, [isAppointmentsPanelOpen, loadPatientAppointments]);
+  }, []);
 
   const appId = application?.applicationId;
 
-  const SECTION_SCHEMA = { morphologicalResearch: "morphologicalResearch", proceduresManipulations: "proceduresAndManipulations" };
+  const SECTION_SCHEMA = {
+    morphologicalResearch: "morphologicalResearch",
+    proceduresManipulations: "proceduresAndManipulations",
+  };
   const PANEL_NAV_IDS = Object.keys(SECTION_SCHEMA);
 
   useEffect(() => {
@@ -331,29 +397,24 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter both EN and RU names." }));
       return;
     }
-
     const payload = { name: { en: newTestNameEN.trim(), ru: newTestNameRU.trim() } };
-
     try {
       if (editingTestId) {
         const response = labPopupMode === "studiesManipulations"
           ? await updateApplicationInstrumentalAnalysis(editingTestId, payload)
           : await updateApplicationLaboratoryTest(editingTestId, payload);
         const updated = response?.data || response;
-
         if (labPopupMode === "studiesManipulations") {
           setStudyTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
         } else {
           setLabTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
         }
-
         toast.success(t("history_tab.test_updated", { defaultValue: "Test updated" }));
       } else {
         const response = labPopupMode === "studiesManipulations"
           ? await createApplicationInstrumentalAnalysis(payload)
           : await createApplicationLaboratoryTest(payload);
         const created = response?.data || response;
-
         if (created) {
           if (labPopupMode === "studiesManipulations") {
             setStudyTests((prev) => [...prev, created]);
@@ -365,12 +426,13 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
           toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
         }
       }
-
       setEditingTestId(null);
       setNewTestNameEN("");
       setNewTestNameRU("");
     } catch (err) {
-      toast.error(editingTestId ? t("history_tab.failed_update_test", { defaultValue: "Failed to update test" }) : t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
+      toast.error(editingTestId
+        ? t("history_tab.failed_update_test", { defaultValue: "Failed to update test" })
+        : t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
     }
   }, [editingTestId, labPopupMode, newTestNameEN, newTestNameRU, t]);
 
@@ -383,7 +445,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       await (labPopupMode === "studiesManipulations"
         ? deleteApplicationInstrumentalAnalysis(deleteConfirmTest._id)
         : deleteApplicationLaboratoryTest(deleteConfirmTest._id));
-
       if (labPopupMode === "studiesManipulations") {
         setStudyTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
         setSelectedStudyTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
@@ -391,9 +452,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
         setLabTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
         setSelectedLabTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
       }
-
       if (editingTestId === deleteConfirmTest._id) cancelEditTest();
-
       setDeleteConfirmTest(null);
       toast.success(t("history_tab.test_deleted", { defaultValue: "Test deleted" }));
     } catch (err) {
@@ -428,7 +487,15 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const selectedTestFiles = React.useMemo(() => {
     if (!selectedTest) return [];
     if (Array.isArray(selectedTest.files) && selectedTest.files.length > 0) return selectedTest.files;
-    if (selectedTest.fileId) return [{ fileId: selectedTest.fileId, fileName: selectedTest.fileName || selectedTest.originalName || t("history_tab.unknown_file", { defaultValue: "Unknown file" }), fileMimeType: selectedTest.fileMimeType || "", fileSize: selectedTest.fileSize || 0, uploadedAt: selectedTest.uploadedAt || null }];
+    if (selectedTest.fileId) {
+      return [{
+        fileId: selectedTest.fileId,
+        fileName: selectedTest.fileName || selectedTest.originalName || t("history_tab.unknown_file", { defaultValue: "Unknown file" }),
+        fileMimeType: selectedTest.fileMimeType || "",
+        fileSize: selectedTest.fileSize || 0,
+        uploadedAt: selectedTest.uploadedAt || null,
+      }];
+    }
     return [];
   }, [selectedTest, t]);
 
@@ -436,7 +503,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     if (!selectedTest || !selectedTestMode || !file) return;
     setIsUploadingTestFile(true);
     setTestFileUploadError(null);
-
     try {
       const response = selectedTestMode === "studiesManipulations"
         ? await uploadApplicationInstrumentalAnalysisFile(selectedTest._id, file)
@@ -486,8 +552,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       toast.success(t("history_tab.note_saved", { defaultValue: "Note saved" }));
       setShowTestNoteEditor(false); setEditingNoteId(null); setTestNoteDraft("");
     } catch (error) {
-      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_save_note", { defaultValue: "Failed to save note" });
-      toast.error(message);
+      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_save_note", { defaultValue: "Failed to save note" }));
     }
   }, [selectedTest, selectedTestMode, testNoteDraft, editingNoteId, t]);
 
@@ -503,8 +568,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
       toast.success(t("history_tab.file_removed", { defaultValue: "File removed" }));
     } catch (error) {
-      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_remove_file", { defaultValue: "Failed to remove file" });
-      toast.error(message);
+      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_remove_file", { defaultValue: "Failed to remove file" }));
     }
   }, [selectedTest, selectedTestMode, t]);
 
@@ -518,8 +582,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       window.open(url, "_blank", "noopener,noreferrer");
       setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch (error) {
-      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_view_file", { defaultValue: "Failed to open file" });
-      toast.error(message);
+      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_view_file", { defaultValue: "Failed to open file" }));
     }
   }, [selectedTest, selectedTestMode, t]);
 
@@ -536,13 +599,14 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       toast.success(t("history_tab.note_deleted", { defaultValue: "Note deleted" }));
       setShowTestNoteEditor(false);
     } catch (error) {
-      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_delete_note", { defaultValue: "Failed to delete note" });
-      toast.error(message);
+      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_delete_note", { defaultValue: "Failed to delete note" }));
     }
   }, [selectedTest, selectedTestMode, t]);
 
+  /* Close editing fields when clicking outside — skip in bulk-edit mode */
   useEffect(() => {
     const handleClickOutside = (e) => {
+      if (isEditMode) return;
       if (
         e.target.closest("[data-ht-field]") ||
         e.target.closest(".ht-section-header--clickable") ||
@@ -551,25 +615,42 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
         e.target.closest(".tp-wrap") ||
         e.target.closest(".tp-dropdown")
       ) return;
-
       setEditingFields({});
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isEditMode]);
+
+  const setFieldEditing = useCallback((fieldKey, value) => {
+    setEditingFields((prev) => ({ ...prev, [fieldKey]: value }));
   }, []);
 
-  const setFieldEditing = useCallback((fieldKey, value) => { setEditingFields((prev) => ({ ...prev, [fieldKey]: value })); }, []);
-  const handleEditorChange = useCallback((key, html) => { setForm((prev) => ({ ...prev, [key]: { ...prev[key], value: html } })); }, []);
+  const handleEditorChange = useCallback((key, html) => {
+    setForm((prev) => ({ ...prev, [key]: { ...prev[key], value: html } }));
+  }, []);
+
   const handleVerifyToggle = useCallback(async (key) => {
     const newVal = !form[key]?.isVerified;
     setForm((prev) => ({ ...prev, [key]: { ...prev[key], isVerified: newVal } }));
     if (!application?.applicationId) return;
-    try { await updateHistoryFieldVerify(application.applicationId, key, newVal); } catch (err) { toast.error("Failed to update verification"); }
+    try {
+      await updateHistoryFieldVerify(application.applicationId, key, newVal);
+    } catch (err) {
+      toast.error("Failed to update verification");
+    }
   }, [application, form]);
 
   const [templates, setTemplates] = useState([]);
-  useEffect(() => { const fetchTemplates = async () => { try { const data = await getHistoryTemplates(); setTemplates(Array.isArray(data) ? data : []); } catch (err) {} }; fetchTemplates(); }, []);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const data = await getHistoryTemplates();
+        setTemplates(Array.isArray(data) ? data : []);
+      } catch (err) {}
+    };
+    fetchTemplates();
+  }, []);
 
   useEffect(() => {
     const fetchLabTests = async () => {
@@ -578,27 +659,56 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
         const tests = Array.isArray(response?.data) ? response.data : response || [];
         setLabTests(tests);
         setSelectedLabTests(tests.reduce((acc, test) => { acc[test._id] = false; return acc; }, {}));
-      } catch (err) { console.error("Failed to load laboratory tests", err); }
+      } catch (err) {}
     };
-
     const fetchStudyTests = async () => {
       try {
         const response = await getAllApplicationInstrumentalAnalysis();
         const tests = Array.isArray(response?.data) ? response.data : response || [];
         setStudyTests(tests);
         setSelectedStudyTests(tests.reduce((acc, test) => { acc[test._id] = false; return acc; }, {}));
-      } catch (err) { console.error("Failed to load study tests", err); }
+      } catch (err) {}
     };
-
     fetchLabTests();
     fetchStudyTests();
   }, []);
 
   const getFieldTemplates = useCallback((fieldKey) => templates.filter((t) => t.fieldKey === fieldKey), [templates]);
-  const handleSaveTemplate = useCallback(async (fieldKey, name, content) => { const tpl = await createHistoryTemplate({ fieldKey, name, content }); setTemplates((prev) => [tpl, ...prev]); toast.success(t("toast.template_saved")); }, []);
-  const handleUpdateTemplate = useCallback(async (id, changes) => { try { const updated = await updateHistoryTemplate(id, changes); setTemplates((prev) => prev.map((t) => (t._id === id ? { ...t, ...updated } : t))); } catch (err) { toast.error(t("toast.template_update_failed")); } }, []);
-  const handleDeleteTemplate = useCallback(async (id) => { try { await deleteHistoryTemplate(id); setTemplates((prev) => prev.filter((t) => t._id !== id)); toast.success(t("toast.template_deleted")); } catch (err) { toast.error(t("toast.template_delete_failed")); } }, []);
-  const handleDuplicateTemplate = useCallback(async (tpl) => { try { const newTpl = await createHistoryTemplate({ fieldKey: tpl.fieldKey, name: `${tpl.name} (copy)`, content: tpl.content, isDefault: false }); setTemplates((prev) => [newTpl, ...prev]); toast.success(t("toast.template_duplicated")); } catch (err) { toast.error(t("toast.template_duplicate_failed")); } }, []);
+
+  const handleSaveTemplate = useCallback(async (fieldKey, name, content) => {
+    const tpl = await createHistoryTemplate({ fieldKey, name, content });
+    setTemplates((prev) => [tpl, ...prev]);
+    toast.success(t("toast.template_saved"));
+  }, []);
+
+  const handleUpdateTemplate = useCallback(async (id, changes) => {
+    try {
+      const updated = await updateHistoryTemplate(id, changes);
+      setTemplates((prev) => prev.map((t) => (t._id === id ? { ...t, ...updated } : t)));
+    } catch (err) {
+      toast.error(t("toast.template_update_failed"));
+    }
+  }, []);
+
+  const handleDeleteTemplate = useCallback(async (id) => {
+    try {
+      await deleteHistoryTemplate(id);
+      setTemplates((prev) => prev.filter((t) => t._id !== id));
+      toast.success(t("toast.template_deleted"));
+    } catch (err) {
+      toast.error(t("toast.template_delete_failed"));
+    }
+  }, []);
+
+  const handleDuplicateTemplate = useCallback(async (tpl) => {
+    try {
+      const newTpl = await createHistoryTemplate({ fieldKey: tpl.fieldKey, name: `${tpl.name} (copy)`, content: tpl.content, isDefault: false });
+      setTemplates((prev) => [newTpl, ...prev]);
+      toast.success(t("toast.template_duplicated"));
+    } catch (err) {
+      toast.error(t("toast.template_duplicate_failed"));
+    }
+  }, []);
 
   const makeTemplatePicker = useCallback((fieldKey) => (
     <TemplatePicker
@@ -613,12 +723,43 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     />
   ), [getFieldTemplates, form, editingFields, handleEditorChange, setFieldEditing, handleSaveTemplate, handleUpdateTemplate, handleDeleteTemplate, handleDuplicateTemplate]);
 
-  useImperativeHandle(ref, () => ({ getData: () => ({ historyForm: { ...form } }) }));
+  useImperativeHandle(ref, () => ({
+    getData: () => ({ historyForm: { ...form } }),
+  }));
+
+  const handleSaveForm = useCallback(async () => {
+    if (!application?.applicationId) return;
+    setIsSavingForm(true);
+    try {
+      const result = await updatePatientHistoryForm(application.applicationId, { ...form });
+      if (result) {
+        setForm((prev) => ({
+          ...prev,
+          isFirstAppointment: typeof result.isFirstAppointment === "boolean" ? result.isFirstAppointment : prev.isFirstAppointment,
+          isRepetitiveAppointment: typeof result.isRepetitiveAppointment === "boolean" ? result.isRepetitiveAppointment : prev.isRepetitiveAppointment,
+        }));
+      }
+      toast.success(t("history_tab.saved", { defaultValue: "Saved" }));
+      if (hasAnyContent()) {
+        setIsEditMode(false);
+        setEditingFields({});
+      }
+    } catch {
+      toast.error(t("history_tab.save_error", { defaultValue: "Failed to save" }));
+    } finally {
+      setIsSavingForm(false);
+    }
+  }, [application, form, t, hasAnyContent]);
 
   const VerifyBadge = ({ fieldKey }) => {
     const verified = !!form[fieldKey]?.isVerified;
     return (
-      <button type="button" className={`ht-verify-btn${verified ? " ht-verify-btn--verified" : " ht-verify-btn--pending"}`} onClick={(e) => { e.stopPropagation(); handleVerifyToggle(fieldKey); }} title={verified ? t("verify_title_verified") : t("verify_title_pending") }>
+      <button
+        type="button"
+        className={`ht-verify-btn${verified ? " ht-verify-btn--verified" : " ht-verify-btn--pending"}`}
+        onClick={(e) => { e.stopPropagation(); handleVerifyToggle(fieldKey); }}
+        title={verified ? t("verify_title_verified") : t("verify_title_pending")}
+      >
         {verified ? t("verify_verified") : t("verify_pending")}
       </button>
     );
@@ -648,14 +789,23 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     const singleEditing = singleKey ? !!editingFields[singleKey] : false;
 
     return (
-      <div key={section.id} ref={(node) => { if (level === 0) sectionRefs.current[section.id] = node; }} className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}`}>
-        <div className={`ht-section-header${level > 0 ? " ht-subsection-header" : ""}${isSingleField ? " ht-section-header--clickable" : ""}`} onClick={isSingleField ? () => setFieldEditing(singleKey, !singleEditing) : undefined}>
+      <div
+        key={section.id}
+        ref={(node) => { if (level === 0) sectionRefs.current[section.id] = node; }}
+        className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}`}
+      >
+        <div
+          className={`ht-section-header${level > 0 ? " ht-subsection-header" : ""}${isSingleField ? " ht-section-header--clickable" : ""}`}
+          onClick={isSingleField ? () => setFieldEditing(singleKey, !singleEditing) : undefined}
+        >
           <span className={level > 0 ? "ht-subsection-title" : "ht-section-title"}>{t(section.titleKey)}</span>
           {isSingleField && (
             <div className="ht-section-header-actions">
               {form[singleKey]?.value?.replace(/<[^>]*>/g, "").trim() && <VerifyBadge fieldKey={singleKey} />}
               {makeTemplatePicker(singleKey)}
-              <span className={`ht-field-toggle ${singleEditing ? "ht-field-toggle--active" : ""}`}>{singleEditing ? "\u2715" : "\u270E"}</span>
+              <span className={`ht-field-toggle ${singleEditing ? "ht-field-toggle--active" : ""}`}>
+                {singleEditing ? "✕" : "✎"}
+              </span>
             </div>
           )}
         </div>
@@ -667,7 +817,12 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 <RichTextEditor value={form[singleKey]?.value || ""} onChange={(html) => handleEditorChange(singleKey, html)} placeholder={t("enter_text")} />
               </div>
             ) : (
-              <div data-ht-field className={`ht-preview${!form[singleKey]?.value ? " ht-preview--empty" : ""}`} onClick={() => setFieldEditing(singleKey, true)} dangerouslySetInnerHTML={{ __html: form[singleKey]?.value || `<span class='ht-preview-placeholder'>${t("click_to_edit")}</span>` }} />
+              <div
+                data-ht-field
+                className={`ht-preview${!form[singleKey]?.value ? " ht-preview--empty" : ""}`}
+                onClick={() => setFieldEditing(singleKey, true)}
+                dangerouslySetInnerHTML={{ __html: form[singleKey]?.value || `<span class='ht-preview-placeholder'>${t("click_to_edit")}</span>` }}
+              />
             )
           ) : (
             <>
@@ -675,14 +830,22 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
               {((section.id === "examinationPlan" && activeNavItem === "laboratoryAnalysis") || (section.id === "physicalExam" && activeNavItem === "studiesManipulations")) && (
                 <div className="ht-lab-analysis-panel">
                   <div className="ht-lab-analysis-header">
-                    <span>{activeNavItem === "laboratoryAnalysis" ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" }) : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}</span>
-                    <button type="button" className="ht-lab-analysis-manage-btn" onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}>{t("history_tab.manage_tests", { defaultValue: "Manage tests" })}</button>
+                    <span>
+                      {activeNavItem === "laboratoryAnalysis"
+                        ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" })
+                        : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}
+                    </span>
+                    <button type="button" className="ht-lab-analysis-manage-btn" onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}>
+                      {t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
+                    </button>
                   </div>
-                  {((activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).length > 0) ? (
+                  {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).length > 0 ? (
                     <div className="ht-lab-analysis-grid">
                       {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).map((test) => (
                         <div key={test._id} className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}>
-                          <label><input type="checkbox" checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]} onChange={(e) => { e.stopPropagation(); handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); }} onClick={(e) => e.stopPropagation()} /></label>
+                          <label>
+                            <input type="checkbox" checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]} onChange={(e) => { e.stopPropagation(); handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); }} onClick={(e) => e.stopPropagation()} />
+                          </label>
                           <div className="ht-lab-analysis-item-label" onClick={() => handleSelectTest(test, activeNavItem)}>
                             <span>{test.name?.en || ""}</span>
                             <span>{test.name?.ru || ""}</span>
@@ -691,7 +854,9 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                       ))}
                     </div>
                   ) : (
-                    <p className="ht-lab-analysis-empty">{t(activeNavItem === "laboratoryAnalysis" ? "history_tab.no_lab_tests" : "history_tab.no_studies_tests", { defaultValue: activeNavItem === "laboratoryAnalysis" ? "No laboratory tests available." : "No studies/manipulations available." })}</p>
+                    <p className="ht-lab-analysis-empty">
+                      {t(activeNavItem === "laboratoryAnalysis" ? "history_tab.no_lab_tests" : "history_tab.no_studies_tests", { defaultValue: activeNavItem === "laboratoryAnalysis" ? "No laboratory tests available." : "No studies/manipulations available." })}
+                    </p>
                   )}
                 </div>
               )}
@@ -710,11 +875,19 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
           <div className="ht-sub-sidebar-list">
             {HISTORY_NAV_ITEMS.map((item) => (
               <React.Fragment key={item.id}>
-                <div role="button" tabIndex={0} className={`ht-sub-sidebar-item${activeNavItem === item.id ? " ht-sub-sidebar-item--active" : ""}`} onClick={(e) => handleSidebarItemClick(item, e)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSidebarItemClick(item, e); }}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={`ht-sub-sidebar-item${activeNavItem === item.id ? " ht-sub-sidebar-item--active" : ""}`}
+                  onClick={(e) => handleSidebarItemClick(item, e)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSidebarItemClick(item, e); }}
+                >
                   <span className="ht-sub-sidebar-label">{t(item.labelKey)}</span>
                   <span className="ht-sub-sidebar-actions">
                     {(item.id === "laboratoryAnalysis" || item.id === "studiesManipulations") && (
-                      <button type="button" className="ht-sub-sidebar-setting-btn" onClick={(e) => openLabAnalysisPopup(item.id, e)} aria-label={t("history_tab.manage_lab_tests", { defaultValue: "Manage tests" })}><FiSettings size={14} /></button>
+                      <button type="button" className="ht-sub-sidebar-setting-btn" onClick={(e) => openLabAnalysisPopup(item.id, e)} aria-label={t("history_tab.manage_lab_tests", { defaultValue: "Manage tests" })}>
+                        <FiSettings size={14} />
+                      </button>
                     )}
                     {item.icon && <span className="ht-sub-sidebar-icon" aria-hidden="true">{item.icon}</span>}
                   </span>
@@ -722,31 +895,93 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
                 {item.id === "laboratoryAnalysis" && isLabPanelOpen && (
                   <div className="ht-tests-panel">
-                    {labTests.length === 0 ? (<p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>) : (labTests.map((test) => (<button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "laboratoryAnalysis")}><span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span></button>)))}
+                    {labTests.length === 0 ? (
+                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
+                    ) : (
+                      labTests.map((test) => (
+                        <button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
+                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                        </button>
+                      ))
+                    )}
                   </div>
                 )}
 
                 {item.id === "studiesManipulations" && isStudyPanelOpen && (
                   <div className="ht-tests-panel">
-                    {studyTests.length === 0 ? (<p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>) : (studyTests.map((test) => (<button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "studiesManipulations")}><span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span></button>)))}
+                    {studyTests.length === 0 ? (
+                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
+                    ) : (
+                      studyTests.map((test) => (
+                        <button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "studiesManipulations")}>
+                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                        </button>
+                      ))
+                    )}
                   </div>
                 )}
 
                 {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
                   <div className="ht-appointments-panel">
-                    {isAppointmentsLoading ? (<div className="ht-appointments-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}</div>) : appointmentsError ? (<div className="ht-appointments-error">{appointmentsError}</div>) : (
+                    {isAppointmentsLoading ? (
+                      <div className="ht-appointments-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}</div>
+                    ) : appointmentsError ? (
+                      <div className="ht-appointments-error">{appointmentsError}</div>
+                    ) : (
                       <ul className="ht-appointments-list">
                         {application && (() => {
-                          const name = application.service?.name?.ru || application.service?.name?.en || (Array.isArray(application.services) && application.services[0]?.name?.ru) || (Array.isArray(application.services) && application.services[0]?.name?.en) || t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                          const name =
+                            application.service?.name?.ru ||
+                            application.service?.name?.en ||
+                            (Array.isArray(application.services) && application.services[0]?.name?.ru) ||
+                            (Array.isArray(application.services) && application.services[0]?.name?.en) ||
+                            t("history_tab.current_appointment", { defaultValue: "Consultation" });
                           const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
                           const time = application.startTime ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}` : "";
-                          return (<li className="ht-appointment-item ht-appointment-item--current"><div className="ht-appointment-current-row"><span className="ht-appointment-name">{name}</span><span className="ht-appointment-current-badge">{t("history_tab.current_badge", { defaultValue: "Current" })}</span></div><span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span></li>);
+                          const isSelected = selectedConsultationId === application.applicationId;
+                          return (
+                            <li
+                              className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setSelectedConsultationId(application.applicationId)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedConsultationId(application.applicationId); }}
+                            >
+                              <div className="ht-appointment-current-row">
+                                <span className="ht-appointment-name">{name}</span>
+                                <span className="ht-appointment-current-badge">{t("history_tab.current_badge", { defaultValue: "Current" })}</span>
+                              </div>
+                              <span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span>
+                            </li>
+                          );
                         })()}
                         {patientAppointments.map((appt) => {
-                          const patientName = appt.patient ? [appt.patient.firstName, appt.patient.middleName, appt.patient.lastName].filter(Boolean).join(" ").trim() || appt.patient.email || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" }) : appt.patientName || t("history_tab.unknown_patient", { defaultValue: "Unknown patient" });
+                          const apptId = appt.applicationId || appt._id;
+                          const isSelected = selectedConsultationId === apptId;
                           const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
                           const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
-                          return (<li key={appt.applicationId || appt._id} className="ht-appointment-item"><span className="ht-appointment-name">{patientName}</span><span className="ht-appointment-meta">{appointmentDate}{appointmentTime ? ` · ${appointmentTime}` : ""}</span></li>);
+                          const label = t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                          return (
+                            <li
+                              key={apptId}
+                              className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => {
+                                setSelectedConsultationId(apptId);
+                                window.open(`/appointments/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  setSelectedConsultationId(apptId);
+                                  window.open(`/appointments/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
+                                }
+                              }}
+                            >
+                              <span className="ht-appointment-name">{label}</span>
+                              <span className="ht-appointment-meta">{appointmentDate}{appointmentTime ? ` · ${appointmentTime}` : ""}</span>
+                            </li>
+                          );
                         })}
                       </ul>
                     )}
@@ -761,19 +996,19 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
           {selectedTest ? (
             <div className="ht-td-page">
               <div className="ht-td-header">
-                <div className="ht-td-title-group"><h2 className="ht-td-title">{selectedTest.name?.ru || selectedTest.name?.en || ""}</h2>{selectedTest.name?.en && selectedTest.name?.ru && (<span className="ht-td-subtitle">{selectedTest.name.en}</span>)}</div>
+                <div className="ht-td-title-group">
+                  <h2 className="ht-td-title">{selectedTest.name?.ru || selectedTest.name?.en || ""}</h2>
+                  {selectedTest.name?.en && selectedTest.name?.ru && <span className="ht-td-subtitle">{selectedTest.name.en}</span>}
+                </div>
                 <button type="button" className="ht-td-close" onClick={handleCloseSelectedTest} aria-label="Close"><FiX size={18} /></button>
               </div>
-
               <div className="ht-td-actions">
                 <button type="button" className="ht-td-btn" onClick={() => fileInputRef.current?.click()}><FiUpload size={14} />{t("history_tab.upload_file", { defaultValue: "Upload file" })}</button>
                 <button type="button" className="ht-td-btn" onClick={handleOpenTestNoteEditor}><FiFileText size={14} />{t("history_tab.add_text", { defaultValue: "Add text" })}</button>
               </div>
-
               <input ref={fileInputRef} type="file" multiple className="ht-hidden-file-input" onChange={handleTestFileChange} />
               {testFileUploadError && <div className="ht-error-message">{testFileUploadError}</div>}
               {isUploadingTestFile && <div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>}
-
               <div className="ht-td-list">
                 {selectedTestFiles.map((file) => {
                   const ext = (file.fileName || "").split(".").pop().toUpperCase().slice(0, 5);
@@ -783,12 +1018,17 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                   return (
                     <div key={String(file.fileId)} className="ht-td-item">
                       <span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span>
-                      <div className="ht-td-item-info"><span className="ht-td-item-name">{file.fileName}</span>{dateStr && (<span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>)}</div>
-                      <div className="ht-td-item-actions"><button type="button" className="ht-td-icon-btn" onClick={() => handleViewTestFile(file.fileId)} aria-label="View"><FiEye size={14} /></button><button type="button" className="ht-td-icon-btn" onClick={() => handleRemoveTestFile(file.fileId)} aria-label="Delete"><FiTrash2 size={14} /></button></div>
+                      <div className="ht-td-item-info">
+                        <span className="ht-td-item-name">{file.fileName}</span>
+                        {dateStr && <span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>}
+                      </div>
+                      <div className="ht-td-item-actions">
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleViewTestFile(file.fileId)} aria-label="View"><FiEye size={14} /></button>
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleRemoveTestFile(file.fileId)} aria-label="Delete"><FiTrash2 size={14} /></button>
+                      </div>
                     </div>
                   );
                 })}
-
                 {selectedTestNotes.map((note) => {
                   const dt = note.createdAt ? new Date(note.createdAt) : null;
                   const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
@@ -796,54 +1036,159 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                   return (
                     <div key={String(note._id)} className="ht-td-item">
                       <span className="ht-td-note-icon"><FiFileText size={16} /></span>
-                      <div className="ht-td-item-info"><div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />{dateStr && (<span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>)}</div>
-                      <div className="ht-td-item-actions"><button type="button" className="ht-td-icon-btn" onClick={() => handleEditTestNote(note)} aria-label="Edit"><FiEdit2 size={14} /></button><button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote(note._id)} aria-label="Delete"><FiTrash2 size={14} /></button></div>
+                      <div className="ht-td-item-info">
+                        <div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
+                        {dateStr && <span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>}
+                      </div>
+                      <div className="ht-td-item-actions">
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleEditTestNote(note)} aria-label="Edit"><FiEdit2 size={14} /></button>
+                        <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote(note._id)} aria-label="Delete"><FiTrash2 size={14} /></button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
-
               {showTestNoteEditor && (
                 <div className="ht-td-note-editor">
                   <RichTextEditor value={testNoteDraft} onChange={(value) => setTestNoteDraft(value)} placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })} />
-                  <div className="ht-td-note-editor-actions"><button type="button" className="ht-td-save-btn" onClick={handleSaveTestNote}>{t("history_tab.save", { defaultValue: "Save" })}</button><button type="button" className="ht-td-cancel-btn" onClick={() => setShowTestNoteEditor(false)}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button></div>
+                  <div className="ht-td-note-editor-actions">
+                    <button type="button" className="ht-td-save-btn" onClick={handleSaveTestNote}>{t("history_tab.save", { defaultValue: "Save" })}</button>
+                    <button type="button" className="ht-td-cancel-btn" onClick={() => setShowTestNoteEditor(false)}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>
+                  </div>
                 </div>
               )}
             </div>
           ) : activeNavItem === "conclusion" ? (
-            <div className="ht-conclusion-wrap"><AppointmentReport booking={application} /></div>
+            <div className="ht-conclusion-wrap">
+              <AppointmentReport booking={application} />
+            </div>
           ) : PANEL_NAV_IDS.includes(activeNavItem) ? (() => {
-            const sid = activeNavItem; const fileRef = sid === "morphologicalResearch" ? morphFileRef : procFileRef; const sec = sectionData[sid] || { files: [], comment: {} }; const files = sec.files || []; const commentValue = sec.comment?.value || "";
+            const sid = activeNavItem;
+            const fileRef = sid === "morphologicalResearch" ? morphFileRef : procFileRef;
+            const sec = sectionData[sid] || { files: [], comment: {} };
+            const files = sec.files || [];
+            const commentValue = sec.comment?.value || "";
             return (
               <div className="ht-sp-page">
                 <div className="ht-sp-section">
-                  <div className="ht-sp-section-header"><span className="ht-sp-section-title">{t("history_tab.files_title", { defaultValue: "FILES" })}</span><button type="button" className="ht-sp-upload-btn" onClick={() => fileRef.current?.click()}><FiUpload size={13} />{t("history_tab.upload_file", { defaultValue: "Upload file" })}</button></div>
+                  <div className="ht-sp-section-header">
+                    <span className="ht-sp-section-title">{t("history_tab.files_title", { defaultValue: "FILES" })}</span>
+                    <button type="button" className="ht-sp-upload-btn" onClick={() => fileRef.current?.click()}><FiUpload size={13} />{t("history_tab.upload_file", { defaultValue: "Upload file" })}</button>
+                  </div>
                   <input ref={fileRef} type="file" multiple className="ht-hidden-file-input" onChange={(e) => handleSectionFileChange(sid, e)} />
-                  {sectionUploading[sid] && (<div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>)}
-                  {files.length === 0 ? (<div className="ht-sp-files-empty">{t("history_tab.no_files_uploaded", { defaultValue: "No files uploaded yet" })}</div>) : (
-                    <div className="ht-sp-files-list">{files.map((file) => {
-                      const name = file.filename || file.fileName || ""; const ext = name.split(".").pop().toUpperCase().slice(0, 5); const dt = file.uploadedAt ? new Date(file.uploadedAt) : null; const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : ""; const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : ""; const fid = String(file._id || file.fileId);
-                      return (<div key={fid} className="ht-sp-file-row"><span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span><div className="ht-sp-file-info"><span className="ht-sp-file-name">{name}</span>{dateStr && (<span className="ht-sp-file-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>)}</div><button type="button" className="ht-td-icon-btn" onClick={() => handleSectionFileRemove(sid, fid)} aria-label="Remove"><FiTrash2 size={14} /></button></div>);
-                    })}</div>
+                  {sectionUploading[sid] && <div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>}
+                  {files.length === 0 ? (
+                    <div className="ht-sp-files-empty">{t("history_tab.no_files_uploaded", { defaultValue: "No files uploaded yet" })}</div>
+                  ) : (
+                    <div className="ht-sp-files-list">
+                      {files.map((file) => {
+                        const name = file.filename || file.fileName || "";
+                        const ext = name.split(".").pop().toUpperCase().slice(0, 5);
+                        const dt = file.uploadedAt ? new Date(file.uploadedAt) : null;
+                        const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                        const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                        const fid = String(file._id || file.fileId);
+                        return (
+                          <div key={fid} className="ht-sp-file-row">
+                            <span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span>
+                            <div className="ht-sp-file-info">
+                              <span className="ht-sp-file-name">{name}</span>
+                              {dateStr && <span className="ht-sp-file-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>}
+                            </div>
+                            <button type="button" className="ht-td-icon-btn" onClick={() => handleSectionFileRemove(sid, fid)} aria-label="Remove"><FiTrash2 size={14} /></button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-
                 <div className="ht-sp-section">
-                  <div className="ht-sp-section-header"><span className="ht-sp-section-title">{t("history_tab.comment_title", { defaultValue: "COMMENT" })}</span>{sectionDirty[sid] && (<button type="button" className="ht-sp-save-btn" onClick={() => handleSectionCommentSave(sid, sectionData[sid]?.comment?.value || "") }><FiFileText size={13} />{t("history_tab.save", { defaultValue: "Save" })}</button>)}</div>
-                  <div className="ht-sp-comment-editor"><RichTextEditor value={commentValue} onChange={(val) => { setSectionData((prev) => ({ ...prev, [sid]: { ...prev[sid], comment: { ...prev[sid]?.comment, value: val } } })); setSectionDirty((prev) => ({ ...prev, [sid]: true })); }} placeholder={t("history_tab.enter_comment", { defaultValue: "Enter comment..." })} /></div>
+                  <div className="ht-sp-section-header">
+                    <span className="ht-sp-section-title">{t("history_tab.comment_title", { defaultValue: "COMMENT" })}</span>
+                    {sectionDirty[sid] && (
+                      <button type="button" className="ht-sp-save-btn" onClick={() => handleSectionCommentSave(sid, sectionData[sid]?.comment?.value || "")}>
+                        <FiFileText size={13} />{t("history_tab.save", { defaultValue: "Save" })}
+                      </button>
+                    )}
+                  </div>
+                  <div className="ht-sp-comment-editor">
+                    <RichTextEditor
+                      value={commentValue}
+                      onChange={(val) => {
+                        setSectionData((prev) => ({ ...prev, [sid]: { ...prev[sid], comment: { ...prev[sid]?.comment, value: val } } }));
+                        setSectionDirty((prev) => ({ ...prev, [sid]: true }));
+                      }}
+                      placeholder={t("history_tab.enter_comment", { defaultValue: "Enter comment..." })}
+                    />
+                  </div>
                 </div>
               </div>
             );
-          })() : (
+          })() : isEditMode ? (
             <>
+              <div className="ht-edit-toolbar">
+                <button type="button" className="ht-view-mode-btn" onClick={enterViewMode}>
+                  <FiEye size={14} />
+                  {t("history_tab.view", { defaultValue: "View" })}
+                </button>
+              </div>
               <div className="ht-container">
                 <div className="ht-first-appt-bar">
-                  <label className="ht-first-appt-label"><input type="checkbox" className="ht-first-appt-checkbox" checked={!!form.isFirstAppointment} onChange={(e) => setForm((prev) => ({ ...prev, isFirstAppointment: e.target.checked, isRepetitiveAppointment: e.target.checked ? false : prev.isRepetitiveAppointment }))} /><span>{t("first_appointment")}</span></label>
-                  <label className="ht-first-appt-label"><input type="checkbox" className="ht-first-appt-checkbox" checked={!!form.isRepetitiveAppointment} onChange={(e) => setForm((prev) => ({ ...prev, isRepetitiveAppointment: e.target.checked, isFirstAppointment: e.target.checked ? false : prev.isFirstAppointment }))} /><span>{t("repetitive_appointment")}</span></label>
+                  <label className="ht-first-appt-label">
+                    <input
+                      type="checkbox"
+                      className="ht-first-appt-checkbox"
+                      checked={!!form.isFirstAppointment}
+                      onChange={(e) => setForm((prev) => ({ ...prev, isFirstAppointment: e.target.checked, isRepetitiveAppointment: e.target.checked ? false : prev.isRepetitiveAppointment }))}
+                    />
+                    <span>{t("first_appointment")}</span>
+                  </label>
+                  <label className="ht-first-appt-label">
+                    <input
+                      type="checkbox"
+                      className="ht-first-appt-checkbox"
+                      checked={!!form.isRepetitiveAppointment}
+                      onChange={(e) => setForm((prev) => ({ ...prev, isRepetitiveAppointment: e.target.checked, isFirstAppointment: e.target.checked ? false : prev.isFirstAppointment }))}
+                    />
+                    <span>{t("repetitive_appointment")}</span>
+                  </label>
                 </div>
                 {HISTORY_SECTIONS.map((s) => renderSection(s))}
               </div>
+              <div className="ht-form-save-bar">
+                <button
+                  type="button"
+                  className="ht-form-save-btn"
+                  onClick={handleSaveForm}
+                  disabled={isSavingForm}
+                >
+                  {isSavingForm
+                    ? t("history_tab.saving", { defaultValue: "Saving..." })
+                    : t("history_tab.save", { defaultValue: "Save" })}
+                </button>
+              </div>
             </>
+          ) : (
+            <div className="ht-view-wrap">
+              <div className="ht-view-header">
+                <button type="button" className="ht-view-edit-btn" onClick={enterEditMode}>
+                  <FiEdit2 size={14} />
+                  {t("history_tab.edit", { defaultValue: "Edit" })}
+                </button>
+              </div>
+              <div className="ht-view-fields">
+                {ALL_KEYS.map((key) => {
+                  const val = form[key]?.value;
+                  if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
+                  return (
+                    <div key={key} className="ht-view-field">
+                      <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                      <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -851,16 +1196,55 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       {labPopupOpen && createPortal(
         <div className="ht-portal-overlay" onClick={closeLabAnalysisPopup}>
           <div className="ht-portal-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ht-portal-header"><h2 className="ht-portal-title">{labPopupMode === "studiesManipulations" ? t("history_tab.manage_study_tests", { defaultValue: "Studies / Manipulations" }) : t("history_tab.manage_tests", { defaultValue: "Laboratory Analysis" })}</h2><button className="ht-portal-close" type="button" onClick={closeLabAnalysisPopup} aria-label="Close">×</button></div>
-            <div className="ht-portal-form"><div className="ht-portal-inputs"><input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_ru", { defaultValue: "Name (RU)" })} value={newTestNameRU} onChange={(e) => setNewTestNameRU(e.target.value)} /><input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_en", { defaultValue: "Name (EN)" })} value={newTestNameEN} onChange={(e) => setNewTestNameEN(e.target.value)} /></div><button className="ht-portal-add-btn" type="button" onClick={handleSaveTest}><span className="ht-portal-add-plus">+</span><span>{editingTestId ? t("history_tab.save", { defaultValue: "Save" }) : t("history_tab.add_btn", { defaultValue: "Add" })}</span></button></div>
-            {editingTestId && (<button className="ht-portal-cancel-btn" type="button" onClick={cancelEditTest}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>)}
-            <div className="ht-portal-list">{(labPopupMode === "studiesManipulations" ? studyTests : labTests).length > 0 ? ((labPopupMode === "studiesManipulations" ? studyTests : labTests).map((test) => (<div key={test._id} className="ht-portal-item" role="button" onClick={() => { handleSelectTest(test, labPopupMode); closeLabAnalysisPopup(); }}><div className="ht-portal-item-info"><span className="ht-portal-item-name">{test.name?.ru || test.name?.en || ""}</span>{test.name?.en && test.name?.ru && (<span className="ht-portal-item-sub">{test.name.en}</span>)}</div><div className="ht-portal-item-actions"><button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openEditTest(test); }} aria-label="Edit"><FiEdit2 size={14} /></button><button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openDeleteConfirm(test); }} aria-label="Delete"><FiTrash2 size={14} /></button></div></div>))) : (<p className="ht-portal-empty">{t("history_tab.no_tests_yet", { defaultValue: "No items yet" })}</p>)}</div>
+            <div className="ht-portal-header">
+              <h2 className="ht-portal-title">{labPopupMode === "studiesManipulations" ? t("history_tab.manage_study_tests", { defaultValue: "Studies / Manipulations" }) : t("history_tab.manage_tests", { defaultValue: "Laboratory Analysis" })}</h2>
+              <button className="ht-portal-close" type="button" onClick={closeLabAnalysisPopup} aria-label="Close">×</button>
+            </div>
+            <div className="ht-portal-form">
+              <div className="ht-portal-inputs">
+                <input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_ru", { defaultValue: "Name (RU)" })} value={newTestNameRU} onChange={(e) => setNewTestNameRU(e.target.value)} />
+                <input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_en", { defaultValue: "Name (EN)" })} value={newTestNameEN} onChange={(e) => setNewTestNameEN(e.target.value)} />
+              </div>
+              <button className="ht-portal-add-btn" type="button" onClick={handleSaveTest}>
+                <span className="ht-portal-add-plus">+</span>
+                <span>{editingTestId ? t("history_tab.save", { defaultValue: "Save" }) : t("history_tab.add_btn", { defaultValue: "Add" })}</span>
+              </button>
+            </div>
+            {editingTestId && <button className="ht-portal-cancel-btn" type="button" onClick={cancelEditTest}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>}
+            <div className="ht-portal-list">
+              {(labPopupMode === "studiesManipulations" ? studyTests : labTests).length > 0 ? (
+                (labPopupMode === "studiesManipulations" ? studyTests : labTests).map((test) => (
+                  <div key={test._id} className="ht-portal-item" role="button" onClick={() => { handleSelectTest(test, labPopupMode); closeLabAnalysisPopup(); }}>
+                    <div className="ht-portal-item-info">
+                      <span className="ht-portal-item-name">{test.name?.ru || test.name?.en || ""}</span>
+                      {test.name?.en && test.name?.ru && <span className="ht-portal-item-sub">{test.name.en}</span>}
+                    </div>
+                    <div className="ht-portal-item-actions">
+                      <button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openEditTest(test); }} aria-label="Edit"><FiEdit2 size={14} /></button>
+                      <button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openDeleteConfirm(test); }} aria-label="Delete"><FiTrash2 size={14} /></button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="ht-portal-empty">{t("history_tab.no_tests_yet", { defaultValue: "No items yet" })}</p>
+              )}
+            </div>
           </div>
-        </div>, document.body
+        </div>,
+        document.body
       )}
 
       {deleteConfirmTest && createPortal(
-        <div className="ht-delete-confirm-overlay"><div className="ht-delete-confirm-card"><p>{t("history_tab.confirm_delete_message", { defaultValue: "Are you sure you want to delete this test? This action cannot be undone." })}</p><div className="ht-delete-confirm-actions"><button type="button" className="ht-cancel-delete-btn" onClick={closeDeleteConfirm}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button><button type="button" className="ht-confirm-delete-btn" onClick={handleConfirmDelete}>{t("history_tab.delete", { defaultValue: "Delete" })}</button></div></div></div>, document.body
+        <div className="ht-delete-confirm-overlay">
+          <div className="ht-delete-confirm-card">
+            <p>{t("history_tab.confirm_delete_message", { defaultValue: "Are you sure you want to delete this test? This action cannot be undone." })}</p>
+            <div className="ht-delete-confirm-actions">
+              <button type="button" className="ht-cancel-delete-btn" onClick={closeDeleteConfirm}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>
+              <button type="button" className="ht-confirm-delete-btn" onClick={handleConfirmDelete}>{t("history_tab.delete", { defaultValue: "Delete" })}</button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </>
   );
