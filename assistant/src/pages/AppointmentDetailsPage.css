@@ -5,7 +5,7 @@
 .adp-page {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  height: 100%;
   background: #f5f6f8;
   font-family: inherit;
 }
@@ -92,29 +92,44 @@
 }
 
 .adp-header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
   margin-left: auto;
   flex-shrink: 0;
 }
-.adp-dob-value {
-  font-size: 20px;
+
+.adp-patient-details-strip {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.adp-patient-detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.adp-patient-detail-item--badge {
+  align-items: center;
+  justify-content: center;
+}
+
+.adp-detail-value {
+  font-size: 14px;
   font-weight: 700;
   color: #111827;
   line-height: 1.2;
+  white-space: nowrap;
 }
-.adp-dob-label {
+
+.adp-detail-label {
   font-size: 10px;
   color: #9ca3af;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
-.adp-dob-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+
 .adp-age-badge {
   font-size: 12px;
   font-weight: 600;
@@ -195,10 +210,8 @@
   transform: translateX(-50%) scaleX(1);
 }
 
-/* Hide horizontal tab bar when vertical iconic tabs are used */
 .adp-page .adp-tab-bar { display: none; }
 
-/* Vertical tabs (left fixed iconic bar) */
 .apd-vertical-tabs {
   display: flex !important;
   flex-direction: column;
@@ -210,11 +223,11 @@
   border-right: 1px solid #e4e7ec;
   background: white;
   left:1000;
-  position: fixed; /* fixed to viewport like a main sidebar */
-  top: 64px; /* moved upward to align below header */
+  position: fixed;
+  top: 64px;
   height: calc(100vh - 64px);
   z-index: 30;
-  margin-left: -100px; /* visually compensate for the sidebar's space */
+  margin-left: -100px;
 }
 
 .apd-vert-tab {
@@ -259,10 +272,12 @@
 
 @media (max-width: 1024px) {
   .adp-page { padding-left: 32px; padding-right: 32px; }
+  .adp-body { margin-left: -32px; margin-right: -32px; }
 }
 
 @media (max-width: 768px) {
   .adp-page { padding-left: 16px; padding-right: 16px; }
+  .adp-body { margin-left: -16px; margin-right: -16px; }
 }
 
 /* Hide the left patient appointments list when page requests it */
@@ -301,7 +316,8 @@ body.hide-global-sidebar .sidebar-backdrop {
   min-height: 0;
   overflow: hidden;
   position: relative;
-  margin-left:-100px
+  margin-left: -100px;
+  margin-right: -100px;
 }
 
 /* ── Patient Appointments Sidebar ── */

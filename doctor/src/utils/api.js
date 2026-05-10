@@ -1978,7 +1978,30 @@ export const deleteHistoryTemplate = async (id) => {
   }
 };
 
+// ===== Document upload helpers =====
+export const uploadDocumentFile = async (id, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("filename", file.name);
+  return api.post(`/applications/${encodeURIComponent(id)}/documents/file`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const uploadDocumentUrl = async (id, url, filename = "Cloud Link") => {
+  return api.post(`/applications/${encodeURIComponent(id)}/documents/url`, { url, filename });
+};
+
 // ===== Application & Tests helpers (borrowed from manager API surface) =====
+export const getApplication = async (id) => {
+  try {
+    const response = await api.get(`/applications/${encodeURIComponent(id)}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getApplicationsByPatientId = async (patientId) => {
   try {
     const encodedPatientId = encodeURIComponent(patientId);

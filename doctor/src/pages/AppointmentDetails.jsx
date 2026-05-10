@@ -17,7 +17,6 @@ import {
   updateTestResult,
   addMultipleTestsToAppointment,
   getOrdersByIds,
-  saveFollowUp,
   viewDocument,
   downloadDocument,
   viewResultDocument,
@@ -30,6 +29,8 @@ import {
   joinTelemedicineRoom,
   endTelemedicineRoom,
   getTelemedicineRoomStatus,
+  uploadDocumentFile,
+  uploadDocumentUrl,
 } from "../utils/api";
 import "../styles/AppointmentDetails.css";
 import jsPDF from "jspdf";
@@ -37,6 +38,8 @@ import html2canvas from "html2canvas";
 import AppointmentPDFTemplate from "../components/AppointmentPDFTemplate";
 import PatientDetailsTab from "../components/PatientDetailsTab";
 import HistoryTab from "../components/HistoryTab";
+import FollowUpsTab from "../components/FollowUpsTab";
+import DocumentsTab from "../components/DocumentsTab";
 import AppointmentReport from "./AppointmentReport";
 import Service from "./Service";
 import {
@@ -47,7 +50,6 @@ import {
   FiActivity,
   FiVideo,
   FiMessageSquare,
-  FiFileText,
   FiCheckCircle,
   FiUser,
   FiMapPin,
@@ -69,8 +71,10 @@ import {
   FiExternalLink,
   FiLink,
   FiSettings,
+  FiFolder,
+  FiRepeat,
 } from "react-icons/fi";
-import { GrDocumentTest, GrDocumentStore } from "react-icons/gr";
+import { GrDocumentTest } from "react-icons/gr";
 import Modal from "react-modal";
 import { useTranslation } from "react-i18next";
 import "react-toastify/dist/ReactToastify.css";
@@ -158,8 +162,6 @@ const AppointmentDetails = () => {
   const [selectedTests, setSelectedTests] = useState([]);
   const [testResults, setTestResults] = useState({});
   const [loadingDocuments, setLoadingDocuments] = useState({});
-  const [followUpNeeded, setFollowUpNeeded] = useState(false);
-  const [followUpComment, setFollowUpComment] = useState("");
   const [orders, setOrders] = useState([]);
   const [isMedicalHistoryOpen, setIsMedicalHistoryOpen] = useState(false);
   const [isPatientExpanded, setIsPatientExpanded] = useState(false);
@@ -532,19 +534,8 @@ const AppointmentDetails = () => {
   const handleUploadConfirm = async () => {
     if (!selectedFile) return;
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", selectedFile);
     try {
-      await fetch(
-        `${baseUrl}/api/applications/appointments/${appointment._id}/upload-document`,
-        {
-          method: "POST",
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        },
-      );
+      await uploadDocumentFile(appointment.applicationId, selectedFile);
       const updatedAppointment = await getAppointmentById(id);
       setAppointment(updatedAppointment);
       if (updatedAppointment.documents?.length > 0) {
@@ -553,7 +544,6 @@ const AppointmentDetails = () => {
       toast.success(t("appointment.toast.documentUploaded"));
     } catch (err) {
       console.error("Error uploading document:", err);
-      setError(t("appointment.toast.failedUploadDocument"));
       toast.error(t("appointment.toast.failedUploadDocument"));
     } finally {
       setSelectedFile(null);
@@ -569,20 +559,7 @@ const AppointmentDetails = () => {
     if (!urlInput.trim()) return;
     setUploading(true);
     try {
-      await fetch(
-        `${baseUrl}/api/applications/appointments/${appointment._id}/upload-document`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            url: urlInput.trim(),
-            name: urlFileName.trim() || urlInput.trim(),
-          }),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        },
-      );
+      await uploadDocumentUrl(appointment.applicationId, urlInput.trim(), urlFileName.trim() || urlInput.trim());
       const updatedAppointment = await getAppointmentById(id);
       setAppointment(updatedAppointment);
       if (updatedAppointment.documents?.length > 0) {
@@ -834,27 +811,6 @@ const AppointmentDetails = () => {
         ...prev,
         [`download-${doc.id}`]: false,
       }));
-    }
-  };
-
-  const handleSaveFollowUp = async () => {
-    if (!followUpNeeded) {
-      toast.info(t("appointment.toast.noFollowUpRequired"));
-      return;
-    }
-    try {
-      await saveFollowUp(appointment.applicationId, {
-        needed: true,
-        comment: followUpComment,
-        booked: false,
-      });
-      toast.success(t("appointment.toast.followUpNoted"));
-      setFollowUpComment("");
-      setFollowUpNeeded(false);
-      fetchAppointment();
-    } catch (err) {
-      console.error("Error saving follow-up:", err);
-      toast.error(t("appointment.toast.failedSaveFollowUp"));
     }
   };
 
@@ -1140,14 +1096,14 @@ const AppointmentDetails = () => {
             className={`sidebar-tab${activeSubTab === "documents" ? " active" : ""}`}
             onClick={() => setActiveSubTab("documents")}
           >
-            <GrDocumentStore size={18} />
+            <FiFolder size={18} />
           </button>
           <button
             title={t("appointment.followUp")}
             className={`sidebar-tab${activeSubTab === "followup" ? " active" : ""}`}
             onClick={() => setActiveSubTab("followup")}
           >
-            <FiCalendar size={18} />
+            <FiRepeat size={18} />
           </button>
           <button
             title={t("appointment.earlyDiagnosis") || "Early diagnosis"}
@@ -1155,13 +1111,6 @@ const AppointmentDetails = () => {
             onClick={() => setActiveSubTab("overview")}
           >
             <FiActivity size={18} />
-          </button>
-          <button
-            title={t("appointment.report") || "Report"}
-            className={`sidebar-tab${activeSubTab === "report" ? " active" : ""}`}
-            onClick={() => setActiveSubTab("report")}
-          >
-            <FiFileText size={18} />
           </button>
           <button
             title={t("appointment.service") || "Service"}
@@ -1336,6 +1285,12 @@ const AppointmentDetails = () => {
                 )}
 
                 {activeSubTab === "documents" && (
+                  <div className="app-detail-docs-container">
+                    <DocumentsTab application={appointment} />
+                  </div>
+                )}
+
+                {false && (
                   <div className="app-detail-docs-container">
                     {/* Upload bar */}
                     <div className="app-detail-docs-upload-bar">
@@ -1863,6 +1818,13 @@ const AppointmentDetails = () => {
                     </div>
                   </div>
                 )} */}
+
+                {activeSubTab === "followup" && (
+                  <FollowUpsTab
+                    application={appointment}
+                    onApplicationUpdate={(updated) => updated && setAppointment(updated)}
+                  />
+                )}
 
                 {
                   activeSubTab === "report" && (

@@ -16,7 +16,7 @@ import {
   deleteDoctorBreak,
   updateDoctorBreak,
 } from "../utils/api";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import moment from "moment-timezone";
 import "moment/locale/ru";
@@ -36,9 +36,6 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Search,
-  Filter,
-  X,
   Table,
   CalendarDays,
   ChevronLeft,
@@ -50,6 +47,8 @@ import {
   Trash2,
   Download,
 } from "lucide-react";
+import SearchBar from "../components/SearchBar/SearchBar";
+import FilterDropdown from "../components/Filter/Filter";
 import "../styles/Appointments.css";
 import CalendarSelect from "../components/CalendarSelect";
 
@@ -59,10 +58,8 @@ const Appointments = () => {
   const [error, setError] = useState(null);
 
   const [filter, setFilter] = useState("all");
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const filterRef = useRef(null); // for closing dropdown on outside click
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [sortConfig, setSortConfig] = useState({
@@ -174,7 +171,6 @@ const Appointments = () => {
   const { t, i18n } = useTranslation();
   moment.locale(i18n.language);
 
-  const navigate = useNavigate();
   const calendarRef = useRef(null);
 
   // month/year dropdown options for mini calendar (localized via i18n)
@@ -221,9 +217,9 @@ const Appointments = () => {
     if (!appointmentId) return;
     // don't pass the full ev object (contains functions/moment instances)
     if (ev.type === "earlyDetection") {
-      navigate(`/early-detection-bookings/${encodeURIComponent(appointmentId)}`);
+      window.open(`/early-detection-bookings/${encodeURIComponent(appointmentId)}`, "_blank");
     } else {
-      navigate(`/appointments/${encodeURIComponent(appointmentId)}`);
+      window.open(`/appointments/${encodeURIComponent(appointmentId)}`, "_blank");
     }
   };
 
@@ -624,6 +620,40 @@ const Appointments = () => {
     return appt.patientEmail || appt.patient || t("appointment.unknownPatient");
   };
 
+  const calculateAge = (dob) => {
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth)) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+  };
+
+  const formatDateDDMMYYYY = (dateStr) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
+  };
+
+  const getPatientFirstName = (appt) => {
+    if (appt.patientDetails?.firstName) {
+      return appt.patientDetails.firstName?.en || appt.patientDetails.firstName || "";
+    }
+    const name = appt.patientName || "";
+    return name.split(" ")[0] || "";
+  };
+
+  const getPatientLastName = (appt) => {
+    if (appt.patientDetails?.lastName) {
+      return appt.patientDetails.lastName?.en || appt.patientDetails.lastName || "";
+    }
+    const name = appt.patientName || "";
+    return name.split(" ").slice(1).join(" ") || "";
+  };
+
   const formatDateTime = (date, startTime, endTime) => {
     const formatted = formatAppointmentDateTime(date, startTime, endTime);
     return formatted || t("common.notAvailable");
@@ -701,23 +731,7 @@ const Appointments = () => {
   const handleFilterChange = (value) => {
     setFilter(value);
     setCurrentPage(1);
-    setShowFilterDropdown(false);
   };
-
-  // close filter dropdown when clicking outside
-  useEffect(() => {
-    const handler = (e) => {
-      if (
-        showFilterDropdown &&
-        filterRef.current &&
-        !filterRef.current.contains(e.target)
-      ) {
-        setShowFilterDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showFilterDropdown]);
 
   // CSV Export
   const handleExportCSV = () => {
@@ -779,81 +793,47 @@ const Appointments = () => {
           {error}
         </div>
       )}
-      <div className="section-header">
-        <div className="header-left">
-          <h1 className="application-page-title">
+      <div className="appt-page-header">
+        <div className="appt-page-header-left">
+          <h1 className="appt-page-title">
             {t("appointments.title")}
-            <span className="appt-count-badge">{totalRecords}</span>
           </h1>
         </div>
-        <div className="header-right">
-          <div className="appt-filter-section" ref={filterRef}>
-            <button
-              className="appt-filter-button"
-              onClick={() => setShowFilterDropdown((f) => !f)}
-            >
-              <Filter size={16} />
-              {filter === "all"
-                ? t("appointments.filter")
-                : t(`appointments.filters.${filter}`)}
-            </button>
-            {showFilterDropdown && (
-              <div className="appt-filter-dropdown">
-                <ul className="appt-filter-list">
-                  {[
-                    "all",
-                    "upcoming",
-                    "confirmed",
-                    "completed",
-                    "cancelled",
-                  ].map((option) => (
-                    <li
-                      key={option}
-                      className={`appt-filter-item ${filter === option ? "active" : ""}`}
-                      onClick={() => handleFilterChange(option)}
-                    >
-                      {t(`appointments.filters.${option}`)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          <div className="search-wrapper">
-            <Search
-              size={16}
-              className="search-icon"
-              style={{ marginLeft: "-5px", marginTop: "-2px" }}
-            />{" "}
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t("appointments.searchPlaceholder")}
-              className="search-input"
-            />
-          </div>
-          <button className="csv-export-btn" onClick={handleExportCSV}>
+        <div className="appt-page-header-right">
+          <SearchBar
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+            placeholder={t("appointments.searchPlaceholder")}
+            style={{ width: "260px" }}
+          />
+          <FilterDropdown
+            value={filter}
+            onChange={handleFilterChange}
+            placeholder={t("appointments.filter")}
+            options={["all", "upcoming", "confirmed", "completed", "cancelled"].map((v) => ({
+              value: v,
+              label: t(`appointments.filters.${v}`),
+            }))}
+          />
+          <button className="appt-export-btn" onClick={handleExportCSV}>
             <Download size={16} />
-            {t("appointments.exportCSV")}
           </button>
-          <div className="view-toggle-container">
-            <div className="view-toggle">
-              <button
-                className={`view-toggle-btn ${viewMode === "calendar" ? "active" : ""}`}
-                onClick={() => setViewMode("calendar")}
-                title="Table View"
-              >
-                <CalendarDays size={16} />
-              </button>
-              <button
-                className={`view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
-                onClick={() => setViewMode("table")}
-                title="Calendar View"
-              >
-                <Table size={16} />
-              </button>
-            </div>
+          <div className="appt-view-toggle">
+            <button
+              className={`appt-view-toggle-btn ${viewMode === "calendar" ? "active" : ""}`}
+              onClick={() => setViewMode("calendar")}
+              title="Calendar View"
+            >
+              <CalendarDays size={16} />
+            </button>
+            <button
+              className={`appt-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+              onClick={() => setViewMode("table")}
+              title="Table View"
+            >
+              <Table size={16} />
+            </button>
           </div>
         </div>
       </div>
@@ -1110,6 +1090,24 @@ const Appointments = () => {
             <table className="application-modern-data-table">
               <thead>
                 <tr>
+                  <th>
+                    <div className="th-content">
+                      <span>{t("appointments.patient").toUpperCase()}</span>
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      <span>{t("appointments.sex").toUpperCase()}</span>
+                    </div>
+                  </th>
+
+                  <th>
+                    <div className="th-content">
+                      <span>{t("appointments.age").toUpperCase()}</span>
+                    </div>
+                  </th>
+
                   <th
                     onClick={() => handleSort("applicationId")}
                     className="sortable-header"
@@ -1121,13 +1119,7 @@ const Appointments = () => {
 
                   <th>
                     <div className="th-content">
-                      <span>{t("appointments.patient").toUpperCase()}</span>
-                    </div>
-                  </th>
-
-                  <th>
-                    <div className="th-content">
-                      <span>{t("appointments.type").toUpperCase()}</span>
+                      <span>{t("appointments.typeOfService").toUpperCase()}</span>
                     </div>
                   </th>
 
@@ -1136,7 +1128,7 @@ const Appointments = () => {
                     className="sortable-header"
                   >
                     <div className="th-content">
-                      <span>{t("appointments.dateTime").toUpperCase()}</span>
+                      <span>{t("appointments.date").toUpperCase()}</span>
                     </div>
                   </th>
 
@@ -1151,7 +1143,7 @@ const Appointments = () => {
               <tbody>
                 {displayedAppointments.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="no-data-row">
+                    <td colSpan={7} className="no-data-row">
                       {loading
                         ? t("appointments.loading")
                         : t("appointments.noAppointments")}
@@ -1165,94 +1157,76 @@ const Appointments = () => {
                       onClick={() => {
                         const appointmentId = appt.applicationId || appt._id || appt.id;
                         if (appt.type === "earlyDetection") {
-                          navigate(
-                            `/early-detection-bookings/${encodeURIComponent(
-                              appointmentId,
-                            )}`,
-                            {
-                              state: {
-                                doctorEmail: doctorInfo.email,
-                                patientEmail: appt.patientEmail,
-                                appointmentData: appt,
-                              },
-                            },
+                          window.open(
+                            `/early-detection-bookings/${encodeURIComponent(appointmentId)}`,
+                            "_blank",
                           );
                         } else {
-                          navigate(
+                          window.open(
                             `/appointments/${encodeURIComponent(appointmentId)}`,
-                            { state: { appointmentData: appt } },
+                            "_blank",
                           );
                         }
                       }}
                     >
+                      {/* Patient Column */}
+                      <td>
+                        <div className="patient-name-cell">
+                          <span className="patient-name-primary">
+                            {getPatientFirstName(appt) || getPatientName(appt)}
+                          </span>
+                          {getPatientLastName(appt) && (
+                            <span className="patient-name-secondary">
+                              {getPatientLastName(appt)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {/* Sex Column */}
+                      <td>
+                        {(() => {
+                          const g = (appt.patientDetails?.gender || "").toLowerCase();
+                          if (g === "male") return <span className="sex-icon sex-icon--male">♂</span>;
+                          if (g === "female") return <span className="sex-icon sex-icon--female">♀</span>;
+                          return <span className="sex-icon sex-icon--unknown">—</span>;
+                        })()}
+                      </td>
+                      {/* Age Column */}
+                      <td>
+                        <span className="age-text">
+                          {appt.patientDetails?.dateOfBirth
+                            ? calculateAge(appt.patientDetails.dateOfBirth) ?? "—"
+                            : "—"}
+                        </span>
+                      </td>
                       {/* Appointment Column */}
                       <td>
                         <span className="applicationId-text">
                           #{appt.applicationId || appt._id}
                         </span>
                       </td>
-                      {/* Patient Column */}
-                      <td>
-                        <div className="patient-cell">
-                          <div
-                            className="patient-avatar"
-                            style={{
-                              width: "32px",
-                              height: "32px",
-                              borderRadius: "50%",
-                              backgroundColor: "rgba(10, 46, 93, 0.1)",
-                              color: "#0A2E5D",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "15px",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {getPatientName(appt)
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .substring(0, 2)
-                              .toUpperCase()}
-                          </div>
-                          <div className="patient-cell-info">
-                            <span className="patient-cell-name">
-                              {getPatientName(appt)}
-                            </span>
-                            <span className="patient-cell-email">
-                              {appt.patientEmail || t("common.noEmail")}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      {/* Type Column */}
+                      {/* Type of Service Column */}
                       <td>
                         <span className="appointment-type-label">
                           {getAppointmentTypeLabel(appt)}
                         </span>
                       </td>
-                      {/* Date & Time Column */}
+                      {/* Date Column */}
                       <td>
-                        <div className="datetime-cell">
-                          <div className="datetime-date">
-                            <Calendar size={14} />
-                            {appt.date
-                              ? formatDateISO(appt.date)
-                              : t("common.notAvailable")}
-                          </div>
-                          <div className="datetime-time">
-                            <Clock size={14} />
-                            {appt.startTime ? formatTimeHHMM(appt.startTime) : ""}
-                            {appt.endTime
-                              ? " – " +
-                                formatTimeHHMM(appt.endTime)
-                              : ""}
-                          </div>
+                        <div className="appt-date-cell">
+                          <span className="appt-date-text">
+                            {appt.date ? formatDateDDMMYYYY(appt.date) : t("common.notAvailable")}
+                          </span>
+                          {(appt.startTime || appt.endTime) && (
+                            <span className="appt-time-sub">
+                              {appt.startTime ? formatTimeHHMM(appt.startTime) : ""}
+                              {appt.endTime ? " – " + formatTimeHHMM(appt.endTime) : ""}
+                            </span>
+                          )}
                         </div>
                       </td>
                       {/* Status Column */}
-                      <td>{getStatusBadge(appt.appointmentStatus, t)}</td>{" "}
+                      <td>{getStatusBadge(appt.appointmentStatus, t)}</td>
                     </tr>
                   ))
                 )}

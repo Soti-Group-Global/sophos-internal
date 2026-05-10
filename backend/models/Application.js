@@ -34,20 +34,22 @@ const paymentSchema = new mongoose.Schema(
       {
         name: { type: String, required: true }, // service/test name
         amount: { type: Number, required: true }, // price for that item
+        discount: { type: Number, default: 0 }, // per-item discount percentage
       },
     ],
 
     // Payment totals
-    amount: { type: Number, required: true }, // total before discount
+    amount: { type: Number, required: true }, // total before discount/vat
     discount: { type: Number, default: 0 }, // discount applied
-    finalAmount: { type: Number, required: true }, // total after discount
+    vat: { type: Number, default: 0 }, // VAT percentage applied
+    finalAmount: { type: Number, required: true }, // total after vat/discount
     currency: { type: String, default: "RUB" }, // ISO currency code
 
     // Payment type
     type: {
       type: String,
       enum: ["consultation", "test"],
-      required: true,
+      default: "consultation",
     },
     // Timestamps
     createdAt: { type: Date, default: Date.now },
@@ -292,15 +294,6 @@ const applicationSchema = new mongoose.Schema(
     documents: { type: [documentSchema], default: [] },
     serviceOrders: { type: [serviceOrderSchema], default: [] },
     services: { type: [applicationServiceSchema], default: [] },
-    addedServicePositions: {
-      type: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "ServicePosition",
-        },
-      ],
-      default: [],
-    },
     followUp: {
       needed: { type: Boolean, default: false },
       comment: { type: String, default: "" },

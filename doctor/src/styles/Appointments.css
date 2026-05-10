@@ -3,8 +3,6 @@
   display: flex;
   flex-direction: column;
   height: 83vh;
-  /* no overflow:hidden here — inner .applications-content handles scroll containment;
-     this allows filter dropdowns in the header to render above content */
   position: relative;
 }
 
@@ -17,7 +15,6 @@
   background: white;
   border-bottom: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-
 }
 
 .tab-button {
@@ -76,40 +73,34 @@
 
 }
 
-/* Header Section */
-.section-header {
+/* ── Appointments page header ── */
+.appt-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 20px;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  border-radius: 10px;
-  margin-top: -10px;
-  overflow: visible;
+  margin-bottom: 12px;
 }
 
-.header-left {
+.appt-page-header-left {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-  /* remove manual vertical offsets so left and right align on same baseline */
-  margin-top: 0;
 }
 
-.header-right {
+.appt-page-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
   flex-wrap: nowrap;
-  overflow: visible;
-  margin-top: 0;
+}
 
+.appt-page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
 }
 
 /* ensure title-row contents also align to right */
@@ -161,44 +152,42 @@
   flex-wrap: wrap;
 }
 
-.view-toggle-container {
-  margin-left: auto;
-  margin-top: -3px;
-}
-
-/* View Toggle */
-.view-toggle {
+/* ── Appointments page view toggle ── */
+.appt-view-toggle {
   display: flex;
   align-items: center;
-  background: #f1f5f9;
+  height: 40px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 2px;
-  gap: 2px;
+  overflow: hidden;
 }
 
-.view-toggle-btn {
+.appt-view-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #64748b;
+  border-right: 1px solid #e2e8f0;
+  background: #fff;
+  color: #94a3b8;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s;
 }
 
-.view-toggle-btn:hover {
-  background: #e2e8f0;
-  color: #334155;
+.appt-view-toggle-btn:last-child {
+  border-right: none;
 }
 
-.view-toggle-btn.active {
+.appt-view-toggle-btn:hover {
+  background: #f8fafc;
+  color: #475569;
+}
+
+.appt-view-toggle-btn.active {
   background: #0A2E5D;
-  color: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: #fff;
 }
 
 /* ─── Title row ─── */
@@ -275,28 +264,24 @@
   box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.08);
 }
 
-/* CSV Export button */
-.csv-export-btn {
+/* ── Appointments page export button ── */
+.appt-export-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
+  justify-content: center;
+  height: 40px;
+  padding: 0 14px;
   background: #0A2E5D;
-  color: white;
+  color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
-  white-space: nowrap;
   transition: background 0.2s ease;
-  margin-top: 7px;
+  flex-shrink: 0;
 }
 
-.csv-export-btn:hover {
-   background: #1a4a8a;
-   color:white;
-  transform: scale(1.035);
+.appt-export-btn:hover {
+  background: #1a4a8a;
 }
 
 /* ─── Filter tabs (legacy, may be removed) ─── */
@@ -447,6 +432,68 @@
 .patient-cell-email {
   font-size: 12px;
   color: #94a3b8;
+}
+
+/* ─── New patient name cell (no avatar) ─── */
+.patient-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.patient-name-primary {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.patient-name-secondary {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ─── Sex icon cell ─── */
+.sex-icon {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sex-icon--male {
+  color: #2563eb;
+}
+
+.sex-icon--female {
+  color: #db2777;
+}
+
+.sex-icon--unknown {
+  color: #94a3b8;
+}
+
+/* ─── Age cell ─── */
+.age-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* ─── Date + time cell ─── */
+.appt-date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.appt-date-text {
+  font-size: 13px;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.appt-time-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
 /* ─── Date & Time cell ─── */

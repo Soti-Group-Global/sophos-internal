@@ -10,6 +10,7 @@ import {
   updateHistoryTemplate,
   deleteHistoryTemplate,
   getApplicationsByPatientId,
+  getApplication,
   getAllApplicationLaboratoryTests,
   createApplicationLaboratoryTest,
   updateApplicationLaboratoryTest,
@@ -41,11 +42,7 @@ import TemplatePicker from "../../components/RichTextEditor/TemplatePicker";
 import AppointmentReport from "../AppointmentReport";
 import "./HistoryTab.css";
 
-/* ────────────────────────────────────────────────────────────
-   Schema — each section has:
-     id, titleKey (i18n key), fields[]  (key, labelKey?)
-     optional subsections[] with the same shape
-   ──────────────────────────────────────────────────────────── */
+
 const HISTORY_SECTIONS = [
   /* 1 */
   {
@@ -139,6 +136,7 @@ const collectKeys = (sections) => {
   });
   return keys;
 };
+
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
 /* ── Map each field key → its i18n title key ── */
@@ -159,9 +157,7 @@ const HISTORY_NAV_ITEMS = [
   { id: "conclusion", labelKey: "sidebar.conclusion", sectionId: "clinicalDiagnosis" },
 ];
 
-/* ────────────────────────────────────────────────────────────
-   RichTextField — dual-mode: preview (read) ↔ edit (RichTextEditor)
-   ──────────────────────────────────────────────────────────── */
+
 const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, placeholder, emptyPlaceholder, templatePicker }) => (
   <div className={`ht-field${editing ? " ht-field--editing" : ""}`} data-ht-field>
     {label && (
@@ -197,6 +193,7 @@ const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, p
 /* ================================================================
    HistoryTab component
    ================================================================ */
+   
 const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const { t } = useTranslation("history_tab");
 
@@ -261,6 +258,8 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const [isAppointmentsLoading, setIsAppointmentsLoading] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState(null);
   const [selectedConsultationId, setSelectedConsultationId] = useState(null);
+  const [selectedApptData, setSelectedApptData] = useState(null);
+  const [selectedApptLoading, setSelectedApptLoading] = useState(false);
   const [isSavingForm, setIsSavingForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(true);
   const editModeInitRef = useRef(false);
@@ -381,6 +380,24 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   useEffect(() => {
     loadPatientAppointments();
   }, [loadPatientAppointments]);
+
+  const handleSelectPastAppointment = useCallback(async (apptId) => {
+    setSelectedConsultationId(apptId);
+    if (apptId === application?.applicationId) {
+      setSelectedApptData(null);
+      return;
+    }
+    setSelectedApptLoading(true);
+    try {
+      const res = await getApplication(apptId);
+      setSelectedApptData(res?.data || res);
+    } catch {
+      toast.error(t("history_tab.failed_loading_appointment", { defaultValue: "Failed to load appointment" }));
+      setSelectedApptData(null);
+    } finally {
+      setSelectedApptLoading(false);
+    }
+  }, [application?.applicationId, t]);
 
   const handleSidebarItemClick = useCallback(
     async (item, _e) => {
@@ -1115,6 +1132,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     );
   };
 
+  
   return (
     <>
       <div className="ht-shell">
@@ -1216,8 +1234,8 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                               className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
                               role="button"
                               tabIndex={0}
-                              onClick={() => setSelectedConsultationId(application.applicationId)}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedConsultationId(application.applicationId); }}
+                              onClick={() => handleSelectPastAppointment(application.applicationId)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(application.applicationId); }}
                             >
                               <div className="ht-appointment-current-row">
                                 <span className="ht-appointment-name">{name}</span>
@@ -1241,16 +1259,8 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                               className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
                               role="button"
                               tabIndex={0}
-                              onClick={() => {
-                                setSelectedConsultationId(apptId);
-                                window.open(`/applications/appointment/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  setSelectedConsultationId(apptId);
-                                  window.open(`/applications/appointment/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
-                                }
-                              }}
+                              onClick={() => handleSelectPastAppointment(apptId)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(apptId); }}
                             >
                               <span className="ht-appointment-name">{label}</span>
                               <span className="ht-appointment-meta">
@@ -1473,7 +1483,47 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 </div>
               </div>
             );
-          })() : isEditMode ? (
+          })() : selectedConsultationId && selectedConsultationId !== application?.applicationId ? (
+            selectedApptLoading ? (
+              <div className="ht-past-appt-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading..." })}</div>
+            ) : selectedApptData ? (
+              <div className="ht-past-appt-view">
+                <div className="ht-past-appt-header">
+                  <div className="ht-past-appt-meta">
+                    <span className="ht-past-appt-label">{t("history_tab.current_appointment", { defaultValue: "Consultation" })}</span>
+                    <span className="ht-past-appt-date">
+                      {selectedApptData.date ? formatDate(selectedApptData.date) : ""}
+                      {selectedApptData.startTime ? ` · ${formatTime(selectedApptData.startTime)}${selectedApptData.endTime ? ` - ${formatTime(selectedApptData.endTime)}` : ""}` : ""}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="ht-past-appt-back"
+                    onClick={() => handleSelectPastAppointment(application?.applicationId)}
+                  >
+                    <FiX size={14} />
+                    {t("history_tab.back_to_current", { defaultValue: "Back to current" })}
+                  </button>
+                </div>
+                <div className="ht-view-fields">
+                  {ALL_KEYS.map((key) => {
+                    const hf = selectedApptData.historyForm || {};
+                    const f = hf[key];
+                    const val = typeof f === "object" ? f?.value : f;
+                    if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
+                    return (
+                      <div key={key} className="ht-view-field">
+                        <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                        <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="ht-past-appt-empty">{t("history_tab.no_history", { defaultValue: "No history form data for this appointment." })}</div>
+            )
+          ) : isEditMode ? (
             <>
               <div className="ht-edit-toolbar">
                 <button type="button" className="ht-view-mode-btn" onClick={enterViewMode}>

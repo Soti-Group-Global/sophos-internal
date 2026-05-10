@@ -4,8 +4,10 @@
 }
 
 .early-detect-heading {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
+  color: #1e293b;
+  margin: 0;
 }
 
 .early-detect-loading,
@@ -20,20 +22,12 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 5px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
   margin-top: -20px;
 }
 
-/* Action section in header */
-.ed-action-section {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* Controls row — keeps export, filter, and toggle on ONE line at all sizes */
+/* Controls row — heading + search + filter + toggle all on one line */
 .ed-controls-row {
   display: flex;
   align-items: center;
@@ -242,19 +236,41 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 0;
-  color: #94a3b8;
+  padding: 80px 0;
+  gap: 16px;
 }
 
-.empty-icon {
-  margin-bottom: 12px;
-  opacity: 0.3;
+.empty-icon-wrapper {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon-wrapper svg {
+  color: #93c5fd;
+  width: 40px;
+  height: 40px;
+}
+
+.empty-state h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+}
+
+.empty-state p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
 }
 
 /* ===== Table View ===== */
 .ed-table-container {
-  background: #fff;
-  border-radius: 12px;
   overflow-x: auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -1202,24 +1218,9 @@
     align-items: stretch;
   }
 
-  .ed-action-section {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    gap: 8px;
-  }
-
-  .ed-search-wrapper {
-    width: 100%;
-  }
-
-  .ed-search-input {
-    width: 100%;
-  }
-
-  /* Controls row stays on one line — reduce padding to keep compact */
   .ed-controls-row {
     width: 100%;
+    flex-wrap: wrap;
     justify-content: flex-end;
   }
 

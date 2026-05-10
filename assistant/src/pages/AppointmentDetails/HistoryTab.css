@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════
-   HistoryTab.css  –  Medical history form styling (copied from manager)
+   HistoryTab.css  –  Main styling for the history tab, including layout and sub-sidebar
    ══════════════════════════════════════════════════════════ */
 
 .ht-container {
@@ -24,8 +24,8 @@
 
 .ht-conclusion-wrap {
   position: fixed;
-  left: 256px;   /* 56px icon-sidebar + 200px sub-sidebar */
-  top: 70px;     /* below the top header */
+  left: 256px;
+  top: 70px;
   right: 0;
   bottom: 0;
   overflow-y: auto;
@@ -70,44 +70,6 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-.ht-sub-sidebar-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  color: #475569;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.ht-sub-sidebar-item:hover {
-  background: #f3f6fb;
-  color: #0a2e5d;
-}
-.ht-sub-sidebar-item--active {
-  background: #eef4ff;
-  color: #0c3870;
-  border-left: 3px solid #0c3870;
-  padding-left: 9px;
-}
-.ht-sub-sidebar-label {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-.ht-sub-sidebar-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: currentColor;
-}
   color: #6b7280;
 }
 
@@ -127,45 +89,65 @@
 .ht-sub-sidebar-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
 .ht-sub-sidebar-item {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  box-sizing: border-box;
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 18px;
   border: none;
+  border-radius: 0;
   background: transparent;
-  color: #475569;
+  color: #6b7280;
   cursor: pointer;
   text-align: left;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .ht-sub-sidebar-item:hover {
-  background: #f3f6fb;
-  color: #0a2e5d;
+  background: #f5f7fa;
+  color: #0c3870;
 }
 
 .ht-sub-sidebar-item--active {
-  background: #eef4ff;
+  background: #ffffff;
   color: #0c3870;
-  border-left: 3px solid #0c3870;
-  padding-left: 9px;
+  font-weight: 600;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 2px 10px rgba(12, 56, 112, 0.12);
+}
+
+.ht-sub-sidebar-item--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #0c3870;
+  border-radius: 0 2px 2px 0;
 }
 
 .ht-sub-sidebar-label {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ht-sub-sidebar-icon {
+  width: 18px;
+  height: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -199,7 +181,7 @@
   color: #0c3870;
 }
 
-.ht-tests-panel-item + .ht-tests-panel-item {
+.ht-tests-panel-item+.ht-tests-panel-item {
   margin-top: 6px;
 }
 
@@ -231,53 +213,78 @@
 }
 
 .ht-appointment-item {
-  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
   border-radius: 8px;
   background: #fff;
   border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.ht-appointment-item:hover {
+  border-color: #bfdbfe;
+  background: #f8faff;
+}
+
+.ht-appointment-item:last-child {
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .ht-appointment-item--current {
-  border-color: #93c5fd;
+  border-left: 3px solid #3b82f6;
+  padding-left: 8px;
+}
+
+.ht-appointment-item--selected {
   background: #eff6ff;
+  border-color: #93c5fd;
+  border-left: 3px solid #2563eb;
+  padding-left: 8px;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.1);
 }
 
 .ht-appointment-current-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
 }
 
 .ht-appointment-name {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
 }
 
 .ht-appointment-current-badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: #1d4ed8;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 9px;
+  font-weight: 600;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ht-appointment-meta {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: #64748b;
+  font-size: 10px;
+  color: #475569;
+  text-align: left;
+  white-space: normal;
 }
 
-  .ht-appointments-panel {
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: -8px;
-    padding: 8px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f5f6f8;
-  }
+.ht-appointments-panel {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: -8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f5f6f8;
+}
 
 .ht-lab-analysis-panel {
   margin-top: 16px;
@@ -371,7 +378,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border:none;
+  border: none;
   color: #475569;
   cursor: pointer;
   background: transparent;
@@ -576,6 +583,7 @@
   border-radius: 10px;
   padding: 10px 14px;
 }
+
 /* ══════════════════════════════════════════════════════════
    HistoryTab.css  –  Medical history form styling
    ══════════════════════════════════════════════════════════ */
@@ -623,10 +631,12 @@
   transition: background 0.15s, border-color 0.15s;
   position: relative;
 }
+
 .ht-first-appt-checkbox:checked {
   background: #0c3870;
   border-color: #0c3870;
 }
+
 .ht-first-appt-checkbox:checked::after {
   content: "";
   position: absolute;
@@ -648,6 +658,7 @@
   overflow: hidden;
   transition: box-shadow 0.2s;
 }
+
 .ht-section:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
@@ -661,10 +672,12 @@
   user-select: none;
   background: linear-gradient(135deg, #f8f9fb 0%, #ffffff 100%);
 }
+
 .ht-section-header--clickable {
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .ht-section-header--clickable:hover {
   background: #f3f4f6;
 }
@@ -698,11 +711,13 @@
   line-height: 1.6;
   white-space: nowrap;
 }
+
 .ht-verify-badge--verified {
   background: #dcfce7;
   color: #15803d;
   border: 1px solid #bbf7d0;
 }
+
 .ht-verify-badge--pending {
   background: #fef9c3;
   color: #a16207;
@@ -721,18 +736,22 @@
   transition: background 0.15s, opacity 0.15s;
   white-space: nowrap;
 }
+
 .ht-verify-btn:hover {
   background: #1a4a8a;
 }
+
 .ht-verify-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
 .ht-verify-btn--unverify {
   background: transparent;
   color: #6b7280;
   border-color: #d1d5db;
 }
+
 .ht-verify-btn--unverify:hover {
   background: #f3f4f6;
   color: #374151;
@@ -770,6 +789,7 @@
   overflow: hidden;
   margin-top: 14px;
 }
+
 .ht-subsection:first-child {
   margin-top: 18px;
 }
@@ -810,9 +830,11 @@
   overflow: hidden;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
+
 .ht-field:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
+
 .ht-field--editing {
   border-color: #c7d2fe;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.06);
@@ -829,6 +851,7 @@
   user-select: none;
   transition: background 0.15s;
 }
+
 .ht-field-header:hover {
   background: #f3f4f6;
 }
@@ -851,12 +874,15 @@
   transition: color 0.15s, background 0.15s;
   line-height: 1;
 }
+
 .ht-field-header:hover .ht-field-toggle {
   color: #6366f1;
 }
+
 .ht-field-toggle--active {
   color: #6b7280;
 }
+
 .ht-field-header:hover .ht-field-toggle--active {
   color: #ef4444;
   background: #fef2f2;
@@ -877,18 +903,23 @@
   border-radius: 0 0 9px 9px;
   transition: background 0.15s;
 }
+
 .ht-preview:hover {
   background: #f9fafb;
 }
+
 .ht-preview p {
   margin: 0 0 6px;
 }
+
 .ht-preview p:last-child {
   margin-bottom: 0;
 }
+
 .ht-preview--empty {
   min-height: 48px;
 }
+
 .ht-preview-placeholder {
   color: #c0c5cc;
   font-style: italic;
@@ -905,9 +936,11 @@
   .ht-section-header {
     padding: 12px 14px;
   }
+
   .ht-section-body {
     padding: 14px 14px 18px;
   }
+
   .ht-first-appt-bar {
     padding: 10px 14px;
   }
@@ -920,39 +953,48 @@
     gap: 8px;
     padding: 12px 12px;
   }
+
   .ht-section-title {
     font-size: 11.5px;
     flex: 1 1 100%;
     min-width: 0;
   }
+
   .ht-section-header-actions,
   .ht-field-actions {
     flex-wrap: wrap;
     gap: 6px;
     width: 100%;
   }
+
   .ht-section-body {
     padding: 12px 12px 16px;
   }
+
   .ht-subsection-header {
     flex-wrap: wrap;
     gap: 6px;
     padding: 10px 12px;
   }
+
   .ht-subsection-title {
     flex: 1 1 100%;
   }
+
   .ht-field-header {
     flex-wrap: wrap;
     gap: 6px;
     padding: 10px 12px;
   }
+
   .ht-field-label {
     flex: 1 1 100%;
   }
+
   .ht-field-body {
     padding: 10px 12px 14px;
   }
+
   .ht-preview {
     padding: 10px 12px;
     font-size: 13px;
@@ -965,52 +1007,66 @@
     gap: 8px;
     padding: 8px 0 60px;
   }
+
   .ht-section-header {
     padding: 10px 10px;
     gap: 6px;
   }
+
   .ht-section-title {
     font-size: 11px;
     letter-spacing: 0.2px;
   }
+
   .ht-section-header-actions,
   .ht-field-actions {
     gap: 4px;
   }
+
   .ht-verify-badge {
     font-size: 10px;
     padding: 1px 6px;
   }
+
   .ht-verify-btn {
     font-size: 10px;
     padding: 2px 7px;
   }
+
   .ht-section-body {
     padding: 10px 10px 14px;
   }
+
   .ht-subsection-header {
     padding: 8px 10px;
   }
+
   .ht-subsection-title {
     font-size: 11px;
   }
+
   .ht-field-header {
     padding: 8px 10px;
   }
+
   .ht-field-label {
     font-size: 10.5px;
   }
+
   .ht-field-body {
     padding: 8px 10px 12px;
   }
+
   .ht-preview {
     padding: 8px 10px;
     font-size: 12.5px;
     min-height: 40px;
   }
+
   .ht-first-appt-bar {
     padding: 8px 10px;
   }
+
   .ht-first-appt-label {
     font-size: 12px;
     gap: 8px;
@@ -1031,6 +1087,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  box-sizing: border-box;
   width: 100%;
   padding: 10px 12px 10px 18px;
   border: none;
@@ -1094,6 +1151,9 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ht-sub-sidebar-icon {
@@ -1178,16 +1238,34 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 4px 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.ht-appointment-item:hover {
+  border-color: #bfdbfe;
+  background: #f8faff;
 }
 
 .ht-appointment-item:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .ht-appointment-item--current {
-  border-left: 2px solid #3b82f6;
-  padding-left: 6px;
+  border-left: 3px solid #3b82f6;
+  padding-left: 8px;
+}
+
+.ht-appointment-item--selected {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  border-left: 3px solid #2563eb;
+  padding-left: 8px;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.1);
 }
 
 .ht-appointment-current-row {
@@ -1229,12 +1307,22 @@
   padding: 6px 0;
 }
 
+.ht-sp-wrap {
+  position: fixed;
+  left: 256px;
+  top: 70px;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+}
+
 .ht-sp-page {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-right: 20px;
-  padding: 20px 0;
+  padding: 20px;
 }
 
 .ht-sp-section {
@@ -1446,7 +1534,7 @@
 }
 
 .ht-td-item:hover {
-  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
 }
 
 .ht-td-badge {
@@ -1464,12 +1552,23 @@
   flex-shrink: 0;
 }
 
-.ht-td-badge--pdf  { background: #fee2e2; color: #b91c1c; }
+.ht-td-badge--pdf {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .ht-td-badge--doc,
-.ht-td-badge--docx { background: #dbeafe; color: #1d4ed8; }
+.ht-td-badge--docx {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .ht-td-badge--jpg,
 .ht-td-badge--jpeg,
-.ht-td-badge--png  { background: #dcfce7; color: #15803d; }
+.ht-td-badge--png {
+  background: #dcfce7;
+  color: #15803d;
+}
 
 .ht-td-note-icon {
   display: inline-flex;
@@ -1498,7 +1597,9 @@
   word-break: break-all;
 }
 
-.ht-td-item-name p { margin: 0; }
+.ht-td-item-name p {
+  margin: 0;
+}
 
 .ht-td-item-meta {
   display: flex;
@@ -1561,7 +1662,9 @@
   transition: background 0.15s;
 }
 
-.ht-td-save-btn:hover { background: #0a2e5d; }
+.ht-td-save-btn:hover {
+  background: #0a2e5d;
+}
 
 .ht-td-cancel-btn {
   padding: 8px 18px;
@@ -1574,7 +1677,9 @@
   transition: background 0.15s;
 }
 
-.ht-td-cancel-btn:hover { background: #f3f4f6; }
+.ht-td-cancel-btn:hover {
+  background: #f3f4f6;
+}
 
 .ht-portal-overlay {
   position: fixed;
@@ -1853,4 +1958,181 @@
 
 .ht-hidden-file-input {
   display: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Edit-mode toolbar  (.ht-edit-toolbar)
+   ══════════════════════════════════════════════════════════ */
+.ht-edit-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 20px 4px;
+}
+
+.ht-view-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.ht-view-mode-btn:hover {
+  border-color: #0c3870;
+  color: #0c3870;
+  background: #f5f8ff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   View mode  (.ht-view-*)
+   ══════════════════════════════════════════════════════════ */
+.ht-view-wrap {
+  margin: 16px 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ht-view-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f2f5;
+  background: #f8f9fb;
+}
+
+.ht-view-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #0c3870;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ht-view-edit-btn:hover {
+  background: #0a2e5d;
+}
+
+.ht-view-fields {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0 4px;
+}
+
+.ht-view-field {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ht-view-field:last-child {
+  border-bottom: none;
+}
+
+.ht-view-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.ht-view-field-content {
+  font-size: 14px;
+  color: #111827;
+  line-height: 1.65;
+}
+
+.ht-view-field-content p {
+  margin: 0 0 4px;
+}
+
+.ht-view-field-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Past appointment read-only view  (.ht-past-appt-*)
+   ══════════════════════════════════════════════════════════ */
+.ht-past-appt-view {
+  margin: 16px 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ht-past-appt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f2f5;
+  background: #f8f9fb;
+}
+
+.ht-past-appt-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ht-past-appt-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.ht-past-appt-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.ht-past-appt-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.ht-past-appt-back:hover {
+  border-color: #0c3870;
+  color: #0c3870;
+  background: #f5f8ff;
+}
+
+.ht-past-appt-loading,
+.ht-past-appt-empty {
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
 }

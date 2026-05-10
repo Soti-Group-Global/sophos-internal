@@ -84,7 +84,11 @@
     },
     "unknown": "Unknown",
     "tableView": "Table View",
-    "calendarView": "Calendar View"
+    "calendarView": "Calendar View",
+    "patient": "Patient",
+    "sex": "Sex",
+    "age": "Age",
+    "typeOfService": "Type of Service"
   },
 
   "appointment": {

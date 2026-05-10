@@ -84,7 +84,11 @@
     },
     "unknown": "Неизвестно",
     "tableView": "Табличный вид",
-    "calendarView": "Календарь"
+    "calendarView": "Календарь",
+    "patient": "Пациент",
+    "sex": "Пол",
+    "age": "Возраст",
+    "typeOfService": "Тип услуги"
   },
 
   "appointment": {

@@ -245,15 +245,18 @@ async function buildPopulatedApplication(application) {
   populatedApplication.documents = await populateDocuments(
     application.documents,
   );
-  // Populate added service positions if present
+  // Populate services array (service tab selections)
   try {
-    if (application.addedServicePositions && application.addedServicePositions.length) {
-      const ids = application.addedServicePositions.map((id) => id && id.toString ? id.toString() : id);
-      const positions = await ServicePosition.find({ _id: { $in: ids } }).lean();
-      populatedApplication.addedServicePositions = positions;
-    } else {
-      populatedApplication.addedServicePositions = [];
-    }
+    const appWithServices = await Application.findById(application._id || application.id)
+      .populate({ path: "services.servicePosition", strictPopulate: false })
+      .lean();
+    const populated = (appWithServices?.services || []).map((s) => ({
+      ...(s.servicePosition || {}),
+      _id: s.servicePosition?._id ?? s.servicePosition,
+      price: s.price ?? s.servicePosition?.price,
+    }));
+    populatedApplication.addedServicePositions = populated;
+    populatedApplication.services = appWithServices?.services || [];
   } catch (err) {
     populatedApplication.addedServicePositions = [];
   }
@@ -1125,16 +1128,7 @@ async function getAllApplicationsForDoctors(req, res) {
       appointmentStatus: { $ne: "Unconfirmed" },
     }).sort({ date: 1, startTime: 1 });
 
-    console.log(
-      "Fetched applications for doctor:",
-      doctorEmail,
-      "from",
-      start,
-      "to",
-      end,
-      "Count:",
-      applications.length
-    );
+
 
     res.json(applications);
   } catch (err) {
@@ -1391,24 +1385,26 @@ async function getAppointmentsByDoctorEmail(req, res) {
       Application.countDocuments(query)
     ]);
 
-    const patientEmails = [...new Set(appointments.map(a => a.patientEmail))].filter(Boolean);
+    const patientIds = [...new Set(appointments.map(a => a.patientId))].filter(Boolean);
     const doctorEmails = [
       ...new Set(
         appointments.map((a) => getPrimaryDoctorEmail(a)).filter(Boolean)
       ),
     ];
 
-    const [patients, doctors] = await Promise.all([
-      Patient.find({ email: { $in: patientEmails } }),
+    const [patientsRaw, doctors] = await Promise.all([
+      patientIds.length > 0 ? Patient.find({ patientId: { $in: patientIds } }) : [],
       Doctor.find({ email: { $in: doctorEmails } })
     ]);
 
     const patientMap = {};
-    patients.forEach(p => {
-      patientMap[p.email] = {
+    patientsRaw.forEach(p => {
+      patientMap[p.patientId] = {
         firstName: p.firstName,
         middleName: p.middleName,
-        lastName: p.lastName
+        lastName: p.lastName,
+        gender: p.gender,
+        dateOfBirth: p.dateOfBirth
       };
     });
 
@@ -1424,7 +1420,7 @@ async function getAppointmentsByDoctorEmail(req, res) {
     const enrichedAppointments = appointments.map(appt => {
       const obj = appt.toObject();
       const primaryDoctorEmail = getPrimaryDoctorEmail(appt);
-      obj.patientDetails = patientMap[appt.patientEmail] || null;
+      obj.patientDetails = (appt.patientId && patientMap[appt.patientId]) || null;
       obj.doctorDetails = doctorMap[primaryDoctorEmail] || null;
       return obj;
     });
@@ -1515,16 +1511,21 @@ async function getAppointmentsByAssistantEmail(req, res) {
     // Enrich with patient and doctor details
     const patientIds = [...new Set(appointments.map(a => a.patientId))].filter(Boolean);
     const doctorEmailsPrimary = [...new Set(appointments.map(a => getPrimaryDoctorEmail(a)).filter(Boolean))];
-    const patientEmails = [...new Set(appointments.map((a) => a.patientEmail).concat(patientIds))].filter(Boolean);
 
-    const [patients, doctors] = await Promise.all([
-      Patient.find({ email: { $in: patientEmails } }),
+    const [patientsRaw, doctors] = await Promise.all([
+      patientIds.length > 0 ? Patient.find({ patientId: { $in: patientIds } }) : [],
       Doctor.find({ email: { $in: doctorEmailsPrimary } }),
     ]);
 
     const patientMap = {};
-    patients.forEach(p => {
-      patientMap[p.email] = { firstName: p.firstName, middleName: p.middleName, lastName: p.lastName };
+    patientsRaw.forEach(p => {
+      patientMap[p.patientId] = {
+        firstName: p.firstName,
+        middleName: p.middleName,
+        lastName: p.lastName,
+        gender: p.gender,
+        dateOfBirth: p.dateOfBirth,
+      };
     });
 
     const doctorMap = {};
@@ -1535,7 +1536,7 @@ async function getAppointmentsByAssistantEmail(req, res) {
     const enrichedAppointments = appointments.map(appt => {
       const obj = appt.toObject();
       const primaryDoctorEmail = getPrimaryDoctorEmail(appt);
-      obj.patientDetails = patientMap[appt.patientEmail] || patientMap[appt.patientId] || null;
+      obj.patientDetails = (appt.patientId && patientMap[appt.patientId]) || null;
       obj.doctorDetails = doctorMap[primaryDoctorEmail] || null;
       return obj;
     });
@@ -2145,26 +2146,18 @@ async function getAssistantAppointments(req,res){
       ];
     }
 
-    console.log('[Appointments] Final DB query:', JSON.stringify(query, null, 2));
 
     const diagApps = await Application.find({ 'doctors.doctorEmail': { $in: activeDoctorEmails } })
       .select('applicationId doctors branch appointmentStatus')
       .limit(10)
       .lean();
-    console.log(`[Appointments] DIAG — apps for active doctors (ignoring branch): ${diagApps.length}`);
-    diagApps.forEach((a) =>
-      console.log(`  id:${a.applicationId} | doctor:${a.doctors?.[0]?.doctorEmail} | branch:"${a.branch}" | status:${a.appointmentStatus}`)
-    );
+
 
     const [appointments, totalCount] = await Promise.all([
       Application.find(query).sort({ date: -1 }).skip(Number(skip)).limit(Number(limit)),
       Application.countDocuments(query),
     ]);
 
-    console.log(`[Appointments] DB result — found: ${appointments.length}, totalCount: ${totalCount}`);
-    if (appointments.length > 0) {
-      console.log('[Appointments] Sample statuses:', appointments.slice(0, 5).map((a) => `${a.applicationId}:${a.appointmentStatus}`));
-    }
 
     const patientEmails = [...new Set(appointments.map((a) => a.patientEmail))].filter(Boolean);
     const uniqueDoctorEmails = [
@@ -2197,9 +2190,6 @@ async function getAssistantAppointments(req,res){
       obj.doctorDetails = doctorMap[primaryDoctorEmail] || null;
       return obj;
     });
-
-    console.log(`[Appointments] ✓ Returning ${enrichedAppointments.length} enriched appointments (total: ${totalCount})`);
-    console.log('─────────────────────────────────────────────────\n');
 
     res.json({ success: true, data: { appointments: enrichedAppointments, totalCount } });
   } catch (error) {
@@ -2308,13 +2298,7 @@ async function getCalendar(req,res){
       date: { $gte: startDateStr, $lte: endDateStr },
     };
 
-    console.log('Assistant calendar query:', {
-      assistant: assistant.email,
-      branches: assistant.branches,
-      activeDoctorEmails,
-      startDateStr,
-      endDateStr,
-    });
+
 
     const validStatuses = ['unconfirmed', 'confirmed', 'cancelled'];
     if (status && validStatuses.includes(status.toLowerCase())) {
@@ -2713,6 +2697,8 @@ async function createPayment(req, res) {
       status = "pending", // Default to pending for new payments
       paymentMethod = "yookassa", // 'yookassa' or 'bank'
       paymentType = "card", // 'card' or 'qr'
+      vat = 0,
+      discount = 0,
     } = req.body;
 
     if (!amount || !Array.isArray(items) || items.length === 0) {
@@ -2740,12 +2726,15 @@ async function createPayment(req, res) {
       // invoiceNumber will be auto-generated by mongoose pre-save middleware
       status,
       amount: parsedAmount,
+      discount: Number(discount) || 0,
+      vat: Number(vat) || 0,
       finalAmount: finalAmount ?? parsedAmount,
       paymentMethod,
       paymentType,
       items: items.map((item) => ({
         name: item.name,
         amount: Number(item.amount),
+        discount: Number(item.discount) || 0,
         currency: item.currency || "RUB",
         quantity: Number(item.quantity) || 1,
       })),
@@ -2917,11 +2906,6 @@ async function createPayment(req, res) {
             let data = "";
             res.on("data", (chunk) => (data += chunk));
             res.on("end", () => {
-              console.log("[VTB] Token response status:", res.statusCode);
-              console.log(
-                "[VTB] Token response body:",
-                data.substring(0, 200) + (data.length > 200 ? "..." : ""),
-              );
               try {
                 const parsed = JSON.parse(data);
                 resolve({
@@ -2991,13 +2975,6 @@ async function createPayment(req, res) {
           if (VTB_MERCHANT_AUTH) {
             headers["Merchant-Authorization"] = VTB_MERCHANT_AUTH;
           }
-          console.log(
-            "[VTB] Order request headers:",
-            JSON.stringify({
-              ...headers,
-              Authorization: "Bearer ***" + accessToken.slice(-10),
-            }),
-          );
 
           const options = {
             hostname: url.hostname,

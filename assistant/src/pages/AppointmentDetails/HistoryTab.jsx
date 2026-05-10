@@ -10,6 +10,7 @@ import {
   createHistoryTemplate,
   updateHistoryTemplate,
   deleteHistoryTemplate,
+  getApplication,
   getApplicationsByPatientId,
   getAllApplicationLaboratoryTests,
   createApplicationLaboratoryTest,
@@ -184,6 +185,8 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
   const [isAppointmentsLoading, setIsAppointmentsLoading] = useState(false);
   const [appointmentsError, setAppointmentsError] = useState(null);
   const [selectedConsultationId, setSelectedConsultationId] = useState(null);
+  const [selectedApptData, setSelectedApptData] = useState(null);
+  const [selectedApptLoading, setSelectedApptLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(true);
   const editModeInitRef = useRef(false);
@@ -295,6 +298,24 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
   useEffect(() => {
     loadPatientAppointments();
   }, [loadPatientAppointments]);
+
+  const handleSelectPastAppointment = useCallback(async (apptId) => {
+    setSelectedConsultationId(apptId);
+    if (apptId === application?.applicationId) {
+      setSelectedApptData(null);
+      return;
+    }
+    setSelectedApptLoading(true);
+    try {
+      const res = await getApplication(apptId);
+      setSelectedApptData(res?.data || res);
+    } catch {
+      toast.error(t("history_tab.failed_loading_appointment", { defaultValue: "Failed to load appointment" }));
+      setSelectedApptData(null);
+    } finally {
+      setSelectedApptLoading(false);
+    }
+  }, [application?.applicationId, t]);
 
   const handleSidebarItemClick = useCallback(async (item, _e) => {
     setActiveNavItem(item.id);
@@ -959,8 +980,8 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                               className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
                               role="button"
                               tabIndex={0}
-                              onClick={() => setSelectedConsultationId(application.applicationId)}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedConsultationId(application.applicationId); }}
+                              onClick={() => handleSelectPastAppointment(application.applicationId)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(application.applicationId); }}
                             >
                               <div className="ht-appointment-current-row">
                                 <span className="ht-appointment-name">{name}</span>
@@ -982,16 +1003,8 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                               className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
                               role="button"
                               tabIndex={0}
-                              onClick={() => {
-                                setSelectedConsultationId(apptId);
-                                window.open(`/appointments/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  setSelectedConsultationId(apptId);
-                                  window.open(`/appointments/${encodeURIComponent(apptId)}?tab=history`, "_blank", "noopener,noreferrer");
-                                }
-                              }}
+                              onClick={() => handleSelectPastAppointment(apptId)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(apptId); }}
                             >
                               <span className="ht-appointment-name">{label}</span>
                               <span className="ht-appointment-meta">{appointmentDate}{appointmentTime ? ` · ${appointmentTime}` : ""}</span>
@@ -1084,6 +1097,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
             const files = sec.files || [];
             const commentValue = sec.comment?.value || "";
             return (
+              <div className="ht-sp-wrap">
               <div className="ht-sp-page">
                 <div className="ht-sp-section">
                   <div className="ht-sp-section-header">
@@ -1138,8 +1152,49 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                   </div>
                 </div>
               </div>
+              </div>
             );
-          })() : isEditMode ? (
+          })() : selectedConsultationId && selectedConsultationId !== application?.applicationId ? (
+            selectedApptLoading ? (
+              <div className="ht-past-appt-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading..." })}</div>
+            ) : selectedApptData ? (
+              <div className="ht-past-appt-view">
+                <div className="ht-past-appt-header">
+                  <div className="ht-past-appt-meta">
+                    <span className="ht-past-appt-label">{t("history_tab.current_appointment", { defaultValue: "Consultation" })}</span>
+                    <span className="ht-past-appt-date">
+                      {selectedApptData.date ? formatDate(selectedApptData.date) : ""}
+                      {selectedApptData.startTime ? ` · ${formatTime(selectedApptData.startTime)}${selectedApptData.endTime ? ` - ${formatTime(selectedApptData.endTime)}` : ""}` : ""}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="ht-past-appt-back"
+                    onClick={() => handleSelectPastAppointment(application?.applicationId)}
+                  >
+                    <FiX size={14} />
+                    {t("history_tab.back_to_current", { defaultValue: "Back to current" })}
+                  </button>
+                </div>
+                <div className="ht-view-fields">
+                  {ALL_KEYS.map((key) => {
+                    const hf = selectedApptData.historyForm || {};
+                    const f = hf[key];
+                    const val = typeof f === "object" ? f?.value : f;
+                    if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
+                    return (
+                      <div key={key} className="ht-view-field">
+                        <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                        <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="ht-past-appt-empty">{t("history_tab.no_data", { defaultValue: "No data for this appointment" })}</div>
+            )
+          ) : isEditMode ? (
             <>
               <div className="ht-edit-toolbar">
                 <button type="button" className="ht-view-mode-btn" onClick={enterViewMode}>
@@ -1196,15 +1251,20 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
         </div>
       </div>
 
-      {/* Sticky footer */}
-      <div className="adp-sticky-footer">
-        <button className="adp-footer-btn adp-footer-save-btn" onClick={handleSaveAll} disabled={isSaving}>
-          {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save", { ns: "appointment_details_general" })}
-        </button>
-        <button className="adp-footer-btn adp-footer-save-close-btn" onClick={handleSaveAndClose} disabled={isSaving}>
-          {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save_and_close", { ns: "appointment_details_general" })}
-        </button>
-      </div>
+      {/* Sticky footer — only when the history form is the active view */}
+      {!selectedTest &&
+        activeNavItem !== "conclusion" &&
+        !PANEL_NAV_IDS.includes(activeNavItem) &&
+        !(selectedConsultationId && selectedConsultationId !== application?.applicationId) && (
+        <div className="adp-sticky-footer">
+          <button className="adp-footer-btn adp-footer-save-btn" onClick={handleSaveAll} disabled={isSaving}>
+            {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save", { ns: "appointment_details_general" })}
+          </button>
+          <button className="adp-footer-btn adp-footer-save-close-btn" onClick={handleSaveAndClose} disabled={isSaving}>
+            {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save_and_close", { ns: "appointment_details_general" })}
+          </button>
+        </div>
+      )}
 
       {labPopupOpen && createPortal(
         <div className="ht-portal-overlay" onClick={closeLabAnalysisPopup}>

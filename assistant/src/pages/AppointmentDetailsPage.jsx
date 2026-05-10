@@ -7,15 +7,14 @@ import {
   getApplication,
   getAppointmentsByDoctor,
   getEmailFromToken,
-  getPatientByEmail,
-  getMedicalHistoryByEmail,
+  getPatientByPatientId,
   updateApplication,
   updateHistoryForm,
 } from "../utils/api";
 import LoadingComponent from "../components/Loading/LoadingComponent";
-import { FiArrowLeft, FiClock, FiChevronDown, FiChevronUp, FiFile, FiVideo ,FiSettings} from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo, FiSettings } from "react-icons/fi";
 import { MdOutlinePerson } from "react-icons/md";
-import { LuClipboardList, LuCalendarClock } from "react-icons/lu";
+import { LuClipboardList } from "react-icons/lu";
 import "./AppointmentDetailsPage.css";
 import GeneralInformationTab from "./AppointmentDetails/GeneralInformationTab";
 import MedicalHistoryTab from "./AppointmentDetails/MedicalHistoryTab";
@@ -90,20 +89,19 @@ const AppointmentDetailsPage = () => {
   };
 
   const TABS = [
-    { key: "general",   label: t("tabs.general"),    icon: <MdOutlinePerson size={16} /> },
-    { key: "history",   label: t("tabs.history"),    icon: <FiClock size={15} /> },
-    { key: "medical",   label: t("tabs.medical"),    icon: <LuClipboardList size={15} /> },
-    { key: "documents", label: t("tabs.documents"),  icon: <FiFile size={15} /> },
-    { key: "followups", label: t("tabs.followups"),  icon: <LuCalendarClock size={15} /> },
+    { key: "general", label: t("tabs.general"), icon: <MdOutlinePerson size={16} /> },
+    { key: "history", label: t("tabs.history"), icon: <FiClock size={15} /> },
+    { key: "medical", label: t("tabs.medical"), icon: <LuClipboardList size={15} /> },
+    { key: "documents", label: t("tabs.documents"), icon: <FiFolder size={15} /> },
+    { key: "followups", label: t("tabs.followups"), icon: <FiRepeat size={15} /> },
     { key: "telemedicine", label: t("tabs.telemedicine"), icon: <FiVideo size={15} /> },
-    { key: "report", label: t("tabs.report") || "Report", icon: <FiFile size={15} /> },
     { key: "service", label: t("tabs.service") || "Service", icon: <FiSettings size={15} /> },
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [application, setApplication] = useState(null);
   const [patient, setPatient] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [history] = useState([]);
   const [loading, setLoading] = useState(true);
   const activeTab = searchParams.get("tab") || "general";
   const setActiveTab = (key) => setSearchParams({ tab: key }, { replace: true });
@@ -115,7 +113,6 @@ const AppointmentDetailsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Hide global app sidebar to give room for the left iconic tabs
     document.body.classList.add("hide-global-sidebar");
     return () => document.body.classList.remove("hide-global-sidebar");
   }, []);
@@ -145,35 +142,17 @@ const AppointmentDetailsPage = () => {
           } catch { /* non-critical */ }
         }
 
-        if (app?.patient) {
-          setPatient(app.patient);
-        }
-
-        if (app?.patientEmail) {
+        const patientId = app?.patientId || app?.patient?.patientId || app?.patient?._id;
+        if (patientId) {
           try {
-            const patRes = await getPatientByEmail(app.patientEmail);
+            const patRes = await getPatientByPatientId(patientId);
             const fullPatient = patRes?.patient || patRes;
             if (fullPatient && (fullPatient.firstName || fullPatient.lastName || fullPatient.email)) {
               setPatient(fullPatient);
             }
-          } catch {
-            /* keep basic patient from app.patient */
-          }
-
-          try {
-            const histRes = await getMedicalHistoryByEmail(app.patientEmail);
-            setHistory(Array.isArray(histRes) ? histRes : (histRes?.data || []));
-          } catch {
-            // history unavailable
-          }
-        } else if (app?.patient?.email) {
-          /* fallback: patientEmail field missing but embedded patient has email */
-          try {
-            const histRes = await getMedicalHistoryByEmail(app.patient.email);
-            setHistory(Array.isArray(histRes) ? histRes : (histRes?.data || []));
-          } catch {
-            // history unavailable
-          }
+          } catch { /* keep embedded patient from app.patient */ }
+        } else if (app?.patient) {
+          setPatient(app.patient);
         }
       } catch (err) {
         toast.error(t("load_error"));
@@ -223,8 +202,8 @@ const AppointmentDetailsPage = () => {
 
   const patientDisplayName = patient
     ? [patient.firstName, patient.middleName, patient.lastName].filter(Boolean).join(" ").trim() ||
-      patient.email ||
-      t("unknown_patient")
+    patient.email ||
+    t("unknown_patient")
     : application.patientName || t("unknown_patient");
 
   const createdAt = formatDate(application.createdAt);
@@ -241,7 +220,7 @@ const AppointmentDetailsPage = () => {
             history={history}
             onSave={handleSave}
             saving={saving}
-            onSaved={(p) => setPatient(p)}
+            onSaved={(p) => setPatient(p?.patient || p)}
           />
         );
       case "history":
@@ -291,17 +270,19 @@ const AppointmentDetailsPage = () => {
           </span>
         </div>
 
-        {dob && (
-          <div className="adp-header-right">
-            <div className="adp-dob-row">
-              <span className="adp-dob-value">{dob}</span>
-              {age !== null && age !== undefined && (
-                <span className="adp-age-badge">{age} y.o.</span>
-              )}
+        <div className="adp-header-right">
+          <div className="adp-patient-details-strip">
+            <div className="adp-patient-detail-item">
+              <span className="adp-detail-value">{dob || "—"}</span>
+              <span className="adp-detail-label">{t("date_of_birth")}</span>
             </div>
-            <span className="adp-dob-label">{t("date_of_birth")}</span>
+            {age !== null && age !== undefined && (
+              <div className="adp-patient-detail-item adp-patient-detail-item--badge">
+                <span className="adp-age-badge">{age} y.o.</span>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Left vertical iconic tabs (replace top tab bar visually) */}
@@ -367,9 +348,9 @@ const AppointmentDetailsPage = () => {
               const status = app.appointmentStatus || app.status || "";
               const statusClass =
                 status.toLowerCase().includes("confirm") ? "confirmed" :
-                status.toLowerCase().includes("upcoming") ? "upcoming" :
-                status.toLowerCase().includes("unconfirm") || status.toLowerCase().includes("pending") ? "unconfirmed" :
-                status.toLowerCase().includes("cancel") ? "cancelled" : "default";
+                  status.toLowerCase().includes("upcoming") ? "upcoming" :
+                    status.toLowerCase().includes("unconfirm") || status.toLowerCase().includes("pending") ? "unconfirmed" :
+                      status.toLowerCase().includes("cancel") ? "cancelled" : "default";
               const statusLabel = i18n.t(`application.status.${status.toLowerCase()}`, { ns: "translation", defaultValue: status });
               const lang = i18n.language;
               const doctorName = buildDocName(app.doctorDetails, lang)

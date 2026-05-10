@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getEmailFromToken, getAppointmentsForCalendar, getAppointmentsByDoctor } from "../utils/api";
 import {
@@ -105,7 +104,6 @@ const WEEKDAYS_RU = ["Пн",  "Вт",  "Ср",  "Чт",  "Пт",  "Сб",  "Вс
 /* ─── Component ─── */
 const AppointmentsCalendarView = () => {
   const { i18n } = useTranslation();
-  const navigate  = useNavigate();
   const locale    = i18n.language === "ru" ? "ru-RU" : "en-US";
   const isRu      = i18n.language === "ru";
   const lang      = i18n.language === "ru" ? "ru" : "en";
@@ -452,16 +450,9 @@ const AppointmentsCalendarView = () => {
                               style={{ background: statusColor(appt.appointmentStatus) }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(
+                                window.open(
                                   `/appointments/${encodeURIComponent(appt.applicationId || appt._id)}`,
-                                  {
-                                    state: {
-                                      doctorName: {
-                                        en: [appt.doctorDetails?.firstName?.en, appt.doctorDetails?.lastName?.en].filter(Boolean).join(" "),
-                                        ru: [appt.doctorDetails?.firstName?.ru, appt.doctorDetails?.lastName?.ru].filter(Boolean).join(" "),
-                                      },
-                                    },
-                                  }
+                                  "_blank"
                                 );
                               }}
                             >

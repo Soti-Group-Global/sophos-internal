@@ -27,16 +27,8 @@ import moment from "moment-timezone";
 import "moment/locale/ru";
 import {
   Calendar,
-  CheckCircle,
-  User,
   ArrowLeft,
   ArrowRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Search,
-  Filter,
-  X,
   Table,
   CalendarDays,
   ChevronLeft,
@@ -44,8 +36,9 @@ import {
   Clock,
   Plus,
   Trash2,
-  ChevronDown,
 } from "lucide-react";
+import SearchBar from "./SearchBar/SearchBar";
+import FilterDropdown from "./Filter/Filter";
 import {
   formatDateISO,
   formatTimeHHMM,
@@ -94,15 +87,9 @@ const EarlyDetectionApplications = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [viewMode, setViewMode] = useState("calendar"); // "table" or "calendar"
+  const [viewMode, setViewMode] = useState("table"); // "table" or "calendar"
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const filterRef = useRef(null); // ref to detect outside clicks for filter dropdown
-  const [sortConfig, setSortConfig] = useState({
-    key: "date",
-    direction: "asc",
-  });
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 10;
 
@@ -174,20 +161,6 @@ const EarlyDetectionApplications = () => {
     setMiniCalMonth((m) => m.clone());
   }, [i18n.language]);
 
-  // close filter dropdown when clicking outside
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (
-        showFilterDropdown &&
-        filterRef.current &&
-        !filterRef.current.contains(e.target)
-      ) {
-        setShowFilterDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showFilterDropdown]);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -373,41 +346,45 @@ const EarlyDetectionApplications = () => {
     return result;
   }, [applications, filter, searchTerm]);
 
-  // Sorting
-  const sortedApplications = useMemo(() => {
-    const sorted = [...filteredApplications].sort((a, b) => {
-      if (!a[sortConfig.key]) return 1;
-      if (!b[sortConfig.key]) return -1;
-      if (typeof a[sortConfig.key] === "string") {
-        return sortConfig.direction === "asc"
-          ? a[sortConfig.key].localeCompare(b[sortConfig.key])
-          : b[sortConfig.key].localeCompare(a[sortConfig.key]);
-      }
-      return sortConfig.direction === "asc"
-        ? new Date(a[sortConfig.key]) - new Date(b[sortConfig.key])
-        : new Date(b[sortConfig.key]) - new Date(a[sortConfig.key]);
-    });
-    return sorted;
-  }, [filteredApplications, sortConfig]);
-
   // Pagination
-  const totalPages = Math.ceil(sortedApplications.length / recordsPerPage);
-  const paginatedApplications = sortedApplications.slice(
+  const totalPages = Math.ceil(filteredApplications.length / recordsPerPage);
+  const paginatedApplications = filteredApplications.slice(
     (currentPage - 1) * recordsPerPage,
     currentPage * recordsPerPage,
   );
 
-  const handleSort = (key) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
+
+  const calculateAge = (dob) => {
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth)) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+  };
+
+  const formatDateDDMMYYYY = (dateStr) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
+  };
+
+  const getPatientFirstName = (appt) => {
+    if (appt.patientDetails?.firstName) return appt.patientDetails.firstName?.en || appt.patientDetails.firstName || "";
+    return (appt.patientName || "").split(" ")[0] || "";
+  };
+
+  const getPatientLastName = (appt) => {
+    if (appt.patientDetails?.lastName) return appt.patientDetails.lastName?.en || appt.patientDetails.lastName || "";
+    return (appt.patientName || "").split(" ").slice(1).join(" ") || "";
   };
 
   const handleFilterChange = (value) => {
     setFilter(value);
     setCurrentPage(1);
-    setShowFilterDropdown(false);
   };
 
   // --- Calendar helpers ---
@@ -544,19 +521,6 @@ const EarlyDetectionApplications = () => {
     return counts;
   }, [filteredApplications]);
 
-  // helper reused from appointments for consistent light backgrounds
-  const lightenColor = (hex, amount = 60) => {
-    let c = hex.replace("#", "");
-    if (c.length === 3) c = c.split("").map((v) => v + v).join("");
-    const num = parseInt(c, 16);
-    let r = (num >> 16) + amount;
-    let g = ((num >> 8) & 0x00ff) + amount;
-    let b = (num & 0x0000ff) + amount;
-    r = r > 255 ? 255 : r;
-    g = g > 255 ? 255 : g;
-    b = b > 255 ? 255 : b;
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
-  };
 
   const getEventStyle = (event) => {
     const startHour = event.start.hour() + event.start.minute() / 60;
@@ -587,24 +551,6 @@ const EarlyDetectionApplications = () => {
     };
   };
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      confirmed: { color: "success-status", icon: CheckCircle },
-      completed: { color: "success-status", icon: CheckCircle },
-      upcoming: { color: "warning-status", icon: Calendar },
-      cancelled: { color: "error-status", icon: X },
-      unconfirmed: { color: "neutral-status", icon: Calendar },
-    };
-    const key = (status || "").toLowerCase();
-    const conf = statusMap[key] || statusMap.unconfirmed;
-    const Icon = conf.icon;
-    return (
-      <span className={`status-badge-app status-${conf.color}`}>
-        <Icon size={12} />
-        {t(`appointmentStatus.${key}`, status || t("common.unknown"))}
-      </span>
-    );
-  };
 
   // CSV export
   const exportToCSV = () => {
@@ -672,7 +618,7 @@ const EarlyDetectionApplications = () => {
           color: "#991b1b",
           fontSize: "14px"
         }}>
-          ❌ Error loading applications: {error}
+          Error loading applications: {error}
         </div>
       )}
       
@@ -680,124 +626,59 @@ const EarlyDetectionApplications = () => {
       <div className="early-detect-header">
         <h2 className="early-detect-heading">
           {t("EarlyDetectionApplications.header")}
-          {/* Debug info */}
-          <span style={{ fontSize: "15px", marginLeft: "12px",marginTop:"-10px" ,color: "#3730a3",backgroundColor: "#e0e7ff", padding: "4px 10px", borderRadius: "999px" }}>
-            {applications.length} 
-          </span>
           {loading && <span style={{ fontSize: "12px", marginLeft: "5px", color: "#ff6b6b" }}>Loading...</span>}
         </h2>
-        <div className="ed-action-section">
+        <div className="ed-controls-row">
           {/* Search */}
-          <div className="ed-search-wrapper">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t("EarlyDetectionApplications.searchPlaceholder")}
-              className="ed-search-input"
-            />
-          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
+            placeholder={t("EarlyDetectionApplications.searchPlaceholder")}
+            style={{ width: "260px", flexShrink: 1, minWidth: "140px" }}
+          />
 
-          {/* Controls row: export + filter + view toggle — always on one line */}
-          <div className="ed-controls-row">
-            {/* Export */}
-            {applications.length > 0 && (
-              <button
-                className="export-csv-button"
-                style={{
-                  background: "#0A2E5D",
-                  color: "white",
-                }}
-                onClick={exportToCSV}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                <span className="csv-btn-text">
-                  {t("EarlyDetectionApplications.exportCSV")}
-                </span>
-              </button>
-            )}
+          {/* Export */}
+          {applications.length > 0 && (
+            <button
+              className="export-csv-button"
+              style={{ background: "#0A2E5D", color: "white" }}
+              onClick={exportToCSV}
+            >
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span className="csv-btn-text">{t("EarlyDetectionApplications.exportCSV")}</span>
+            </button>
+          )}
 
-            {/* Filter */}
-            <div className="ed-filter-section" ref={filterRef}>
-              <button
-                className="ed-filter-button"
-                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              >
-                <Filter size={16} />
-                {filter === "all"
-                  ? t("EarlyDetectionApplications.filter")
-                  : t(`appointments.filters.${filter}`)}
-              </button>
-              {showFilterDropdown && (
-                <div className="ed-filter-dropdown">
-                  <div className="ed-filter-group">
-                    <label className="ed-filter-label">
-                      {t("EarlyDetectionApplications.statusLabel")}
-                    </label>
-                    <ul className="ed-filter-list">
-                      {[
-                        "all",
-                        "upcoming",
-                        "confirmed",
-                        "completed",
-                        "cancelled",
-                        "unconfirmed",
-                      ].map((option) => (
-                        <li
-                          key={option}
-                          className={`ed-filter-item ${filter === option ? "active" : ""}`}
-                          onClick={() => handleFilterChange(option)}
-                        >
-                          {t(`appointments.filters.${option}`, {
-                            defaultValue:
-                              option.charAt(0).toUpperCase() + option.slice(1),
-                          })}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="ed-filter-actions">
-                    <button
-                      onClick={() => handleFilterChange("all")}
-                      className="ed-reset-button"
-                    >
-                      {t("EarlyDetectionApplications.reset")}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* Filter */}
+          <FilterDropdown
+            value={filter}
+            onChange={handleFilterChange}
+            placeholder={t("EarlyDetectionApplications.filter")}
+            options={["all", "upcoming", "confirmed", "completed", "cancelled"].map((v) => ({
+              value: v,
+              label: t(`appointments.filters.${v}`, { defaultValue: v.charAt(0).toUpperCase() + v.slice(1) }),
+            }))}
+          />
 
-            {/* View toggle */}
-            <div className="ed-view-toggle">
-              <button
-                className={`ed-view-toggle-btn ${viewMode === "calendar" ? "active" : ""}`}
-                onClick={() => setViewMode("calendar")}
-                title={t("EarlyDetectionApplications.calendarView")}
-              >
-                <CalendarDays size={16} />
-              </button>
-              <button
-                className={`ed-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
-                onClick={() => setViewMode("table")}
-                title={t("EarlyDetectionApplications.tableView")}
-              >
-                <Table size={16} />
-              </button>
-            </div>
+          {/* View toggle */}
+          <div className="ed-view-toggle">
+            <button
+              className={`ed-view-toggle-btn ${viewMode === "calendar" ? "active" : ""}`}
+              onClick={() => setViewMode("calendar")}
+              title={t("EarlyDetectionApplications.calendarView")}
+            >
+              <CalendarDays size={16} />
+            </button>
+            <button
+              className={`ed-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+              onClick={() => setViewMode("table")}
+              title={t("EarlyDetectionApplications.tableView")}
+            >
+              <Table size={16} />
+            </button>
           </div>
         </div>
       </div>
@@ -815,47 +696,30 @@ const EarlyDetectionApplications = () => {
             </div>
           ) : paginatedApplications.length === 0 ? (
             <div className="empty-state">
-              <Calendar size={48} className="empty-icon" />
+              <div className="empty-icon-wrapper">
+                <Calendar />
+              </div>
               <h3>{t("EarlyDetectionApplications.noApplications")}</h3>
             </div>
           ) : (
-            <div className="application-modern-table">
-              <table className="application-modern-data-table">
+            <div className="appt-table-wrap">
+              <table className="appt-table">
                 <thead>
                   <tr>
-                    <th
-                      onClick={() => handleSort("applicationId")}
-                      className="sortable-header"
-                    >
-                      <div className="header-content">
-                        <span>{t("appointments.appointment").toUpperCase()}</span>
-                      </div>
-                    </th>
-                    <th>
-                      <div className="header-content">
-                        <span>{t("appointments.patient").toUpperCase()}</span>
-                      </div>
-                    </th>
-                    <th
-                      onClick={() => handleSort("date")}
-                      className="sortable-header"
-                    >
-                      <div className="header-content">
-                        <span>{t("appointments.dateTime").toUpperCase()}</span>
-                      </div>
-                    </th>
-                    <th>
-                      <div className="header-content">
-                        <span>{t("appointments.status").toUpperCase()}</span>
-                      </div>
-                    </th>
+                    <th>{t("appointments.patient").toUpperCase()}</th>
+                    <th>{t("appointments.sex", "SEX").toUpperCase()}</th>
+                    <th>{t("appointments.age", "AGE").toUpperCase()}</th>
+                    <th>{t("appointments.columns.appointment", "APPOINTMENT").toUpperCase()}</th>
+                    <th>{t("appointments.typeOfService", "TYPE OF SERVICE").toUpperCase()}</th>
+                    <th>{t("appointments.date", "DATE").toUpperCase()}</th>
+                    <th>{t("appointments.columns.status", "STATUS").toUpperCase()}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedApplications.map((appt) => (
                     <tr
                       key={appt._id || appt.applicationId}
-                      className="table-row"
+                      className="appt-row"
                       onClick={() =>
                         navigate(
                           `/early-detection-bookings/${encodeURIComponent(appt.applicationId || appt._id)}`,
@@ -880,63 +744,61 @@ const EarlyDetectionApplications = () => {
                       }
                     >
                       <td>
-                        <span className="applicationId-text">
-                          #{appt.applicationId || appt._id}
+                        <div className="patient-name-cell">
+                          <span className="patient-name-primary">{getPatientFirstName(appt) || t("appointment.unknownPatient")}</span>
+                          {getPatientLastName(appt) && <span className="patient-name-secondary">{getPatientLastName(appt)}</span>}
+                        </div>
+                      </td>
+                      <td>
+                        {(() => {
+                          const g = (appt.patientDetails?.gender || "").toLowerCase();
+                          if (g === "male") return <span className="sex-icon sex-icon--male">♂</span>;
+                          if (g === "female") return <span className="sex-icon sex-icon--female">♀</span>;
+                          return <span className="sex-icon sex-icon--unknown">—</span>;
+                        })()}
+                      </td>
+                      <td>
+                        <span className="age-text">
+                          {appt.patientDetails?.dateOfBirth ? calculateAge(appt.patientDetails.dateOfBirth) ?? "—" : "—"}
+                        </span>
+                      </td>
+                      <td><span className="appt-cell-id">#{appt.applicationId || appt._id}</span></td>
+                      <td>
+                        <span className="appointment-type-label">
+                          {appt.serviceType || t("appointments.types.earlyDetection", "Early Detection")}
                         </span>
                       </td>
                       <td>
-                        <div className="patient-cell">
-                          <div
-                            className="patient-avatar"
-                            style={{
-                              width: "32px",
-                              height: "32px",
-                              borderRadius: "50%",
-                              backgroundColor: "rgba(10, 46, 93, 0.1)",
-                              color: "#0A2E5D",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "15px",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {(appt.patientName || appt.patientEmail || "?")
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .substring(0, 2)
-                              .toUpperCase()}
-                          </div>
-                          <div className="patient-cell-info">
-                            <span className="patient-cell-name">
-                              {appt.patientName ||
-                                t("appointment.unknownPatient")}
+                        <div className="appt-date-cell">
+                          <span className="appt-date-text">
+                            {appt.date ? formatDateDDMMYYYY(appt.date) : t("common.notAvailable")}
+                          </span>
+                          {(appt.startTime || appt.endTime) && (
+                            <span className="appt-time-sub">
+                              {appt.startTime ? formatTimeHHMM(appt.startTime) : ""}
+                              {appt.endTime ? " – " + formatTimeHHMM(appt.endTime) : ""}
                             </span>
-                            <span className="patient-cell-email">
-                              {appt.patientEmail || t("common.noEmail")}
-                            </span>
-                          </div>
+                          )}
                         </div>
                       </td>
                       <td>
-                        <div className="datetime-cell">
-                          <div className="datetime-date">
-                            <Calendar size={14} />
-                            {appt.date
-                              ? formatDateISO(appt.date)
-                              : t("common.notAvailable")}
-                          </div>
-                          <div className="datetime-time">
-                            <Clock size={14} />
-                            {appt.startTime ? formatTimeHHMM(appt.startTime) : ""}
-                            {appt.endTime
-                              ? " – " + formatTimeHHMM(appt.endTime)
-                              : ""}
-                          </div>
-                        </div>
+                        {(() => {
+                          const s = appt.appointmentStatus;
+                          const config = {
+                            confirmed:   { dot: "#00C853", bg: "#e8f5e9", color: "#1b5e20" },
+                            completed:   { dot: "#3b82f6", bg: "#eff6ff", color: "#1e40af" },
+                            cancelled:   { dot: "#FF1744", bg: "#fce4ec", color: "#b71c1c" },
+                            upcoming:    { dot: "#FFD600", bg: "#fffde7", color: "#f57f17" },
+                            unconfirmed: { dot: "#FF9800", bg: "#fff3e0", color: "#e65100" },
+                          }[s?.toLowerCase()] || { dot: "#9ca3af", bg: "#f9fafb", color: "#6b7280" };
+                          return (
+                            <span className="appt-status-badge" style={{ background: config.bg, color: config.color }}>
+                              <span className="appt-status-dot" style={{ background: config.dot }} />
+                              {t(`application.status.${s?.toLowerCase()}`, { defaultValue: s }) || t("common.unknown")}
+                            </span>
+                          );
+                        })()}
                       </td>
-                      <td>{getStatusBadge(appt.appointmentStatus, t)}</td>
                     </tr>
                   ))}
                 </tbody>

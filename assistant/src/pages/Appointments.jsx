@@ -5,11 +5,10 @@ import {
   getDoctors,
 } from "../utils/api";
 import "../styles/Appointments.css";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer, toast } from "react-toastify";
-import { FiSearch, FiCalendar, FiClock, FiDownload, FiChevronLeft, FiChevronRight, FiUser, FiList } from "react-icons/fi";
+import { FiSearch, FiCalendar, FiDownload, FiChevronLeft, FiChevronRight, FiList } from "react-icons/fi";
 import AppointmentsCalendarView from "../components/AppointmentsCalendarView";
 
 const Appointments = () => {
@@ -25,7 +24,6 @@ const Appointments = () => {
   const [selectedDoctor, setSelectedDoctor] = useState("all");
   const [view, setView] = useState("calendar"); // "table" | "calendar"
 
-  const navigate = useNavigate();
   const recordsPerPage = 21;
   const { t, i18n } = useTranslation();
   const lang = i18n.language === 'ru' ? 'ru' : 'en';
@@ -112,11 +110,6 @@ const Appointments = () => {
     });
   };
 
-  const getInitials = (name) => {
-    if (!name || name === "N/A") return "?";
-    const clean = name.replace(/\(.*?\)/g, "").trim();
-    return clean.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
 
   const StatusBadge = ({ status }) => {
     const config = {
@@ -128,7 +121,6 @@ const Appointments = () => {
     }[status?.toLowerCase()] || { dot: "#9ca3af", bg: "#f9fafb", color: "#6b7280" };
     return (
       <span className="appt-status-badge" style={{ background: config.bg, color: config.color }}>
-        <span className="appt-status-dot" style={{ background: config.dot }} />
         {t(`application.status.${status?.toLowerCase()}`, { defaultValue: status }) || t("appointments.unknown")}
       </span>
     );
@@ -140,6 +132,34 @@ const Appointments = () => {
       return `${appt.patientDetails.firstName} ${appt.patientDetails.lastName}`;
     }
     return appt.patient || "Unknown Patient";
+  };
+
+  const getPatientFirstName = (appt) => {
+    if (appt.patientDetails?.firstName) return appt.patientDetails.firstName?.en || appt.patientDetails.firstName || "";
+    return (appt.patientName || "").split(" ")[0] || "";
+  };
+
+  const getPatientLastName = (appt) => {
+    if (appt.patientDetails?.lastName) return appt.patientDetails.lastName?.en || appt.patientDetails.lastName || "";
+    return (appt.patientName || "").split(" ").slice(1).join(" ") || "";
+  };
+
+  const calculateAge = (dob) => {
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth)) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+  };
+
+  const formatDateDDMMYYYY = (dateStr) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
   };
 
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
@@ -237,11 +257,10 @@ const Appointments = () => {
     <div className={`appt-page${view === "calendar" ? " appt-page--calendar" : ""}`}>
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* â”€â”€ Header â”€â”€ */}
+      {/*  Header  */}
       <div className="appt-header">
         <div className="appt-header-left">
           <h1 className="appt-title">{t("appointments.title")}</h1>
-          {totalRecords > 0 && <span className="appt-total-pill">{totalRecords}</span>}
         </div>
         <div className="appt-header-right">
           <div className="appt-search-box">
@@ -269,7 +288,6 @@ const Appointments = () => {
           {appointments.length > 0 && (
             <button className="appt-export-btn" onClick={exportToCSV}>
               <FiDownload size={14} />
-              <span className="appt-export-label">{t("appointments.exportCSV")}</span>
             </button>
           )}
           {/* View toggle */}
@@ -298,20 +316,9 @@ const Appointments = () => {
       {/* ── Table view ── */}
       {view === "table" && (
         <>
-      {/* Filter tabs */}
-      <div className="appt-filter-tabs">
-        {["all", "upcoming", "confirmed", "completed", "cancelled"].map((f) => (
-          <button
-            key={f}
-            className={`appt-tab ${filter === f ? "active" : ""}`}
-            onClick={() => setFilter(f)}
-          >
-            {t(`appointments.filters.${f}`)}
-          </button>
-        ))}
-      </div>
+      
 
-      {/* â”€â”€ Loading â”€â”€ */}
+      {/*  Loading  */}
       {loading && (
         <div className="appt-state">
           <div className="appt-spinner" />
@@ -319,7 +326,7 @@ const Appointments = () => {
         </div>
       )}
 
-      {/* â”€â”€ Error â”€â”€ */}
+      {/*  Error  */}
       {!loading && error && (
         <div className="appt-state">
           <p className="appt-error-msg">{error}</p>
@@ -329,7 +336,7 @@ const Appointments = () => {
         </div>
       )}
 
-      {/* â”€â”€ Empty â”€â”€ */}
+      {/*  Empty  */}
       {!loading && !error && appointments.length === 0 && (
         <div className="appt-state">
           <div className="appt-empty-icon"><FiCalendar size={36} /></div>
@@ -340,17 +347,19 @@ const Appointments = () => {
         </div>
       )}
 
-      {/* â”€â”€ Table â”€â”€ */}
+      {/*  Table  */}
       {!loading && !error && appointments.length > 0 && (
         <>
           <div className="appt-table-wrap">
             <table className="appt-table">
               <thead>
                 <tr>
+                  <th>{t("appointments.patient").toUpperCase()}</th>
+                  <th>{t("appointments.sex", "SEX").toUpperCase()}</th>
+                  <th>{t("appointments.age", "AGE").toUpperCase()}</th>
                   <th>{t("appointments.columns.appointment")}</th>
-                  <th>{t("appointments.columns.patient")}</th>
-                  <th>{t("appointments.columns.dateTime")}</th>
-                  <th>{t("appointments.columns.doctorService")}</th>
+                  <th>{t("appointments.typeOfService", "TYPE OF SERVICE").toUpperCase()}</th>
+                  <th>{t("appointments.date").toUpperCase()}</th>
                   <th>{t("appointments.columns.status")}</th>
                 </tr>
               </thead>
@@ -362,30 +371,43 @@ const Appointments = () => {
                     appt.patientDetails?.lastName,
                   ].filter(Boolean).join(" ") || "N/A";
 
-                  const doctorName = [
-                    appt.doctorDetails?.firstName?.[lang] || appt.doctorDetails?.firstName?.en,
-                    appt.doctorDetails?.middleName?.[lang] || appt.doctorDetails?.middleName?.en,
-                    appt.doctorDetails?.lastName?.[lang] || appt.doctorDetails?.lastName?.en,
-                  ].filter(Boolean).join(" ") || appt.doctors?.[0]?.doctorName || "N/A";
 
                   return (
                     <tr
                       key={appt._id || appt.id}
                       className="appt-row"
                       onClick={() =>
-                        navigate(
+                        window.open(
                           `/appointments/${encodeURIComponent(appt.applicationId || appt._id)}`,
-                          {
-                            state: {
-                              doctorName: {
-                                en: [appt.doctorDetails?.firstName?.en, appt.doctorDetails?.middleName?.en, appt.doctorDetails?.lastName?.en].filter(Boolean).join(" "),
-                                ru: [appt.doctorDetails?.firstName?.ru, appt.doctorDetails?.middleName?.ru, appt.doctorDetails?.lastName?.ru].filter(Boolean).join(" "),
-                              },
-                            },
-                          }
+                          "_blank",
                         )
                       }
                     >
+                      {/* Patient */}
+                      <td>
+                        <div className="patient-name-cell">
+                          <span className="patient-name-primary">{getPatientFirstName(appt) || patientName}</span>
+                          {getPatientLastName(appt) && <span className="patient-name-secondary">{getPatientLastName(appt)}</span>}
+                        </div>
+                      </td>
+
+                      {/* Sex */}
+                      <td>
+                        {(() => {
+                          const g = (appt.patientDetails?.gender || "").toLowerCase();
+                          if (g === "male") return <span className="sex-icon sex-icon--male">♂</span>;
+                          if (g === "female") return <span className="sex-icon sex-icon--female">♀</span>;
+                          return <span className="sex-icon sex-icon--unknown">—</span>;
+                        })()}
+                      </td>
+
+                      {/* Age */}
+                      <td>
+                        <span className="age-text">
+                          {appt.patientDetails?.dateOfBirth ? calculateAge(appt.patientDetails.dateOfBirth) ?? "—" : "—"}
+                        </span>
+                      </td>
+
                       {/* Appointment ID */}
                       <td>
                         <span className="appt-cell-id">
@@ -393,60 +415,28 @@ const Appointments = () => {
                         </span>
                       </td>
 
-                      {/* Patient */}
+                      {/* Type of Service */}
                       <td>
-                        <div className="appt-person-cell">
-                          <div className="appt-avatar appt-avatar--patient">
-                            {getInitials(patientName)}
-                          </div>
-                          <div>
-                            <div className="appt-person-name">{patientName}</div>
-                            <div className="appt-person-sub">{appt.patientEmail || ""}</div>
-                          </div>
-                        </div>
+                        <span className="appointment-type-label">
+                          {appt.serviceType || t("appointments.types.application", "Application")}
+                        </span>
                       </td>
 
-                      {/* Date & Time */}
+                      {/* Date + Time */}
                       <td>
-                        <div className="appt-datetime-cell">
-                          <div className="appt-date-row">
-                            <FiCalendar size={12} />
-                            {formatDate(appt.date)}
-                          </div>
-                          <div className="appt-time-row">
-                            <FiClock size={12} />
-                            {formatTime(appt.startTime)} – {formatTime(appt.endTime)} MSK
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Doctor & Service */}
-                      <td>
-                        <div className="appt-doctor-cell">
-                          <div className="appt-person-cell">
-                            <div className="appt-avatar appt-avatar--doctor">
-                              {getInitials(doctorName)}
-                            </div>
-                            <div>
-                              <div className="appt-person-name">{doctorName}</div>
-                              {appt.serviceType && (
-                                <span className="appt-service-tag">{t(`application.service_type.${appt.serviceType.toLowerCase().replace(/\s+/g, "_")}`, { defaultValue: appt.serviceType })}</span>
-                              )}
-                            </div>
-                          </div>
+                        <div className="appt-date-cell">
+                          <span className="appt-date-text">{formatDateDDMMYYYY(appt.date)}</span>
+                          {(appt.startTime || appt.endTime) && (
+                            <span className="appt-time-sub">
+                              {formatTime(appt.startTime)}{appt.endTime ? " – " + formatTime(appt.endTime) : ""}
+                            </span>
+                          )}
                         </div>
                       </td>
 
                       {/* Status */}
                       <td>
-                        <div className="appt-status-cell">
-                          <StatusBadge status={appt.appointmentStatus} />
-                          {appt.appointmentMode && (
-                            <span className={`appt-mode-tag appt-mode-tag--${appt.appointmentMode?.toLowerCase().replace(/\s+/g, "-") ?? ""}`}>
-                              {appt.appointmentMode}
-                            </span>
-                          )}
-                        </div>
+                        <StatusBadge status={appt.appointmentStatus} />
                       </td>
                     </tr>
                   );

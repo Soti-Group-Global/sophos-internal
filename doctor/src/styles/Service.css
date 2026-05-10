@@ -3,7 +3,7 @@
 }
 
 .add-service-btn {
-    background: linear-gradient(135deg, #0b3b6f 0%, #0f5ea8 100%);
+    background: #0a2f5e;
     color: #fff;
     border: none;
     padding: 11px 20px;
@@ -32,7 +32,7 @@
 
 .service-modal {
     width: min(540px, 100%);
-    max-height: min(86vh, 760px);
+    height: 680px;
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 28px 80px rgba(15, 23, 42, 0.3);
@@ -50,7 +50,40 @@
 }
 
 .service-modal-header {
+    border-bottom: none;
+}
+
+/* ── Tabs ── */
+.service-modal-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 20px 12px;
     border-bottom: 1px solid #edf2f7;
+}
+
+.service-modal-tab {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: 1.5px solid transparent;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.service-modal-tab:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.service-modal-tab.active {
+    background: #eef3f9;
+    color: #0c3870;
+    border-color: #c8d8ec;
+    font-weight: 600;
 }
 
 .service-modal-header h2 {
@@ -108,7 +141,8 @@
 
 .service-modal-body {
     padding: 10px 10px 12px;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     background: #fff;
 }
 
@@ -275,6 +309,7 @@
     border-radius: 14px;
     color: #64748b;
     background: #f8fafc;
+    text-align: center;
 }
 
 .service-position-list {
@@ -291,6 +326,7 @@
     border-radius: 12px;
     background: #fff;
     cursor: pointer;
+    overflow: hidden;
     transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
@@ -317,8 +353,17 @@
 
 .service-position-card__name {
     font-size: 14px;
-    font-weight: 600;
-    line-height: 1.25;
+    font-weight: 500;
+    line-height: 1.3;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.service-position-card__code {
+    font-size: 12px;
+    font-weight: 500;
     color: #264b7a;
     white-space: nowrap;
     overflow: hidden;
@@ -334,9 +379,10 @@
 
 .service-position-card__price {
     font-size: 14px;
-    font-weight: 700;
-    color: #264b7a;
+    font-weight: 600;
+    color: #1f2937;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .service-position-card__meta {

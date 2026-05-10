@@ -27,7 +27,7 @@ import { FaMale, FaFemale } from "react-icons/fa";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { useNavigate } from "react-router-dom";
-import { patchPatient, getDoctorsLite } from "../../utils/api";
+import { patchPatient, getDoctorsLite, updateApplication } from "../../utils/api";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import CustomCalendar from "../../components/CustomCalendar/CustomCalendar";
@@ -104,9 +104,8 @@ const GenderPills = ({ value }) => {
       {genderOpts.map((g) => (
         <span
           key={g.key}
-          className={`adp-gender-pill ${
-            (!value && g.key === "") || value === g.key ? "active" : ""
-          }`}
+          className={`adp-gender-pill ${(!value && g.key === "") || value === g.key ? "active" : ""
+            }`}
         >
           {g.label}
         </span>
@@ -129,9 +128,8 @@ const GenderPillsEdit = ({ value, onChange }) => {
         <button
           key={g.key}
           type="button"
-          className={`adp-gender-toggle-btn ${
-            (!value && g.key === "") || value === g.key ? "active" : ""
-          }`}
+          className={`adp-gender-toggle-btn ${(!value && g.key === "") || value === g.key ? "active" : ""
+            }`}
           onClick={() => onChange(g.key)}
         >
           {g.label}
@@ -141,6 +139,7 @@ const GenderPillsEdit = ({ value, onChange }) => {
   );
 };
 
+
 const BasicDataSection = forwardRef(({ patient, application }, ref) => {
   const { t, i18n } = useTranslation("appointment_details_general");
   const [open, setOpen] = useState(true);
@@ -149,19 +148,19 @@ const BasicDataSection = forwardRef(({ patient, application }, ref) => {
   const lang = i18n.language === "ru" ? "ru" : "en";
   const dob = patient?.dateOfBirth
     ? new Date(patient.dateOfBirth).toLocaleDateString(
-        lang === "ru" ? "ru-RU" : "en-US",
-        { month: "long", day: "numeric", year: "numeric" }
-      )
+      lang === "ru" ? "ru-RU" : "en-US",
+      { month: "long", day: "numeric", year: "numeric" }
+    )
     : null;
   const patientId = patient?._id?.toString().slice(-4) || "—";
 
   const patientFullName = patient
     ? [patient.firstName, patient.middleName, patient.lastName]
-        .filter(Boolean)
-        .join(" ")
-        .trim() ||
-      patient.email ||
-      t("common.unknown_patient")
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    patient.email ||
+    t("common.unknown_patient")
     : application?.patientName || t("common.unknown_patient");
 
   const [form, setForm] = useState({
@@ -1451,7 +1450,7 @@ const DiseasesSection = forwardRef(({ patient }, ref) => {
   };
 
   useEffect(() => {
-    getDoctorsLite().then((data) => setDoctors(Array.isArray(data) ? data : [])).catch(() => {});
+    getDoctorsLite().then((data) => setDoctors(Array.isArray(data) ? data : [])).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -1680,7 +1679,7 @@ const FinalDiagnosisSection = forwardRef(({ patient }, ref) => {
   };
 
   useEffect(() => {
-    getDoctorsLite().then((data) => setDoctors(Array.isArray(data) ? data : [])).catch(() => {});
+    getDoctorsLite().then((data) => setDoctors(Array.isArray(data) ? data : [])).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -2759,37 +2758,37 @@ const LegalRepresentativeSection = forwardRef(({ patient }, ref) => {
   const { t } = useTranslation("appointment_details_general");
   const initReps = patient?.legalRepresentatives?.length
     ? patient.legalRepresentatives.map((r) => ({
-        lastName: r.lastName || "",
-        firstName: r.firstName || "",
-        middleName: r.middleName || "",
-        isCurrent: r.isCurrent || false,
-        birthday: r.birthday
-          ? new Date(r.birthday).toISOString().split("T")[0]
-          : "",
-        gender: r.gender || "",
-        relationship: r.relationship || "",
-        attitudeToPatient: r.attitudeToPatient || "",
-        documentOfAuthority: r.documentOfAuthority || "",
-        documentType: r.documentType || "",
-        series: r.series || "",
-        number: r.number || "",
-        whenIssued: r.whenIssued
-          ? new Date(r.whenIssued).toISOString().split("T")[0]
-          : "",
-        issuedBy: r.issuedBy || "",
-        snils: r.snils || "",
-        address: r.address || "",
-        addressType: r.addressType || "",
-        tenant: r.tenant || "",
-        subjectOfRussia: r.subjectOfRussia || "",
-        district: r.district || "",
-        city: r.city || "",
-        settlement: r.settlement || "",
-        street: r.street || "",
-        house: r.house || "",
-        apartment: r.apartment || "",
-        state: r.state || "",
-      }))
+      lastName: r.lastName || "",
+      firstName: r.firstName || "",
+      middleName: r.middleName || "",
+      isCurrent: r.isCurrent || false,
+      birthday: r.birthday
+        ? new Date(r.birthday).toISOString().split("T")[0]
+        : "",
+      gender: r.gender || "",
+      relationship: r.relationship || "",
+      attitudeToPatient: r.attitudeToPatient || "",
+      documentOfAuthority: r.documentOfAuthority || "",
+      documentType: r.documentType || "",
+      series: r.series || "",
+      number: r.number || "",
+      whenIssued: r.whenIssued
+        ? new Date(r.whenIssued).toISOString().split("T")[0]
+        : "",
+      issuedBy: r.issuedBy || "",
+      snils: r.snils || "",
+      address: r.address || "",
+      addressType: r.addressType || "",
+      tenant: r.tenant || "",
+      subjectOfRussia: r.subjectOfRussia || "",
+      district: r.district || "",
+      city: r.city || "",
+      settlement: r.settlement || "",
+      street: r.street || "",
+      house: r.house || "",
+      apartment: r.apartment || "",
+      state: r.state || "",
+    }))
     : [{ ...EMPTY_REP }];
 
   const [open, setOpen] = useState(false);
@@ -3279,11 +3278,11 @@ const GeneralInformationTab = ({ application, patient, onSave, saving, onSaved }
 
   const patientFullName = patient
     ? [patient.lastName, patient.firstName, patient.middleName]
-        .filter(Boolean)
-        .join(" ")
-        .trim() ||
-      patient.email ||
-      t("common.unknown_patient")
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    patient.email ||
+    t("common.unknown_patient")
     : application?.patientName || t("common.unknown_patient");
 
   /* refs for each section */
@@ -3302,7 +3301,7 @@ const GeneralInformationTab = ({ application, patient, onSave, saving, onSaved }
   const [savingAction, setSavingAction] = useState(null); // 'save' | 'saveAndClose' | null
 
   const handleSaveAll = useCallback(async () => {
-    if (!patient?._id) {
+    if (!patient?.patientId) {
       toast.error(t("footer.patient_not_found"));
       return;
     }
@@ -3321,7 +3320,7 @@ const GeneralInformationTab = ({ application, patient, onSave, saving, onSaved }
         radiationDoses: radiationRef.current?.getData() || [],
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
-      const updated = await patchPatient(patient._id, payload);
+      const updated = await patchPatient(patient.patientId, payload);
       legalRepRef.current?.commitEdit?.();
       onSaved?.(updated);
       toast.success(t("footer.save_success"));
@@ -3335,13 +3334,13 @@ const GeneralInformationTab = ({ application, patient, onSave, saving, onSaved }
 
   const navigate = useNavigate();
 
-  const handleSaveAndClose = useCallback(async () => {
-    if (!patient?._id) {
+  const handleSaveAndCompleted = useCallback(async () => {
+    if (!patient?.patientId) {
       toast.error(t("footer.patient_not_found"));
       return;
     }
     try {
-      setSavingAction('saveAndClose');
+      setSavingAction('saveAndCompleted');
       const payload = {
         ...(basicRef.current?.getData() || {}),
         ...(contactsRef.current?.getData() || {}),
@@ -3355,9 +3354,12 @@ const GeneralInformationTab = ({ application, patient, onSave, saving, onSaved }
         radiationDoses: radiationRef.current?.getData() || [],
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
-      const updated = await patchPatient(patient._id, payload);
+      const updated = await patchPatient(patient.patientId, payload);
       legalRepRef.current?.commitEdit?.();
       onSaved?.(updated);
+      if (application?.applicationId) {
+        await updateApplication(application.applicationId, { appointmentStatus: "Completed" });
+      }
       toast.success(t("footer.save_success"));
       navigate(-1);
     } catch (err) {
@@ -3366,7 +3368,7 @@ const GeneralInformationTab = ({ application, patient, onSave, saving, onSaved }
     } finally {
       setSavingAction(null);
     }
-  }, [patient, navigate, onSaved]);
+  }, [patient, application, navigate, onSaved]);
 
   return (
     <>
@@ -3414,10 +3416,10 @@ const GeneralInformationTab = ({ application, patient, onSave, saving, onSaved }
         </button>
         <button
           className="adp-footer-btn adp-footer-save-close-btn"
-          onClick={handleSaveAndClose}
+          onClick={handleSaveAndCompleted}
           disabled={savingAction !== null}
         >
-          {savingAction === 'saveAndClose' ? t("footer.saving") : t("footer.save_and_close")}
+          {savingAction === 'saveAndCompleted' ? t("footer.saving") : t("footer.save_and_completed", { defaultValue: "Save and completed" })}
         </button>
       </div>
     </>

@@ -16,15 +16,14 @@ import PatientDetails from "./pages/PatientDetails";
 import MedicalHistoryDetail from "./components/PatientDetails/MedicalHistoryDetail";
 import AppointmentDetails from "./pages/AppointmentDetails";
 import NetworkGuard from "./NetworkGuard";
-import EarlyDetection from "./pages/EarlyDetection";
 import Assistants from "./pages/Assistants";
-import EarlyDetectionApplicationsDetails from "./pages/EarlyDetectionApplicationsDetails";
 import EarlyDetectionBookingDetails from "./pages/EarlyDetectionBookingDetails";
 import ResetPassword from "./pages/ResetPassword";
 import { AuthContext } from "./context/AuthContext";
 import MedicalHistory from "./pages/MedicalHistory";
 import ProjectWorkspace from "./pages/ProjectWorkspace";
 import MeetingRoom from "./pages/meetingRoom";
+import EarlyDetectionApplications from "./components/EarlyDetectionApplications";
 
 
 // check login state using refresh token
@@ -98,17 +97,13 @@ function App() {
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/assistants" element={<Assistants />} />
-                  <Route path="/early-detection" element={<EarlyDetection />} />
+                  <Route path="/early-detection" element={<EarlyDetectionApplications />} />
                   <Route
                     path="/early-detection-bookings/:id"
                     element={<EarlyDetectionBookingDetails />}
                   />
                   <Route path="/meeting-room" element={<MeetingRoom />} />
                   <Route path="/tasks" element={<ProjectWorkspace />} />
-                  <Route
-                    path="/early-detection/:id"
-                    element={<EarlyDetectionApplicationsDetails />}
-                  />
                   <Route path="/patients/:id" element={<PatientDetails />} />
                   <Route
                     path="/patients/medical-history/:id"

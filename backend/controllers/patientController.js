@@ -728,7 +728,7 @@ const updatePatient = async (req, res) => {
 // Patch a patient – partial update for GeneralInformationTab fields
 const patchPatient = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.patientId);
+    const patient = await Patient.findOne({ patientId: req.params.id });
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
@@ -793,8 +793,8 @@ const patchPatient = async (req, res) => {
       }
     }
 
-    const updated = await Patient.findByIdAndUpdate(
-      req.params.patientId,
+    const updated = await Patient.findOneAndUpdate(
+      { patientId: req.params.id },
       { $set: updates },
       { new: true, runValidators: true }
     );

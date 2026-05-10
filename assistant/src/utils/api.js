@@ -615,7 +615,6 @@ export const verifyHistoryField = async (applicationId, fieldKey, isVerified, do
   return res.data;
 };
 
-// Partially update a patient by their MongoDB _id
 export const patchPatient = async (patientId, data) => {
   const res = await api.patch(`/patients/${encodeURIComponent(patientId)}`, data);
   return res.data;
@@ -1439,6 +1438,19 @@ export const addMultipleTestsToEarlyDetectionAppointment = async (
   } catch (error) {
     console.error("Error adding multiple tests to early detection:", error);
     throw error;
+  }
+};
+
+export const getPatientByPatientId = async (patientId) => {
+  try {
+    const res = await api.get(`/patients/by-patient-id/${encodeURIComponent(patientId)}`);
+    return res.data && res.data.patient ? res.data.patient : res.data;
+  } catch (error) {
+    throw {
+      status: error.response?.status || 500,
+      data: error.response?.data || null,
+      message: error.message || "Failed to fetch patient by patientId",
+    };
   }
 };
 

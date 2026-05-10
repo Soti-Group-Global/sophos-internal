@@ -317,7 +317,6 @@ const EarlyDetection = () => {
       <div className="appt-header">
         <div className="appt-header-left">
           <h1 className="appt-title">{t("EarlyDetectionApplications.header")}</h1>
-          {totalRecords > 0 && <span className="appt-total-pill">{totalRecords}</span>}
         </div>
         <div className="appt-header-right">
           <div className="appt-search-box">
@@ -345,7 +344,6 @@ const EarlyDetection = () => {
           {filteredBookings.length > 0 && (
             <button className="appt-export-btn" onClick={exportToCSV}>
               <FiDownload size={14} />
-              <span className="appt-export-label">{t("EarlyDetectionApplications.exportCSV")}</span>
             </button>
           )}
           {/* View toggle */}

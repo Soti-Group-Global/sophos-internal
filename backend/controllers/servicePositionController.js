@@ -375,10 +375,15 @@ exports.getPositions = async (req, res) => {
   try {
     const applicationId = req.params.applicationId;
     const application = await Application.findOne({ applicationId })
-      .populate({ path: "addedServicePositions", strictPopulate: false })
+      .populate({ path: "services.servicePosition", strictPopulate: false })
       .lean();
     if (!application) return res.status(404).json({ message: "Application not found" });
-    res.json({ positions: application.addedServicePositions || [] });
+    const positions = (application.services || []).map((s) => ({
+      ...(s.servicePosition || {}),
+      _id: s.servicePosition?._id ?? s.servicePosition,
+      price: s.price ?? s.servicePosition?.price,
+    }));
+    res.json({ positions });
   }
   catch (err) {
     res.status(500).json({ message: err.message });
@@ -391,13 +396,14 @@ exports.addPosition = async (req, res) => {
     const { positionId } = req.body;
     const application = await Application.findOne({ applicationId });
     if (!application) return res.status(404).json({ message: "Application not found" });
-    if (application.addedServicePositions && application.addedServicePositions.some((p) => p.toString() === positionId)) {
+    if ((application.services || []).some((s) => s.servicePosition.toString() === positionId)) {
       return res.status(400).json({ message: "Position already added" });
     }
-    if (!application.addedServicePositions) {
-      application.addedServicePositions = [];
-    }
-    application.addedServicePositions.push(positionId);
+    const servicePos = await ServicePosition.findById(positionId).lean();
+    application.services.push({
+      servicePosition: positionId,
+      price: servicePos?.price ?? null,
+    });
     await application.save();
     res.json({ message: "Position added" });
   }
@@ -411,8 +417,8 @@ exports.removePosition = async (req, res) => {
     const applicationId = req.params.applicationId;
     const positionId = req.params.positionId;
     const application = await Application.findOne({ applicationId });
-    if (!application) return res.status(404).json({ message: "Application not found" });  
-    application.addedServicePositions = (application.addedServicePositions || []).filter((p) => p.toString() !== positionId);
+    if (!application) return res.status(404).json({ message: "Application not found" });
+    application.services = (application.services || []).filter((s) => s.servicePosition.toString() !== positionId);
     await application.save();
     res.json({ message: "Position removed" });
   }

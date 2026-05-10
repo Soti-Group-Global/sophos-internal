@@ -73,12 +73,13 @@ const patientSchema = new mongoose.Schema({
   // ─── BASIC DATA ────────────────────────────────────────────────────────────
   email: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
+    sparse: true,
     trim: true,
     lowercase: true,
     validate: {
-      validator: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      validator: (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
       message: "Invalid email format.",
     },
   },

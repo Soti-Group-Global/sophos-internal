@@ -769,29 +769,34 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 6px 8px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
 .ht-appointment-item:hover {
-  background: #f1f5f9;
+  border-color: #bfdbfe;
+  background: #f8faff;
 }
 
 .ht-appointment-item:last-child {
-  border-bottom: none;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .ht-appointment-item--current {
-  border-left: 2px solid #3b82f6;
-  padding-left: 6px;
+  border-left: 3px solid #3b82f6;
+  padding-left: 8px;
 }
 
 .ht-appointment-item--selected {
   background: #eff6ff;
-  border-left: 2px solid #2563eb;
-  padding-left: 6px;
+  border-color: #93c5fd;
+  border-left: 3px solid #2563eb;
+  padding-left: 8px;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.1);
 }
 
 .ht-appointment-current-row {
@@ -2082,3 +2087,73 @@
 }
 .ht-view-field-content p { margin: 0 0 4px; }
 .ht-view-field-content p:last-child { margin-bottom: 0; }
+
+/* ══════════════════════════════════════════════════════════
+   Past appointment read-only view  (.ht-past-appt-*)
+   ══════════════════════════════════════════════════════════ */
+.ht-past-appt-view {
+  margin: 16px 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ht-past-appt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f2f5;
+  background: #f8f9fb;
+}
+
+.ht-past-appt-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ht-past-appt-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.ht-past-appt-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.ht-past-appt-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.ht-past-appt-back:hover {
+  border-color: #0c3870;
+  color: #0c3870;
+  background: #f5f8ff;
+}
+
+.ht-past-appt-loading,
+.ht-past-appt-empty {
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
+}
