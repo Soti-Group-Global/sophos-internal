@@ -1,29 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { getApptStatusClass } from "../utils/appointmentStatus";
 import {
-  ArrowLeft,
-  User,
-  Calendar,
   CheckCircle,
   Clock,
   Edit2,
   Trash2,
   FileText,
-  Copy,
-  Check,
   Plus,
-  ExternalLink,
-  ChevronDown,
-  Save,
   Eye,
   Download,
-  MoreVertical,
-  Globe,
-  Pencil,
-  Settings,
-  Lock,
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import {
@@ -53,14 +39,17 @@ import {
   deleteEarlyDetectionTestEntryNote,
   saveEarlyDetectionSpecialistHistoryForm,
 } from "../utils/api";
-import { createPortal } from "react-dom";
 import GeneralInformationTab from "../components/GeneralInformationTab";
-import CustomCalendar from "../components/CustomCalendar";
-import CustomTimePicker from "../components/CustomTimePicker";
 import RichTextEditor from "../components/RichTextEditor";
-import SpecialistHistoryForm from "../components/SpecialistHistoryForm";
-import EarlyDetectionReportTab from "./EarlyDetectionReportTab";
+import EDHeader from "../components/EarlyDetection/EDHeader";
+import EDIconSidebar from "../components/EarlyDetection/EDIconSidebar";
+import EDMedicalSubnav from "../components/EarlyDetection/EDMedicalSubnav";
+import EDScheduleTab from "../components/EarlyDetection/EDScheduleTab";
+import EDMedicalHistoryContent from "../components/EarlyDetection/EDMedicalHistoryContent";
+import EDHistoryNotesTab from "../components/EarlyDetection/EDHistoryNotesTab";
+import EDModals from "../components/EarlyDetection/EDModals";
 import "../styles/EarlyDetectionBookingDetails.css";
+import "../styles/PatientDetailsPage.css";
 
 const ED_PACKAGES = [{ id: "predict", name: { en: "PREDICT", ru: "«ПРЕДИКТ»" }, price: 99500 }];
 
@@ -245,16 +234,12 @@ const toLocalDateOnly = (value) => {
   return `${y}-${m}-${d}`;
 };
 
-const formatLocalDateOnly = (value, locale = "en-US") => {
+const formatLocalDateOnly = (value) => {
   const dateOnly = toLocalDateOnly(value);
   if (!dateOnly) return "-";
   const [y, m, d] = dateOnly.split("-").map(Number);
-  const localDate = new Date(y, (m || 1) - 1, d || 1);
-  return localDate.toLocaleDateString(locale, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  if (!y || !m || !d) return "-";
+  return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
 };
 
 const normalizeId = (value) => {
@@ -363,20 +348,25 @@ const EarlyDetectionBookingDetails = () => {
   const [testToDelete, setTestToDelete] = useState(null);
   const [showDeleteNoteConfirm, setShowDeleteNoteConfirm] = useState(false);
   const [noteIdToDelete, setNoteIdToDelete] = useState(null);
-  const [activeTab, setActiveTab] = useState("appointmentDetails");
-  const [activeScheduleTab, setActiveScheduleTab] = useState("laboratoryTests");
+  const [activeTab, setActiveTab] = useState("patient");
+  const [navExpanded, setNavExpanded] = useState(false);
+  const [activeScheduleTab, setActiveScheduleTab] = useState("specialistConsultation");
   const [activeTestId, setActiveTestId] = useState(null);
   const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
   const [testNoteDraft, setTestNoteDraft] = useState("");
   const [editingTestNoteId, setEditingTestNoteId] = useState(null);
   const [isSavingTestNote, setIsSavingTestNote] = useState(false);
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
+  const [specialistAccordionOpen, setSpecialistAccordionOpen] = useState(true);
   const [editedScheduleItems, setEditedScheduleItems] = useState([]);
 
   useEffect(() => {
     document.body.classList.add("hide-global-sidebar");
+    const lc = document.querySelector(".layout-content");
+    if (lc) lc.classList.add("ed-booking-details-active");
     return () => {
       document.body.classList.remove("hide-global-sidebar");
+      if (lc) lc.classList.remove("ed-booking-details-active");
     };
   }, []);
   const [doctors, setDoctors] = useState([]);
@@ -500,6 +490,14 @@ const EarlyDetectionBookingDetails = () => {
       return prev;
     });
   }, [activeScheduleTab, booking]);
+
+  // Reset schedule sub-tab to Specialist Consultation whenever medical history tab is opened
+  useEffect(() => {
+    if (activeTab === "medicalHistory") {
+      setActiveScheduleTab("specialistConsultation");
+      setActiveTestId(null);
+    }
+  }, [activeTab]);
 
   // Close payment dropdown on outside click
   useEffect(() => {
@@ -1125,14 +1123,12 @@ const EarlyDetectionBookingDetails = () => {
 
   const formatDate = (date) => {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString(
-      i18n.language === "ru" ? "ru-RU" : "en-US",
-      {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      },
-    );
+    try {
+      const iso = String(date).split("T")[0];
+      const [y, m, d] = iso.split("-").map(Number);
+      if (!y || !m || !d) return "-";
+      return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
+    } catch { return "-"; }
   };
 
   const formatDateTime = (date) => {
@@ -1572,8 +1568,6 @@ const EarlyDetectionBookingDetails = () => {
   };
 
   const showSidebarTabs = ["payments", "history", "notes"].includes(activeTab);
-  const isConclusionView =
-    activeTab === "medicalHistory" && activeScheduleTab === "conclusion";
   const readNameField = (value) => {
     if (!value) return "";
     if (typeof value === "string") return value.trim();
@@ -2115,27 +2109,27 @@ const EarlyDetectionBookingDetails = () => {
                   const entry = selectedEntries.find((item) => (item?.files || []).some((entryFile) => normalizeId(entryFile?.fileId) === normalizeId(file?.fileId) || normalizeId(entryFile?._id) === normalizeId(file?._id)));
                   const entryId = entry?._id || selectedEntries[0]?._id;
                   return (
-                  <div key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-td-item">
-                    <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
-                    <div className="ed-td-item-info">
-                      <span className="ed-td-item-name">{getFileLabel(file)}</span>
-                      <span className="ed-td-item-meta">
-                        <Clock size={11} />
-                        {formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)}
-                      </span>
+                    <div key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-td-item">
+                      <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
+                      <div className="ed-td-item-info">
+                        <span className="ed-td-item-name">{getFileLabel(file)}</span>
+                        <span className="ed-td-item-meta">
+                          <Clock size={11} />
+                          {formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)}
+                        </span>
+                      </div>
+                      <div className="ed-td-item-actions">
+                        {renderFileActionButtons(file)}
+                        <button
+                          type="button"
+                          className="ed-td-icon-btn ed-td-icon-btn--delete"
+                          title={t("earlyDiagnosis.delete", "Delete")}
+                          onClick={() => handleDeleteSelectedTestFile(section, entryId, file)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="ed-td-item-actions">
-                      {renderFileActionButtons(file)}
-                      <button
-                        type="button"
-                        className="ed-td-icon-btn ed-td-icon-btn--delete"
-                        title={t("earlyDiagnosis.delete", "Delete")}
-                        onClick={() => handleDeleteSelectedTestFile(section, entryId, file)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
                   );
                 })
               )}
@@ -2311,1337 +2305,243 @@ const EarlyDetectionBookingDetails = () => {
     )
     : null;
 
+  const patientGender = booking?.patient?.gender || null;
+  const patientAge = (() => {
+    const dob = booking?.patient?.dateOfBirth;
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth)) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+  })();
+
   return (
-  <div className="booking-details-page">
-    <ToastContainer position="top-right" autoClose={3000} />
-    <div className="adp-top-header">
-      <button
-        className="adp-back-btn"
-        onClick={() => navigate("/early-detection")}
-      >
-        <ArrowLeft size={14} />
-        <span>{t("earlyDiagnosis.backToSchedule")}</span>
-      </button>
+    <div className="booking-details-page">
+      <ToastContainer position="top-right" autoClose={3000} />
+      <EDHeader
+        booking={booking}
+        patientDisplayName={patientDisplayName}
+        dobHeader={dobHeader}
+        formatDate={formatDate}
+        patientGender={patientGender}
+        patientAge={patientAge}
+      />
 
-      <div className="adp-header-divider" />
+      <div className="booking-details-content">
+        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}${navExpanded ? " ed-details-body--sidebar-expanded" : ""}`}>
+          <EDIconSidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            patientBookings={patientBookings}
+            selectedBookingId={selectedBookingId}
+            setSelectedBookingId={setSelectedBookingId}
+            formatDate={formatDate}
+            normalizeId={normalizeId}
+            navExpanded={navExpanded}
+            setNavExpanded={setNavExpanded}
+          />
 
-      <div className="adp-header-center">
-        <div className="adp-header-name-row">
-          <h1 className="adp-patient-title">
-            {t("earlyDiagnosis.patients")}: <strong>{patientDisplayName}</strong>
-          </h1>
-          <span className="adp-status-badge-header">
-            {(
-              {
-                confirmed: t("earlyDiagnosis.confirmed"),
-                pending: t("earlyDiagnosis.pendingStatus"),
-                cancelled: t("earlyDiagnosis.cancelled"),
-                completed: t("earlyDiagnosis.completed"),
-              }[booking.status?.toLowerCase()] || booking.status || "Active"
-            )}
-          </span>
-        </div>
-        <span className="adp-added-date">
-          No.{booking.invoiceNumber || booking.bookingNumber} &nbsp;·&nbsp; {t("earlyDiagnosis.addedToSystemOn")} {formatDate(booking.createdAt)}
-        </span>
-      </div>
+          {activeTab === "medicalHistory" && (
+            <EDMedicalSubnav
+              booking={booking}
+              activeScheduleTab={activeScheduleTab}
+              setActiveScheduleTab={setActiveScheduleTab}
+              activeTestId={activeTestId}
+              setActiveTestId={setActiveTestId}
+              managedTests={managedTests}
+              managedSectionTabs={managedSectionTabs}
+              specialistAccordionOpen={specialistAccordionOpen}
+              setSpecialistAccordionOpen={setSpecialistAccordionOpen}
+              activeSpecialistTab={activeSpecialistTab}
+              setActiveSpecialistTab={setActiveSpecialistTab}
+              openTestSettingsModal={openTestSettingsModal}
+              openUploadSectionModal={openUploadSectionModal}
+              normalizeId={normalizeId}
+              normalizeSpecialistTitle={normalizeSpecialistTitle}
+              readLocalizedName={readLocalizedName}
+              getManagedTestEntries={getManagedTestEntries}
+              setShowTestNoteEditor={setShowTestNoteEditor}
+              setTestNoteDraft={setTestNoteDraft}
+              setEditingTestNoteId={setEditingTestNoteId}
+            />
+          )}
 
-      {dobHeader && (
-        <div className="adp-header-right">
-          <span className="adp-dob-value">{dobHeader}</span>
-          <span className="adp-dob-label">{t("earlyDiagnosis.dob")}</span>
-        </div>
-      )}
-    </div>
-
-    <div className="booking-details-content">
-      <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-med-sidebar" : ""}`}>
-        <aside className={`ed-appointments-sidebar adp-app-sidebar${activeTab === "medicalHistory" ? " ed-sidebar-expanded" : ""}`}>
-          <div className="ed-sidebar-icons">
-            <div className="ed-appointments-sidebar-list ed-sidebar-icon-list" role="tablist" aria-label={t("earlyDiagnosis.sectionTabs", "Section tabs")}>
-              {[
-                { key: "patient", Icon: User, label: t("earlyDiagnosis.patientInformation", "Patient information") },
-                { key: "appointmentDetails", Icon: Calendar, label: t("earlyDiagnosis.appointmentDetails", "Appointment details") },
-                { key: "medicalHistory", Icon: FileText, label: t("earlyDiagnosis.medicalHistory", "Medical history") },
-                { key: "history", Icon: Clock, label: t("earlyDiagnosis.historyLogs", "History logs") },
-                { key: "notes", Icon: Edit2, label: t("earlyDiagnosis.internalNotes", "Internal notes") },
-              ].map(({ key, Icon, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`ed-sidebar-icon-btn${activeTab === key ? " active" : ""}`}
-                  onClick={() => setActiveTab(key)}
-                  aria-label={label}
-                  title={label}
-                >
-                  <Icon size={18} />
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        {activeTab === "medicalHistory" && (
-          <aside className="ed-medical-history-sidebar ed-medical-history-outside">
-            <div className="ed-sidebar-medical-tabs">
-              {[
-                ["specialistConsultation", t("earlyDiagnosis.specialistConsultation")],
-                ["laboratoryTests", t("earlyDiagnosis.laboratoryTests")],
-                ["instrumentalAnalysis", t("earlyDiagnosis.instrumentalAnalysis")],
-                ["morphologicalResearch", t("earlyDiagnosis.morphologicalResearch")],
-                ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations")],
-                ["conclusion", t("earlyDiagnosis.conclusion")],
-              ].map(([key, label]) => (
-                <React.Fragment key={key}>
-                  <button
-                    type="button"
-                    className={`ed-sidebar-medical-tab-btn${activeScheduleTab === key ? " active" : ""}`}
-                    onClick={() => {
-                      setActiveScheduleTab(key);
-                      if (managedSectionTabs.includes(key)) {
-                        setActiveTestId(null);
+          <div
+            className={`booking-details-layout booking-details-layout--single${showSidebarTabs ? " booking-details-layout--sidebar-only" : ""}`}
+          >
+            {/* Left Column */}
+            {!showSidebarTabs && (
+              <div className="booking-details-main">
+                {activeTab === "patient" && (
+                  <GeneralInformationTab
+                    application={{
+                      createdAt: booking.createdAt,
+                      applicationId: booking.invoiceNumber || booking.bookingNumber,
+                      patientName:
+                        [booking?.patient?.lastName, booking?.patient?.firstName, booking?.patient?.middleName]
+                          .filter(Boolean)
+                          .join(" ")
+                          .trim() ||
+                        booking?.patientName ||
+                        "",
+                      patientEmail: booking?.patient?.email || booking?.patientEmail || "",
+                    }}
+                    patient={
+                      booking.patient || {
+                        _id: booking?.patientId || "",
+                        email: booking?.patientEmail || "",
+                        firstName: booking?.patientName || "",
                       }
-                    }}
-                  >
-                    <span>{label}</span>
-                    {managedSectionTabs.includes(key) && (
-                      <span
-                        className="ed-tab-settings-btn"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openTestSettingsModal(key);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            openTestSettingsModal(key);
-                          }
-                        }}
-                        title={t("earlyDiagnosis.manageTests")}
-                      >
-                        <Settings size={14} />
-                      </span>
-                    )}
-                  </button>
-
-                  {managedSectionTabs.includes(key) && (managedTests?.[key] || []).length > 0 && (
-                    <div className="ed-subnav-test-list">
-                      {(managedTests[key] || []).map((test) => {
-                        const testId = normalizeId(test?._id);
-                        const entries = getManagedTestEntries(key, testId);
-                        const isDone = entries.some((entry) => Array.isArray(entry?.files) && entry.files.length > 0);
-                        const isActive = activeScheduleTab === key && activeTestId === testId;
-
-                        return (
-                          <button
-                            key={testId}
-                            type="button"
-                            className={`ed-subnav-test-item${isDone ? " ed-subnav-test-item--done" : ""}${isActive ? " ed-subnav-test-item--active" : ""}`}
-                            onClick={() => {
-                              setActiveScheduleTab(key);
-                              setActiveTestId(isActive ? null : testId);
-                            }}
-                          >
-                            <span className="ed-subnav-test-name">{readLocalizedName(test?.name)}</span>
-                            {isDone && <CheckCircle size={12} className="ed-subnav-test-check" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          </aside>
-        )}
-
-        <div
-          className={`booking-details-layout booking-details-layout--single${showSidebarTabs ? " booking-details-layout--sidebar-only" : ""}`}
-        >
-          {/* Left Column */}
-          {!showSidebarTabs && (
-            <div className="booking-details-main">
-              {activeTab === "patient" && (
-                <GeneralInformationTab
-                  application={{
-                    createdAt: booking.createdAt,
-                    applicationId: booking.invoiceNumber || booking.bookingNumber,
-                    patientName:
-                      [booking?.patient?.lastName, booking?.patient?.firstName, booking?.patient?.middleName]
-                        .filter(Boolean)
-                        .join(" ")
-                        .trim() ||
-                      booking?.patientName ||
-                      "",
-                    patientEmail: booking?.patient?.email || booking?.patientEmail || "",
-                  }}
-                  patient={
-                    booking.patient || {
-                      _id: booking?.patientId || "",
-                      email: booking?.patientEmail || "",
-                      firstName: booking?.patientName || "",
                     }
-                  }
-                  onSave={(updatedPatient) => {
-                    setBooking((prev) => ({
-                      ...prev,
-                      patient: updatedPatient,
-                    }));
-                  }}
-                />
-              )}
-
-              {activeTab === "appointmentDetails" && (
-                <>
-                  {/* Appointment Details */}
-                  <div className="ed-schedule-wrapper">
-                    {[1, 2].map((day) => (
-                      <div key={day} className="ed-day-card">
-                        <div className="ed-day-header">
-                          <div className="ed-day-header-left">
-                            <span className="ed-day-title">{`${t("earlyDiagnosis.dayLabel")} ${day}`}</span>
-                            <span className="ed-day-date">{formatDayMetaDate(groupedSchedule[day])}</span>
-                          </div>
-                          <span className="ed-day-count-badge">
-                            {`${groupedSchedule[day].length} ${t("earlyDiagnosis.appointments")}`}
-                          </span>
-                        </div>
-                        <div className="ed-day-body">
-                          {groupedSchedule[day].length === 0 ? (
-                            <div className="ed-schedule-empty">{t("earlyDiagnosis.noAppointments")}</div>
-                          ) : (
-                            groupedSchedule[day].map((item, index) => (
-                              (() => {
-                                const scheduleItemId = normalizeId(item?._id || item?.id) || `${day}-${index}`;
-                                return (
-                                  <div
-                                    key={scheduleItemId}
-                                    className="ed-schedule-item"
-                                  >
-                                    {!isEditing ? (
-                                      <div className="ed-schedule-view-card">
-                                        <div className="ed-schedule-view-icon">
-                                          <FileText size={18} />
-                                        </div>
-                                        <div className="ed-schedule-view-main">
-                                          <div className="ed-schedule-view-topline">
-                                            <span className="ed-schedule-view-specialty">
-                                              {item?.title ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`, item.title) : t("earlyDiagnosis.consultation")}
-                                            </span>
-                                          </div>
-                                          <div className="ed-schedule-view-doctor">{getDoctorDisplayName(item?.doctor)}</div>
-                                          <div className="ed-schedule-view-meta">
-                                            <span className="ed-schedule-view-meta-item">
-                                              <Calendar size={13} />
-                                              {item?.date
-                                                ? formatLocalDateOnly(item.date, i18n.language === "ru" ? "ru-RU" : "en-US")
-                                                : t("earlyDiagnosis.dateNotSet")}
-                                            </span>
-                                            <span className="ed-schedule-view-meta-item">
-                                              <Clock size={13} />
-                                              {item?.startTime && item?.endTime ? `${item.startTime} - ${item.endTime}` : t("earlyDiagnosis.notScheduled")}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        <div className="ed-schedule-view-right">
-                                          <div className="ed-schedule-view-status-label">{t("earlyDiagnosis.status")}</div>
-                                          <span className={`ed-schedule-view-status ${item?.isCompleted ? "is-confirmed" : "is-pending"}`}>
-                                            <span className="ed-schedule-view-status-dot" />
-                                            {item?.isCompleted
-                                              ? t("earlyDiagnosis.confirmed")
-                                              : t("earlyDiagnosis.pendingStatus")}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <div className="ed-schedule-head">
-                                          <div className="ed-schedule-title">
-                                            {item?.title ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`, item.title) : t("earlyDiagnosis.consultation")}
-                                          </div>
-                                          <label className="ed-process-toggle" title={t("earlyDiagnosis.markAsCompleted")}
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              checked={!!item?.isCompleted}
-                                              disabled={!isEditing}
-                                              onChange={(e) => handleScheduleItemChange(scheduleItemId, "isCompleted", e.target.checked)}
-                                            />
-                                            <span className="ed-process-toggle-slider" />
-                                            <span className="ed-process-toggle-label">
-                                              {item?.isCompleted
-                                                ? t("earlyDiagnosis.completed")
-                                                : t("earlyDiagnosis.pendingStatus")}
-                                            </span>
-                                          </label>
-                                        </div>
-                                        <div className="ed-schedule-grid">
-                                          <div className="ed-schedule-field">
-                                            <label>{t("earlyDiagnosis.dateShort").toUpperCase()}</label>
-                                            {isEditing ? (
-                                              <CustomCalendar
-                                                value={item?.date ? String(item.date).split("T")[0] : ""}
-                                                onChange={(date) =>
-                                                  setEditedScheduleItems((prev) =>
-                                                    prev.map((row) =>
-                                                      normalizeId(row?._id || row?.id) === normalizeId(scheduleItemId)
-                                                        ? {
-                                                          ...row,
-                                                          date: toLocalDateOnly(date),
-                                                          startTime: "",
-                                                          endTime: "",
-                                                        }
-                                                        : row,
-                                                    ),
-                                                  )
-                                                }
-                                                minDate={new Date()}
-                                                dateFormat="yyyy-MM-dd"
-                                                className="ed-schedule-calendar"
-                                              />
-                                            ) : (
-                                              <span>
-                                                {formatLocalDateOnly(
-                                                  item?.date,
-                                                  i18n.language === "ru" ? "ru-RU" : "en-US",
-                                                )}
-                                              </span>
-                                            )}
-                                          </div>
-                                          <div className="ed-schedule-field">
-                                            <label>{t("earlyDiagnosis.doctorShort").toUpperCase()}</label>
-                                            {isEditing ? (
-                                              <select
-                                                className="ed-schedule-input"
-                                                value={
-                                                  typeof item?.doctor === "object"
-                                                    ? item?.doctor?._id || ""
-                                                    : item?.doctor || ""
-                                                }
-                                                onChange={(e) =>
-                                                  setEditedScheduleItems((prev) =>
-                                                    prev.map((row) =>
-                                                      normalizeId(row?._id || row?.id) === normalizeId(scheduleItemId)
-                                                        ? {
-                                                          ...row,
-                                                          doctor: e.target.value,
-                                                          startTime: "",
-                                                          endTime: "",
-                                                        }
-                                                        : row,
-                                                    ),
-                                                  )
-                                                }
-                                              >
-                                                <option value="">
-                                                  {loadingDoctors
-                                                    ? t("earlyDiagnosis.loadingDoctors")
-                                                    : getDoctorsForScheduleItem(item).length
-                                                      ? t("earlyDiagnosis.selectDoctor")
-                                                      : t("earlyDiagnosis.noMatchingDoctors")}
-                                                </option>
-                                                {getDoctorsForScheduleItem(item).map((doctor) => (
-                                                  <option key={normalizeId(doctor._id) || doctor.email} value={normalizeId(doctor._id) || ""}>
-                                                    {getDoctorDisplayName(doctor)}
-                                                  </option>
-                                                ))}
-                                              </select>
-                                            ) : (
-                                              <span>{getDoctorDisplayName(item?.doctor)}</span>
-                                            )}
-                                          </div>
-                                          <div className="ed-schedule-field">
-                                            <label>{t("earlyDiagnosis.startTimeShort").toUpperCase()}</label>
-                                            {isEditing ? (
-                                              <CustomTimePicker
-                                                value={item?.startTime || ""}
-                                                onChange={(timeStr) =>
-                                                  setEditedScheduleItems((prev) =>
-                                                    prev.map((row) => {
-                                                      if (normalizeId(row?._id || row?.id) !== normalizeId(scheduleItemId)) return row;
-                                                      const nextRow = { ...row, startTime: timeStr };
-                                                      const availableEndTimes = getAvailableEndTimesForItem(nextRow, scheduleItemId);
-                                                      if (!availableEndTimes.includes(nextRow.endTime)) {
-                                                        nextRow.endTime = "";
-                                                      }
-                                                      return nextRow;
-                                                    }),
-                                                  )
-                                                }
-                                                className="ed-schedule-input"
-                                                placeholder={t("earlyDiagnosis.selectTime")}
-                                                disabled={!resolveDoctorEmail(item?.doctor) || !toLocalDateOnly(item?.date)}
-                                                allowedTimes={getAvailableStartTimesForItem(item, scheduleItemId)}
-                                              />
-                                            ) : (
-                                              <span>{item?.startTime || "-"}</span>
-                                            )}
-                                          </div>
-                                          <div className="ed-schedule-field">
-                                            <label>{t("earlyDiagnosis.endTimeShort").toUpperCase()}</label>
-                                            {isEditing ? (
-                                              <CustomTimePicker
-                                                value={item?.endTime || ""}
-                                                onChange={(timeStr) =>
-                                                  handleScheduleItemChange(scheduleItemId, "endTime", timeStr)
-                                                }
-                                                className="ed-schedule-input"
-                                                placeholder={t("earlyDiagnosis.selectTime")}
-                                                disabled={!item?.startTime || !resolveDoctorEmail(item?.doctor) || !toLocalDateOnly(item?.date)}
-                                                allowedTimes={getAvailableEndTimesForItem(item, scheduleItemId)}
-                                              />
-                                            ) : (
-                                              <span>{item?.endTime || "-"}</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                )
-                              })()
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {activeTab === "medicalHistory" && (
-                <>
-                <div className="detail-section">
-
-                    <div className="detail-section-content">
-                      <div className="ed-medical-history-content">
-                    {managedSectionTabs.includes(activeScheduleTab) && renderManagedTestSection(activeScheduleTab)}
-
-                    {activeScheduleTab === "morphologicalResearch" && (
-                      <div className="ed-schedule-section-list">
-                        <div className="ed-section-actions-row">
-                          <button
-                            type="button"
-                            className="ed-upload-btn"
-                            onClick={() => openUploadSectionModal("morphologicalResearch")}
-                          >
-                            {t("earlyDiagnosis.uploadFile")}
-                          </button>
-                        </div>
-                        {(booking?.schedule?.morphologicalResearch?.files || []).length === 0 ? (
-                          <div className="ed-schedule-empty">{t("earlyDiagnosis.noFiles")}</div>
-                        ) : (
-                          <div className="ed-section-card ed-test-card">
-                            <ul className="ed-files-list ed-test-files-list">
-                              {(booking?.schedule?.morphologicalResearch?.files || []).map((file, fileIndex) => (
-                                <li key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-file-row ed-test-file-row">
-                                  <div className="ed-test-file-left">
-                                    <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
-                                      {getFileExtension(file).toUpperCase()}
-                                    </span>
-                                    <span className="ed-test-file-meta">
-                                      <span className="ed-test-file-name">{getFileLabel(file)}</span>
-                                      <span className="ed-test-file-subtext">
-                                        {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy || file?.uploadedByDoctorName].filter(Boolean).join(" • ")}
-                                      </span>
-                                    </span>
-                                  </div>
-                                  <span className="ed-file-actions ed-test-file-actions">
-                                    {renderFileActionButtons(file)}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        <div className="ed-section-card">
-                          <div className="ed-section-head-row">
-                            <div className="ed-section-title">{t("earlyDiagnosis.morphologicalResearch")}</div>
-                            <div className="ed-history-actions">
-                              <button
-                                type="button"
-                                className="save-btn"
-                                onClick={() => handleSaveManagedSectionComment("morphologicalResearch")}
-                                disabled={!!sectionEditors?.morphologicalResearch?.saving}
-                              >
-                                {sectionEditors?.morphologicalResearch?.saving ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.save")}
-                              </button>
-                            </div>
-                          </div>
-                          <div className="ed-history-rich-editor">
-                            <RichTextEditor
-                              value={sectionEditors?.morphologicalResearch?.value || ""}
-                              onChange={(html) => updateSectionEditor("morphologicalResearch", { value: html })}
-                              placeholder={t("history_tab.enter_text")}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeScheduleTab === "proceduresAndManipulations" && (
-                      <div className="ed-schedule-section-list">
-                        <div className="ed-section-actions-row">
-                          <button
-                            type="button"
-                            className="ed-upload-btn"
-                            onClick={() => openUploadSectionModal("proceduresAndManipulations")}
-                          >
-                            {t("earlyDiagnosis.uploadFile")}
-                          </button>
-                        </div>
-
-                        {(booking?.schedule?.proceduresAndManipulations?.files || []).length === 0 ? (
-                          <div className="ed-schedule-empty">{t("earlyDiagnosis.noFiles")}</div>
-                        ) : (
-                          <div className="ed-section-card ed-test-card">
-                            <ul className="ed-files-list ed-test-files-list">
-                              {(booking?.schedule?.proceduresAndManipulations?.files || []).map((file, fileIndex) => (
-                                <li key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-file-row ed-test-file-row">
-                                  <div className="ed-test-file-left">
-                                    <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
-                                      {getFileExtension(file).toUpperCase()}
-                                    </span>
-                                    <span className="ed-test-file-meta">
-                                      <span className="ed-test-file-name">{getFileLabel(file)}</span>
-                                      <span className="ed-test-file-subtext">
-                                        {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy || file?.uploadedByDoctorName].filter(Boolean).join(" • ")}
-                                      </span>
-                                    </span>
-                                  </div>
-                                  <span className="ed-file-actions ed-test-file-actions">
-                                    {renderFileActionButtons(file)}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        <div className="ed-section-card">
-                          <div className="ed-section-head-row">
-                            <div className="ed-section-title">{t("earlyDiagnosis.proceduresAndManipulations")}</div>
-                            <div className="ed-history-actions">
-                              <button
-                                type="button"
-                                className="save-btn"
-                                onClick={() => handleSaveManagedSectionComment("proceduresAndManipulations")}
-                                disabled={!!sectionEditors?.proceduresAndManipulations?.saving}
-                              >
-                                {sectionEditors?.proceduresAndManipulations?.saving ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.save")}
-                              </button>
-                            </div>
-                          </div>
-                          <div className="ed-history-rich-editor">
-                            <RichTextEditor
-                              value={sectionEditors?.proceduresAndManipulations?.value || ""}
-                              onChange={(html) => updateSectionEditor("proceduresAndManipulations", { value: html })}
-                              placeholder={t("history_tab.enter_text")}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeScheduleTab === "specialistConsultation" && (
-                      <div className="detail-section">
-
-                        {(() => {
-                          const specialistList = getVisibleSpecialistConsultations(booking);
-
-                          if (specialistList.length === 0) {
-                            return <div className="ed-schedule-empty">{t("earlyDiagnosis.noSpecialistConsultations")}</div>;
-                          }
-
-                          const currentIndex =
-                            activeSpecialistTab !== null && activeSpecialistTab >= 0 && activeSpecialistTab < specialistList.length
-                              ? activeSpecialistTab
-                              : 0;
-
-                          const specialist = specialistList[currentIndex];
-
-                          if (!specialist) {
-                            return <div className="ed-schedule-empty">{t("earlyDiagnosis.noSpecialistConsultations")}</div>;
-                          }
-
-                          const specialistDoctorEmail = normalizeDoctorEmail(specialist?.doctor);
-                          const isSpecialistOwner = !!currentDoctorEmail && specialistDoctorEmail === currentDoctorEmail;
-                          const displaySpecialistTitle = specialist.title ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`, specialist.title) : specialist.title;
-
-                          return (
-                            <div className="ed-specialist-consultation-wrapper">
-                              <div className="ed-schedule-tabs ed-specialist-tabs">
-                          {getVisibleSpecialistConsultations(booking).map((s, i) => {
-                            const specialistDoctorEmail = normalizeDoctorEmail(s?.doctor);
-                            const isOwned = !!currentDoctorEmail && specialistDoctorEmail === currentDoctorEmail;
-
-                            // CRITICAL DEBUG: Log specialist consultation data with currentDoctorEmail
-                            if (i === 0) {
-                              console.log("[DEBUG-CRITICAL] First specialist tab render:", {
-                                currentDoctorEmail: currentDoctorEmail,
-                                currentDoctorEmailEmpty: !currentDoctorEmail,
-                                currentDoctorEmailLength: currentDoctorEmail.length,
-                                specialistDoctorEmail,
-                                isOwned,
-                                doctorObject: s.doctor,
-                              });
-                            }
-
-                            console.log(`[DEBUG] Specialist ${i} (${s?.title}):`, {
-                              doctorRaw: s?.doctor,
-                              specialistDoctorEmail,
-                              currentDoctorEmail,
-                              isOwned,
-                            });
-                            const displayTitle = s?.title
-                              ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(s.title)}`, s.title)
-                              : `${t("earlyDiagnosis.specialist")} ${i + 1}`;
-
-                            return (
-                              <button
-                                key={`specialist_${i}`}
-                                type="button"
-                                className={`ed-schedule-tab-btn ${activeSpecialistTab === i ? "active" : ""} ${!isOwned ? "ed-schedule-tab-btn--locked" : ""}`}
-                                onClick={() => setActiveSpecialistTab(i)}
-                                title={!isOwned ? t("earlyDiagnosis.specialistTabLocked") : displayTitle}
-                              >
-                                <span>
-                                  {displayTitle}
-                                  {!isOwned && <Lock size={14} style={{ marginLeft: 6 }} />}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                              <SpecialistHistoryForm
-                                key={`specialist_form_${currentIndex}`}
-                                specialistTitle={displaySpecialistTitle}
-                                historyForm={specialistForms[currentIndex] || specialist.historyForm || {}}
-                                isSaving={!!specialistFormSaving[currentIndex]}
-                                isEditable={isSpecialistOwner}
-                                onSave={(formData) => handleSaveSpecialistForm(currentIndex, formData)}
-                              />
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-                    {activeScheduleTab === "conclusion" && (
-                      <div className="ed-report-full-screen">
-                        <EarlyDetectionReportTab booking={booking} />
-                      </div>
-                    )}
-                      </div>
-                    </div>
-                  
-                </div>                  
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Right Column */}
-          {showSidebarTabs && (
-            <div className="booking-details-sidebar">
-              {/* History & Logs */}
-              {activeTab === "history" && (
-                <div className="sidebar-section">
-                  <h3 className="sidebar-title">
-                    {t("earlyDiagnosis.historyLogs").toUpperCase()}
-                  </h3>
-                  <div className="history-timeline">
-                    {booking.payment?.status === "paid" && (
-                      <div className="timeline-item timeline-item--completed">
-                        <div className="timeline-dot green">
-                          <CheckCircle size={12} />
-                        </div>
-                        <div className="timeline-content timeline-content--plain">
-                          <p className="timeline-kicker timeline-kicker--completed">{t("earlyDiagnosis.completed")}</p>
-                          <p className="timeline-title">{t("earlyDiagnosis.paymentVerified")}</p>
-                          <p className="timeline-description">
-                            {(() => {
-                              const transactionRef = booking.payment?.transactionId || booking.payment?.tbank?.paymentId || booking.payment?.tbank?.orderId;
-                              if (transactionRef) {
-                                return `${t("earlyDiagnosis.transaction")} #${transactionRef} ${t("earlyDiagnosis.paymentProcessed")}`;
-                              }
-                              return t("earlyDiagnosis.paymentStatusUpdated");
-                            })()}
-                          </p>
-                          <div className="timeline-pills">
-                            <span className="timeline-pill">{formatDate(booking.payment.paidAt)}</span>
-                            <span className="timeline-pill">{new Date(booking.payment.paidAt).toLocaleTimeString(i18n.language === "ru" ? "ru-RU" : "en-US", { hour: "2-digit", minute: "2-digit" })}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="timeline-item timeline-item--milestone">
-                      <div className="timeline-dot blue">
-                        <Calendar size={12} />
-                      </div>
-                      <div className="timeline-content timeline-content--plain">
-                        <p className="timeline-kicker timeline-kicker--milestone">{t("earlyDiagnosis.nextMilestone")}</p>
-                        <p className="timeline-title">{t("earlyDiagnosis.appointmentScheduled")}</p>
-
-                        <div className="timeline-service-list">
-                          {[1, 2].map((day) => {
-                            const dayItems = groupedSchedule?.[day] || [];
-                            if (!dayItems.length) return null;
-
-                            return (
-                              <div key={`timeline-day-${day}`} className="timeline-day-group">
-                                <p className="timeline-day-title">{`${t("earlyDiagnosis.dayLabel")} ${day}`}</p>
-                                {dayItems.map((specialist, idx) => (
-                                  <div key={`service-log-${day}-${idx}`} className="timeline-service-card">
-                                    <div className="timeline-service-icon">
-                                      <FileText size={16} />
-                                    </div>
-                                    <div className="timeline-service-main">
-                                      <p className="timeline-service-title">
-                                        {specialist.title
-                                          ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`, specialist.title)
-                                          : `${t("earlyDiagnosis.service")} ${idx + 1}`}
-                                      </p>
-                                      <p className="timeline-service-sub">
-                                        {specialist.date
-                                          ? formatDate(specialist.date)
-                                          : t("earlyDiagnosis.dateNotSet")}
-                                        {specialist.startTime && specialist.endTime ? ` · ${specialist.startTime} - ${specialist.endTime}` : ""}
-                                      </p>
-                                    </div>
-                                    <div className="timeline-service-side">
-                                      <p className="timeline-service-doctor">
-                                        <User size={12} /> {getDoctorDisplayName(specialist.doctor)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <p className="timeline-date">{formatDateTime(booking.appointmentDate)}</p>
-                      </div>
-                    </div>
-
-                    <div className="timeline-item timeline-item--system">
-                      <div className="timeline-dot gray">
-                        <Clock size={12} />
-                      </div>
-                      <div className="timeline-content timeline-content--plain">
-                        <p className="timeline-kicker">{t("earlyDiagnosis.systemEvent")}</p>
-                        <p className="timeline-title">{t("earlyDiagnosis.bookingCreated")}</p>
-                        <p className="timeline-description">
-                          {t("earlyDiagnosis.bookingCreateDescription")}
-                        </p>
-                        <p className="timeline-date">{formatDateTime(booking.createdAt)}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Internal Notes */}
-              {activeTab === "notes" && (
-                <div className="sidebar-section">
-                  <div className="notes-shell">
-                    <div className="notes-toolbar">
-                      <h3 className="sidebar-title notes-title">
-                        {t("earlyDiagnosis.internalNotes").toUpperCase()}
-                      </h3>
-                      {!isAddingNote && (
-                        <button
-                          className="notes-add-btn"
-                          onClick={() => setIsAddingNote(true)}
-                        >
-                          <Plus size={14} />
-                          {t("earlyDiagnosis.addNote")}
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="notes-content">
-                      {isAddingNote && (
-                        <div className="add-note-form note-add-card">
-                          <textarea
-                            className="note-textarea"
-                            placeholder={t("earlyDiagnosis.enterNoteHere")}
-                            value={newNote}
-                            onChange={(e) => setNewNote(e.target.value)}
-                            rows={4}
-                          />
-                          <div className="note-actions">
-                            <button
-                              className="cancel-note-btn"
-                              onClick={() => {
-                                setIsAddingNote(false);
-                                setNewNote("");
-                              }}
-                              disabled={isSaving}
-                            >
-                              {t("earlyDiagnosis.cancel")}
-                            </button>
-                            <button
-                              className="save-note-btn"
-                              onClick={handleAddNote}
-                              disabled={isSaving || !newNote.trim()}
-                            >
-                              {isSaving
-                                ? t("earlyDiagnosis.saving")
-                                : t("earlyDiagnosis.saveNote")}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {Array.isArray(booking.internalNotes) && booking.internalNotes.length > 0 ? (
-                        <div className="notes-list notes-list--modern">
-                          {booking.internalNotes.map((note, index) => (
-                            <article key={note._id || index} className="note-card">
-                              <div className="note-card-top">
-                                <div className="note-author-block">
-                                  <div className="note-avatar">
-                                    <User size={14} />
-                                  </div>
-                                  <div>
-                                    <p className="note-author">{note.addedBy}</p>
-                                    <p className="note-date">{formatDateTime(note.addedAt)}</p>
-                                  </div>
-                                </div>
-
-                                {editingNoteId !== note._id && (
-                                  <div className="note-buttons">
-                                    <button
-                                      className="edit-note-icon-btn"
-                                      onClick={() => handleEditNote(note)}
-                                      title={t("earlyDiagnosis.editNote")}
-                                    >
-                                      <Edit2 size={14} />
-                                    </button>
-                                    <button
-                                      className="delete-note-icon-btn"
-                                      onClick={() => handleDeleteNote(note._id)}
-                                      title={t("earlyDiagnosis.deleteNote")}
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-
-                              {editingNoteId === note._id ? (
-                                <div className="edit-note-form note-edit-form">
-                                  <textarea
-                                    className="note-textarea"
-                                    value={editingNoteText}
-                                    onChange={(e) => setEditingNoteText(e.target.value)}
-                                    rows={3}
-                                  />
-                                  <div className="note-actions">
-                                    <button
-                                      className="cancel-note-btn"
-                                      onClick={() => {
-                                        setEditingNoteId(null);
-                                        setEditingNoteText("");
-                                      }}
-                                      disabled={isSaving}
-                                    >
-                                      {t("earlyDiagnosis.cancel")}
-                                    </button>
-                                    <button
-                                      className="save-note-btn"
-                                      onClick={() => handleUpdateNote(note._id)}
-                                      disabled={isSaving || !editingNoteText.trim()}
-                                    >
-                                      {isSaving
-                                        ? t("earlyDiagnosis.saving")
-                                        : t("earlyDiagnosis.save")}
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <p className="note-text">{formatNoteText(note.note)}</p>
-                              )}
-                            </article>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="notes-empty">
-                          <p className="note-text">{t("earlyDiagnosis.noNotesAdded")}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-
-    {showTestSettingsModal &&
-      createPortal(
-        <div
-          className="mp-modal-overlay"
-          onClick={() => setShowTestSettingsModal(false)}
-        >
-          <div className="mp-modal ed-manage-tests-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="mp-modal-header">
-              <h3>{t("earlyDiagnosis.manageTests")}</h3>
-              <button
-                className="mp-modal-close"
-                onClick={() => setShowTestSettingsModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mp-modal-body">
-              <div className="mp-field">
-                <label className="mp-field-label">EN</label>
-                <input
-                  className="mp-input"
-                  value={testDraft.en}
-                  onChange={(e) => setTestDraft((prev) => ({ ...prev, en: e.target.value }))}
-                  placeholder={t("earlyDiagnosis.testNameEn")}
-                />
-              </div>
-              <div className="mp-field">
-                <label className="mp-field-label">RU</label>
-                <input
-                  className="mp-input"
-                  value={testDraft.ru}
-                  onChange={(e) => setTestDraft((prev) => ({ ...prev, ru: e.target.value }))}
-                  placeholder={t("earlyDiagnosis.testNameRu")}
-                />
-              </div>
-
-              <div className="ed-manage-tests-actions">
-                <button
-                  className="save-btn"
-                  onClick={handleManagedTestSave}
-                  disabled={savingManagedTest}
-                >
-                  {savingManagedTest ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.save")}
-                </button>
-                {editingManagedTestId && (
-                  <button
-                    className="cancel-btn"
-                    onClick={() => {
-                      setEditingManagedTestId("");
-                      setTestDraft({ en: "", ru: "" });
+                    onSave={(updatedPatient) => {
+                      setBooking((prev) => ({
+                        ...prev,
+                        patient: updatedPatient,
+                      }));
                     }}
-                  >
-                    {t("earlyDiagnosis.cancel")}
-                  </button>
+                  />
+                )}
+
+                {activeTab === "appointmentDetails" && (
+                  <EDScheduleTab
+                    booking={booking}
+                    isEditing={isEditing}
+                    groupedSchedule={groupedSchedule}
+                    editedScheduleItems={editedScheduleItems}
+                    setEditedScheduleItems={setEditedScheduleItems}
+                    loadingDoctors={loadingDoctors}
+                    formatLocalDateOnly={formatLocalDateOnly}
+                    formatDayMetaDate={formatDayMetaDate}
+                    toLocalDateOnly={toLocalDateOnly}
+                    normalizeId={normalizeId}
+                    normalizeSpecialistTitle={normalizeSpecialistTitle}
+                    handleScheduleItemChange={handleScheduleItemChange}
+                    getDoctorDisplayName={getDoctorDisplayName}
+                    getDoctorsForScheduleItem={getDoctorsForScheduleItem}
+                    getAvailableStartTimesForItem={getAvailableStartTimesForItem}
+                    getAvailableEndTimesForItem={getAvailableEndTimesForItem}
+                    resolveDoctorEmail={resolveDoctorEmail}
+                    i18nLanguage={i18n.language}
+                  />
+                )}
+
+                {activeTab === "medicalHistory" && (
+                  <EDMedicalHistoryContent
+                    booking={booking}
+                    activeScheduleTab={activeScheduleTab}
+                    activeSpecialistTab={activeSpecialistTab}
+                    managedSectionTabs={managedSectionTabs}
+                    renderManagedTestSection={renderManagedTestSection}
+                    renderFileActionButtons={renderFileActionButtons}
+                    sectionEditors={sectionEditors}
+                    updateSectionEditor={updateSectionEditor}
+                    handleSaveManagedSectionComment={handleSaveManagedSectionComment}
+                    openUploadSectionModal={openUploadSectionModal}
+                    normalizeId={normalizeId}
+                    normalizeSpecialistTitle={normalizeSpecialistTitle}
+                    getFileExtension={getFileExtension}
+                    getFileLabel={getFileLabel}
+                    formatFileSize={formatFileSize}
+                    getVisibleSpecialistConsultations={getVisibleSpecialistConsultations}
+                    currentDoctorEmail={currentDoctorEmail}
+                    normalizeDoctorEmail={normalizeDoctorEmail}
+                    specialistForms={specialistForms}
+                    specialistFormSaving={specialistFormSaving}
+                    handleSaveSpecialistForm={handleSaveSpecialistForm}
+                  />
                 )}
               </div>
+            )}
 
-              <div className="ed-managed-tests-list">
-                {(managedTests?.[settingsSection] || []).map((item) => (
-                  <div className="ed-managed-test-row" key={normalizeId(item?._id)}>
-                    <div className="ed-managed-test-name">
-                      <strong>{item?.name?.en}</strong>
-                      <span>{item?.name?.ru}</span>
-                    </div>
-                    <div className="ed-managed-test-buttons">
-                      <button
-                        className="edit-note-icon-btn"
-                        onClick={() => {
-                          setEditingManagedTestId(normalizeId(item?._id));
-                          setTestDraft({
-                            en: item?.name?.en || "",
-                            ru: item?.name?.ru || "",
-                          });
-                        }}
-                        title={t("earlyDiagnosis.edit")}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        className="delete-note-icon-btn"
-                        onClick={() => handleManagedTestDelete(normalizeId(item?._id))}
-                        title={t("earlyDiagnosis.delete")}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+            {/* Right Column */}
+            {showSidebarTabs && (
+              <div className="booking-details-sidebar">
+                <EDHistoryNotesTab
+                  activeTab={activeTab}
+                  booking={booking}
+                  formatDate={formatDate}
+                  formatDateTime={formatDateTime}
+                  formatNoteText={formatNoteText}
+                  groupedSchedule={groupedSchedule}
+                  getDoctorDisplayName={getDoctorDisplayName}
+                  normalizeSpecialistTitle={normalizeSpecialistTitle}
+                  i18nLanguage={i18n.language}
+                  isAddingNote={isAddingNote}
+                  setIsAddingNote={setIsAddingNote}
+                  newNote={newNote}
+                  setNewNote={setNewNote}
+                  handleAddNote={handleAddNote}
+                  isSaving={isSaving}
+                  editingNoteId={editingNoteId}
+                  editingNoteText={editingNoteText}
+                  setEditingNoteText={setEditingNoteText}
+                  setEditingNoteId={setEditingNoteId}
+                  handleEditNote={handleEditNote}
+                  handleDeleteNote={handleDeleteNote}
+                  handleUpdateNote={handleUpdateNote}
+                />
               </div>
-            </div>
+            )}
           </div>
-        </div>,
-        document.body,
-      )}
+        </div>
+      </div>
 
-    {showUploadModal &&
-      createPortal(
-        <div className="mp-modal-overlay" onClick={() => setShowUploadModal(false)}>
-          <div className="mp-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="mp-modal-header">
-              <h3>{t("earlyDiagnosis.uploadFile")}</h3>
-              <button className="mp-modal-close" onClick={() => setShowUploadModal(false)}>×</button>
-            </div>
-
-            <div className="mp-modal-body">
-              {sectionsWithTestSelection.includes(uploadSection) && (
-                <div className="mp-field">
-                  <label className="mp-field-label">{t("earlyDiagnosis.selectTest")}</label>
-                  <select
-                    className="mp-select"
-                    value={uploadItemId}
-                    onChange={(e) => setUploadItemId(e.target.value)}
-                  >
-                    <option value="">{t("earlyDiagnosis.selectTest")}</option>
-                    {managedTestOptions.map((item) => (
-                      <option key={normalizeId(item?._id)} value={normalizeId(item?._id)}>
-                        {readLocalizedName(item?.name)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {!multiUploadSections.includes(uploadSection) && (
-                <div className="mp-field">
-                  <label className="mp-field-label">{t("earlyDiagnosis.customName")}</label>
-                  <input
-                    className="mp-input"
-                    value={uploadCustomName}
-                    onChange={(e) => setUploadCustomName(e.target.value)}
-                    placeholder={t("earlyDiagnosis.customNameOptional")}
-                  />
-                </div>
-              )}
-
-              {multiUploadSections.includes(uploadSection) ? (
-                <>
-                  <div className="mp-field">
-                    <label className="mp-field-label">{t("earlyDiagnosis.file")}</label>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="file"
-                        className="mp-input"
-                        style={{ flex: 1 }}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setUploadFiles((prev) => [...prev, { file, customName: "" }]);
-                            e.target.value = "";
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Display added files with custom name inputs */}
-                  {uploadFiles.length > 0 && (
-                    <div style={{ marginTop: "12px" }}>
-                      <label className="mp-field-label">{t("earlyDiagnosis.filesToUpload")}</label>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        {uploadFiles.map((fileItem, idx) => (
-                          <div key={idx} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                            <input
-                              type="text"
-                              className="mp-input"
-                              placeholder={t("earlyDiagnosis.customName")}
-                              value={fileItem.customName}
-                              onChange={(e) => {
-                                const newFiles = [...uploadFiles];
-                                newFiles[idx].customName = e.target.value;
-                                setUploadFiles(newFiles);
-                              }}
-                              style={{ flex: 1 }}
-                            />
-                            <span style={{ fontSize: "12px", color: "#6b7280", minWidth: "120px" }}>
-                              {fileItem.file.name}
-                            </span>
-                            <button
-                              type="button"
-                              className="delete-note-icon-btn"
-                              onClick={() => {
-                                setUploadFiles((prev) => prev.filter((_, i) => i !== idx));
-                              }}
-                              title={t("earlyDiagnosis.remove")}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="mp-field">
-                  <label className="mp-field-label">{t("earlyDiagnosis.file")}</label>
-                  <input
-                    type="file"
-                    className="mp-input"
-                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="mp-modal-footer">
-              <button
-                className="mp-btn-cancel"
-                onClick={() => setShowUploadModal(false)}
-                disabled={isUploadingSectionFile}
-              >
-                {t("earlyDiagnosis.cancel")}
-              </button>
-              <button
-                className="mp-btn-save"
-                onClick={handleUploadSectionFile}
-                disabled={isUploadingSectionFile}
-              >
-                {isUploadingSectionFile ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.upload")}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
-
-    {showDeleteNoteConfirm &&
-      createPortal(
-        <div className="mp-modal-overlay" onClick={cancelDeleteNote}>
-          <div className="mp-modal ed-manage-tests-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="mp-modal-header">
-              <h3>{t("earlyDiagnosis.confirmDelete")}</h3>
-              <button className="mp-modal-close" onClick={cancelDeleteNote}>×</button>
-            </div>
-            <div className="mp-modal-body">
-              <p>{t("earlyDiagnosis.confirmDeleteNote")}</p>
-            </div>
-            <div className="mp-modal-footer">
-              <button className="mp-btn-cancel" onClick={cancelDeleteNote}>
-                {t("earlyDiagnosis.cancel")}
-              </button>
-              <button className="mp-btn-save mp-btn-danger" onClick={confirmDeleteNote} disabled={isSaving}>
-                {isSaving ? t("earlyDiagnosis.deleting") : t("earlyDiagnosis.delete")}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
-
-    {showDeleteConfirm &&
-      createPortal(
-        <div className="mp-modal-overlay" onClick={cancelManagedTestDelete}>
-          <div className="mp-modal ed-manage-tests-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="mp-modal-header">
-              <h3>{t("earlyDiagnosis.confirmDelete")}</h3>
-              <button className="mp-modal-close" onClick={cancelManagedTestDelete}>×</button>
-            </div>
-            <div className="mp-modal-body">
-              <p>{t("earlyDiagnosis.confirmDeleteTest")}</p>
-            </div>
-            <div className="mp-modal-footer">
-              <button className="mp-btn-cancel" onClick={cancelManagedTestDelete}>
-                {t("earlyDiagnosis.cancel")}
-              </button>
-              <button className="mp-btn-save" onClick={confirmManagedTestDelete}>
-                {t("earlyDiagnosis.delete")}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
-
-    {/* Manual Payment Modal */}
-    {showManualPaymentForm &&
-      createPortal(
-        <div
-          className="mp-modal-overlay"
-          onClick={() => setShowManualPaymentForm(false)}
-        >
-          <div className="mp-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="mp-modal-header">
-              <h3>{t("earlyDiagnosis.manualPaymentEntry")}</h3>
-              <button
-                className="mp-modal-close"
-                onClick={() => setShowManualPaymentForm(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mp-modal-body">
-              {/* Package Selection */}
-              <div className="mp-section">
-                <h4 className="mp-section-title">
-                  {t("earlyDiagnosis.selectPackageAddons")}
-                </h4>
-
-                <label className="mp-field-label">
-                  {t("earlyDiagnosis.mainPackage")}
-                </label>
-                <div className="mp-packages">
-                  {ED_PACKAGES.map((pkg) => (
-                    <label
-                      key={pkg.id}
-                      className={`mp-package-card${manualSelectedPkg === pkg.id ? " mp-package-card--active" : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name="mp-pkg"
-                        value={pkg.id}
-                        checked={manualSelectedPkg === pkg.id}
-                        onChange={() => setManualSelectedPkg(pkg.id)}
-                        style={{ display: "none" }}
-                      />
-                      <span className="mp-package-name">{readLocalizedName(pkg.name)}</span>
-                      <span className="mp-package-price">
-                        {pkg.price.toLocaleString()} ₽
-                      </span>
-                    </label>
-                  ))}
-                </div>
-
-                <label
-                  className="mp-field-label"
-                  style={{ marginTop: "12px" }}
-                >
-                  {t("earlyDiagnosis.addons")}
-                </label>
-                <div className="mp-addons">
-                  {ED_ADDONS.map((addon) => {
-                    const isOn = manualSelectedAddons.includes(addon.id);
-                    return (
-                      <label
-                        key={addon.id}
-                        className={`mp-addon-row${isOn ? " mp-addon-row--active" : ""}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isOn}
-                          onChange={() => toggleManualAddon(addon.id)}
-                        />
-                        <span className="mp-addon-name">{readLocalizedName(addon.name)}</span>
-                        <span className="mp-addon-price">
-                          {addon.price.toLocaleString()} ₽
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-
-                <div className="mp-total-row">
-                  <span>{t("earlyDiagnosis.selectedTotal")}</span>
-                  <span className="mp-total-value">
-                    {manualTotal.toLocaleString()} ₽
-                  </span>
-                </div>
-              </div>
-
-              {/* Payment Details */}
-              <div className="mp-section">
-                <div className="mp-field">
-                  <label className="mp-field-label">
-                    {t("earlyDiagnosis.paymentStatusLabel")}
-                  </label>
-                  <select
-                    value={manualPayment.paymentStatus}
-                    onChange={(e) =>
-                      setManualPayment((p) => ({
-                        ...p,
-                        paymentStatus: e.target.value,
-                      }))
-                    }
-                    className="mp-select"
-                  >
-                    <option value="paid">
-                      {t("earlyDiagnosis.status_paid")}
-                    </option>
-                    <option value="pending">
-                      {t("earlyDiagnosis.status_pending")}
-                    </option>
-                    <option value="processing">
-                      {t("earlyDiagnosis.status_processing")}
-                    </option>
-                    <option value="failed">
-                      {t("earlyDiagnosis.status_failed")}
-                    </option>
-                    <option value="refunded">
-                      {t("earlyDiagnosis.status_refunded")}
-                    </option>
-                  </select>
-                </div>
-
-                <div className="mp-field">
-                  <label className="mp-field-label">
-                    {t("earlyDiagnosis.transactionId")}
-                  </label>
-                  <input
-                    type="text"
-                    value={manualPayment.transactionId}
-                    onChange={(e) =>
-                      setManualPayment((p) => ({
-                        ...p,
-                        transactionId: e.target.value,
-                      }))
-                    }
-                    placeholder={t("earlyDiagnosis.enterTransactionId")}
-                    className="mp-input"
-                  />
-                </div>
-
-                <div className="mp-field">
-                  <label className="mp-field-label">
-                    {t("earlyDiagnosis.notesLabel")}
-                  </label>
-                  <textarea
-                    value={manualPayment.notes}
-                    onChange={(e) =>
-                      setManualPayment((p) => ({
-                        ...p,
-                        notes: e.target.value,
-                      }))
-                    }
-                    placeholder={t("earlyDiagnosis.enterNotes")}
-                    className="mp-textarea"
-                    rows={2}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mp-modal-footer">
-              <button
-                className="mp-btn-cancel"
-                onClick={() => setShowManualPaymentForm(false)}
-                disabled={isSavingManual}
-              >
-                {t("earlyDiagnosis.cancel")}
-              </button>
-              <button
-                className="mp-btn-save"
-                onClick={handleManualPaymentSave}
-                disabled={isSavingManual}
-              >
-                {isSavingManual
-                  ? t("earlyDiagnosis.saving")
-                  : t("earlyDiagnosis.savePayment")}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
-  </div>
-);
+      <EDModals
+        showTestSettingsModal={showTestSettingsModal}
+        setShowTestSettingsModal={setShowTestSettingsModal}
+        settingsSection={settingsSection}
+        testDraft={testDraft}
+        setTestDraft={setTestDraft}
+        editingManagedTestId={editingManagedTestId}
+        setEditingManagedTestId={setEditingManagedTestId}
+        managedTests={managedTests}
+        handleManagedTestSave={handleManagedTestSave}
+        handleManagedTestDelete={handleManagedTestDelete}
+        savingManagedTest={savingManagedTest}
+        normalizeId={normalizeId}
+        showUploadModal={showUploadModal}
+        setShowUploadModal={setShowUploadModal}
+        uploadSection={uploadSection}
+        uploadItemId={uploadItemId}
+        setUploadItemId={setUploadItemId}
+        uploadCustomName={uploadCustomName}
+        setUploadCustomName={setUploadCustomName}
+        uploadFile={uploadFile}
+        setUploadFile={setUploadFile}
+        uploadFiles={uploadFiles}
+        setUploadFiles={setUploadFiles}
+        managedTestOptions={managedTestOptions}
+        readLocalizedName={readLocalizedName}
+        handleUploadSectionFile={handleUploadSectionFile}
+        isUploadingSectionFile={isUploadingSectionFile}
+        sectionsWithTestSelection={sectionsWithTestSelection}
+        multiUploadSections={multiUploadSections}
+        showDeleteNoteConfirm={showDeleteNoteConfirm}
+        cancelDeleteNote={cancelDeleteNote}
+        confirmDeleteNote={confirmDeleteNote}
+        isSaving={isSaving}
+        showDeleteConfirm={showDeleteConfirm}
+        cancelManagedTestDelete={cancelManagedTestDelete}
+        confirmManagedTestDelete={confirmManagedTestDelete}
+        showManualPaymentForm={showManualPaymentForm}
+        setShowManualPaymentForm={setShowManualPaymentForm}
+        manualSelectedPkg={manualSelectedPkg}
+        setManualSelectedPkg={setManualSelectedPkg}
+        manualSelectedAddons={manualSelectedAddons}
+        toggleManualAddon={toggleManualAddon}
+        manualTotal={manualTotal}
+        manualPayment={manualPayment}
+        setManualPayment={setManualPayment}
+        handleManualPaymentSave={handleManualPaymentSave}
+        isSavingManual={isSavingManual}
+        ED_PACKAGES={ED_PACKAGES}
+        ED_ADDONS={ED_ADDONS}
+      />
+    </div>
+  );
 };
 
 export default EarlyDetectionBookingDetails;

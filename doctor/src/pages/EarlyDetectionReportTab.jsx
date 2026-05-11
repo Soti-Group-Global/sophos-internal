@@ -416,7 +416,7 @@ export default function EarlyDetectionReportTab({ booking }) {
         <img src="/logo_ru.png" alt="Logo" className="ed-header-logo" />
         <div className="ed-header-clinic">
           <span className="ed-header-clinic-name">{CLINIC_INFO.name}</span>
-          <span className="ed-header-clinic-contact">| {CLINIC_INFO.phone} &nbsp; | &nbsp; {CLINIC_INFO.website}</span>
+          <span className="ed-header-clinic-contact">{CLINIC_INFO.phone} &nbsp; | &nbsp; {CLINIC_INFO.website}</span>
         </div>
       </div>
       <hr className="ed-header-line" />

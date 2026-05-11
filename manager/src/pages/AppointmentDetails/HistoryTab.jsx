@@ -291,10 +291,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const hasAnyContent = useCallback((f = form) =>
     ALL_KEYS.some((k) => f[k]?.value?.replace(/<[^>]*>/g, "").trim()), [form]);
 
-  const enterEditMode = useCallback(() => {
-    setIsEditMode(true);
-    setEditingFields(ALL_KEYS.reduce((acc, k) => ({ ...acc, [k]: true }), {}));
-  }, []);
 
   const enterViewMode = useCallback(() => {
     if (!hasAnyContent()) return; // nothing to show in view — stay in edit mode
@@ -309,6 +305,11 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const [isStudyPanelOpen, setIsStudyPanelOpen] = useState(false);
   const [labPopupOpen, setLabPopupOpen] = useState(false);
   const [labPopupMode, setLabPopupMode] = useState(null);
+  const [labUploadModalOpen, setLabUploadModalOpen] = useState(false);
+  const [labUploadSection, setLabUploadSection] = useState(null);
+  const [labUploadTestId, setLabUploadTestId] = useState("");
+  const [labUploadFile, setLabUploadFile] = useState(null);
+  const [isLabUploading, setIsLabUploading] = useState(false);
   const [newTestNameEN, setNewTestNameEN] = useState("");
   const [newTestNameRU, setNewTestNameRU] = useState("");
   const [editingTestId, setEditingTestId] = useState(null);
@@ -402,17 +403,41 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const handleSidebarItemClick = useCallback(
     async (item, _e) => {
       setActiveNavItem(item.id);
-      setSelectedTest(null);
 
       if (item.id === "specialistConsultation") {
+        setSelectedTest(null);
         setIsAppointmentsPanelOpen((prev) => !prev);
       } else if (item.id === "laboratoryAnalysis") {
         setIsLabPanelOpen((prev) => !prev);
+        const first = labTests.find((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+        if (first) {
+          setSelectedTest(first);
+          setSelectedTestMode("laboratoryAnalysis");
+          setShowTestNoteEditor(false);
+          setTestNoteDraft(first?.note || "");
+          setTestFileUploadError(null);
+        } else {
+          setSelectedTest(null);
+          setSelectedTestMode(null);
+        }
       } else if (item.id === "studiesManipulations") {
         setIsStudyPanelOpen((prev) => !prev);
+        const first = studyTests.find((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+        if (first) {
+          setSelectedTest(first);
+          setSelectedTestMode("studiesManipulations");
+          setShowTestNoteEditor(false);
+          setTestNoteDraft(first?.note || "");
+          setTestFileUploadError(null);
+        } else {
+          setSelectedTest(null);
+          setSelectedTestMode(null);
+        }
+      } else {
+        setSelectedTest(null);
       }
     },
-    [],
+    [labTests, studyTests],
   );
 
   const appId = application?.applicationId;
@@ -473,6 +498,45 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
       toast.error(err?.response?.data?.error || "Failed to save comment");
     }
   }, [appId]);
+
+  const openLabUploadModal = useCallback((section, e, preSelectTestId = "") => {
+    if (e?.stopPropagation) e.stopPropagation();
+    setLabUploadSection(section);
+    setLabUploadTestId(preSelectTestId);
+    setLabUploadFile(null);
+    setLabUploadModalOpen(true);
+  }, []);
+
+  const closeLabUploadModal = useCallback(() => {
+    setLabUploadModalOpen(false);
+    setLabUploadSection(null);
+    setLabUploadTestId("");
+    setLabUploadFile(null);
+  }, []);
+
+  const handleLabUploadSubmit = useCallback(async () => {
+    if (!labUploadTestId) { toast.error(t("history_tab.select_test", { defaultValue: "Select a test" })); return; }
+    if (!labUploadFile) { toast.error(t("history_tab.select_file", { defaultValue: "Select a file" })); return; }
+    setIsLabUploading(true);
+    try {
+      const result = labUploadSection === "studiesManipulations"
+        ? await uploadApplicationInstrumentalAnalysisFile(labUploadTestId, labUploadFile)
+        : await uploadApplicationLaboratoryTestFile(labUploadTestId, labUploadFile);
+      const updatedTest = result?.test || result;
+      if (labUploadSection === "studiesManipulations") {
+        setStudyTests((prev) => prev.map((t) => t._id === labUploadTestId ? { ...t, ...updatedTest } : t));
+      } else {
+        setLabTests((prev) => prev.map((t) => t._id === labUploadTestId ? { ...t, ...updatedTest } : t));
+      }
+      setSelectedTest((prev) => prev?._id === labUploadTestId ? { ...prev, ...updatedTest } : prev);
+      toast.success(t("history_tab.file_uploaded", { defaultValue: "File uploaded" }));
+      closeLabUploadModal();
+    } catch (err) {
+      toast.error(err?.response?.data?.error || t("history_tab.failed_upload_file", { defaultValue: "Upload failed" }));
+    } finally {
+      setIsLabUploading(false);
+    }
+  }, [labUploadSection, labUploadTestId, labUploadFile, closeLabUploadModal, t]);
 
   const openLabAnalysisPopup = useCallback((mode, e) => {
     if (e?.stopPropagation) e.stopPropagation();
@@ -1081,47 +1145,56 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                       {t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
                     </button>
                   </div>
-                  {((activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).length > 0) ? (
-                    <div className="ht-lab-analysis-grid">
-                      {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).map((test) => (
-                        <div
-                          key={test._id}
-                          className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}
-                        >
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleToggleLabTest(test._id, activeNavItem === "studiesManipulations");
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </label>
-                          <div
-                            className="ht-lab-analysis-item-label"
-                            onClick={() => handleSelectTest(test, activeNavItem)}
-                          >
-                            <span>{test.name?.en || ""}</span>
-                            <span>{test.name?.ru || ""}</span>
-                          </div>
+                  {(() => {
+                    const allTests = activeNavItem === "laboratoryAnalysis" ? labTests : studyTests;
+                    const withFiles = allTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+                    if (withFiles.length > 0) {
+                      return (
+                        <div className="ht-lab-analysis-grid">
+                          {allTests.map((test) => (
+                            <div
+                              key={test._id}
+                              className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}
+                            >
+                              <label>
+                                <input
+                                  type="checkbox"
+                                  checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleLabTest(test._id, activeNavItem === "studiesManipulations");
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </label>
+                              <div
+                                className="ht-lab-analysis-item-label"
+                                onClick={() => handleSelectTest(test, activeNavItem)}
+                              >
+                                <span>{test.name?.en || ""}</span>
+                                <span>{test.name?.ru || ""}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="ht-lab-analysis-empty">
-                      {t(
-                        activeNavItem === "laboratoryAnalysis" ? "history_tab.no_lab_tests" : "history_tab.no_studies_tests",
-                        {
-                          defaultValue:
-                            activeNavItem === "laboratoryAnalysis"
-                              ? "No laboratory tests available."
-                              : "No studies/manipulations available.",
-                        },
-                      )}
-                    </p>
-                  )}
+                      );
+                    }
+                    return (
+                      <div className="ht-lab-no-files">
+                        <span className="ht-lab-no-files-text">
+                          {t("history_tab.no_files_uploaded", { defaultValue: "No files uploaded" })}
+                        </span>
+                        <button
+                          type="button"
+                          className="ht-lab-no-files-btn"
+                          onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}
+                        >
+                          <FiUpload size={14} />
+                          {t("history_tab.upload_file", { defaultValue: "Upload file" })}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
               {section.subsections?.map((sub) => renderSection(sub, level + 1))}
@@ -1169,12 +1242,11 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                   </span>
                 </div>
 
-                {item.id === "laboratoryAnalysis" && isLabPanelOpen && (
-                  <div className="ht-tests-panel">
-                    {labTests.length === 0 ? (
-                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
-                    ) : (
-                      labTests.map((test) => (
+                {item.id === "laboratoryAnalysis" && isLabPanelOpen && (() => {
+                  const withFiles = labTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+                  return withFiles.length === 0 ? null : (
+                    <div className="ht-tests-panel">
+                      {withFiles.map((test) => (
                         <button
                           key={test._id}
                           type="button"
@@ -1183,17 +1255,16 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                         >
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
-                      ))
-                    )}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  );
+                })()}
 
-                {item.id === "studiesManipulations" && isStudyPanelOpen && (
-                  <div className="ht-tests-panel">
-                    {studyTests.length === 0 ? (
-                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
-                    ) : (
-                      studyTests.map((test) => (
+                {item.id === "studiesManipulations" && isStudyPanelOpen && (() => {
+                  const withFiles = studyTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+                  return withFiles.length === 0 ? null : (
+                    <div className="ht-tests-panel">
+                      {withFiles.map((test) => (
                         <button
                           key={test._id}
                           type="button"
@@ -1202,10 +1273,10 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                         >
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
-                      ))
-                    )}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  );
+                })()}
 
                 {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
                   <div className="ht-appointments-panel">
@@ -1297,7 +1368,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
               {/* Actions */}
               <div className="ht-td-actions">
-                <button type="button" className="ht-td-btn" onClick={() => fileInputRef.current?.click()}>
+                <button type="button" className="ht-td-btn" onClick={(e) => openLabUploadModal(selectedTestMode, e, selectedTest?._id)}>
                   <FiUpload size={14} />
                   {t("history_tab.upload_file", { defaultValue: "Upload file" })}
                 </button>
@@ -1380,7 +1451,88 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
             <div className="ht-conclusion-wrap">
               <AppointmentReport booking={application} />
             </div>
-          ) : PANEL_NAV_IDS.includes(activeNavItem) ? (() => {
+          ) : (activeNavItem === "laboratoryAnalysis" || activeNavItem === "studiesManipulations") && !selectedTest ? (() => {
+            const allTests = activeNavItem === "laboratoryAnalysis" ? labTests : studyTests;
+            const withFiles = allTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+            return (
+              <div className="ht-lab-analysis-panel">
+                <div className="ht-lab-analysis-header">
+                  <span>
+                    {activeNavItem === "laboratoryAnalysis"
+                      ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" })
+                      : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}
+                  </span>
+                  <button
+                    type="button"
+                    className="ht-lab-analysis-manage-btn"
+                    onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}
+                  >
+                    {t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
+                  </button>
+                </div>
+                {withFiles.length > 0 ? (
+                  <div className="ht-lab-analysis-grid">
+                    {allTests.map((test) => (
+                      <div
+                        key={test._id}
+                        className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}
+                      >
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleToggleLabTest(test._id, activeNavItem === "studiesManipulations");
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </label>
+                        <div
+                          className="ht-lab-analysis-item-label"
+                          onClick={() => handleSelectTest(test, activeNavItem)}
+                        >
+                          <span>{test.name?.en || ""}</span>
+                          <span>{test.name?.ru || ""}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ht-lab-empty-view">
+                    <div className="ht-lab-empty-actions">
+                      <button
+                        type="button"
+                        className="ht-lab-empty-btn"
+                        onClick={(e) => openLabUploadModal(activeNavItem, e)}
+                      >
+                        <FiUpload size={14} />
+                        {t("history_tab.upload_file", { defaultValue: "Upload file" })}
+                      </button>
+                      <button
+                        type="button"
+                        className="ht-lab-empty-btn"
+                        onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}
+                      >
+                        <FiFileText size={14} />
+                        {t("history_tab.add_text", { defaultValue: "Add text" })}
+                      </button>
+                    </div>
+                    <div className="ht-lab-empty-card">
+                      <span className="ht-lab-empty-card-text">
+                        {t("history_tab.no_files", { defaultValue: "Нет файлов" })}
+                      </span>
+                    </div>
+                    <div className="ht-lab-empty-card">
+                      <span className="ht-lab-empty-card-text">
+                        {t("history_tab.no_entries", { defaultValue: "No entries yet" })}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })() : PANEL_NAV_IDS.includes(activeNavItem) ? (() => {
             const sid = activeNavItem;
             const fileRef = sid === "morphologicalResearch" ? morphFileRef : procFileRef;
             const sec = sectionData[sid] || { files: [], comment: {} };
@@ -1569,11 +1721,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
             </>
           ) : (
             <div className="ht-view-wrap">
-              <div className="ht-view-header">
-                <button type="button" className="ht-view-edit-btn" onClick={enterEditMode}>
-                  <FiEdit2 size={14} />
-                  {t("history_tab.edit", { defaultValue: "Edit" })}
-                </button>
+              <div className="ht-view-header" style={{ display: "none" }}>
               </div>
               <div className="ht-view-fields">
                 {ALL_KEYS.map((key) => {
@@ -1670,6 +1818,59 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
               ) : (
                 <p className="ht-portal-empty">{t("history_tab.no_tests_yet", { defaultValue: "No items yet" })}</p>
               )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {labUploadModalOpen && createPortal(
+        <div className="ht-portal-overlay" onClick={closeLabUploadModal}>
+          <div className="ht-upload-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ht-upload-modal-header">
+              <h2 className="ht-upload-modal-title">
+                {t("history_tab.upload_file", { defaultValue: "Upload file" })}
+              </h2>
+              <button type="button" className="ht-portal-close" onClick={closeLabUploadModal} aria-label="Close">×</button>
+            </div>
+            <div className="ht-upload-modal-body">
+              <label className="ht-upload-modal-label">
+                {t("history_tab.select_test_label", { defaultValue: "Select test" })}
+              </label>
+              <select
+                className="ht-upload-modal-select"
+                value={labUploadTestId}
+                onChange={(e) => setLabUploadTestId(e.target.value)}
+              >
+                <option value="">—</option>
+                {(labUploadSection === "studiesManipulations" ? studyTests : labTests).map((test) => (
+                  <option key={test._id} value={test._id}>
+                    {test.name?.ru || test.name?.en || ""}
+                  </option>
+                ))}
+              </select>
+              <label className="ht-upload-modal-label">
+                {t("history_tab.file_label", { defaultValue: "File" })}
+              </label>
+              <input
+                type="file"
+                className="ht-upload-modal-file"
+                onChange={(e) => setLabUploadFile(e.target.files?.[0] || null)}
+              />
+            </div>
+            <div className="ht-upload-modal-footer">
+              <button type="button" className="ht-upload-modal-cancel" onClick={closeLabUploadModal}>
+                {t("history_tab.cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button
+                type="button"
+                className="ht-upload-modal-submit"
+                onClick={handleLabUploadSubmit}
+                disabled={isLabUploading}
+              >
+                {isLabUploading
+                  ? t("history_tab.uploading", { defaultValue: "Uploading…" })
+                  : t("history_tab.upload_btn", { defaultValue: "Upload" })}
+              </button>
             </div>
           </div>
         </div>,

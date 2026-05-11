@@ -71,8 +71,12 @@ function useRegisteredSave(sectionKey, editing, handleSave) {
    ═══════════════════════════════════════════════════════════════════════════ */
 const formatDate = (d) => {
   if (!d) return "—";
-  const formatted = formatDateISO(d);
-  return formatted || "—";
+  try {
+    const iso = String(d).split("T")[0];
+    const [y, mo, day] = iso.split("-").map(Number);
+    if (!y || !mo || !day) return "—";
+    return `${String(day).padStart(2, "0")}-${String(mo).padStart(2, "0")}-${y}`;
+  } catch { return "—"; }
 };
 
 const toInputDate = (d) => {
@@ -277,6 +281,7 @@ function BasicDataSection({ patient, onRefresh }) {
                   className="adp-text-input adp-dob-input"
                   value={form.dateOfBirth ? new Date(form.dateOfBirth) : null}
                   onChange={(date) => set("dateOfBirth", date ? date.toISOString().slice(0, 10) : "")}
+                  dateFormat="dd-MM-yyyy"
                 />
               </div>
               <div className="adp-labeled-input">

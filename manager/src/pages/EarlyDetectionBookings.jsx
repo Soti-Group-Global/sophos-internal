@@ -511,9 +511,9 @@ const EarlyDetectionBookings = () => {
               </thead>
               <tbody>
                 {currentBookings.map((booking) => (
-                  <tr 
-                    key={booking._id || booking.bookingNumber} 
-                    onClick={() => navigate(`/early-detection-bookings/${booking._id}`)}
+                  <tr
+                    key={booking._id || booking.bookingNumber}
+                    onClick={() => window.open(`/early-detection-bookings/${booking._id}?lang=${i18n.language}`, "_blank", "noopener,noreferrer")}
                     className="ed-clickable-row"
                   >
                     <td>

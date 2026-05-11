@@ -2344,6 +2344,15 @@ export const updateEarlyDetectionBooking = async (bookingId, payload) => {
   return api.put(`/early-detection/bookings/${encodeURIComponent(bookingId)}`, payload);
 };
 
+export const updateEarlyDetectionBookingStatus = async (bookingId, data) => {
+  try {
+    const res = await api.put(`/early-detection/form/bookings/${bookingId}/status`, data);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const resolveBookingIdForNotes = async (bookingId) => {
   // If it looks like an application ID (e.g., ED-SEED-001), resolve it upfront
   if (String(bookingId).includes('-') && !String(bookingId).match(/^[a-f0-9]{24}$/i)) {

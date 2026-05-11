@@ -5363,7 +5363,15 @@
     "specialist_Ophthalmologist": "Ophthalmologist",
     "specialist_Surgeon": "Surgeon",
     "specialist_ENT": "ENT",
-    "specialist_Ultrasound": "Ultrasound"
+    "specialist_Ultrasound": "Ultrasound",
+    "selectTest": "Select test",
+    "customName": "Custom name",
+    "customNameOptional": "Optional",
+    "file": "File",
+    "files": "Files to upload",
+    "upload": "Upload",
+    "remove": "Remove",
+    "addText": "Add text"
   },
   "appointment_details_general": {
     "common": {

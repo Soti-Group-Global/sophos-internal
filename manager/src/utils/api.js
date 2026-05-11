@@ -618,7 +618,7 @@ export const updatePatient = async (id, formData) => {
 // Patch patient – partial update (GeneralInformationTab fields)
 export const patchPatient = async (id, data) => {
   try {
-    const response = await api.patch(`/patients/${id}`, data);
+    const response = await api.patch(`/patients/${encodeURIComponent(id)}`, data);
     return response;
   } catch (error) {
     throw error;

@@ -412,3 +412,84 @@
 .service-modal-close:hover {
     filter: brightness(0.98);
 }
+
+/* ── Category accordion ─────────────────────────────────── */
+.svc-category-group {
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.svc-category-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #f1f5f9;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.15s;
+    text-align: left;
+}
+
+.svc-category-header--open {
+    background: #e8eef6;
+    border-radius: 10px 10px 0 0;
+}
+
+.svc-category-header:hover {
+    background: #e2e9f3;
+}
+
+.svc-category-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e3a5f;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.svc-category-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.svc-category-count {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    background: #dde4ee;
+    border-radius: 20px;
+    padding: 1px 8px;
+}
+
+.svc-category-selected-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-radius: 20px;
+    padding: 1px 8px;
+}
+
+.svc-category-chevron {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.svc-category-body {
+    border: 1px solid #e8eef6;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: #fff;
+    padding: 4px 0;
+    display: grid;
+    gap: 1px;
+}

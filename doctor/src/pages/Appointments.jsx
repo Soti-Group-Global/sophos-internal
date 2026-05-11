@@ -547,11 +547,14 @@ const Appointments = () => {
           ? regularResult.value.appointments || []
           : [];
 
-      const earlyDetectionAppointments =
+      const earlyDetectionRaw =
         earlyDetectionResult.status === "fulfilled" &&
         Array.isArray(earlyDetectionResult.value?.data)
           ? earlyDetectionResult.value.data
           : [];
+      const earlyDetectionAppointments = Array.from(
+        new Map(earlyDetectionRaw.map((b) => [String(b?._id || b?.applicationId), b])).values()
+      );
 
       const normalizedRegular = regularAppointments.map((appt) => ({
         ...appt,

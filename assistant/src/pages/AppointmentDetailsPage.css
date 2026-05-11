@@ -140,6 +140,21 @@
   white-space: nowrap;
 }
 
+.adp-dob-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.adp-header-gender-icon {
+  font-size: 16px;
+  font-weight: 700;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.adp-header-gender-icon--male   { color: #2563eb; }
+.adp-header-gender-icon--female { color: #db2777; }
+
 /* ── Tab Bar ── */
 .adp-tab-bar {
   flex-shrink: 0;

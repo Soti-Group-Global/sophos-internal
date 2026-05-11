@@ -37,25 +37,22 @@ import { useTranslation } from "react-i18next";
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
   try {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const iso = String(dateStr).split("T")[0];
+    const [y, m, d] = iso.split("-").map(Number);
+    if (!y || !m || !d) return dateStr;
+    return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
   } catch {
     return dateStr;
   }
 };
 
-const formatDOB = (dateStr, locale = "ru") => {
+const formatDOB = (dateStr) => {
   if (!dateStr) return null;
   try {
-    const loc = locale === "en" ? "en-US" : "ru-RU";
-    return new Date(dateStr).toLocaleDateString(loc, {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    const iso = String(dateStr).split("T")[0];
+    const [y, m, d] = iso.split("-").map(Number);
+    if (!y || !m || !d) return dateStr;
+    return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
   } catch {
     return dateStr;
   }
@@ -273,7 +270,7 @@ const BasicDataSection = forwardRef(({ patient, application }, ref) => {
                         setForm((f) => ({ ...f, dateOfBirth: toDateOnly(date) }))
                       }
                       maxDate={new Date()}
-                      dateFormat="yyyy-MM-dd"
+                      dateFormat="dd-MM-yyyy"
                     />
                   </div>
                   <div className="adp-labeled-input">
@@ -3196,7 +3193,7 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
         radiationDoses: radiationRef.current?.getData() || [],
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
-      await patchPatient(patient._id, payload);
+      await patchPatient(patient.patientId, payload);
       legalRepRef.current?.commitEdit?.();
       toast.success(t("footer.save_success"));
     } catch (err) {
@@ -3207,7 +3204,7 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
   }, [patient]);
 
   const handleSaveAndComplete = useCallback(async () => {
-    if (!patient?._id) {
+    if (!patient?.patientId) {
       toast.error(t("footer.patient_not_found"));
       return;
     }
@@ -3226,7 +3223,7 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
         radiationDoses: radiationRef.current?.getData() || [],
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
-      await patchPatient(patient._id, payload);
+      await patchPatient(patient.patientId, payload);
       legalRepRef.current?.commitEdit?.();
       toast.success(t("footer.save_success"));
       await onSaveAndComplete?.();

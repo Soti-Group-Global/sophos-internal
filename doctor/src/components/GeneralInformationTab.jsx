@@ -36,25 +36,22 @@ import { useTranslation } from "react-i18next";
 const formatDate = (dateStr) => {
   if (!dateStr) return "—";
   try {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const iso = String(dateStr).split("T")[0];
+    const [y, m, d] = iso.split("-").map(Number);
+    if (!y || !m || !d) return dateStr;
+    return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
   } catch {
     return dateStr;
   }
 };
 
-const formatDOB = (dateStr, locale = "ru") => {
+const formatDOB = (dateStr) => {
   if (!dateStr) return null;
   try {
-    const loc = locale === "en" ? "en-US" : "ru-RU";
-    return new Date(dateStr).toLocaleDateString(loc, {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    const iso = String(dateStr).split("T")[0];
+    const [y, m, d] = iso.split("-").map(Number);
+    if (!y || !m || !d) return dateStr;
+    return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
   } catch {
     return dateStr;
   }
@@ -3148,7 +3145,7 @@ const LegalRepresentativeSection = forwardRef(({ patient }, ref) => {
   );
 });
 
-const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving, showFooter = true }, ref) => {
+const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving, showFooter = true, onSaveAndComplete }, ref) => {
   const { t, i18n } = useTranslation("appointment_details_general");
   const dob = formatDOB(patient?.dateOfBirth, i18n.language);
   const createdAt = formatDate(application?.createdAt);
@@ -3182,9 +3179,7 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveAll = useCallback(async () => {
-    const patientId = resolveEntityId(patient?._id) || resolveEntityId(patient?.id) || resolveEntityId(patient);
-
-    if (!patientId) {
+    if (!patient?.patientId) {
       toast.error(t("footer.patient_not_found"));
       return;
     }
@@ -3203,29 +3198,22 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
         radiationDoses: radiationRef.current?.getData() || [],
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
-      
-      const updatedPatient = await patchPatient(patientId, payload);
+      const updatedPatient = await patchPatient(patient.patientId, payload);
       legalRepRef.current?.commitEdit?.();
-      
-      // Update local state if onSave callback is provided
-      if (typeof onSave === 'function') {
-        onSave(updatedPatient);
-      }
-      
+      if (typeof onSave === 'function') onSave(updatedPatient);
       toast.success(t("footer.save_success"));
+      await onSaveAndComplete?.();
     } catch (err) {
       toast.error(err?.response?.data?.error || t("footer.save_error"));
     } finally {
       setIsSaving(false);
     }
-  }, [patient, onSave, t]);
+  }, [patient, onSave, onSaveAndComplete, t]);
 
   const navigate = useNavigate();
 
   const handleSaveAndClose = useCallback(async () => {
-    const patientId = resolveEntityId(patient?._id) || resolveEntityId(patient?.id) || resolveEntityId(patient);
-
-    if (!patientId) {
+    if (!patient?.patientId) {
       toast.error(t("footer.patient_not_found"));
       return;
     }
@@ -3244,15 +3232,9 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
         radiationDoses: radiationRef.current?.getData() || [],
         legalRepresentatives: legalRepRef.current?.getData() || [],
       };
-      
-      const updatedPatient = await patchPatient(patientId, payload);
+      const updatedPatient = await patchPatient(patient.patientId, payload);
       legalRepRef.current?.commitEdit?.();
-      
-      // Update local state if onSave callback is provided
-      if (typeof onSave === 'function') {
-        onSave(updatedPatient);
-      }
-      
+      if (typeof onSave === 'function') onSave(updatedPatient);
       toast.success(t("footer.save_success"));
       navigate(-1);
     } catch (err) {
@@ -3316,23 +3298,12 @@ const GeneralInformationTab = forwardRef(({ application, patient, onSave, saving
             {isSaving ? t("footer.saving") : t("footer.save")}
           </button>
           <button
-  onClick={handleSaveAndClose}
-  disabled={isSaving}
-  style={{
-    backgroundColor: isSaving ? "#0a2e5d" : "#0a2e5d",
-    color: "#fff",
-    padding: "10px 20px",
-    border: "none",
-    borderRadius: "8px",
-    cursor: isSaving ? "not-allowed" : "pointer",
-    fontSize: "14px",
-    fontWeight: "500",
-    transition: "all 0.2s ease",
-    opacity: isSaving ? 0.7 : 1,
-  }}
->
-  {isSaving ? t("footer.saving") : t("footer.save_and_close")}
-</button>
+            className="adp-footer-btn adp-footer-save-close-btn"
+            onClick={handleSaveAndClose}
+            disabled={isSaving}
+          >
+            {isSaving ? t("footer.saving") : t("footer.save_and_close")}
+          </button>
         </div>
       )}
     </>

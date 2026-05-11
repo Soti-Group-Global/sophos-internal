@@ -22,25 +22,10 @@ const StatusBadge = ({ status, t }) => {
 
 const EarlyDetectionApplications = ({ bookings = [], loading = true }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+
   const [applications, setApplications] = useState(bookings);
 
   useEffect(() => { setApplications(bookings || []); }, [bookings]);
-
-  const formatDateDDMMYYYY = (dateStr) => {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    if (isNaN(d)) return dateStr;
-    return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
-  };
-
-  const formatTime = (value) => {
-    if (!value) return "—";
-    if (/^\d{1,2}:\d{2}$/.test(String(value).trim())) return value;
-    const d = new Date(value);
-    if (isNaN(d)) return value;
-    return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Moscow" });
-  };
 
   const calculateAge = (dob) => {
     if (!dob) return null;
@@ -75,8 +60,6 @@ const EarlyDetectionApplications = ({ bookings = [], loading = true }) => {
             <th>{t("appointments.sex", "SEX").toUpperCase()}</th>
             <th>{t("appointments.age", "AGE").toUpperCase()}</th>
             <th>{t("appointments.appointment", "APPOINTMENT").toUpperCase()}</th>
-            <th>{t("appointments.typeOfService", "TYPE OF SERVICE").toUpperCase()}</th>
-            <th>{t("appointments.date", "DATE").toUpperCase()}</th>
             <th>{t("appointments.status", "STATUS").toUpperCase()}</th>
           </tr>
         </thead>
@@ -85,9 +68,7 @@ const EarlyDetectionApplications = ({ bookings = [], loading = true }) => {
             <tr
               key={appt.applicationId || appt._id}
               className="appt-row"
-              onClick={() => navigate(`/early-detection/${encodeURIComponent(appt.applicationId)}`, {
-                state: { doctorEmail: appt.doctorEmail, patientEmail: appt.patientEmail },
-              })}
+              onClick={() => window.open(`/early-detection/${encodeURIComponent(appt._id || appt.applicationId)}`, "_blank", "noopener,noreferrer")}
             >
               <td>
                 <div className="patient-name-cell">
@@ -109,17 +90,6 @@ const EarlyDetectionApplications = ({ bookings = [], loading = true }) => {
                 </span>
               </td>
               <td><span className="appt-cell-id">#{appt.applicationId || appt._id}</span></td>
-              <td><span className="appointment-type-label">{appt.serviceType || t("appointments.types.earlyDetection", "Early Detection")}</span></td>
-              <td>
-                <div className="appt-date-cell">
-                  <span className="appt-date-text">{formatDateDDMMYYYY(appt.date)}</span>
-                  {(appt.startTime || appt.endTime) && (
-                    <span className="appt-time-sub">
-                      {formatTime(appt.startTime)}{appt.endTime ? " – " + formatTime(appt.endTime) : ""}
-                    </span>
-                  )}
-                </div>
-              </td>
               <td><StatusBadge status={appt.appointmentStatus} t={t} /></td>
             </tr>
           ))}

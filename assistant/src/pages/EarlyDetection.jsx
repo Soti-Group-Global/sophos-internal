@@ -130,15 +130,18 @@ const EarlyDetection = () => {
       // which returns ALL ED bookings (no longer filters by doctor assignment)
       const response = await getEarlyDetectionBookingsByDoctor(user.email);
       
-      const bookingsData = Array.isArray(response?.data) ? response.data : [];
-      
+      const raw = Array.isArray(response?.data) ? response.data : [];
+      const bookingsData = Array.from(
+        new Map(raw.map((b) => [String(b?._id || b?.applicationId), b])).values()
+      );
+
       console.log("[EarlyDetection] ED bookings fetched", {
         userEmail: user.email,
         role: user.role,
         count: bookingsData.length,
         firstItem: bookingsData[0] || null,
       });
-      
+
       setBookings(bookingsData);
     } catch (err) {
       console.error("[EarlyDetection] fetchBookings() failed", err);

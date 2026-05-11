@@ -50,9 +50,9 @@
     "filters": {
       "all": "Все",
       "upcoming": "Предстоящие",
-      "confirmed": "Подтверждённые",
+      "confirmed": "Подтвержденные",
       "completed": "Завершённые",
-      "cancelled": "Отменённые",
+      "cancelled": "Отмененные",
       "pending": "Ожидание"
     },
     "service": "Услуга",
@@ -279,13 +279,14 @@
 
   "status": {
     "completed": "Завершено",
-    "confirmed": "Подтверждено",
-    "cancelled": "Отменено",
+    "confirmed": "Подтвержденные",
+    "cancelled": "Отмененные",
     "ordered": "Заказано",
     "pending": "В ожидании",
     "waiting_for_assign": "Ожидает назначения",
     "paid": "Оплачено",
-    "unconfirmed": "Не подтверждено"
+    "unconfirmed": "Неподтвержденные",
+    "upcoming": "Предстоящие"
   },
 
   "service_type": {
@@ -448,7 +449,7 @@
       "all": "Все",
       "upcoming": "Предстоящие",
       "completed": "Завершённые",
-      "cancelled": "Отменённые"
+      "cancelled": "Отмененные"
     },
     "viewDetails": "Посмотреть детали"
   },

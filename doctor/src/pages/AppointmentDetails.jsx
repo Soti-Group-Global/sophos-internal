@@ -126,11 +126,10 @@ const AppointmentDetails = () => {
   const formatLocalDate = (dateStr) => {
     if (!dateStr) return "";
     try {
-      return new Intl.DateTimeFormat(i18n.language, {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }).format(new Date(dateStr));
+      const iso = String(dateStr).split("T")[0];
+      const [y, m, d] = iso.split("-").map(Number);
+      if (!y || !m || !d) return dateStr;
+      return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
     } catch {
       return dateStr;
     }
@@ -1035,6 +1034,12 @@ const AppointmentDetails = () => {
           <div className="apd-top-divider" />
           <div className="apd-patient-info">
             <div className="apd-patient-name-row">
+              {patientDetails?.gender?.toLowerCase() === "male" && (
+                <span className="apd-header-gender-icon apd-header-gender-icon--male">♂</span>
+              )}
+              {patientDetails?.gender?.toLowerCase() === "female" && (
+                <span className="apd-header-gender-icon apd-header-gender-icon--female">♀</span>
+              )}
               <span className="apd-patient-label">
                 {t("appointment.patient")}:
               </span>
@@ -1106,13 +1111,6 @@ const AppointmentDetails = () => {
             <FiRepeat size={18} />
           </button>
           <button
-            title={t("appointment.earlyDiagnosis") || "Early diagnosis"}
-            className={`sidebar-tab${activeSubTab === "overview" ? " active" : ""}`}
-            onClick={() => setActiveSubTab("overview")}
-          >
-            <FiActivity size={18} />
-          </button>
-          <button
             title={t("appointment.service") || "Service"}
             className={`sidebar-tab${activeSubTab === "service" ? " active" : ""}`}
             onClick={() => setActiveSubTab("service")}
@@ -1152,137 +1150,6 @@ const AppointmentDetails = () => {
                   />
                 )}
 
-                {activeSubTab === "overview" && (
-                  <div className="app-detail-section-container">
-                    <div className="app-detail-section-header">
-                      <h3>{t("appointment.earlyDiagnosis") || "Early diagnosis"}</h3>
-                    </div>
-                    {loadingEarlyDetection ? (
-                      <div className="app-detail-empty-state">
-                        <div className="loading-spinner"></div>
-                        <p>{t("appointment.loading")}</p>
-                      </div>
-                    ) : earlyDetectionError ? (
-                      <div className="app-detail-empty-state">
-                        <p>{earlyDetectionError}</p>
-                      </div>
-                    ) : earlyDetectionAppointments.length === 0 ? (
-                      <div className="app-detail-empty-state">
-                        <p>
-                          {t("appointment.noEarlyDiagnosisAppointments") ||
-                            "No early diagnosis appointments found."}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="app-detail-table-wrapper">
-                        <table className="app-detail-table">
-                          <thead>
-                            <tr>
-                              <th>{t("appointments.appointment").toUpperCase()}</th>
-                              <th>{t("appointments.patient").toUpperCase()}</th>
-                              <th>{t("appointments.dateTime").toUpperCase()}</th>
-                              <th>{t("appointments.status").toUpperCase()}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {earlyDetectionAppointments.map((appt, index) => (
-                              <tr
-                                key={appt._id || appt.applicationId || appt.id || index}
-                                className="app-detail-table-row"
-                                onClick={() =>
-                                  navigate(
-                                    `/early-detection-bookings/${encodeURIComponent(
-                                      appt.applicationId || appt._id || appt.id,
-                                    )}`,
-                                    {
-                                      state: {
-                                        doctorEmail,
-                                        patientEmail: appt.patientEmail,
-                                        appointmentData: {
-                                          _id: appt._id,
-                                          applicationId: appt.applicationId,
-                                          patientEmail: appt.patientEmail,
-                                          patientName: appt.patientName,
-                                          appointmentStatus: appt.appointmentStatus,
-                                          date: appt.date || null,
-                                          startTime: appt.startTime || null,
-                                          endTime: appt.endTime || null,
-                                          serviceType: appt.serviceType || null,
-                                        },
-                                      },
-                                    },
-                                  )
-                                }
-                              >
-                                <td>
-                                  <span className="app-detail-table-id">
-                                    #{appt.applicationId || appt._id || appt.id}
-                                  </span>
-                                </td>
-                                <td>
-                                  <div className="app-detail-table-patient">
-                                    <div className="app-detail-table-avatar">
-                                      {String(
-                                        appt.patientName || appt.patientEmail || "?",
-                                      )
-                                        .split(" ")
-                                        .map((n) => n[0])
-                                        .join("")
-                                        .substring(0, 2)
-                                        .toUpperCase()}
-                                    </div>
-                                    <div>
-                                      <div className="app-detail-table-patient-name">
-                                        {appt.patientName ||
-                                          t("appointment.unknownPatient")}
-                                      </div>
-                                      <div className="app-detail-table-patient-email">
-                                        {appt.patientEmail || t("common.noEmail")}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td>
-                                  <div className="app-detail-table-datetime">
-                                    <div>
-                                      {appt.date
-                                        ? formatDateISO(appt.date)
-                                        : t("common.notAvailable")}
-                                    </div>
-                                    <div>
-                                      {appt.startTime
-                                        ? formatTimeHHMM(appt.startTime)
-                                        : ""}
-                                      {appt.endTime
-                                        ? " – " + formatTimeHHMM(appt.endTime)
-                                        : ""}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td>
-                                  <span className={`status-badge ${String(
-                                    appt.appointmentStatus || "",
-                                  )
-                                    .toLowerCase()
-                                    .replace(/\s+/g, "-")}`}>
-                                    {t(
-                                      `appointmentStatus.${String(
-                                        appt.appointmentStatus || "",
-                                      )
-                                        .toLowerCase()
-                                        .trim()}`,
-                                      appt.appointmentStatus || "",
-                                    )}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {activeSubTab === "documents" && (
                   <div className="app-detail-docs-container">

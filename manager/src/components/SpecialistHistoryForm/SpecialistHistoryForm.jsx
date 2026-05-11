@@ -37,18 +37,9 @@ const collectKeys = (sections) => {
 };
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
-/* ────────────────────────────────────────────────────────────
-   SpecialistHistoryForm
-   Props:
-     historyForm  – initial saved data object (from booking.schedule.specialistConsultations[i].historyForm)
-     onSave       – async (formData) => void  called when user clicks Save
-     isSaving     – boolean controlled by parent
-     specialistTitle – string label shown in the header
-   ──────────────────────────────────────────────────────────── */
-const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSaving, specialistTitle }) => {
+const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSaving, specialistTitle = "", readOnly = false }) => {
   const { t } = useTranslation("history_tab");
 
-  /* ── Init form from saved data ── */
   const buildForm = (saved) => {
     const form = {
       isFirstAppointment:      saved?.isFirstAppointment      ?? false,
@@ -67,9 +58,8 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
   };
 
   const [form, setForm] = useState(() => buildForm(initialHistoryForm));
-  const [editingFields, setEditingFields] = useState({});
+  const [isEditMode, setIsEditMode] = useState(false);
 
-  /* Re-sync when parent data changes (e.g. booking reloads) */
   useEffect(() => {
     setForm((prev) => {
       const saved = initialHistoryForm || {};
@@ -89,139 +79,67 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
       });
       return next;
     });
-    // Reset editing fields on specialist switch
-    setEditingFields({});
+    setIsEditMode(false);
   }, [initialHistoryForm]);
-
-  /* Close editing when clicking outside field cards */
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        e.target.closest("[data-ht-field]") ||
-        e.target.closest(".ht-section-header--clickable") ||
-        e.target.closest(".rte-color-dropdown") ||
-        e.target.closest(".rte-select")
-      ) return;
-      setEditingFields({});
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const setFieldEditing = useCallback((key, val) => {
-    setEditingFields((prev) => ({ ...prev, [key]: val }));
-  }, []);
 
   const handleEditorChange = useCallback((key, html) => {
     setForm((prev) => ({ ...prev, [key]: { ...prev[key], value: html } }));
   }, []);
 
-  const handleSave = useCallback(() => {
-    onSave?.({ ...form });
+  const handleSave = useCallback(async () => {
+    await onSave?.({ ...form });
+    setIsEditMode(false);
   }, [form, onSave]);
 
-  /* ── Verify toggle (local only — parent save persists it) ── */
-  const VerifyBadge = ({ fieldKey }) => {
-    const verified = !!form[fieldKey]?.isVerified;
-    return (
-      <button
-        type="button"
-        className={`ht-verify-btn${verified ? " ht-verify-btn--verified" : " ht-verify-btn--pending"}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          setForm((prev) => ({
-            ...prev,
-            [fieldKey]: { ...prev[fieldKey], isVerified: !verified },
-          }));
-        }}
-        title={verified ? t("verify_title_verified") : t("verify_title_pending")}
-      >
-        {verified ? t("verify_verified") : t("verify_pending")}
-      </button>
-    );
+  /* True when at least one field has saved content */
+  const hasAnyContent = ALL_KEYS.some((k) => !!form[k]?.value);
+
+  /* If nothing is filled yet, always show in edit mode (unless readOnly) */
+  const effectiveEditMode = !readOnly && (isEditMode || !hasAnyContent);
+
+  /* Check if a section (or any of its subsections) has content */
+  const sectionHasContent = (section) => {
+    const fieldsFilled = section.fields?.some((f) => !!form[f.key]?.value);
+    const subsFilled = section.subsections?.some((sub) => sectionHasContent(sub));
+    return !!(fieldsFilled || subsFilled);
   };
 
-  /* ── Render one section (with optional subsections) ── */
+  /* ── Render one section ── */
   const renderSection = (section, level = 0) => {
-    const isSingleField = section.fields?.length === 1 && !section.fields[0].labelKey && !section.subsections?.length;
-    const singleKey = isSingleField ? section.fields[0].key : null;
-    const singleEditing = singleKey ? !!editingFields[singleKey] : false;
+    /* In view mode, skip sections with no content entirely */
+    if (!effectiveEditMode && !sectionHasContent(section)) return null;
+
+    const titleClass = level > 0 ? "ht-subsection-title" : "ht-section-title";
+    const sectionClass = `ht-section${level > 0 ? " ht-subsection" : ""}`;
 
     return (
-      <div
-        key={section.id}
-        className={`ht-section${level > 0 ? " ht-subsection" : ""}${singleEditing ? " ht-section--editing" : ""}`}
-      >
-        <div
-          className={`ht-section-header${level > 0 ? " ht-subsection-header" : ""}${isSingleField ? " ht-section-header--clickable" : ""}`}
-          onClick={isSingleField ? () => setFieldEditing(singleKey, !singleEditing) : undefined}
-        >
-          <span className={level > 0 ? "ht-subsection-title" : "ht-section-title"}>
-            {t(section.titleKey)}
-          </span>
-          {isSingleField && (
-            <div className="ht-section-header-actions">
-              {form[singleKey]?.value?.replace(/<[^>]*>/g, "").trim() && (
-                <VerifyBadge fieldKey={singleKey} />
-              )}
-              <span className={`ht-field-toggle ${singleEditing ? "ht-field-toggle--active" : ""}`}>
-                {singleEditing ? "✕" : "✎"}
-              </span>
-            </div>
-          )}
+      <div key={section.id} className={sectionClass}>
+        <div className={`ht-section-header${level > 0 ? " ht-subsection-header" : ""}`}>
+          <span className={titleClass}>{t(section.titleKey)}</span>
         </div>
 
         <div className="ht-section-body">
-          {isSingleField ? (
-            singleEditing ? (
-              <div data-ht-field>
+          {section.fields?.map((f) => {
+            /* In view mode, skip empty fields */
+            if (!effectiveEditMode && !form[f.key]?.value) return null;
+
+            return effectiveEditMode ? (
+              <div key={f.key} className="ht-field ht-field--editing">
                 <RichTextEditor
-                  value={form[singleKey]?.value || ""}
-                  onChange={(html) => handleEditorChange(singleKey, html)}
+                  value={form[f.key]?.value || ""}
+                  onChange={(html) => handleEditorChange(f.key, html)}
                   placeholder={t("enter_text")}
                 />
               </div>
             ) : (
               <div
-                data-ht-field
-                className={`ht-preview${!form[singleKey]?.value ? " ht-preview--empty" : ""}`}
-                onClick={() => setFieldEditing(singleKey, true)}
-                dangerouslySetInnerHTML={{
-                  __html: form[singleKey]?.value ||
-                    `<span class='ht-preview-placeholder'>${t("click_to_edit")}</span>`,
-                }}
+                key={f.key}
+                className="shf-view-text"
+                dangerouslySetInnerHTML={{ __html: form[f.key]?.value }}
               />
-            )
-          ) : (
-            <>
-              {section.fields?.map((f) => (
-                <div
-                  key={f.key}
-                  className={`ht-field${editingFields[f.key] ? " ht-field--editing" : ""}`}
-                  data-ht-field
-                >
-                  {editingFields[f.key] ? (
-                    <RichTextEditor
-                      value={form[f.key]?.value || ""}
-                      onChange={(html) => handleEditorChange(f.key, html)}
-                      placeholder={t("enter_text")}
-                    />
-                  ) : (
-                    <div
-                      data-ht-field
-                      className={`ht-preview${!form[f.key]?.value ? " ht-preview--empty" : ""}`}
-                      onClick={() => setFieldEditing(f.key, true)}
-                      dangerouslySetInnerHTML={{
-                        __html: form[f.key]?.value ||
-                          `<span class='ht-preview-placeholder'>${t("click_to_edit")}</span>`,
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
-              {section.subsections?.map((sub) => renderSection(sub, level + 1))}
-            </>
-          )}
+            );
+          })}
+          {section.subsections?.map((sub) => renderSection(sub, level + 1))}
         </div>
       </div>
     );
@@ -229,52 +147,35 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
 
   return (
     <div className="shf-wrap">
-      {/* ── Save row ── */}
       <div className="shf-header-row">
-        <div className="shf-header-actions">
-          <label className="ht-first-appt-label">
-            <input
-              type="checkbox"
-              className="ht-first-appt-checkbox"
-              checked={!!form.isFirstAppointment}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  isFirstAppointment: e.target.checked,
-                  isRepetitiveAppointment: e.target.checked ? false : prev.isRepetitiveAppointment,
-                }))
-              }
-            />
-            <span>{t("first_appointment")}</span>
-          </label>
-          <label className="ht-first-appt-label">
-            <input
-              type="checkbox"
-              className="ht-first-appt-checkbox"
-              checked={!!form.isRepetitiveAppointment}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  isRepetitiveAppointment: e.target.checked,
-                  isFirstAppointment: e.target.checked ? false : prev.isFirstAppointment,
-                }))
-              }
-            />
-            <span>{t("repetitive_appointment")}</span>
-          </label>
+        {specialistTitle && (
+          <span className="shf-specialist-title">{specialistTitle}</span>
+        )}
+        {!readOnly && (effectiveEditMode ? (
           <button
             type="button"
             className="save-btn"
             onClick={handleSave}
             disabled={!!isSaving}
+            style={{ marginLeft: "auto" }}
           >
-            {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save", { ns: "appointment_details_general" })}
+            {isSaving
+              ? t("footer.saving", { ns: "appointment_details_general" })
+              : t("footer.save", { ns: "appointment_details_general" })}
           </button>
-        </div>
+        ) : (
+          <button
+            type="button"
+            className="shf-edit-btn"
+            onClick={() => setIsEditMode(true)}
+            style={{ marginLeft: "auto" }}
+          >
+            ✎ {t("footer.edit", { ns: "appointment_details_general", defaultValue: "Edit" })}
+          </button>
+        ))}
       </div>
 
-      {/* ── History sections ── */}
-      <div className="ht-container" style={{ paddingBottom: 24 }}>
+      <div className={`ht-container${!effectiveEditMode ? " shf-view-mode" : ""}`} style={{ paddingTop: effectiveEditMode ? 16 : 8, paddingBottom: 16 }}>
         {HISTORY_SECTIONS.map((s) => renderSection(s))}
       </div>
     </div>

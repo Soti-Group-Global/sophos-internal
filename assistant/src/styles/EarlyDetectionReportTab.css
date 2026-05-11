@@ -11,7 +11,7 @@
 
 /* ── Left form panel ──────────────────────────────────────── */
 .ed-form-panel {
-  flex: 0 0 38%;
+  flex: 0 0 28%;
   min-width: 0;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -19,7 +19,7 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  max-height: calc(100vh - 310px);
+  max-height: calc(100vh - 90px);
   position: sticky;
   top: 0;
   box-sizing: border-box;
@@ -170,7 +170,7 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: calc(100vh - 310px);
+  max-height: calc(100vh - 90px);
   box-sizing: border-box;
   background: #d0d0d0;
   padding: 24px 20px;
@@ -184,11 +184,10 @@
 .ed-intro-text-content {
   font-size: 9pt;
   line-height: 1.6;
-  color: #333 !important;
+  color: #333;
 }
 
-.ed-intro-text-content *  {
-  color: #333 !important;
+.ed-intro-text-content * {
   font-size: 9pt;
   line-height: 1.6;
 }
@@ -374,9 +373,9 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100%;
-  padding: 80px 64px 80px 64px;
+  padding: 60px 64px 60px 64px;
   box-sizing: border-box;
   gap: 28px;
 }
@@ -1242,9 +1241,9 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100%;
-  padding: 80px 64px 80px 64px;
+  padding: 60px 64px 60px 64px;
   box-sizing: border-box;
   gap: 28px;
 }
@@ -1967,9 +1966,7 @@
   min-height: 0;
   max-height: none;
   min-width: 0;
-  gap: 16px;
-  padding: 16px;
-  box-sizing: border-box;
+  gap: 12px;
   align-items: stretch;
 }
 

@@ -3169,6 +3169,14 @@
   white-space: nowrap;
 }
 
+.apd-header-gender-icon {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+}
+.apd-header-gender-icon--male   { color: #2563eb; }
+.apd-header-gender-icon--female { color: #db2777; }
+
 /* === Full-width tabs bar === */
 .apd-tabs-bar {
   display: flex;

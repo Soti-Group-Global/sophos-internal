@@ -185,18 +185,21 @@ const EarlyDetectionApplications = () => {
         console.log("[ED] API result status:", edResult.status);
         
         // Check if request was fulfilled before accessing data
-        const edAppointments =
+        const edRaw =
           edResult.status === "fulfilled" &&
           Array.isArray(edResult.value?.data)
             ? edResult.value.data
             : [];
+        const edAppointments = Array.from(
+          new Map(edRaw.map((b) => [String(b?._id || b?.applicationId), b])).values()
+        );
 
         console.log("[ED] Early Detection applications count:", edAppointments.length);
-        
+
         if (edAppointments.length > 0) {
           console.log("[ED] Sample:", edAppointments.slice(0, 2));
         }
-        
+
         setApplications(edAppointments);
       } catch (error) {
         console.error("[ED] Error fetching applications:", error);
@@ -365,22 +368,23 @@ const EarlyDetectionApplications = () => {
     return age >= 0 ? age : null;
   };
 
-  const formatDateDDMMYYYY = (dateStr) => {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    if (isNaN(d)) return dateStr;
-    return `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
-  };
-
   const getPatientFirstName = (appt) => {
-    if (appt.patientDetails?.firstName) return appt.patientDetails.firstName?.en || appt.patientDetails.firstName || "";
+    const d = appt.patientDetails;
+    if (d?.firstName) return typeof d.firstName === "object" ? d.firstName.en || "" : d.firstName;
     return (appt.patientName || "").split(" ")[0] || "";
   };
 
   const getPatientLastName = (appt) => {
-    if (appt.patientDetails?.lastName) return appt.patientDetails.lastName?.en || appt.patientDetails.lastName || "";
-    return (appt.patientName || "").split(" ").slice(1).join(" ") || "";
+    const d = appt.patientDetails;
+    if (d?.lastName) return typeof d.lastName === "object" ? d.lastName.en || "" : d.lastName;
+    // patientName is now the full name from the backend
+    const parts = (appt.patientName || "").trim().split(/\s+/);
+    return parts.length > 1 ? parts.slice(1).join(" ") : "";
   };
+
+  const getPatientGender = (appt) => (appt.patientDetails?.gender || "").toLowerCase();
+
+  const getPatientDOB = (appt) => appt.patientDetails?.dateOfBirth || null;
 
   const handleFilterChange = (value) => {
     setFilter(value);
@@ -709,10 +713,8 @@ const EarlyDetectionApplications = () => {
                     <th>{t("appointments.patient").toUpperCase()}</th>
                     <th>{t("appointments.sex", "SEX").toUpperCase()}</th>
                     <th>{t("appointments.age", "AGE").toUpperCase()}</th>
-                    <th>{t("appointments.columns.appointment", "APPOINTMENT").toUpperCase()}</th>
-                    <th>{t("appointments.typeOfService", "TYPE OF SERVICE").toUpperCase()}</th>
-                    <th>{t("appointments.date", "DATE").toUpperCase()}</th>
-                    <th>{t("appointments.columns.status", "STATUS").toUpperCase()}</th>
+                    <th>{t("appointments.appointment", "APPOINTMENT").toUpperCase()}</th>
+                    <th>{t("appointments.status", "STATUS").toUpperCase()}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -721,25 +723,9 @@ const EarlyDetectionApplications = () => {
                       key={appt._id || appt.applicationId}
                       className="appt-row"
                       onClick={() =>
-                        navigate(
+                        window.open(
                           `/early-detection-bookings/${encodeURIComponent(appt.applicationId || appt._id)}`,
-                          {
-                            state: {
-                              doctorEmail: user?.email,
-                              patientEmail: appt.patientEmail,
-                              appointmentData: {
-                                _id: appt?._id,
-                                applicationId: appt?.applicationId,
-                                patientEmail: appt?.patientEmail,
-                                patientName: appt?.patientName,
-                                appointmentStatus: appt?.appointmentStatus,
-                                date: appt?.date || null,
-                                startTime: appt?.startTime || null,
-                                endTime: appt?.endTime || null,
-                                serviceType: appt?.serviceType || null,
-                              },
-                            },
-                          },
+                          "_blank",
                         )
                       }
                     >
@@ -751,7 +737,7 @@ const EarlyDetectionApplications = () => {
                       </td>
                       <td>
                         {(() => {
-                          const g = (appt.patientDetails?.gender || "").toLowerCase();
+                          const g = getPatientGender(appt);
                           if (g === "male") return <span className="sex-icon sex-icon--male">♂</span>;
                           if (g === "female") return <span className="sex-icon sex-icon--female">♀</span>;
                           return <span className="sex-icon sex-icon--unknown">—</span>;
@@ -759,28 +745,10 @@ const EarlyDetectionApplications = () => {
                       </td>
                       <td>
                         <span className="age-text">
-                          {appt.patientDetails?.dateOfBirth ? calculateAge(appt.patientDetails.dateOfBirth) ?? "—" : "—"}
+                          {(() => { const dob = getPatientDOB(appt); return dob ? (calculateAge(dob) ?? "—") : "—"; })()}
                         </span>
                       </td>
                       <td><span className="appt-cell-id">#{appt.applicationId || appt._id}</span></td>
-                      <td>
-                        <span className="appointment-type-label">
-                          {appt.serviceType || t("appointments.types.earlyDetection", "Early Detection")}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="appt-date-cell">
-                          <span className="appt-date-text">
-                            {appt.date ? formatDateDDMMYYYY(appt.date) : t("common.notAvailable")}
-                          </span>
-                          {(appt.startTime || appt.endTime) && (
-                            <span className="appt-time-sub">
-                              {appt.startTime ? formatTimeHHMM(appt.startTime) : ""}
-                              {appt.endTime ? " – " + formatTimeHHMM(appt.endTime) : ""}
-                            </span>
-                          )}
-                        </div>
-                      </td>
                       <td>
                         {(() => {
                           const s = appt.appointmentStatus;
@@ -794,7 +762,7 @@ const EarlyDetectionApplications = () => {
                           return (
                             <span className="appt-status-badge" style={{ background: config.bg, color: config.color }}>
                               <span className="appt-status-dot" style={{ background: config.dot }} />
-                              {t(`application.status.${s?.toLowerCase()}`, { defaultValue: s }) || t("common.unknown")}
+                              {t(`appointmentStatus.${s?.toLowerCase()}`, { defaultValue: s }) || t("common.unknown")}
                             </span>
                           );
                         })()}

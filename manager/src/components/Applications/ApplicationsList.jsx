@@ -1390,15 +1390,10 @@ const ApplicationsList = () => {
 
                             <td className="consultation-cell">
                               <div className="cell-content">
-                                <button
-                                  className="doctor-name-link"
-                                  onClick={(e) =>
-                                    handleDoctorNameClick(app.doctorId, e)
-                                  }
-                                >
+                                <div className="doctor-name-text">
                                   <User size={14} />
                                   {app.doctorName}
-                                </button>
+                                </div>
                                 {/*
                                 <div className="specialty-info">
                                   {app.specialty || t("applications.na")}

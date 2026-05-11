@@ -640,6 +640,15 @@
   transform: translateX(3px);
 }
 
+.doctor-name-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: var(--font-size-body);
+}
+
 /* Status Badge */
 .status-badge-app {
   display: inline-flex;

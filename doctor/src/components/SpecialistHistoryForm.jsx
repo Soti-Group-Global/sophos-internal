@@ -240,30 +240,30 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
   };
 
   return (
-    <div className="shf-wrap">
+    <div className={`shf-wrap${!canEdit ? " shf-wrap--readonly" : ""}`}>
       {/* ── Save row ── */}
       <div className="shf-header-row">
-        <div className="shf-header-actions">
-          <button
-            type="button"
-            className="save-btn"
-            onClick={handleSave}
-            disabled={!canEdit || !!isSaving}
-          >
-            {isSaving
-              ? t("footer.saving")
-              : canEdit
-                ? t("earlyDiagnosis.save", { ns: "translation" })
-                : t("read_only", "Read-only")}
-          </button>
-        </div>
+        {specialistTitle && (
+          <h2 className="shf-specialist-title">{specialistTitle}</h2>
+        )}
+        {canEdit && (
+          <div className="shf-header-actions">
+            <button
+              type="button"
+              className="save-btn"
+              onClick={handleSave}
+              disabled={!!isSaving}
+            >
+              {isSaving ? t("footer.saving") : t("earlyDiagnosis.save", { ns: "translation" })}
+            </button>
+          </div>
+        )}
+        {!canEdit && (
+          <div className="shf-readonly-banner">
+            🔒 {t("history_tab.read_only_specialist", "You can view this specialist history but cannot edit it")}
+          </div>
+        )}
       </div>
-
-      {!canEdit && (
-        <div className="shf-readonly-banner" style={{ marginBottom: 12, color: "#a00", fontWeight: 600 }}>
-          🔒 {t("history_tab.read_only_specialist", "You can view this specialist history but cannot edit it")}
-        </div>
-      )}
 
       {/* ── History sections ── */}
       <div className="ht-container" style={{ paddingBottom: 24 }}>

@@ -294,7 +294,7 @@ const SpecialistHistoryForm = ({
   };
 
   return (
-    <div className="shf-wrap">
+    <div className={`shf-wrap${readOnly ? " shf-wrap--readonly" : ""}`}>
       {/* ── Title row ── */}
       <div className="shf-header-row">
         <div className="shf-title-group">

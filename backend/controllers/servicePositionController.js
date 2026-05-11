@@ -42,6 +42,7 @@ exports.getAllPositions = async (req, res) => {
         const skip = (Number(page) - 1) * Number(limit);
         const [positions, total] = await Promise.all([
           ServicePosition.find(filter)
+            .populate("category", "name")
             .sort({ sortOrder: 1, name: 1 })
             .skip(skip)
             .limit(Number(limit))

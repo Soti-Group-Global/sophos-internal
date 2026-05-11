@@ -181,6 +181,55 @@
   margin: 0;
 }
 
+/* ── Lab upload modal ── */
+.ht-upload-modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 480px;
+  max-width: 94vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.ht-upload-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0c3870;
+  padding: 16px 20px;
+}
+.ht-upload-modal-title { font-size: 16px; font-weight: 600; color: #fff; margin: 0; }
+.ht-upload-modal-body { display: flex; flex-direction: column; gap: 8px; padding: 20px 20px 4px; }
+.ht-upload-modal-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #64748b; text-transform: uppercase; }
+.ht-upload-modal-select { width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; color: #0f172a; background: #fff; cursor: pointer; }
+.ht-upload-modal-select:focus { outline: none; border-color: #0c3870; }
+.ht-upload-modal-file { width: 100%; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #fff; }
+.ht-upload-modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; }
+.ht-upload-modal-cancel { padding: 8px 20px; border: 1.5px solid #cbd5e1; border-radius: 8px; background: #fff; color: #475569; font-size: 14px; cursor: pointer; }
+.ht-upload-modal-submit { padding: 8px 22px; background: #0c3870; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.ht-upload-modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.ht-upload-modal-submit:not(:disabled):hover { opacity: 0.88; }
+
+/* ── Lab section empty state ── */
+.ht-lab-empty-view { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+.ht-lab-empty-actions { display: flex; gap: 8px; margin-bottom: 2px; }
+.ht-lab-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #fff;
+  color: #0c3870;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ht-lab-empty-btn:hover { border-color: #0c3870; background: #f0f4ff; }
+.ht-lab-empty-card { padding: 16px 14px; border: 1.5px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; }
+.ht-lab-empty-card-text { font-size: 13px; color: #94a3b8; }
+
 .ht-sub-sidebar-actions {
   display: flex;
   align-items: center;

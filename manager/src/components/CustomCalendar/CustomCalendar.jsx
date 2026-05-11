@@ -103,6 +103,8 @@ const CustomCalendar = ({
         return `${month}/${day}/${year}`;
       case 'yyyy-MM-dd':
         return `${year}-${month}-${day}`;
+      case 'dd-MM-yyyy':
+        return `${day}-${month}-${year}`;
       default:
         return `${day}/${month}/${year}`;
     }

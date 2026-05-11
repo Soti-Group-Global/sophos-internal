@@ -1497,6 +1497,16 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
       console.log("[CALENDAR] - Patient:", booking.patient?._id, booking.patient?.email);
       console.log("[CALENDAR] - Schedule specialistConsultations length:", booking.schedule?.specialistConsultations?.length);
       
+      const p = booking.patient || {};
+      console.log("[CALENDAR] - Patient fields:", { firstName: p.firstName, lastName: p.lastName, gender: p.gender, dob: p.dateOfBirth });
+      const patientDetails = {
+        gender: p.gender || null,
+        dateOfBirth: p.dateOfBirth || null,
+        firstName: p.firstName || null,
+        lastName: p.lastName || null,
+      };
+      const patientFullName = [p.firstName, p.lastName].filter(Boolean).join(" ") || p.name || "Unknown";
+
       if (booking.schedule && booking.schedule.specialistConsultations && booking.schedule.specialistConsultations.length > 0) {
         // Create one result entry per specialist consultation
         booking.schedule.specialistConsultations.forEach((consultation, idx) => {
@@ -1508,7 +1518,8 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
             applicationId: booking.bookingNumber,
             patientId: booking.patient?._id,
             patientEmail: booking.patient?.email || null,
-            patientName: booking.patient?.firstName || booking.patient?.name || "Unknown",
+            patientName: patientFullName,
+            patientDetails,
             appointmentStatus: booking.status,
             date: consultation.date,
             startTime: consultation.startTime,
@@ -1522,7 +1533,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
             paymentStatus: booking.payment?.status || "pending",
           };
           results.push(transformed);
-          
+
           console.log(`[CALENDAR] - Specialist ${idx} (${consultation.title}):`, {
             date: consultation.date,
             startTime: consultation.startTime,
@@ -1540,6 +1551,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
           patientId: booking.patient?._id,
           patientEmail: booking.patient?.email || null,
           patientName: booking.patient?.firstName || booking.patient?.name || "Unknown",
+          patientDetails,
           appointmentStatus: booking.status,
           date: null,
           startTime: null,

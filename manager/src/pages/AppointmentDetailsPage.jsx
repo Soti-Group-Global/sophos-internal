@@ -15,7 +15,7 @@ import {
 } from "../utils/api";
 import { getApptStatusClass } from "../utils/appointmentStatus";
 import LoadingComponent from "../components/Loading/LoadingComponent";
-import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo, FiSettings } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiCreditCard, FiChevronDown, FiChevronUp, FiFolder, FiRepeat, FiVideo, FiSettings, FiChevronsRight, FiChevronsLeft } from "react-icons/fi";
 import { MdOutlinePerson } from "react-icons/md";
 import { LuClipboardList } from "react-icons/lu";
 import "./AppointmentDetailsPage.css";
@@ -93,6 +93,7 @@ const AppointmentDetailsSystemHeader = ({
   createdAt,
   dob,
   age,
+  gender,
 }) => (
   <div className="adp-top-header adp-top-header--system">
     <button className="adp-back-btn" onClick={() => navigate(-1)}>
@@ -109,11 +110,12 @@ const AppointmentDetailsSystemHeader = ({
             t("loading")
           ) : (
             <>
+              {gender?.toLowerCase() === "male" && <span className="adp-header-gender-icon adp-header-gender-icon--male">♂</span>}
+              {gender?.toLowerCase() === "female" && <span className="adp-header-gender-icon adp-header-gender-icon--female">♀</span>}
               {t("patient_label")} <strong>{patientDisplayName}</strong>
             </>
           )}
         </h1>
-        {!loading && <span className="adp-status-badge-header">{t("status_active")}</span>}
       </div>
       {!loading && (
         <span className="adp-added-date">
@@ -178,6 +180,7 @@ const AppointmentDetailsPage = () => {
   const [patientApps, setPatientApps] = useState([]);
   const [doctorsMap, setDoctorsMap] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navExpanded, setNavExpanded] = useState(false);
   const prevPatientEmailRef = useRef(null);
 
   useEffect(() => {
@@ -311,6 +314,7 @@ const AppointmentDetailsPage = () => {
         createdAt={createdAt}
         dob={dob}
         age={age}
+        gender={patient?.gender}
       />,
     );
   }, [
@@ -323,6 +327,7 @@ const AppointmentDetailsPage = () => {
     createdAt,
     dob,
     age,
+    patient?.gender,
   ]);
 
   useEffect(() => () => setTopBarContent(null), [setTopBarContent]);
@@ -374,18 +379,26 @@ const AppointmentDetailsPage = () => {
   };
 
   return (
-    <div className="adp-page">
+    <div className={`adp-page${navExpanded ? " adp-page--nav-expanded" : ""}`}>
       {/* Left vertical iconic tabs (replace top tab bar visually) */}
-      <nav className="apd-vertical-tabs" aria-label="Appointment sections">
+      <nav className={`apd-vertical-tabs${navExpanded ? " apd-vertical-tabs--expanded" : ""}`} aria-label="Appointment sections">
+        <button
+          className="apd-nav-toggle"
+          onClick={() => setNavExpanded((v) => !v)}
+          title={navExpanded ? "Collapse" : "Expand"}
+        >
+          {navExpanded ? <FiChevronsLeft size={15} /> : <FiChevronsRight size={15} />}
+        </button>
         {TABS.map((tab) => (
           <button
             key={tab.key}
             className={`apd-vert-tab ${activeTab === tab.key ? "active" : ""}`}
             onClick={() => setActiveTab(tab.key)}
-            title={tab.label}
+            title={navExpanded ? undefined : tab.label}
             aria-pressed={activeTab === tab.key}
           >
             <span className="apd-vert-icon">{tab.icon}</span>
+            {navExpanded && <span className="apd-vert-label">{tab.label}</span>}
           </button>
         ))}
       </nav>

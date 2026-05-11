@@ -24,6 +24,8 @@ import {
   Pencil,
   Settings,
   X,
+  ChevronsRight,
+  ChevronsLeft,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
@@ -162,16 +164,12 @@ const toLocalDateOnly = (value) => {
   return `${y}-${m}-${d}`;
 };
 
-const formatLocalDateOnly = (value, locale = "en-US") => {
+const formatLocalDateOnly = (value) => {
   const dateOnly = toLocalDateOnly(value);
   if (!dateOnly) return "-";
   const [y, m, d] = dateOnly.split("-").map(Number);
-  const localDate = new Date(y, (m || 1) - 1, d || 1);
-  return localDate.toLocaleDateString(locale, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  if (!y || !m || !d) return "-";
+  return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
 };
 
 const normalizeId = (value) => {
@@ -241,6 +239,11 @@ const EarlyDetectionBookingDetails = () => {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const lang = new URLSearchParams(window.location.search).get("lang");
+    if (lang && lang !== i18n.language) i18n.changeLanguage(lang);
+  }, []);
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -269,7 +272,8 @@ const EarlyDetectionBookingDetails = () => {
   const [onlineSelectedAddons, setOnlineSelectedAddons] = useState([]);
   const [isSavingManual, setIsSavingManual] = useState(false);
   const [editingRows, setEditingRows] = useState({}); // { rowKey: status }
-  const [activeTab, setActiveTab] = useState("appointmentDetails");
+  const [activeTab, setActiveTab] = useState("patient");
+  const [navExpanded, setNavExpanded] = useState(false);
   const [activeScheduleTab, setActiveScheduleTab] = useState("specialistConsultation");
   const [activeTestId, setActiveTestId] = useState(null);
   const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
@@ -277,6 +281,7 @@ const EarlyDetectionBookingDetails = () => {
   const [editingTestNoteId, setEditingTestNoteId] = useState(null);
   const [isSavingTestNote, setIsSavingTestNote] = useState(false);
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
+  const [specialistAccordionOpen, setSpecialistAccordionOpen] = useState(true);
   const [editedScheduleItems, setEditedScheduleItems] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -787,7 +792,7 @@ const EarlyDetectionBookingDetails = () => {
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
-          t("earlyDiagnosis.failedToUpdateBooking"),
+        t("earlyDiagnosis.failedToUpdateBooking"),
       );
     } finally {
       updateSectionEditor(section, { saving: false });
@@ -796,14 +801,12 @@ const EarlyDetectionBookingDetails = () => {
 
   const formatDate = (date) => {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString(
-      i18n.language === "ru" ? "ru-RU" : "en-US",
-      {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      },
-    );
+    try {
+      const iso = String(date).split("T")[0];
+      const [y, m, d] = iso.split("-").map(Number);
+      if (!y || !m || !d) return "-";
+      return `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
+    } catch { return "-"; }
   };
 
   const formatDateTime = (date) => {
@@ -895,7 +898,7 @@ const EarlyDetectionBookingDetails = () => {
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          t("earlyDiagnosis.failedToUpdateBooking"),
+        t("earlyDiagnosis.failedToUpdateBooking"),
       );
     } finally {
       setIsSaving(false);
@@ -943,8 +946,8 @@ const EarlyDetectionBookingDetails = () => {
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
-          error?.message ||
-          t("earlyDiagnosis.failedToGenerateLink"),
+        error?.message ||
+        t("earlyDiagnosis.failedToGenerateLink"),
       );
       await loadBookingDetails();
     } finally {
@@ -1075,7 +1078,7 @@ const EarlyDetectionBookingDetails = () => {
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          t("earlyDiagnosis.failedToUpdatePayment"),
+        t("earlyDiagnosis.failedToUpdatePayment"),
       );
     } finally {
       setIsSavingManual(false);
@@ -1591,7 +1594,7 @@ const EarlyDetectionBookingDetails = () => {
     } catch (err) {
       toast.error(
         err?.response?.data?.error ||
-          t("earlyDiagnosis.saveError", "Save failed"),
+        t("earlyDiagnosis.saveError", "Save failed"),
       );
     } finally {
       setSpecialistFormSaving((prev) => ({ ...prev, [idx]: false }));
@@ -1617,31 +1620,44 @@ const EarlyDetectionBookingDetails = () => {
 
   const patientDisplayName = booking?.patient
     ? [
-        booking.patient.firstName,
-        booking.patient.middleName,
-        booking.patient.lastName,
-      ]
-        .map(readNameField)
-        .filter(Boolean)
-        .join(" ")
-        .trim() ||
-      booking.patient.email ||
-      "Unknown patient"
+      booking.patient.firstName,
+      booking.patient.middleName,
+      booking.patient.lastName,
+    ]
+      .map(readNameField)
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    booking.patient.email ||
+    "Unknown patient"
     : "Unknown patient";
 
   const dobHeader = booking?.patient?.dateOfBirth
     ? new Date(booking.patient.dateOfBirth).toLocaleDateString(
-        i18n.language === "ru" ? "ru-RU" : "en-US",
-        {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        },
-      )
+      i18n.language === "ru" ? "ru-RU" : "en-US",
+      {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      },
+    )
     : null;
 
+  const patientGender = booking?.patient?.gender || null;
+  const patientAge = (() => {
+    const dob = booking?.patient?.dateOfBirth;
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth)) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+  })();
+
   return (
-    <div className={`booking-details-page${activeTab === "medicalHistory" ? " booking-details-page--fixed" : ""}`}>
+    <div className="booking-details-page">
       <div className="adp-top-header">
         <button
           className="adp-back-btn"
@@ -1656,6 +1672,8 @@ const EarlyDetectionBookingDetails = () => {
         <div className="adp-header-center">
           <div className="adp-header-name-row">
             <h1 className="adp-patient-title">
+              {patientGender?.toLowerCase() === "male" && <span className="adp-header-gender-icon adp-header-gender-icon--male">♂</span>}
+              {patientGender?.toLowerCase() === "female" && <span className="adp-header-gender-icon adp-header-gender-icon--female">♀</span>}
               {t("earlyDiagnosis.patient", "Patient")}: <strong>{patientDisplayName}</strong>
             </h1>
             <span className="adp-status-badge-header">
@@ -1678,82 +1696,49 @@ const EarlyDetectionBookingDetails = () => {
 
         {dobHeader && (
           <div className="adp-header-right">
-            <span className="adp-dob-value">{dobHeader}</span>
+            <div className="adp-dob-row">
+              <span className="adp-dob-value">{dobHeader}</span>
+              {patientAge !== null && patientAge !== undefined && (
+                <span className="adp-age-badge">{patientAge} y.o.</span>
+              )}
+            </div>
             <span className="adp-dob-label">{t("earlyDiagnosis.dateOfBirth", "Date of Birth")}</span>
           </div>
         )}
       </div>
 
       <div className="booking-details-content">
-        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}`}>
-          <aside className="ed-appointments-sidebar adp-app-sidebar">
+        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}${navExpanded ? " ed-details-body--sidebar-expanded" : ""}`}>
+          <aside className={`ed-appointments-sidebar adp-app-sidebar${navExpanded ? " ed-appointments-sidebar--expanded" : ""}`}>
             <div className="ed-appointments-sidebar-tabs">
               <button
                 type="button"
-                className={`ed-appointments-sidebar-tab ${activeTab === "patient" ? "active" : ""}`}
-                onClick={() => setActiveTab("patient")}
-                title={t("earlyDiagnosis.patientInformation", "Patient details")}
-                aria-label={t("earlyDiagnosis.patientInformation", "Patient details")}
+                className="ed-sidebar-nav-toggle"
+                onClick={() => setNavExpanded((v) => !v)}
+                title={navExpanded ? "Collapse" : "Expand"}
               >
-                <span className="ed-appointments-sidebar-tab-icon">
-                  <User size={18} />
-                </span>
+                {navExpanded ? <ChevronsLeft size={15} /> : <ChevronsRight size={15} />}
               </button>
-              <button
-                type="button"
-                className={`ed-appointments-sidebar-tab ${activeTab === "appointmentDetails" ? "active" : ""}`}
-                onClick={() => setActiveTab("appointmentDetails")}
-                title={t("earlyDiagnosis.appointmentDetails", "Appointment Details")}
-                aria-label={t("earlyDiagnosis.appointmentDetails", "Appointment Details")}
-              >
-                <span className="ed-appointments-sidebar-tab-icon">
-                  <Calendar size={18} />
-                </span>
-              </button>
-              <button
-                type="button"
-                className={`ed-appointments-sidebar-tab ${activeTab === "medicalHistory" ? "active" : ""}`}
-                onClick={() => setActiveTab("medicalHistory")}
-                title={t("earlyDiagnosis.medicalHistory", "Medical History")}
-                aria-label={t("earlyDiagnosis.medicalHistory", "Medical History")}
-              >
-                <span className="ed-appointments-sidebar-tab-icon">
-                  <FileText size={18} />
-                </span>
-              </button>
-              <button
-                type="button"
-                className={`ed-appointments-sidebar-tab ${activeTab === "payments" ? "active" : ""}`}
-                onClick={() => setActiveTab("payments")}
-                title={t("earlyDiagnosis.paymentSummary", "Payments")}
-                aria-label={t("earlyDiagnosis.paymentSummary", "Payments")}
-              >
-                <span className="ed-appointments-sidebar-tab-icon">
-                  <FileText size={18} />
-                </span>
-              </button>
-              <button
-                type="button"
-                className={`ed-appointments-sidebar-tab ${activeTab === "history" ? "active" : ""}`}
-                onClick={() => setActiveTab("history")}
-                title={t("earlyDiagnosis.historyLogs", "History")}
-                aria-label={t("earlyDiagnosis.historyLogs", "History")}
-              >
-                <span className="ed-appointments-sidebar-tab-icon">
-                  <Clock size={18} />
-                </span>
-              </button>
-              <button
-                type="button"
-                className={`ed-appointments-sidebar-tab ${activeTab === "notes" ? "active" : ""}`}
-                onClick={() => setActiveTab("notes")}
-                title={t("earlyDiagnosis.internalNotes", "Notes")}
-                aria-label={t("earlyDiagnosis.internalNotes", "Notes")}
-              >
-                <span className="ed-appointments-sidebar-tab-icon">
-                  <Edit2 size={18} />
-                </span>
-              </button>
+              {[
+                { key: "patient",            Icon: User,     label: t("earlyDiagnosis.patientInformation", "Patient details") },
+                { key: "appointmentDetails", Icon: Calendar, label: t("earlyDiagnosis.appointmentDetails", "Appointment Details") },
+                { key: "medicalHistory",     Icon: FileText, label: t("earlyDiagnosis.medicalHistory", "Medical History") },
+                { key: "payments",           Icon: CheckCircle, label: t("earlyDiagnosis.paymentSummary", "Payments") },
+                { key: "history",            Icon: Clock,    label: t("earlyDiagnosis.historyLogs", "History") },
+                { key: "notes",              Icon: Edit2,    label: t("earlyDiagnosis.internalNotes", "Notes") },
+              ].map(({ key, Icon, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`ed-appointments-sidebar-tab ${activeTab === key ? "active" : ""}`}
+                  onClick={() => setActiveTab(key)}
+                  title={navExpanded ? undefined : label}
+                  aria-label={label}
+                >
+                  <span className="ed-appointments-sidebar-tab-icon"><Icon size={18} /></span>
+                  {navExpanded && <span className="ed-sidebar-tab-label">{label}</span>}
+                </button>
+              ))}
             </div>
 
             <div className="ed-appointments-sidebar-list adp-app-sidebar-list">
@@ -1823,19 +1808,43 @@ const EarlyDetectionBookingDetails = () => {
               <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
                 {[
                   ["specialistConsultation", t("earlyDiagnosis.specialistConsultation", "Specialist Consultation")],
-                  ["laboratoryTests",        t("earlyDiagnosis.laboratoryTests",        "Laboratory analysis")],
-                  ["instrumentalAnalysis",   t("earlyDiagnosis.instrumentalAnalysis",   "Исследования/манипуляции")],
-                  ["morphologicalResearch",  t("earlyDiagnosis.morphologicalResearch",  "Morphological research")],
+                  ["laboratoryTests", t("earlyDiagnosis.laboratoryTests", "Laboratory analysis")],
+                  ["instrumentalAnalysis", t("earlyDiagnosis.instrumentalAnalysis", "Исследования/манипуляции")],
+                  ["morphologicalResearch", t("earlyDiagnosis.morphologicalResearch", "Morphological research")],
                   ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations", "Procedures and manipulations")],
-                  ["conclusion",             t("earlyDiagnosis.conclusion",             "Conclusion")],
+                  ["conclusion", t("earlyDiagnosis.conclusion", "Conclusion")],
                 ].map(([key, label]) => (
                   <React.Fragment key={key}>
                     <button
                       type="button"
                       className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
-                      onClick={() => { setActiveScheduleTab(key); setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}
+                      onClick={() => {
+                        if (key === "specialistConsultation") {
+                          if (activeScheduleTab === key) {
+                            setSpecialistAccordionOpen((o) => !o);
+                          } else {
+                            setActiveScheduleTab(key);
+                            setSpecialistAccordionOpen(true);
+                          }
+                          setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
+                        } else if (managedSectionTabs.includes(key)) {
+                          setActiveScheduleTab(key);
+                          const firstTest = (managedTests?.[key] || [])[0];
+                          setActiveTestId(firstTest ? normalizeId(firstTest._id) : null);
+                          setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
+                        } else {
+                          setActiveScheduleTab(key); setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
+                        }
+                      }}
                     >
                       <span>{label}</span>
+                      {key === "specialistConsultation" && (
+                        <ChevronDown
+                          size={13}
+                          className="ed-tab-chevron"
+                          style={{ transform: (activeScheduleTab === key && specialistAccordionOpen) ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
+                        />
+                      )}
                       {managedSectionTabs.includes(key) && (
                         <span
                           className="ed-tab-settings-btn"
@@ -1849,35 +1858,68 @@ const EarlyDetectionBookingDetails = () => {
                         </span>
                       )}
                     </button>
-                    {managedSectionTabs.includes(key) && (managedTests?.[key] || []).length > 0 && (
-                      <div className="ed-subnav-test-list">
-                        {(managedTests[key] || []).map((test) => {
-                          const testId = normalizeId(test?._id);
-                          const entries = (booking?.schedule?.[key] || []).filter(
-                            (entry) => normalizeId(entry?.item?._id) === testId,
-                          );
-                          const isDone = entries.some((e) => Array.isArray(e.files) && e.files.length > 0);
-                          const isActive = activeScheduleTab === key && activeTestId === testId;
-                          return (
-                            <button
-                              key={testId}
-                              type="button"
-                              className={`ed-subnav-test-item${isDone ? " ed-subnav-test-item--done" : ""}${isActive ? " ed-subnav-test-item--active" : ""}`}
-                              onClick={() => {
-                                setActiveScheduleTab(key);
-                                setActiveTestId(isActive ? null : testId);
-                                setShowTestNoteEditor(false);
-                                setTestNoteDraft("");
-                                setEditingTestNoteId(null);
-                              }}
-                            >
-                              <span className="ed-subnav-test-name">{readLocalizedName(test?.name)}</span>
-                              {isDone && <CheckCircle size={12} className="ed-subnav-test-check" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+
+                    {/* Specialist consultation accordion sub-items */}
+                    {key === "specialistConsultation" && activeScheduleTab === "specialistConsultation" && specialistAccordionOpen &&
+                      Array.isArray(booking?.schedule?.specialistConsultations) &&
+                      booking.schedule.specialistConsultations.length > 0 && (
+                        <div className="ed-subnav-test-list">
+                          {booking.schedule.specialistConsultations.map((s, i) => {
+                            const title = s?.title
+                              ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(s.title)}`, s.title)
+                              : `Specialist ${i + 1}`;
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                className={`ed-subnav-test-item${activeSpecialistTab === i ? " ed-subnav-test-item--active" : ""}`}
+                                onClick={() => setActiveSpecialistTab(i)}
+                              >
+                                <span className="ed-subnav-test-name">{title}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                    {/* Lab / test sub-items — only filled tests, only for the active section */}
+                    {managedSectionTabs.includes(key) && activeScheduleTab === key && (() => {
+                      const filledTests = (managedTests?.[key] || []).filter((test) => {
+                        const testId = normalizeId(test?._id);
+                        const entries = (booking?.schedule?.[key] || []).filter(
+                          (entry) => normalizeId(entry?.item?._id) === testId,
+                        );
+                        return entries.some(
+                          (e) =>
+                            (Array.isArray(e.files) && e.files.length > 0) ||
+                            (Array.isArray(e.notes) && e.notes.length > 0),
+                        );
+                      });
+                      if (filledTests.length === 0) return null;
+                      return (
+                        <div className="ed-subnav-test-list">
+                          {filledTests.map((test) => {
+                            const testId = normalizeId(test?._id);
+                            const isActive = activeTestId === testId;
+                            return (
+                              <button
+                                key={testId}
+                                type="button"
+                                className={`ed-subnav-test-item ed-subnav-test-item--done${isActive ? " ed-subnav-test-item--active" : ""}`}
+                                onClick={() => {
+                                  setActiveTestId(isActive ? null : testId);
+                                  setShowTestNoteEditor(false);
+                                  setTestNoteDraft("");
+                                  setEditingTestNoteId(null);
+                                }}
+                              >
+                                <span className="ed-subnav-test-name">{readLocalizedName(test?.name)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </React.Fragment>
                 ))}
               </div>
@@ -2024,9 +2066,9 @@ const EarlyDetectionBookingDetails = () => {
                                                 <span className="ed-schedule-view-specialty">
                                                   {item?.title
                                                     ? t(
-                                                        `earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`,
-                                                        item.title,
-                                                      )
+                                                      `earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`,
+                                                      item.title,
+                                                    )
                                                     : "Consultation"}
                                                 </span>
                                               </div>
@@ -2041,24 +2083,24 @@ const EarlyDetectionBookingDetails = () => {
                                                     <Calendar size={13} />
                                                     {item?.date
                                                       ? formatLocalDateOnly(
-                                                          item.date,
-                                                          i18n.language === "ru"
-                                                            ? "ru-RU"
-                                                            : "en-US",
-                                                        )
+                                                        item.date,
+                                                        i18n.language === "ru"
+                                                          ? "ru-RU"
+                                                          : "en-US",
+                                                      )
                                                       : t(
-                                                          "earlyDiagnosis.dateNotSet",
-                                                          "Date not set",
-                                                        )}
+                                                        "earlyDiagnosis.dateNotSet",
+                                                        "Date not set",
+                                                      )}
                                                   </span>
                                                   <Clock size={13} />
                                                   {item?.startTime &&
-                                                  item?.endTime
+                                                    item?.endTime
                                                     ? `${item.startTime} - ${item.endTime}`
                                                     : t(
-                                                        "earlyDiagnosis.notScheduled",
-                                                        "Not Scheduled",
-                                                      )}
+                                                      "earlyDiagnosis.notScheduled",
+                                                      "Not Scheduled",
+                                                    )}
                                                 </span>
                                               </div>
                                             </div>
@@ -2075,13 +2117,13 @@ const EarlyDetectionBookingDetails = () => {
                                                 <span className="ed-schedule-view-status-dot" />
                                                 {item?.isCompleted
                                                   ? t(
-                                                      "earlyDiagnosis.confirmed",
-                                                      "Confirmed",
-                                                    )
+                                                    "earlyDiagnosis.confirmed",
+                                                    "Confirmed",
+                                                  )
                                                   : t(
-                                                      "earlyDiagnosis.pendingStatus",
-                                                      "Pending",
-                                                    )}
+                                                    "earlyDiagnosis.pendingStatus",
+                                                    "Pending",
+                                                  )}
                                               </span>
                                             </div>
                                           </div>
@@ -2091,9 +2133,9 @@ const EarlyDetectionBookingDetails = () => {
                                               <div className="ed-schedule-title">
                                                 {item?.title
                                                   ? t(
-                                                      `earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`,
-                                                      item.title,
-                                                    )
+                                                    `earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`,
+                                                    item.title,
+                                                  )
                                                   : "Consultation"}
                                               </div>
                                               <label
@@ -2119,13 +2161,13 @@ const EarlyDetectionBookingDetails = () => {
                                                 <span className="ed-process-toggle-label">
                                                   {item?.isCompleted
                                                     ? t(
-                                                        "earlyDiagnosis.completed",
-                                                        "Completed",
-                                                      )
+                                                      "earlyDiagnosis.completed",
+                                                      "Completed",
+                                                    )
                                                     : t(
-                                                        "earlyDiagnosis.pendingStatus",
-                                                        "Pending",
-                                                      )}
+                                                      "earlyDiagnosis.pendingStatus",
+                                                      "Pending",
+                                                    )}
                                                 </span>
                                               </label>
                                             </div>
@@ -2142,8 +2184,8 @@ const EarlyDetectionBookingDetails = () => {
                                                     value={
                                                       item?.date
                                                         ? String(
-                                                            item.date,
-                                                          ).split("T")[0]
+                                                          item.date,
+                                                        ).split("T")[0]
                                                         : ""
                                                     }
                                                     onChange={(date) =>
@@ -2152,25 +2194,25 @@ const EarlyDetectionBookingDetails = () => {
                                                           prev.map((row) =>
                                                             normalizeId(
                                                               row?._id ||
-                                                                row?.id,
+                                                              row?.id,
                                                             ) ===
-                                                            normalizeId(
-                                                              scheduleItemId,
-                                                            )
+                                                              normalizeId(
+                                                                scheduleItemId,
+                                                              )
                                                               ? {
-                                                                  ...row,
-                                                                  date: toLocalDateOnly(
-                                                                    date,
-                                                                  ),
-                                                                  startTime: "",
-                                                                  endTime: "",
-                                                                }
+                                                                ...row,
+                                                                date: toLocalDateOnly(
+                                                                  date,
+                                                                ),
+                                                                startTime: "",
+                                                                endTime: "",
+                                                              }
                                                               : row,
                                                           ),
                                                       )
                                                     }
                                                     minDate={new Date()}
-                                                    dateFormat="yyyy-MM-dd"
+                                                    dateFormat="dd-MM-yyyy"
                                                     className="ed-schedule-calendar"
                                                   />
                                                 ) : (
@@ -2196,9 +2238,9 @@ const EarlyDetectionBookingDetails = () => {
                                                     className="ed-schedule-input"
                                                     value={
                                                       typeof item?.doctor ===
-                                                      "object"
+                                                        "object"
                                                         ? item?.doctor?._id ||
-                                                          ""
+                                                        ""
                                                         : item?.doctor || ""
                                                     }
                                                     onChange={(e) =>
@@ -2207,19 +2249,19 @@ const EarlyDetectionBookingDetails = () => {
                                                           prev.map((row) =>
                                                             normalizeId(
                                                               row?._id ||
-                                                                row?.id,
+                                                              row?.id,
                                                             ) ===
-                                                            normalizeId(
-                                                              scheduleItemId,
-                                                            )
+                                                              normalizeId(
+                                                                scheduleItemId,
+                                                              )
                                                               ? {
-                                                                  ...row,
-                                                                  doctor:
-                                                                    e.target
-                                                                      .value,
-                                                                  startTime: "",
-                                                                  endTime: "",
-                                                                }
+                                                                ...row,
+                                                                doctor:
+                                                                  e.target
+                                                                    .value,
+                                                                startTime: "",
+                                                                endTime: "",
+                                                              }
                                                               : row,
                                                           ),
                                                       )
@@ -2228,20 +2270,20 @@ const EarlyDetectionBookingDetails = () => {
                                                     <option value="">
                                                       {loadingDoctors
                                                         ? t(
-                                                            "earlyDiagnosis.loadingDoctors",
-                                                            "Loading doctors...",
-                                                          )
+                                                          "earlyDiagnosis.loadingDoctors",
+                                                          "Loading doctors...",
+                                                        )
                                                         : getDoctorsForScheduleItem(
-                                                              item,
-                                                            ).length
+                                                          item,
+                                                        ).length
                                                           ? t(
-                                                              "earlyDiagnosis.selectDoctor",
-                                                              "Select doctor",
-                                                            )
+                                                            "earlyDiagnosis.selectDoctor",
+                                                            "Select doctor",
+                                                          )
                                                           : t(
-                                                              "earlyDiagnosis.noMatchingDoctors",
-                                                              "No matching doctors",
-                                                            )}
+                                                            "earlyDiagnosis.noMatchingDoctors",
+                                                            "No matching doctors",
+                                                          )}
                                                     </option>
                                                     {getDoctorsForScheduleItem(
                                                       item,
@@ -2291,7 +2333,7 @@ const EarlyDetectionBookingDetails = () => {
                                                             if (
                                                               normalizeId(
                                                                 row?._id ||
-                                                                  row?.id,
+                                                                row?.id,
                                                               ) !==
                                                               normalizeId(
                                                                 scheduleItemId,
@@ -2404,7 +2446,7 @@ const EarlyDetectionBookingDetails = () => {
 
                 {activeTab === "medicalHistory" && (
                   <div className={`ed-medical-history-content${activeScheduleTab === "conclusion" ? " ed-medical-history-content--conclusion" : ""}`}>
-                        <div className={`detail-section${activeScheduleTab === "conclusion" ? " detail-section--compact" : ""}`}>
+                    <div className={`detail-section${activeScheduleTab === "conclusion" ? " detail-section--compact" : ""}`}>
                       {activeScheduleTab === "laboratoryTests" && (
                         activeTestId ? (() => {
                           const selTest = (managedTests?.laboratoryTests || []).find((t) => normalizeId(t?._id) === activeTestId);
@@ -2629,8 +2671,8 @@ const EarlyDetectionBookingDetails = () => {
                                           {[
                                             formatFileSize(file),
                                             file?.uploadedByName ||
-                                              file?.uploadedBy ||
-                                              file?.uploadedByDoctorName,
+                                            file?.uploadedBy ||
+                                            file?.uploadedByDoctorName,
                                           ]
                                             .filter(Boolean)
                                             .join(" • ")}
@@ -2773,8 +2815,8 @@ const EarlyDetectionBookingDetails = () => {
                                           {[
                                             formatFileSize(file),
                                             file?.uploadedByName ||
-                                              file?.uploadedBy ||
-                                              file?.uploadedByDoctorName,
+                                            file?.uploadedBy ||
+                                            file?.uploadedByDoctorName,
                                           ]
                                             .filter(Boolean)
                                             .join(" • ")}
@@ -2867,78 +2909,28 @@ const EarlyDetectionBookingDetails = () => {
                         </div>
                       )}
 
-                      {activeScheduleTab === "specialistConsultation" && (
-                        <div className="detail-section">
-                          <div className="ed-schedule-tabs ed-specialist-tabs">
-                            {Array.isArray(
-                              booking?.schedule?.specialistConsultations,
-                            )
-                              ? booking.schedule.specialistConsultations.map(
-                                  (s, i) => (
-                                    <button
-                                      key={`specialist_${i}`}
-                                      type="button"
-                                      className={`ed-schedule-tab-btn ${activeSpecialistTab === i ? "active" : ""}`}
-                                      onClick={() => setActiveSpecialistTab(i)}
-                                    >
-                                      <span>
-                                        {s?.title
-                                          ? t(
-                                              `earlyDiagnosis.specialist_${normalizeSpecialistTitle(s.title)}`,
-                                              s.title,
-                                            )
-                                          : `Specialist ${i + 1}`}
-                                      </span>
-                                    </button>
-                                  ),
-                                )
-                              : null}
-                          </div>
-
-                          {activeSpecialistTab !== null &&
-                            (() => {
-                              const specialist =
-                                booking?.schedule?.specialistConsultations?.[
-                                  activeSpecialistTab
-                                ];
-                              if (!specialist) return null;
-                              const displaySpecialistTitle = specialist.title
-                                ? t(
-                                    `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
-                                    specialist.title,
-                                  )
-                                : specialist.title;
-                              return (
-                                <div className="ed-specialist-consultation-wrapper">
-                                  
-                                  <SpecialistHistoryForm
-                                    key={`specialist_form_${activeSpecialistTab}`}
-                                    specialistTitle={displaySpecialistTitle}
-                                    historyForm={
-                                      specialistForms[activeSpecialistTab] ||
-                                      specialist.historyForm ||
-                                      {}
-                                    }
-                                    isSaving={
-                                      !!specialistFormSaving[activeSpecialistTab]
-                                    }
-                                    onSave={(formData) =>
-                                      handleSaveSpecialistForm(
-                                        activeSpecialistTab,
-                                        formData,
-                                      )
-                                    }
-                                  />
-                                </div>
-                              );
-                            })()}
-                        </div>
-                      )}
-                        </div>
-                      {activeScheduleTab === "conclusion" && (
-                        <EarlyDetectionReportTab booking={booking} />
-                      )}
-                      </div>
+                      {activeScheduleTab === "specialistConsultation" && (() => {
+                        const specialist = booking?.schedule?.specialistConsultations?.[activeSpecialistTab];
+                        if (!specialist) return null;
+                        const displaySpecialistTitle = specialist.title
+                          ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`, specialist.title)
+                          : specialist.title;
+                        return (
+                          <SpecialistHistoryForm
+                            key={`specialist_form_${activeSpecialistTab}`}
+                            specialistTitle={displaySpecialistTitle}
+                            historyForm={specialistForms[activeSpecialistTab] || specialist.historyForm || {}}
+                            isSaving={!!specialistFormSaving[activeSpecialistTab]}
+                            onSave={(formData) => handleSaveSpecialistForm(activeSpecialistTab, formData)}
+                            readOnly
+                          />
+                        );
+                      })()}
+                    </div>
+                    {activeScheduleTab === "conclusion" && (
+                      <EarlyDetectionReportTab booking={booking} />
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -3103,16 +3095,16 @@ const EarlyDetectionBookingDetails = () => {
                                     <td>
                                       {link.paidAt
                                         ? new Date(link.paidAt).toLocaleString(
-                                            i18n.language === "ru"
-                                              ? "ru-RU"
-                                              : "en-US",
-                                            {
-                                              month: "short",
-                                              day: "numeric",
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            },
-                                          )
+                                          i18n.language === "ru"
+                                            ? "ru-RU"
+                                            : "en-US",
+                                          {
+                                            month: "short",
+                                            day: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          },
+                                        )
                                         : "—"}
                                     </td>
                                     <td>
@@ -3227,7 +3219,7 @@ const EarlyDetectionBookingDetails = () => {
                                               title="Copy link"
                                             >
                                               {copiedLinkId ===
-                                              link.paymentId ? (
+                                                link.paymentId ? (
                                                 <Check size={14} />
                                               ) : (
                                                 <Copy size={14} />
@@ -3385,20 +3377,20 @@ const EarlyDetectionBookingDetails = () => {
                                         <p className="timeline-service-title">
                                           {specialist.title
                                             ? t(
-                                                `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
-                                                specialist.title,
-                                              )
+                                              `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
+                                              specialist.title,
+                                            )
                                             : `${t("earlyDiagnosis.service", "Service")} ${idx + 1}`}
                                         </p>
                                         <p className="timeline-service-sub">
                                           {specialist.date
                                             ? formatDate(specialist.date)
                                             : t(
-                                                "earlyDiagnosis.dateNotSet",
-                                                "Date not set",
-                                              )}
+                                              "earlyDiagnosis.dateNotSet",
+                                              "Date not set",
+                                            )}
                                           {specialist.startTime &&
-                                          specialist.endTime
+                                            specialist.endTime
                                             ? ` · ${specialist.startTime} - ${specialist.endTime}`
                                             : ""}
                                         </p>
@@ -3504,7 +3496,7 @@ const EarlyDetectionBookingDetails = () => {
                         )}
 
                         {booking.internalNotes &&
-                        booking.internalNotes.length > 0 ? (
+                          booking.internalNotes.length > 0 ? (
                           <div className="notes-list notes-list--modern">
                             {booking.internalNotes.map((note, index) => (
                               <article

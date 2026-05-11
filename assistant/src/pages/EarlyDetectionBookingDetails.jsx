@@ -1,29 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { getApptStatusClass } from "../utils/appointmentStatus";
 import {
-  ArrowLeft,
-  User,
-  Calendar,
   CheckCircle,
   Clock,
-  Edit2,
   Trash2,
   FileText,
-  Copy,
-  Check,
   Plus,
-  ExternalLink,
-  ChevronDown,
-  Save,
   Eye,
   Download,
-  MoreVertical,
-  Globe,
   Pencil,
-  Settings,
-  Lock,
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import {
@@ -53,15 +39,16 @@ import {
   getEarlyDetectionBookingById,
   getAssistantDoctors,
 } from "../utils/api";
-import { createPortal } from "react-dom";
 import GeneralInformationTab from "./AppointmentDetails/GeneralInformationTab";
-import CustomCalendar from "../components/CustomCalendar/CustomCalendar";
-import CustomTimePicker from "../components/CustomTimePicker/CustomTimePicker";
-import RichTextEditor from "../components/RichTextEditor/RichTextEditor";
-import SpecialistHistoryForm from "../components/SpecialistHistoryForm/SpecialistHistoryForm";
 import "../styles/EarlyDetectionBookingDetails.css";
 import "./AppointmentDetailsPage.css";
-import EarlyDetectionReportTab from "./EarlyDetectionReportTab";
+import EDHeader from "../components/EarlyDetection/EDHeader";
+import EDTabBar from "../components/EarlyDetection/EDTabBar";
+import EDMedicalSubnav from "../components/EarlyDetection/EDMedicalSubnav";
+import EDMedicalHistoryContent from "../components/EarlyDetection/EDMedicalHistoryContent";
+import EDScheduleTab from "../components/EarlyDetection/EDScheduleTab";
+import EDHistoryNotesTab from "../components/EarlyDetection/EDHistoryNotesTab";
+import EDModals from "../components/EarlyDetection/EDModals";
 
 const ED_PACKAGES = [{ id: "predict", name: "«ПРЕДИКТ»", price: 99500 }];
 
@@ -276,6 +263,8 @@ const EarlyDetectionBookingDetails = () => {
   const [editingTestNoteId, setEditingTestNoteId] = useState(null);
   const [isSavingTestNote, setIsSavingTestNote] = useState(false);
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
+  const [specialistAccordionOpen, setSpecialistAccordionOpen] = useState(true);
+  const [managedAccordion, setManagedAccordion] = useState({});
 
   useEffect(() => {
     if (activeTab !== "medicalHistory" && activeScheduleTab !== "laboratoryTests") {
@@ -2106,111 +2095,31 @@ const EarlyDetectionBookingDetails = () => {
       )
     : null;
 
+  const patientGender = patientForGeneralTab?.gender || null;
+  const patientAge = (() => {
+    const dob = patientForGeneralTab?.dateOfBirth;
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth)) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= 0 ? age : null;
+  })();
+
   return (
     <div className="booking-details-page edb-booking-details-page booking-details-page--compact">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-      <div
-        className="edb-tab-bar"
-        role="tablist"
-        aria-label="Booking details tabs"
-      >
-        <button
-          type="button"
-          className={`edb-tab ${activeTab === "patient" ? "active" : ""}`}
-          data-label={t("earlyDiagnosis.patientInformation") || "Patient details"}
-          onClick={() => setActiveTab("patient")}
-        >
-          <span className="edb-tab-icon">
-            <User size={15} />
-          </span>
-          {t("earlyDiagnosis.patientInformation") || "Patient details"}
-        </button>
-        <button
-          type="button"
-          className={`edb-tab edb-tab--section ${activeTab === "appointmentDetails" ? "active" : ""}`}
-          data-label={t("earlyDiagnosis.appointmentDetails") || "Appointment Details"}
-          onClick={() => setActiveTab("appointmentDetails")}
-        >
-          <span className="edb-tab-icon">
-            <Calendar size={15} />
-          </span>
-          {t("earlyDiagnosis.appointmentDetails") ||
-            "Appointment Details"}
-        </button>
-        <button
-          type="button"
-          className={`edb-tab edb-tab--section ${activeTab === "medicalHistory" ? "active" : ""}`}
-          data-label={t("earlyDiagnosis.medicalHistory") || "Medical History"}
-          onClick={() => setActiveTab("medicalHistory")}
-        >
-          <span className="edb-tab-icon">
-            <FileText size={15} />
-          </span>
-          {t("earlyDiagnosis.medicalHistory") || "Medical History"}
-        </button>
-        <button
-          type="button"
-          className={`edb-tab edb-tab--section ${activeTab === "history" ? "active" : ""}`}
-          data-label={t("earlyDiagnosis.historyLogs") || "History"}
-          onClick={() => setActiveTab("history")}
-        >
-          <span className="edb-tab-icon">
-            <Clock size={15} />
-          </span>
-          {t("earlyDiagnosis.historyLogs") || "History"}
-        </button>
-        <button
-          type="button"
-          className={`edb-tab edb-tab--section ${activeTab === "notes" ? "active" : ""}`}
-          data-label={t("earlyDiagnosis.internalNotes") || "Notes"}
-          onClick={() => setActiveTab("notes")}
-        >
-          <span className="edb-tab-icon">
-            <Edit2 size={15} />
-          </span>
-          {t("earlyDiagnosis.internalNotes") || "Notes"}
-        </button>
-      </div>
-      <div className="adp-top-header">
-        <button
-          className="adp-back-btn"
-          onClick={() => navigate("/early-detection")}
-        >
-          <ArrowLeft size={14} />
-          <span>{t("earlyDiagnosis.backToSchedule", "Back to Schedule")}</span>
-        </button>
-
-        <div className="adp-header-divider" />
-
-        <div className="adp-header-center">
-          <div className="adp-header-name-row">
-            <h1 className="adp-patient-title">
-              {t("earlyDiagnosis.patientLabel", "Patient")}: <strong>{patientDisplayName}</strong>
-            </h1>
-            <span className="adp-status-badge-header">
-              {{
-                confirmed: t("earlyDiagnosis.confirmed"),
-                pending: t("earlyDiagnosis.pendingStatus"),
-                cancelled: t("earlyDiagnosis.cancelled"),
-                completed: t("earlyDiagnosis.completed"),
-              }[booking.status?.toLowerCase()] ||
-                booking.status ||
-                "Active"}
-            </span>
-          </div>
-          <span className="adp-added-date">
-            No.{booking.invoiceNumber || booking.bookingNumber} &nbsp;·&nbsp;
-            {t("earlyDiagnosis.addedToSystemOn", "Added to system on")} {formatDate(booking.createdAt)}
-          </span>
-        </div>
-
-        {dobHeader && (
-          <div className="adp-header-right">
-            <span className="adp-dob-value">{dobHeader}</span>
-            <span className="adp-dob-label">{t("earlyDiagnosis.dateOfBirth", "Date of Birth")}</span>
-          </div>
-        )}
-      </div>
+      <EDTabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <EDHeader
+        booking={booking}
+        patientDisplayName={patientDisplayName}
+        dobHeader={dobHeader}
+        formatDate={formatDate}
+        patientGender={patientGender}
+        patientAge={patientAge}
+      />
 
       <div className="booking-details-content edb-booking-details-content">
         <div
@@ -2272,774 +2181,72 @@ const EarlyDetectionBookingDetails = () => {
                 )}
 
                 {activeTab === "appointmentDetails" && (
-                  <>
-                    {/* Appointment Details */}
-                    <div className="detail-section ed-medical-history-section">
-                      <div className="ed-schedule-wrapper">
-                        {[1, 2].map((day) => (
-                          <div key={day} className="ed-day-card">
-                            <div className="ed-day-header">
-                              <div className="ed-day-header-left">
-                                <span className="ed-day-title">{`${t("earlyDiagnosis.dayLabel", "Day")} ${day}`}</span>
-                                <span className="ed-day-date">
-                                  {formatDayMetaDate(groupedSchedule[day])}
-                                </span>
-                              </div>
-                              <span className="ed-day-count-badge">
-                                {`${groupedSchedule[day].length} ${t("earlyDiagnosis.appointments", "Appointments")}`}
-                              </span>
-                            </div>
-                            <div className="ed-day-body">
-                              {groupedSchedule[day].length === 0 ? (
-                                <div className="ed-schedule-empty">
-                                  {t(
-                                    "earlyDiagnosis.noAppointments",
-                                    "No appointments",
-                                  )}
-                                </div>
-                              ) : (
-                                groupedSchedule[day].map((item, index) =>
-                                  (() => {
-                                    const scheduleItemId =
-                                      normalizeId(item?._id || item?.id) ||
-                                      `${day}-${index}`;
-                                    return (
-                                      <div
-                                        key={scheduleItemId}
-                                        className="ed-schedule-item"
-                                      >
-                                        {!isEditing ? (
-                                          <div className="ed-schedule-view-card">
-                                            <div className="ed-schedule-view-icon">
-                                              <FileText size={18} />
-                                            </div>
-                                            <div className="ed-schedule-view-main">
-                                              <div className="ed-schedule-view-topline">
-                                                <span className="ed-schedule-view-specialty">
-                                                  {item?.title
-                                                    ? t(
-                                                        `earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`,
-                                                        item.title,
-                                                      )
-                                                    : "Consultation"}
-                                                </span>
-                                              </div>
-                                              <div className="ed-schedule-view-doctor">
-                                                {getDoctorDisplayName(
-                                                  item?.doctor,
-                                                )}
-                                              </div>
-                                              <div className="ed-schedule-view-meta">
-                                                <span className="ed-schedule-view-meta-item">
-                                                  <span className="ed-schedule-view-meta-item">
-                                                    <Calendar size={13} />
-                                                    {item?.date
-                                                      ? formatLocalDateOnly(
-                                                          item.date,
-                                                          i18n.language === "ru"
-                                                            ? "ru-RU"
-                                                            : "en-US",
-                                                        )
-                                                      : t(
-                                                          "earlyDiagnosis.dateNotSet",
-                                                          "Date not set",
-                                                        )}
-                                                  </span>
-                                                  <Clock size={13} />
-                                                  {item?.startTime &&
-                                                  item?.endTime
-                                                    ? `${item.startTime} - ${item.endTime}`
-                                                    : t(
-                                                        "earlyDiagnosis.notScheduled",
-                                                        "Not Scheduled",
-                                                      )}
-                                                </span>
-                                              </div>
-                                            </div>
-                                            <div className="ed-schedule-view-right">
-                                              <div className="ed-schedule-view-status-label">
-                                                {t(
-                                                  "earlyDiagnosis.status",
-                                                  "Status",
-                                                )}
-                                              </div>
-                                              <span
-                                                className={`ed-schedule-view-status ${item?.isCompleted ? "is-confirmed" : "is-pending"}`}
-                                              >
-                                                <span className="ed-schedule-view-status-dot" />
-                                                {item?.isCompleted
-                                                  ? t(
-                                                      "earlyDiagnosis.confirmed",
-                                                      "Confirmed",
-                                                    )
-                                                  : t(
-                                                      "earlyDiagnosis.pendingStatus",
-                                                      "Pending",
-                                                    )}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        ) : (
-                                          <>
-                                            <div className="ed-schedule-head">
-                                              <div className="ed-schedule-title">
-                                                {item?.title
-                                                  ? t(
-                                                      `earlyDiagnosis.specialist_${normalizeSpecialistTitle(item.title)}`,
-                                                      item.title,
-                                                    )
-                                                  : "Consultation"}
-                                              </div>
-                                              <label
-                                                className="ed-process-toggle"
-                                                title={t(
-                                                  "earlyDiagnosis.markAsCompleted",
-                                                  "Mark as completed",
-                                                )}
-                                              >
-                                                <input
-                                                  type="checkbox"
-                                                  checked={!!item?.isCompleted}
-                                                  disabled={!isEditing}
-                                                  onChange={(e) =>
-                                                    handleScheduleItemChange(
-                                                      scheduleItemId,
-                                                      "isCompleted",
-                                                      e.target.checked,
-                                                    )
-                                                  }
-                                                />
-                                                <span className="ed-process-toggle-slider" />
-                                                <span className="ed-process-toggle-label">
-                                                  {item?.isCompleted
-                                                    ? t(
-                                                        "earlyDiagnosis.completed",
-                                                        "Completed",
-                                                      )
-                                                    : t(
-                                                        "earlyDiagnosis.pendingStatus",
-                                                        "Pending",
-                                                      )}
-                                                </span>
-                                              </label>
-                                            </div>
-                                            <div className="ed-schedule-grid">
-                                              <div className="ed-schedule-field">
-                                                <label>
-                                                  {t(
-                                                    "earlyDiagnosis.dateShort",
-                                                    "Date",
-                                                  ).toUpperCase()}
-                                                </label>
-                                                {isEditing ? (
-                                                  <CustomCalendar
-                                                    value={
-                                                      item?.date
-                                                        ? String(
-                                                            item.date,
-                                                          ).split("T")[0]
-                                                        : ""
-                                                    }
-                                                    onChange={(date) =>
-                                                      setEditedScheduleItems(
-                                                        (prev) =>
-                                                          prev.map((row) =>
-                                                            normalizeId(
-                                                              row?._id ||
-                                                                row?.id,
-                                                            ) ===
-                                                            normalizeId(
-                                                              scheduleItemId,
-                                                            )
-                                                              ? {
-                                                                  ...row,
-                                                                  date: toLocalDateOnly(
-                                                                    date,
-                                                                  ),
-                                                                  startTime: "",
-                                                                  endTime: "",
-                                                                }
-                                                              : row,
-                                                          ),
-                                                      )
-                                                    }
-                                                    minDate={new Date()}
-                                                    dateFormat="yyyy-MM-dd"
-                                                    className="ed-schedule-calendar"
-                                                  />
-                                                ) : (
-                                                  <span>
-                                                    {formatLocalDateOnly(
-                                                      item?.date,
-                                                      i18n.language === "ru"
-                                                        ? "ru-RU"
-                                                        : "en-US",
-                                                    )}
-                                                  </span>
-                                                )}
-                                              </div>
-                                              <div className="ed-schedule-field">
-                                                <label>
-                                                  {t(
-                                                    "earlyDiagnosis.doctorShort",
-                                                    "Doctor",
-                                                  ).toUpperCase()}
-                                                </label>
-                                                {isEditing ? (
-                                                  <select
-                                                    className="ed-schedule-input"
-                                                    value={
-                                                      typeof item?.doctor ===
-                                                      "object"
-                                                        ? item?.doctor?._id ||
-                                                          ""
-                                                        : item?.doctor || ""
-                                                    }
-                                                    onChange={(e) =>
-                                                      setEditedScheduleItems(
-                                                        (prev) =>
-                                                          prev.map((row) =>
-                                                            normalizeId(
-                                                              row?._id ||
-                                                                row?.id,
-                                                            ) ===
-                                                            normalizeId(
-                                                              scheduleItemId,
-                                                            )
-                                                              ? {
-                                                                  ...row,
-                                                                  doctor:
-                                                                    e.target
-                                                                      .value,
-                                                                  startTime: "",
-                                                                  endTime: "",
-                                                                }
-                                                              : row,
-                                                          ),
-                                                      )
-                                                    }
-                                                  >
-                                                    <option value="">
-                                                      {loadingDoctors
-                                                        ? t(
-                                                            "earlyDiagnosis.loadingDoctors",
-                                                            "Loading doctors...",
-                                                          )
-                                                        : getDoctorsForScheduleItem(
-                                                              item,
-                                                            ).length
-                                                          ? t(
-                                                              "earlyDiagnosis.selectDoctor",
-                                                              "Select doctor",
-                                                            )
-                                                          : t(
-                                                              "earlyDiagnosis.noMatchingDoctors",
-                                                              "No matching doctors",
-                                                            )}
-                                                    </option>
-                                                    {getDoctorsForScheduleItem(
-                                                      item,
-                                                    ).map((doctor) => (
-                                                      <option
-                                                        key={
-                                                          normalizeId(
-                                                            doctor._id,
-                                                          ) || doctor.email
-                                                        }
-                                                        value={
-                                                          normalizeId(
-                                                            doctor._id,
-                                                          ) || ""
-                                                        }
-                                                      >
-                                                        {getDoctorDisplayName(
-                                                          doctor,
-                                                        )}
-                                                      </option>
-                                                    ))}
-                                                  </select>
-                                                ) : (
-                                                  <span>
-                                                    {getDoctorDisplayName(
-                                                      item?.doctor,
-                                                    )}
-                                                  </span>
-                                                )}
-                                              </div>
-                                              <div className="ed-schedule-field">
-                                                <label>
-                                                  {t(
-                                                    "earlyDiagnosis.startTimeShort",
-                                                    "Start Time",
-                                                  ).toUpperCase()}
-                                                </label>
-                                                {isEditing ? (
-                                                  <CustomTimePicker
-                                                    value={
-                                                      item?.startTime || ""
-                                                    }
-                                                    onChange={(timeStr) =>
-                                                      setEditedScheduleItems(
-                                                        (prev) =>
-                                                          prev.map((row) => {
-                                                            if (
-                                                              normalizeId(
-                                                                row?._id ||
-                                                                  row?.id,
-                                                              ) !==
-                                                              normalizeId(
-                                                                scheduleItemId,
-                                                              )
-                                                            )
-                                                              return row;
-                                                            const nextRow = {
-                                                              ...row,
-                                                              startTime:
-                                                                timeStr,
-                                                            };
-                                                            const availableEndTimes =
-                                                              getAvailableEndTimesForItem(
-                                                                nextRow,
-                                                                scheduleItemId,
-                                                              );
-                                                            if (
-                                                              !availableEndTimes.includes(
-                                                                nextRow.endTime,
-                                                              )
-                                                            ) {
-                                                              nextRow.endTime =
-                                                                "";
-                                                            }
-                                                            return nextRow;
-                                                          }),
-                                                      )
-                                                    }
-                                                    className="ed-schedule-input"
-                                                    placeholder={t(
-                                                      "earlyDiagnosis.selectTime",
-                                                      "Select time",
-                                                    )}
-                                                    disabled={
-                                                      !resolveDoctorEmail(
-                                                        item?.doctor,
-                                                      ) ||
-                                                      !toLocalDateOnly(
-                                                        item?.date,
-                                                      )
-                                                    }
-                                                    allowedTimes={getAvailableStartTimesForItem(
-                                                      item,
-                                                      scheduleItemId,
-                                                    )}
-                                                  />
-                                                ) : (
-                                                  <span>
-                                                    {item?.startTime || "-"}
-                                                  </span>
-                                                )}
-                                              </div>
-                                              <div className="ed-schedule-field">
-                                                <label>
-                                                  {t(
-                                                    "earlyDiagnosis.endTimeShort",
-                                                    "End Time",
-                                                  ).toUpperCase()}
-                                                </label>
-                                                {isEditing ? (
-                                                  <CustomTimePicker
-                                                    value={item?.endTime || ""}
-                                                    onChange={(timeStr) =>
-                                                      handleScheduleItemChange(
-                                                        scheduleItemId,
-                                                        "endTime",
-                                                        timeStr,
-                                                      )
-                                                    }
-                                                    className="ed-schedule-input"
-                                                    placeholder={t(
-                                                      "earlyDiagnosis.selectTime",
-                                                      "Select time",
-                                                    )}
-                                                    disabled={
-                                                      !item?.startTime ||
-                                                      !resolveDoctorEmail(
-                                                        item?.doctor,
-                                                      ) ||
-                                                      !toLocalDateOnly(
-                                                        item?.date,
-                                                      )
-                                                    }
-                                                    allowedTimes={getAvailableEndTimesForItem(
-                                                      item,
-                                                      scheduleItemId,
-                                                    )}
-                                                  />
-                                                ) : (
-                                                  <span>
-                                                    {item?.endTime || "-"}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
-                                          </>
-                                        )}
-                                      </div>
-                                    );
-                                  })(),
-                                )
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
+                  <EDScheduleTab
+                    isEditing={isEditing}
+                    groupedSchedule={groupedSchedule}
+                    setEditedScheduleItems={setEditedScheduleItems}
+                    loadingDoctors={loadingDoctors}
+                    formatLocalDateOnly={formatLocalDateOnly}
+                    formatDayMetaDate={formatDayMetaDate}
+                    toLocalDateOnly={toLocalDateOnly}
+                    normalizeId={normalizeId}
+                    normalizeSpecialistTitle={normalizeSpecialistTitle}
+                    handleScheduleItemChange={handleScheduleItemChange}
+                    getDoctorDisplayName={getDoctorDisplayName}
+                    getDoctorsForScheduleItem={getDoctorsForScheduleItem}
+                    getAvailableStartTimesForItem={getAvailableStartTimesForItem}
+                    getAvailableEndTimesForItem={getAvailableEndTimesForItem}
+                    resolveDoctorEmail={resolveDoctorEmail}
+                    i18nLanguage={i18n.language}
+                  />
                 )}
+
 
                 {activeTab === "medicalHistory" && (
                   <div className="ed-medical-history-layout">
-                    <aside className="ed-medical-history-sidebar">
-                      <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
-                        {[
-                          ["laboratoryTests", t("earlyDiagnosis.laboratoryTests", "Laboratory analysis")],
-                          ["instrumentalAnalysis", t("earlyDiagnosis.instrumentalAnalysis", "Исследования/манипуляции")],
-                          ["morphologicalResearch", t("earlyDiagnosis.morphologicalResearch", "Morphological research")],
-                          ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations", "Procedures and manipulations")],
-                          ["specialistConsultation", t("earlyDiagnosis.specialistConsultation", "Specialist Consultation")],
-                          ["conclusion", t("earlyDiagnosis.conclusion", "Conclusion")],
-                        ].map(([key, label]) => (
-                          <React.Fragment key={key}>
-                            <button
-                              type="button"
-                              className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
-                              onClick={() => {
-                                setActiveScheduleTab(key);
-                                setActiveTestId(null);
-                              }}
-                            >
-                              <span>{label}</span>
-                              {["laboratoryTests", "instrumentalAnalysis"].includes(key) && (
-                                <span
-                                  className="ed-tab-settings-btn"
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTestSettingsModal(key);
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter" || e.key === " ") {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      openTestSettingsModal(key);
-                                    }
-                                  }}
-                                  title={t("earlyDiagnosis.manageTests", "Manage tests")}
-                                >
-                                  <Settings size={14} />
-                                </span>
-                              )}
-                            </button>
-
-                            {/* Sub-nav for managed tests - show for all categories that have tests */}
-                            {managedSectionTabs.includes(key) && (managedTests?.[key] || []).length > 0 && (
-                              <div className="ed-subnav-test-list">
-                                {(managedTests?.[key] || []).map((test) => {
-                                  const testId = normalizeId(test?._id);
-                                  const isActive = activeScheduleTab === key && activeTestId === testId;
-                                  return (
-                                    <button
-                                      key={testId}
-                                      className={`ed-subnav-test-item ${isActive ? "active" : ""}`}
-                                      onClick={() => {
-                                        setActiveScheduleTab(key);
-                                        setActiveTestId(testId);
-                                      }}
-                                    >
-                                      {readLocalizedName(test?.name)}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </div>
-                    </aside>
-
-                    <div className="ed-medical-history-content">
-                      <div className="detail-section">
-                        {activeScheduleTab === "laboratoryTests" && renderManagedTestSection("laboratoryTests")}
-                        {activeScheduleTab === "instrumentalAnalysis" && renderManagedTestSection("instrumentalAnalysis")}
-
-                        {activeScheduleTab === "morphologicalResearch" && (
-                          <div className="ed-schedule-section-list">
-                            <div className="ed-section-actions-row">
-                              <button
-                                type="button"
-                                className="ed-upload-btn"
-                                onClick={() => openUploadSectionModal("morphologicalResearch")}
-                              >
-                                {t("earlyDiagnosis.uploadFile")}
-                              </button>
-                            </div>
-                            {(booking?.schedule?.morphologicalResearch?.files || []).length === 0 ? (
-                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noFiles")}</div>
-                            ) : (
-                              <div className="ed-section-card ed-test-card">
-                                <ul className="ed-files-list ed-test-files-list">
-                                  {(booking?.schedule?.morphologicalResearch?.files || []).map((file, fileIndex) => (
-                                    <li key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-file-row ed-test-file-row">
-                                      <div className="ed-test-file-left">
-                                        <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
-                                          {getFileExtension(file).toUpperCase()}
-                                        </span>
-                                        <span className="ed-test-file-meta">
-                                          <span className="ed-test-file-name">{getFileLabel(file)}</span>
-                                          <span className="ed-test-file-subtext">
-                                            {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy || file?.uploadedByDoctorName].filter(Boolean).join(" • ")}
-                                          </span>
-                                        </span>
-                                      </div>
-                                      <span className="ed-file-actions ed-test-file-actions">
-                                        {renderFileActionButtons(file)}
-                                      </span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            <div className="ed-section-card">
-                              <div className="ed-section-head-row">
-                                <div className="ed-section-title">{t("earlyDiagnosis.morphologicalResearch")}</div>
-                                <div className="ed-history-actions">
-                                  <button
-                                    type="button"
-                                    className="save-btn"
-                                    onClick={() => handleSaveManagedSectionComment("morphologicalResearch")}
-                                    disabled={!!sectionEditors?.morphologicalResearch?.saving}
-                                  >
-                                    {sectionEditors?.morphologicalResearch?.saving ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.save")}
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="ed-history-rich-editor">
-                                <RichTextEditor
-                                  value={sectionEditors?.morphologicalResearch?.value || ""}
-                                  onChange={(html) => updateSectionEditor("morphologicalResearch", { value: html })}
-                                  placeholder={t("history_tab.enter_text")}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {activeScheduleTab === "proceduresAndManipulations" && (
-                          <div className="ed-schedule-section-list">
-                            <div className="ed-section-actions-row">
-                              <button
-                                type="button"
-                                className="ed-upload-btn"
-                                onClick={() => openUploadSectionModal("proceduresAndManipulations")}
-                              >
-                                {t("earlyDiagnosis.uploadFile")}
-                              </button>
-                            </div>
-
-                            {(booking?.schedule?.proceduresAndManipulations?.files || []).length === 0 ? (
-                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noFiles")}</div>
-                            ) : (
-                              <div className="ed-section-card ed-test-card">
-                                <ul className="ed-files-list ed-test-files-list">
-                                  {(booking?.schedule?.proceduresAndManipulations?.files || []).map((file, fileIndex) => (
-                                    <li key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-file-row ed-test-file-row">
-                                      <div className="ed-test-file-left">
-                                        <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
-                                          {getFileExtension(file).toUpperCase()}
-                                        </span>
-                                        <span className="ed-test-file-meta">
-                                          <span className="ed-test-file-name">{getFileLabel(file)}</span>
-                                          <span className="ed-test-file-subtext">
-                                            {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy || file?.uploadedByDoctorName].filter(Boolean).join(" • ")}
-                                          </span>
-                                        </span>
-                                      </div>
-                                      <span className="ed-file-actions ed-test-file-actions">
-                                        {renderFileActionButtons(file)}
-                                      </span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-
-                            <div className="ed-section-card">
-                              <div className="ed-section-head-row">
-                                <div className="ed-section-title">{t("earlyDiagnosis.proceduresAndManipulations")}</div>
-                                <div className="ed-history-actions">
-                                  <button
-                                    type="button"
-                                    className="save-btn"
-                                    onClick={() => handleSaveManagedSectionComment("proceduresAndManipulations")}
-                                    disabled={!!sectionEditors?.proceduresAndManipulations?.saving}
-                                  >
-                                    {sectionEditors?.proceduresAndManipulations?.saving ? t("earlyDiagnosis.saving") : t("earlyDiagnosis.save")}
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="ed-history-rich-editor">
-                                <RichTextEditor
-                                  value={sectionEditors?.proceduresAndManipulations?.value || ""}
-                                  onChange={(html) => updateSectionEditor("proceduresAndManipulations", { value: html })}
-                                  placeholder={t("history_tab.enter_text")}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                      {activeScheduleTab === "specialistConsultation" && (
-                        <div className="detail-section">
-                          <div className="ed-schedule-tabs ed-specialist-tabs">
-                            {Array.isArray(
-                              booking?.schedule?.specialistConsultations,
-                            )
-                              ? booking.schedule.specialistConsultations.map(
-                                  (s, i) => {
-                                    const tabDoctorEmail = resolveDoctorEmail(
-                                      s?.doctor,
-                                    );
-                                    const tabCanEdit =
-                                      !!tabDoctorEmail &&
-                                      (accessibleDoctorEmails === "all" ||
-                                        (accessibleDoctorEmails instanceof Set &&
-                                          accessibleDoctorEmails.has(
-                                            tabDoctorEmail,
-                                          )));
-                                    console.log("[EDBookingAccess] specialist tab decision", {
-                                      index: i,
-                                      title: s?.title,
-                                      doctorRef: s?.doctor,
-                                      resolvedDoctorEmail: tabDoctorEmail,
-                                      accessibleDoctorEmails:
-                                        accessibleDoctorEmails === "all"
-                                          ? "all"
-                                          : accessibleDoctorEmails instanceof Set
-                                            ? Array.from(accessibleDoctorEmails)
-                                            : accessibleDoctorEmails,
-                                      tabCanEdit,
-                                    });
-                                    return (
-                                      <button
-                                        key={`specialist_${i}`}
-                                        type="button"
-                                        className={`ed-schedule-tab-btn ${
-                                          activeSpecialistTab === i
-                                            ? "active"
-                                            : ""
-                                        }${!tabCanEdit ? " ed-specialist-tab-locked" : ""}`}
-                                        onClick={() =>
-                                          setActiveSpecialistTab(i)
-                                        }
-                                        title={
-                                          !tabCanEdit
-                                            ? t(
-                                                "earlyDiagnosis.viewOnlyNoEditAccess",
-                                                "View Only — you do not have edit access for this doctor",
-                                              )
-                                            : undefined
-                                        }
-                                      >
-                                        <span>
-                                          {s?.title
-                                            ? t(
-                                                `earlyDiagnosis.specialist_${normalizeSpecialistTitle(s.title)}`,
-                                                s.title,
-                                              )
-                                            : `Specialist ${i + 1}`}
-                                        </span>
-                                        {!tabCanEdit && (
-                                          <Lock
-                                            size={10}
-                                            className="ed-specialist-lock-icon"
-                                          />
-                                        )}
-                                      </button>
-                                    );
-                                  },
-                                )
-                              : null}
-                          </div>
-
-                          {activeSpecialistTab !== null &&
-                            (() => {
-                              const specialist =
-                                booking?.schedule?.specialistConsultations?.[
-                                  activeSpecialistTab
-                                ];
-                              if (!specialist) return null;
-                              const specialistDoctorEmail = String(
-                                resolveDoctorEmail(specialist?.doctor) || "",
-                              );
-                              const canEdit =
-                                !!specialistDoctorEmail &&
-                                (accessibleDoctorEmails === "all" ||
-                                  (accessibleDoctorEmails instanceof Set &&
-                                    accessibleDoctorEmails.has(
-                                      specialistDoctorEmail,
-                                    )));
-                              return (
-                                <div className="ed-specialist-consultation-wrapper">
-                                  <div className="ed-specialist-type-header">
-                                    <span className="ed-specialist-type-name">
-                                      {specialist.title
-                                        ? t(
-                                            `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
-                                            specialist.title,
-                                          )
-                                        : specialist.title}
-                                    </span>
-                                  </div>
-                                  <SpecialistHistoryForm
-                                    key={`specialist_form_${activeSpecialistTab}`}
-                                    specialistTitle={
-                                      specialist.title
-                                        ? t(
-                                            `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
-                                            specialist.title,
-                                          )
-                                        : specialist.title
-                                    }
-                                    historyForm={
-                                      specialistForms[activeSpecialistTab] ||
-                                      specialist.historyForm ||
-                                      {}
-                                    }
-                                    isSaving={
-                                      !!specialistFormSaving[activeSpecialistTab]
-                                    }
-                                    readOnly={!canEdit}
-                                    onSave={(formData) =>
-                                      handleSaveSpecialistForm(
-                                        activeSpecialistTab,
-                                        formData,
-                                      )
-                                    }
-                                  />
-                                </div>
-                              );
-                            })()}
-                        </div>
-                      )}
-
-                      {activeScheduleTab === "conclusion" && (
-                        <div className="ed-schedule-section-list ed-conclusion-report-tab">
-                          <EarlyDetectionReportTab booking={booking} />
-                        </div>
-                      )}
-                      </div>
-                    </div>
+                    <EDMedicalSubnav
+                      booking={booking}
+                      activeScheduleTab={activeScheduleTab}
+                      setActiveScheduleTab={setActiveScheduleTab}
+                      activeTestId={activeTestId}
+                      setActiveTestId={setActiveTestId}
+                      managedTests={managedTests}
+                      managedSectionTabs={managedSectionTabs}
+                      specialistAccordionOpen={specialistAccordionOpen}
+                      setSpecialistAccordionOpen={setSpecialistAccordionOpen}
+                      activeSpecialistTab={activeSpecialistTab}
+                      setActiveSpecialistTab={setActiveSpecialistTab}
+                      openTestSettingsModal={openTestSettingsModal}
+                      normalizeId={normalizeId}
+                      normalizeSpecialistTitle={normalizeSpecialistTitle}
+                      readLocalizedName={readLocalizedName}
+                      getManagedTestEntries={getManagedTestEntries}
+                      setShowTestNoteEditor={setShowTestNoteEditor}
+                      setTestNoteDraft={setTestNoteDraft}
+                      setEditingTestNoteId={setEditingTestNoteId}
+                    />
+                    <EDMedicalHistoryContent
+                      booking={booking}
+                      activeScheduleTab={activeScheduleTab}
+                      activeSpecialistTab={activeSpecialistTab}
+                      managedSectionTabs={managedSectionTabs}
+                      renderManagedTestSection={renderManagedTestSection}
+                      renderFileActionButtons={renderFileActionButtons}
+                      sectionEditors={sectionEditors}
+                      updateSectionEditor={updateSectionEditor}
+                      handleSaveManagedSectionComment={handleSaveManagedSectionComment}
+                      openUploadSectionModal={openUploadSectionModal}
+                      normalizeId={normalizeId}
+                      normalizeSpecialistTitle={normalizeSpecialistTitle}
+                      getFileExtension={getFileExtension}
+                      getFileLabel={getFileLabel}
+                      formatFileSize={formatFileSize}
+                      accessibleDoctorEmails={accessibleDoctorEmails}
+                      resolveDoctorEmail={resolveDoctorEmail}
+                      specialistForms={specialistForms}
+                      specialistFormSaving={specialistFormSaving}
+                      handleSaveSpecialistForm={handleSaveSpecialistForm}
+                    />
                   </div>
                 )}
               </div>
@@ -3051,794 +2258,79 @@ const EarlyDetectionBookingDetails = () => {
                 {/* Payment Summary */}
 
                 {/* History & Logs */}
-                {activeTab === "history" && (
-                  <div className="sidebar-section edb-history-section">
-                    <h3 className="sidebar-title">
-                      {t("earlyDiagnosis.historyLogs").toUpperCase()}
-                    </h3>
-                    <div className="history-timeline">
-                      {booking.payment?.status === "paid" && (
-                        <div className="timeline-item timeline-item--completed">
-                          <div className="timeline-dot green">
-                            <CheckCircle size={12} />
-                          </div>
-                          <div className="timeline-content timeline-content--plain">
-                            <p className="timeline-kicker timeline-kicker--completed">
-                              {t("earlyDiagnosis.completed", "Completed")}
-                            </p>
-                            <p className="timeline-title">
-                              {t("earlyDiagnosis.paymentVerified")}
-                            </p>
-                            <p className="timeline-description">
-                              {(() => {
-                                const transactionRef =
-                                  booking.payment?.transactionId ||
-                                  booking.payment?.tbank?.paymentId ||
-                                  booking.payment?.tbank?.orderId;
-                                if (transactionRef) {
-                                  return `${t("earlyDiagnosis.transaction", "Transaction")} #${transactionRef} ${t("earlyDiagnosis.paymentProcessed", "successfully processed for this booking.")}`;
-                                }
-                                return t(
-                                  "earlyDiagnosis.paymentStatusUpdated",
-                                  "Payment was successfully verified for this booking.",
-                                );
-                              })()}
-                            </p>
-                            <div className="timeline-pills">
-                              <span className="timeline-pill">
-                                {formatDate(booking.payment.paidAt)}
-                              </span>
-                              <span className="timeline-pill">
-                                {new Date(
-                                  booking.payment.paidAt,
-                                ).toLocaleTimeString(
-                                  i18n.language === "ru" ? "ru-RU" : "en-US",
-                                  { hour: "2-digit", minute: "2-digit" },
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="timeline-item timeline-item--milestone">
-                        <div className="timeline-dot blue">
-                          <Calendar size={12} />
-                        </div>
-                        <div className="timeline-content timeline-content--plain">
-                          <p className="timeline-kicker timeline-kicker--milestone">
-                            {t(
-                              "earlyDiagnosis.nextMilestone",
-                              "Next milestone",
-                            )}
-                          </p>
-                          <p className="timeline-title">
-                            {t("earlyDiagnosis.appointmentScheduled")}
-                          </p>
-
-                          <div className="timeline-service-list">
-                            {[1, 2].map((day) => {
-                              const dayItems = groupedSchedule?.[day] || [];
-                              if (!dayItems.length) return null;
-
-                              return (
-                                <div
-                                  key={`timeline-day-${day}`}
-                                  className="timeline-day-group"
-                                >
-                                  <p className="timeline-day-title">{`${t("earlyDiagnosis.dayLabel", "Day")} ${day}`}</p>
-                                  {dayItems.map((specialist, idx) => (
-                                    <div
-                                      key={`service-log-${day}-${idx}`}
-                                      className="timeline-service-card"
-                                    >
-                                      <div className="timeline-service-icon">
-                                        <FileText size={16} />
-                                      </div>
-                                      <div className="timeline-service-main">
-                                        <p className="timeline-service-title">
-                                          {specialist.title
-                                            ? t(
-                                                `earlyDiagnosis.specialist_${normalizeSpecialistTitle(specialist.title)}`,
-                                                specialist.title,
-                                              )
-                                            : `${t("earlyDiagnosis.service", "Service")} ${idx + 1}`}
-                                        </p>
-                                        <p className="timeline-service-sub">
-                                          {specialist.date
-                                            ? formatDate(specialist.date)
-                                            : t(
-                                                "earlyDiagnosis.dateNotSet",
-                                                "Date not set",
-                                              )}
-                                          {specialist.startTime &&
-                                          specialist.endTime
-                                            ? ` · ${specialist.startTime} - ${specialist.endTime}`
-                                            : ""}
-                                        </p>
-                                      </div>
-                                      <div className="timeline-service-side">
-                                        <p className="timeline-service-doctor">
-                                          <User size={12} />{" "}
-                                          {getDoctorDisplayName(
-                                            specialist.doctor,
-                                          )}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          <p className="timeline-date">
-                            {formatDateTime(booking.appointmentDate)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="timeline-item timeline-item--system">
-                        <div className="timeline-dot gray">
-                          <Clock size={12} />
-                        </div>
-                        <div className="timeline-content timeline-content--plain">
-                          <p className="timeline-kicker">
-                            {t("earlyDiagnosis.systemEvent", "System event")}
-                          </p>
-                          <p className="timeline-title">
-                            {t("earlyDiagnosis.bookingCreated")}
-                          </p>
-                          <p className="timeline-description">
-                            {t(
-                              "earlyDiagnosis.bookingCreateDescription",
-                              "Initial booking record created in system.",
-                            )}
-                          </p>
-                          <p className="timeline-date">
-                            {formatDateTime(booking.createdAt)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Internal Notes */}
-                {activeTab === "notes" && (
-                  <div className="sidebar-section edb-notes-section">
-                    <div className="notes-shell">
-                      <div className="notes-toolbar">
-                        <h3 className="sidebar-title notes-title">
-                          {t("earlyDiagnosis.internalNotes").toUpperCase()}
-                        </h3>
-                        {!isAddingNote && (
-                          <button
-                            className="notes-add-btn"
-                            onClick={() => setIsAddingNote(true)}
-                          >
-                            <Plus size={14} />
-                            {t("earlyDiagnosis.addNote")}
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="notes-content">
-                        {isAddingNote && (
-                          <div className="add-note-form note-add-card">
-                            <textarea
-                              className="note-textarea"
-                              placeholder={t("earlyDiagnosis.enterNoteHere")}
-                              value={newNote}
-                              onChange={(e) => setNewNote(e.target.value)}
-                              rows={4}
-                            />
-                            <div className="note-actions">
-                              <button
-                                className="cancel-note-btn"
-                                onClick={() => {
-                                  setIsAddingNote(false);
-                                  setNewNote("");
-                                }}
-                                disabled={isSaving}
-                              >
-                                {t("earlyDiagnosis.cancel")}
-                              </button>
-                              <button
-                                className="save-note-btn"
-                                onClick={handleAddNote}
-                                disabled={isSaving || !newNote.trim()}
-                              >
-                                {isSaving
-                                  ? t("earlyDiagnosis.saving")
-                                  : t("earlyDiagnosis.saveNote")}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {booking.internalNotes &&
-                        booking.internalNotes.length > 0 ? (
-                          <div className="notes-list notes-list--modern">
-                            {booking.internalNotes.map((note, index) => (
-                              <article
-                                key={note._id || index}
-                                className="note-card"
-                              >
-                                <div className="note-card-top">
-                                  <div className="note-author-block">
-                                    <div className="note-avatar">
-                                      <User size={14} />
-                                    </div>
-                                    <div>
-                                      <p className="note-author">
-                                        {note.addedBy}
-                                      </p>
-                                      <p className="note-date">
-                                        {formatDateTime(note.addedAt)}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {editingNoteId !== note._id && (
-                                    <div className="note-buttons">
-                                      <button
-                                        className="edit-note-icon-btn"
-                                        onClick={() => handleEditNote(note)}
-                                        title={t("earlyDiagnosis.editNote")}
-                                      >
-                                        <Edit2 size={14} />
-                                      </button>
-                                      <button
-                                        className="delete-note-icon-btn"
-                                        onClick={() =>
-                                          handleDeleteNote(note._id)
-                                        }
-                                        title={t("earlyDiagnosis.deleteNote")}
-                                      >
-                                        <Trash2 size={14} />
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {editingNoteId === note._id ? (
-                                  <div className="edit-note-form note-edit-form">
-                                    <textarea
-                                      className="note-textarea"
-                                      value={editingNoteText}
-                                      onChange={(e) =>
-                                        setEditingNoteText(e.target.value)
-                                      }
-                                      rows={3}
-                                    />
-                                    <div className="note-actions">
-                                      <button
-                                        className="cancel-note-btn"
-                                        onClick={() => {
-                                          setEditingNoteId(null);
-                                          setEditingNoteText("");
-                                        }}
-                                        disabled={isSaving}
-                                      >
-                                        {t("earlyDiagnosis.cancel")}
-                                      </button>
-                                      <button
-                                        className="save-note-btn"
-                                        onClick={() =>
-                                          handleUpdateNote(note._id)
-                                        }
-                                        disabled={
-                                          isSaving || !editingNoteText.trim()
-                                        }
-                                      >
-                                        {isSaving
-                                          ? t("earlyDiagnosis.saving")
-                                          : t("earlyDiagnosis.save")}
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <p className="note-text">{note.note}</p>
-                                )}
-                              </article>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="notes-empty">
-                            <p className="note-text">
-                              {t("earlyDiagnosis.noNotesAdded")}
-                            </p>
-                          </div>
-                        )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                <EDHistoryNotesTab
+                  activeTab={activeTab}
+                  booking={booking}
+                  formatDate={formatDate}
+                  formatDateTime={formatDateTime}
+                  groupedSchedule={groupedSchedule}
+                  getDoctorDisplayName={getDoctorDisplayName}
+                  normalizeSpecialistTitle={normalizeSpecialistTitle}
+                  i18nLanguage={i18n.language}
+                  isAddingNote={isAddingNote}
+                  setIsAddingNote={setIsAddingNote}
+                  newNote={newNote}
+                  setNewNote={setNewNote}
+                  handleAddNote={handleAddNote}
+                  isSaving={isSaving}
+                  editingNoteId={editingNoteId}
+                  editingNoteText={editingNoteText}
+                  setEditingNoteText={setEditingNoteText}
+                  setEditingNoteId={setEditingNoteId}
+                  handleEditNote={handleEditNote}
+                  handleDeleteNote={handleDeleteNote}
+                  handleUpdateNote={handleUpdateNote}
+                />
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
-      {showTestSettingsModal &&
-        createPortal(
-          <div
-            className="mp-modal-overlay"
-            onClick={() => setShowTestSettingsModal(false)}
-          >
-            <div
-              className="mp-modal ed-manage-tests-modal"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mp-modal-header">
-                <h3>{t("earlyDiagnosis.manageTests", "Manage tests")}</h3>
-                <button
-                  className="mp-modal-close"
-                  onClick={() => setShowTestSettingsModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="mp-modal-body">
-                <div className="mp-field">
-                  <label className="mp-field-label">EN</label>
-                  <input
-                    className="mp-input"
-                    value={testDraft.en}
-                    onChange={(e) =>
-                      setTestDraft((prev) => ({ ...prev, en: e.target.value }))
-                    }
-                    placeholder="Test name (EN)"
-                  />
-                </div>
-                <div className="mp-field">
-                  <label className="mp-field-label">RU</label>
-                  <input
-                    className="mp-input"
-                    value={testDraft.ru}
-                    onChange={(e) =>
-                      setTestDraft((prev) => ({ ...prev, ru: e.target.value }))
-                    }
-                    placeholder="Название теста (RU)"
-                  />
-                </div>
-
-                <div className="ed-manage-tests-actions">
-                  <button
-                    className="save-btn"
-                    onClick={handleManagedTestSave}
-                    disabled={savingManagedTest}
-                  >
-                    {savingManagedTest
-                      ? t("earlyDiagnosis.saving", "Saving...")
-                      : t("earlyDiagnosis.save", "Save")}
-                  </button>
-                  {editingManagedTestId && (
-                    <button
-                      className="cancel-btn"
-                      onClick={() => {
-                        setEditingManagedTestId("");
-                        setTestDraft({ en: "", ru: "" });
-                      }}
-                    >
-                      {t("earlyDiagnosis.cancel", "Cancel")}
-                    </button>
-                  )}
-                </div>
-
-                <div className="ed-managed-tests-list">
-                  {(managedTests?.[settingsSection] || []).map((item) => (
-                    <div
-                      className="ed-managed-test-row"
-                      key={normalizeId(item?._id)}
-                    >
-                      <div className="ed-managed-test-name">
-                        <strong>{item?.name?.en}</strong>
-                        <span>{item?.name?.ru}</span>
-                      </div>
-                      <div className="ed-managed-test-buttons">
-                        <button
-                          className="edit-note-icon-btn"
-                          onClick={() => {
-                            setEditingManagedTestId(normalizeId(item?._id));
-                            setTestDraft({
-                              en: item?.name?.en || "",
-                              ru: item?.name?.ru || "",
-                            });
-                          }}
-                          title={t("earlyDiagnosis.edit", "Edit")}
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          className="delete-note-icon-btn"
-                          onClick={() =>
-                            handleManagedTestDelete(normalizeId(item?._id))
-                          }
-                          title={t("earlyDiagnosis.delete", "Delete")}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
-
-      {showUploadModal &&
-        createPortal(
-          <div
-            className="mp-modal-overlay"
-            onClick={() => setShowUploadModal(false)}
-          >
-            <div className="mp-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="mp-modal-header">
-                <h3>{t("earlyDiagnosis.uploadFile", "Upload file")}</h3>
-                <button
-                  className="mp-modal-close"
-                  onClick={() => setShowUploadModal(false)}
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="mp-modal-body">
-                {sectionsWithTestSelection.includes(uploadSection) && (
-                  <div className="mp-field">
-                    <label className="mp-field-label">
-                      {t("earlyDiagnosis.selectTest", "Select test")}
-                    </label>
-                    <select
-                      className="mp-select"
-                      value={uploadItemId}
-                      onChange={(e) => setUploadItemId(e.target.value)}
-                    >
-                      <option value="">
-                        {t("earlyDiagnosis.selectTest", "Select test")}
-                      </option>
-                      {managedTestOptions.map((item) => (
-                        <option
-                          key={normalizeId(item?._id)}
-                          value={normalizeId(item?._id)}
-                        >
-                          {readLocalizedName(item?.name)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {!multiUploadSections.includes(uploadSection) && (
-                  <div className="mp-field">
-                    <label className="mp-field-label">
-                      {t("earlyDiagnosis.customName", "Custom name")}
-                    </label>
-                    <input
-                      className="mp-input"
-                      value={uploadCustomName}
-                      onChange={(e) => setUploadCustomName(e.target.value)}
-                      placeholder={t(
-                        "earlyDiagnosis.customNameOptional",
-                        "Optional",
-                      )}
-                    />
-                  </div>
-                )}
-
-                {multiUploadSections.includes(uploadSection) ? (
-                  <>
-                    <div className="mp-field">
-                      <label className="mp-field-label">
-                        {t("earlyDiagnosis.file", "File")}
-                      </label>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          type="file"
-                          className="mp-input"
-                          style={{ flex: 1 }}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setUploadFiles((prev) => [
-                                ...prev,
-                                { file, customName: "" },
-                              ]);
-                              e.target.value = "";
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Display added files with custom name inputs */}
-                    {uploadFiles.length > 0 && (
-                      <div style={{ marginTop: "12px" }}>
-                        <label className="mp-field-label">
-                          {t("earlyDiagnosis.files", "Files to upload")}
-                        </label>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "8px",
-                          }}
-                        >
-                          {uploadFiles.map((fileItem, idx) => (
-                            <div
-                              key={idx}
-                              style={{
-                                display: "flex",
-                                gap: "8px",
-                                alignItems: "center",
-                              }}
-                            >
-                              <input
-                                type="text"
-                                className="mp-input"
-                                placeholder={t(
-                                  "earlyDiagnosis.customName",
-                                  "Custom name",
-                                )}
-                                value={fileItem.customName}
-                                onChange={(e) => {
-                                  const newFiles = [...uploadFiles];
-                                  newFiles[idx].customName = e.target.value;
-                                  setUploadFiles(newFiles);
-                                }}
-                                style={{ flex: 1 }}
-                              />
-                              <span
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#6b7280",
-                                  minWidth: "120px",
-                                }}
-                              >
-                                {fileItem.file.name}
-                              </span>
-                              <button
-                                type="button"
-                                className="delete-note-icon-btn"
-                                onClick={() => {
-                                  setUploadFiles((prev) =>
-                                    prev.filter((_, i) => i !== idx),
-                                  );
-                                }}
-                                title={t("earlyDiagnosis.remove", "Remove")}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="mp-field">
-                    <label className="mp-field-label">
-                      {t("earlyDiagnosis.file", "File")}
-                    </label>
-                    <input
-                      type="file"
-                      className="mp-input"
-                      onChange={(e) =>
-                        setUploadFile(e.target.files?.[0] || null)
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="mp-modal-footer">
-                <button
-                  className="mp-btn-cancel"
-                  onClick={() => setShowUploadModal(false)}
-                  disabled={isUploadingSectionFile}
-                >
-                  {t("earlyDiagnosis.cancel", "Cancel")}
-                </button>
-                <button
-                  className="mp-btn-save"
-                  onClick={handleUploadSectionFile}
-                  disabled={isUploadingSectionFile}
-                >
-                  {isUploadingSectionFile
-                    ? t("earlyDiagnosis.saving", "Saving...")
-                    : t("earlyDiagnosis.upload", "Upload")}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
-
-      {/* Manual Payment Modal */}
-      {showManualPaymentForm &&
-        createPortal(
-          <div
-            className="mp-modal-overlay"
-            onClick={() => setShowManualPaymentForm(false)}
-          >
-            <div className="mp-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="mp-modal-header">
-                <h3>{t("earlyDiagnosis.manualPaymentEntry")}</h3>
-                <button
-                  className="mp-modal-close"
-                  onClick={() => setShowManualPaymentForm(false)}
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="mp-modal-body">
-                {/* Package Selection */}
-                <div className="mp-section">
-                  <h4 className="mp-section-title">
-                    {t("earlyDiagnosis.selectPackageAddons")}
-                  </h4>
-
-                  <label className="mp-field-label">
-                    {t("earlyDiagnosis.mainPackage")}
-                  </label>
-                  <div className="mp-packages">
-                    {ED_PACKAGES.map((pkg) => (
-                      <label
-                        key={pkg.id}
-                        className={`mp-package-card${manualSelectedPkg === pkg.id ? " mp-package-card--active" : ""}`}
-                      >
-                        <input
-                          type="radio"
-                          name="mp-pkg"
-                          value={pkg.id}
-                          checked={manualSelectedPkg === pkg.id}
-                          onChange={() => setManualSelectedPkg(pkg.id)}
-                          style={{ display: "none" }}
-                        />
-                        <span className="mp-package-name">{pkg.name}</span>
-                        <span className="mp-package-price">
-                          {pkg.price.toLocaleString()} ₽
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-
-                  <label
-                    className="mp-field-label"
-                    style={{ marginTop: "12px" }}
-                  >
-                    {t("earlyDiagnosis.addons")}
-                  </label>
-                  <div className="mp-addons">
-                    {ED_ADDONS.map((addon) => {
-                      const isOn = manualSelectedAddons.includes(addon.id);
-                      return (
-                        <label
-                          key={addon.id}
-                          className={`mp-addon-row${isOn ? " mp-addon-row--active" : ""}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isOn}
-                            onChange={() => toggleManualAddon(addon.id)}
-                          />
-                          <span className="mp-addon-name">{addon.name}</span>
-                          <span className="mp-addon-price">
-                            {addon.price.toLocaleString()} ₽
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mp-total-row">
-                    <span>{t("earlyDiagnosis.selectedTotal")}</span>
-                    <span className="mp-total-value">
-                      {manualTotal.toLocaleString()} ₽
-                    </span>
-                  </div>
-                </div>
-
-                {/* Payment Details */}
-                <div className="mp-section">
-                  <div className="mp-field">
-                    <label className="mp-field-label">
-                      {t("earlyDiagnosis.paymentStatusLabel")}
-                    </label>
-                    <select
-                      value={manualPayment.paymentStatus}
-                      onChange={(e) =>
-                        setManualPayment((p) => ({
-                          ...p,
-                          paymentStatus: e.target.value,
-                        }))
-                      }
-                      className="mp-select"
-                    >
-                      <option value="paid">
-                        {t("earlyDiagnosis.status_paid")}
-                      </option>
-                      <option value="pending">
-                        {t("earlyDiagnosis.status_pending")}
-                      </option>
-                      <option value="processing">
-                        {t("earlyDiagnosis.status_processing")}
-                      </option>
-                      <option value="failed">
-                        {t("earlyDiagnosis.status_failed")}
-                      </option>
-                      <option value="refunded">
-                        {t("earlyDiagnosis.status_refunded")}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div className="mp-field">
-                    <label className="mp-field-label">
-                      {t("earlyDiagnosis.transactionId")}
-                    </label>
-                    <input
-                      type="text"
-                      value={manualPayment.transactionId}
-                      onChange={(e) =>
-                        setManualPayment((p) => ({
-                          ...p,
-                          transactionId: e.target.value,
-                        }))
-                      }
-                      placeholder={t("earlyDiagnosis.enterTransactionId")}
-                      className="mp-input"
-                    />
-                  </div>
-
-                  <div className="mp-field">
-                    <label className="mp-field-label">
-                      {t("earlyDiagnosis.notesLabel")}
-                    </label>
-                    <textarea
-                      value={manualPayment.notes}
-                      onChange={(e) =>
-                        setManualPayment((p) => ({
-                          ...p,
-                          notes: e.target.value,
-                        }))
-                      }
-                      placeholder={t("earlyDiagnosis.enterNotes")}
-                      className="mp-textarea"
-                      rows={2}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mp-modal-footer">
-                <button
-                  className="mp-btn-cancel"
-                  onClick={() => setShowManualPaymentForm(false)}
-                  disabled={isSavingManual}
-                >
-                  {t("earlyDiagnosis.cancel")}
-                </button>
-                <button
-                  className="mp-btn-save"
-                  onClick={handleManualPaymentSave}
-                  disabled={isSavingManual}
-                >
-                  {isSavingManual
-                    ? t("earlyDiagnosis.saving")
-                    : t("earlyDiagnosis.savePayment")}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+      <EDModals
+        showTestSettingsModal={showTestSettingsModal}
+        setShowTestSettingsModal={setShowTestSettingsModal}
+        settingsSection={settingsSection}
+        testDraft={testDraft}
+        setTestDraft={setTestDraft}
+        editingManagedTestId={editingManagedTestId}
+        setEditingManagedTestId={setEditingManagedTestId}
+        managedTests={managedTests}
+        handleManagedTestSave={handleManagedTestSave}
+        handleManagedTestDelete={handleManagedTestDelete}
+        savingManagedTest={savingManagedTest}
+        normalizeId={normalizeId}
+        showUploadModal={showUploadModal}
+        setShowUploadModal={setShowUploadModal}
+        uploadSection={uploadSection}
+        uploadItemId={uploadItemId}
+        setUploadItemId={setUploadItemId}
+        uploadCustomName={uploadCustomName}
+        setUploadCustomName={setUploadCustomName}
+        uploadFile={uploadFile}
+        setUploadFile={setUploadFile}
+        uploadFiles={uploadFiles}
+        setUploadFiles={setUploadFiles}
+        managedTestOptions={managedTestOptions}
+        readLocalizedName={readLocalizedName}
+        handleUploadSectionFile={handleUploadSectionFile}
+        isUploadingSectionFile={isUploadingSectionFile}
+        sectionsWithTestSelection={sectionsWithTestSelection}
+        multiUploadSections={multiUploadSections}
+        showManualPaymentForm={showManualPaymentForm}
+        setShowManualPaymentForm={setShowManualPaymentForm}
+        manualSelectedPkg={manualSelectedPkg}
+        setManualSelectedPkg={setManualSelectedPkg}
+        manualSelectedAddons={manualSelectedAddons}
+        toggleManualAddon={toggleManualAddon}
+        manualTotal={manualTotal}
+        manualPayment={manualPayment}
+        setManualPayment={setManualPayment}
+        handleManualPaymentSave={handleManualPaymentSave}
+        isSavingManual={isSavingManual}
+        ED_PACKAGES={ED_PACKAGES}
+        ED_ADDONS={ED_ADDONS}
+      />
     </div>
   );
 };
