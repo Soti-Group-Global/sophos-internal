@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX } from "react-icons/fi";
+import { Download } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import {
   updateHistoryFieldVerify,
   getHistoryTemplates,
@@ -42,6 +45,113 @@ import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
 import TemplatePicker from "../../components/RichTextEditor/TemplatePicker";
 import AppointmentReport from "../AppointmentReport";
 import "./HistoryTab.css";
+
+const SECTION_RU_LABELS = {
+  morphologicalResearch: "Морфологическое исследование",
+  proceduresManipulations: "Процедуры и манипуляции",
+};
+
+const CLINIC_INFO_ASST = {
+  name: "Медицинский центр «СОФОС»",
+  phone: "+7-495-324-11-11",
+  website: "www.sophos-med.ru",
+  address: "ООО «ЭЙЧДИ КЛИНИК» · Бизнес-центр 'Квартал West' · Аминьевское Шоссе, 6, Москва, 119517",
+  email: "contact@sophos-med.ru",
+};
+
+function SectionPDFModal({ title, commentHtml, application, patient, onClose }) {
+  const reportRef = useRef(null);
+  const [generating, setGenerating] = useState(false);
+
+  const fullName = [patient?.firstName, patient?.middleName, patient?.lastName]
+    .filter(Boolean).join(" ").trim() || "—";
+  const patientId = patient?.patientId || patient?._id || "—";
+  const bookingNum = application?.applicationId || application?._id || "report";
+
+  const handleDownload = async () => {
+    if (!reportRef.current) return;
+    setGenerating(true);
+    try {
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const A4_W_MM = 210, A4_H_MM = 297;
+      const SCALE = 2;
+      const PAGE_H_PX = 1123;
+      const pageEls = Array.from(reportRef.current.querySelectorAll(".ed-page"));
+      for (let i = 0; i < pageEls.length; i++) {
+        const el = pageEls[i];
+        const elH = Math.round(el.getBoundingClientRect().height);
+        const canvas = await html2canvas(el, { scale: SCALE, useCORS: true, allowTaint: true, backgroundColor: "#ffffff", width: 794, height: elH });
+        const canvasPageH = PAGE_H_PX * SCALE;
+        const totalSlices = Math.max(1, Math.ceil(canvas.height / canvasPageH));
+        for (let s = 0; s < totalSlices; s++) {
+          if (i > 0 || s > 0) pdf.addPage();
+          const srcY = s * canvasPageH;
+          const srcH = Math.min(canvasPageH, canvas.height - srcY);
+          if (srcH <= 0) break;
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = srcH;
+          const ctx = sliceCanvas.getContext("2d");
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+          ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+          const sliceH_mm = (srcH / canvasPageH) * A4_H_MM;
+          pdf.addImage(sliceCanvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, A4_W_MM, sliceH_mm);
+        }
+      }
+      pdf.save(`section_${bookingNum}.pdf`);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return createPortal(
+    <div className="ht-spdf-overlay" onClick={onClose}>
+      <div className="ht-spdf-container" onClick={(e) => e.stopPropagation()}>
+        <div className="ht-spdf-toolbar">
+          <button className="ht-spdf-download-btn" onClick={handleDownload} disabled={generating}>
+            <Download size={14} />
+            {generating ? "Генерация..." : "Скачать PDF"}
+          </button>
+          <button className="ht-spdf-close-btn" onClick={onClose} aria-label="Close">
+            <FiX size={18} />
+          </button>
+        </div>
+        <div className="ht-spdf-preview">
+          <div ref={reportRef} className="ed-report-doc">
+            <div className="ed-page">
+              <div className="ed-page-header">
+                <img src="/logo_ru.png" alt="Logo" className="ed-header-logo" />
+                <div className="ed-header-clinic">
+                  <span className="ed-header-clinic-name">{CLINIC_INFO_ASST.name}</span>
+                  <span className="ed-header-clinic-contact">{CLINIC_INFO_ASST.phone} &nbsp;|&nbsp; {CLINIC_INFO_ASST.website}</span>
+                </div>
+              </div>
+              <hr className="ed-header-line" />
+              <div className="ed-conclusions-body">
+                <div className="ed-field-title" style={{ marginBottom: 12 }}>{title}</div>
+                <div className="ed-section-content-text" dangerouslySetInnerHTML={{ __html: commentHtml || "<p>—</p>" }} />
+              </div>
+              <div className="ed-page-footer-patient">
+                <span>ID: {patientId}</span>
+                <span>{fullName}</span>
+                <span>Страница 1</span>
+              </div>
+              <div className="ed-page-footer">
+                <span>{CLINIC_INFO_ASST.address}</span>
+                <span>тел: <strong>{CLINIC_INFO_ASST.phone}</strong> &nbsp;|&nbsp; Почта: {CLINIC_INFO_ASST.email} &nbsp;|&nbsp; <strong>{CLINIC_INFO_ASST.website}</strong></span>
+              </div>
+              <div className="ed-page-footer-bar">
+                ИНН 9727077651 &nbsp;·&nbsp; ОГРН 1247700412068 &nbsp;·&nbsp; Ежедневно с 09:00 до 21:00
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 const HISTORY_SECTIONS = [
   { id: "complaints", titleKey: "sections.complaints", fields: [{ key: "complaints" }] },
@@ -255,6 +365,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
   });
   const [sectionUploading, setSectionUploading] = useState({});
   const [sectionDirty, setSectionDirty] = useState({});
+  const [sectionPdfModal, setSectionPdfModal] = useState(null);
   const morphFileRef = useRef(null);
   const procFileRef = useRef(null);
 
@@ -935,7 +1046,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                       <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
                     ) : (
                       labTests.map((test) => (
-                        <button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
+                        <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
                       ))
@@ -949,7 +1060,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                       <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
                     ) : (
                       studyTests.map((test) => (
-                        <button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "studiesManipulations")}>
+                        <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "studiesManipulations")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
                       ))
@@ -1134,11 +1245,24 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                 <div className="ht-sp-section">
                   <div className="ht-sp-section-header">
                     <span className="ht-sp-section-title">{t("history_tab.comment_title", { defaultValue: "COMMENT" })}</span>
-                    {sectionDirty[sid] && (
-                      <button type="button" className="ht-sp-save-btn" onClick={() => handleSectionCommentSave(sid, sectionData[sid]?.comment?.value || "")}>
-                        <FiFileText size={13} />{t("history_tab.save", { defaultValue: "Save" })}
+                    <div className="ht-sp-header-actions">
+                      {sectionDirty[sid] && (
+                        <button type="button" className="ht-sp-save-btn" onClick={() => handleSectionCommentSave(sid, sectionData[sid]?.comment?.value || "")}>
+                          <FiFileText size={13} />{t("history_tab.save", { defaultValue: "Save" })}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="ht-sp-pdf-btn"
+                        title={t("history_tab.export_pdf", { defaultValue: "Export PDF" })}
+                        onClick={() => setSectionPdfModal({
+                          title: SECTION_RU_LABELS[sid] || "",
+                          commentHtml: commentValue,
+                        })}
+                      >
+                        <Download size={14} />
                       </button>
-                    )}
+                    </div>
                   </div>
                   <div className="ht-sp-comment-editor">
                     <RichTextEditor
@@ -1305,6 +1429,16 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
           </div>
         </div>,
         document.body
+      )}
+
+      {sectionPdfModal && (
+        <SectionPDFModal
+          title={sectionPdfModal.title}
+          commentHtml={sectionPdfModal.commentHtml}
+          application={application}
+          patient={patient}
+          onClose={() => setSectionPdfModal(null)}
+        />
       )}
 
       {deleteConfirmTest && createPortal(

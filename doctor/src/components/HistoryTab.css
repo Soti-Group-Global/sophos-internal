@@ -1386,10 +1386,14 @@
 }
 
 /* ── Inline tests panel (below lab / study sidebar items) ── */
+.ht-sub-sidebar-item:has(+ .ht-tests-panel) {
+  padding-bottom: 0;
+}
+
 .ht-tests-panel {
   display: flex;
   flex-direction: column;
-  padding: 2px 0 4px;
+  padding: 0 0 4px;
 }
 
 .ht-tests-panel-empty {
@@ -1412,20 +1416,19 @@
   transition: background 0.12s;
 }
 
-.ht-tests-panel-item::before {
-  content: "";
-  position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  background: #0c3870;
-  border-radius: 2px;
-}
 
 .ht-tests-panel-item:hover {
   background: #f0f4ff;
+}
+
+.ht-tests-panel-item--active {
+  background: #eef3ff;
+  border-left: 3px solid #0c3870;
+}
+
+.ht-tests-panel-item--active .ht-tests-panel-name {
+  color: #0c3870;
+  font-weight: 600;
 }
 
 .ht-tests-panel-name {

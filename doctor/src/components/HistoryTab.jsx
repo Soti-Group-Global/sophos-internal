@@ -45,6 +45,11 @@ import TemplatePicker from "./TemplatePicker";
 import AppointmentReport from "../pages/AppointmentReport";
 import "./HistoryTab.css";
 
+const SECTION_RU_LABELS = {
+  morphologicalResearch: "Морфологическое исследование",
+  proceduresManipulations: "Процедуры и манипуляции",
+};
+
 const CLINIC_INFO = {
   name: "Медицинский центр «СОФОС»",
   phone: "+7-495-324-11-11",
@@ -1093,7 +1098,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                   return withFiles.length === 0 ? null : (
                     <div className="ht-tests-panel">
                       {withFiles.map((test) => (
-                        <button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
+                        <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
                       ))}
@@ -1106,7 +1111,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                   return withFiles.length === 0 ? null : (
                     <div className="ht-tests-panel">
                       {withFiles.map((test) => (
-                        <button key={test._id} type="button" className="ht-tests-panel-item" onClick={() => handleSelectTest(test, "studiesManipulations")}>
+                        <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "studiesManipulations")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
                       ))}
@@ -1352,7 +1357,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                         className="ht-sp-pdf-btn"
                         title={t("history_tab.export_pdf", { defaultValue: "Export PDF" })}
                         onClick={() => setSectionPdfModal({
-                          title: t(HISTORY_NAV_ITEMS.find((n) => n.id === sid)?.labelKey || ""),
+                          title: SECTION_RU_LABELS[sid] || t(HISTORY_NAV_ITEMS.find((n) => n.id === sid)?.labelKey || ""),
                           commentHtml: commentValue,
                         })}
                       >
