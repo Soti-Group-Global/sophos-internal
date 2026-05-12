@@ -263,7 +263,6 @@ const AppointmentDetailsPage = () => {
             <h1 className="adp-patient-title">
               {t("patient_label")} <strong>{patientDisplayName}</strong>
             </h1>
-            <span className="adp-status-badge-header">{t("status_active")}</span>
           </div>
           <span className="adp-added-date">
             No.{application?.applicationId} &nbsp;·&nbsp; {t("added_to_system")} {createdAt}

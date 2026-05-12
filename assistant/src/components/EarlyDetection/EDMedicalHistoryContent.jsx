@@ -45,6 +45,7 @@ const EDMedicalHistoryContent = ({
   getFileExtension,
   getFileLabel,
   formatFileSize,
+  formatDateTime,
   accessibleDoctorEmails,
   resolveDoctorEmail,
   specialistForms,
@@ -105,6 +106,9 @@ const EDMedicalHistoryContent = ({
                                 file?.uploadedByName ||
                                   file?.uploadedBy ||
                                   file?.uploadedByDoctorName,
+                                formatDateTime
+                                  ? formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)
+                                  : null,
                               ]
                                 .filter(Boolean)
                                 .join(" • ")}
@@ -204,6 +208,9 @@ const EDMedicalHistoryContent = ({
                               file?.uploadedByName ||
                                 file?.uploadedBy ||
                                 file?.uploadedByDoctorName,
+                              formatDateTime
+                                ? formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)
+                                : null,
                             ]
                               .filter(Boolean)
                               .join(" • ")}

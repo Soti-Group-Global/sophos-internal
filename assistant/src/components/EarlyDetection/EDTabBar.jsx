@@ -1,79 +1,45 @@
 import React from "react";
-import { User, Calendar, FileText, Clock, Edit2 } from "lucide-react";
+import { User, Calendar, FileText, Clock, Edit2, ChevronsRight, ChevronsLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-/**
- * Horizontal top tab bar for the Early Detection Booking Details page
- * (assistant interface uses a tab bar rather than the icon sidebar).
- *
- * Props:
- *   activeTab    – current tab key string
- *   setActiveTab – setter
- */
-const EDTabBar = ({ activeTab, setActiveTab }) => {
+const EDTabBar = ({ activeTab, setActiveTab, navExpanded, setNavExpanded }) => {
   const { t } = useTranslation();
+
+  const tabs = [
+    { key: "patient",            Icon: User,     label: t("earlyDiagnosis.patientInformation") || "Patient details" },
+    { key: "appointmentDetails", Icon: Calendar, label: t("earlyDiagnosis.appointmentDetails") || "Appointment Details" },
+    { key: "medicalHistory",     Icon: FileText, label: t("earlyDiagnosis.medicalHistory") || "Medical History" },
+    { key: "history",            Icon: Clock,    label: t("earlyDiagnosis.historyLogs") || "History" },
+    { key: "notes",              Icon: Edit2,    label: t("earlyDiagnosis.internalNotes") || "Notes" },
+  ];
 
   return (
     <div className="edb-tab-bar" role="tablist" aria-label="Booking details tabs">
-      <button
-        type="button"
-        className={`edb-tab ${activeTab === "patient" ? "active" : ""}`}
-        data-label={t("earlyDiagnosis.patientInformation") || "Patient details"}
-        onClick={() => setActiveTab("patient")}
-      >
-        <span className="edb-tab-icon">
-          <User size={15} />
-        </span>
-        {t("earlyDiagnosis.patientInformation") || "Patient details"}
-      </button>
-
-      <button
-        type="button"
-        className={`edb-tab edb-tab--section ${activeTab === "appointmentDetails" ? "active" : ""}`}
-        data-label={t("earlyDiagnosis.appointmentDetails") || "Appointment Details"}
-        onClick={() => setActiveTab("appointmentDetails")}
-      >
-        <span className="edb-tab-icon">
-          <Calendar size={15} />
-        </span>
-        {t("earlyDiagnosis.appointmentDetails") || "Appointment Details"}
-      </button>
-
-      <button
-        type="button"
-        className={`edb-tab edb-tab--section ${activeTab === "medicalHistory" ? "active" : ""}`}
-        data-label={t("earlyDiagnosis.medicalHistory") || "Medical History"}
-        onClick={() => setActiveTab("medicalHistory")}
-      >
-        <span className="edb-tab-icon">
-          <FileText size={15} />
-        </span>
-        {t("earlyDiagnosis.medicalHistory") || "Medical History"}
-      </button>
-
-      <button
-        type="button"
-        className={`edb-tab edb-tab--section ${activeTab === "history" ? "active" : ""}`}
-        data-label={t("earlyDiagnosis.historyLogs") || "History"}
-        onClick={() => setActiveTab("history")}
-      >
-        <span className="edb-tab-icon">
-          <Clock size={15} />
-        </span>
-        {t("earlyDiagnosis.historyLogs") || "History"}
-      </button>
-
-      <button
-        type="button"
-        className={`edb-tab edb-tab--section ${activeTab === "notes" ? "active" : ""}`}
-        data-label={t("earlyDiagnosis.internalNotes") || "Notes"}
-        onClick={() => setActiveTab("notes")}
-      >
-        <span className="edb-tab-icon">
-          <Edit2 size={15} />
-        </span>
-        {t("earlyDiagnosis.internalNotes") || "Notes"}
-      </button>
+      {setNavExpanded && (
+        <button
+          type="button"
+          className="edb-tab-toggle"
+          onClick={() => setNavExpanded((v) => !v)}
+          title={navExpanded ? "Collapse" : "Expand"}
+        >
+          {navExpanded ? <ChevronsLeft size={15} /> : <ChevronsRight size={15} />}
+        </button>
+      )}
+      {tabs.map(({ key, Icon, label }) => (
+        <button
+          key={key}
+          type="button"
+          className={`edb-tab edb-tab--section${activeTab === key ? " active" : ""}`}
+          data-label={label}
+          onClick={() => setActiveTab(key)}
+          aria-label={label}
+        >
+          <span className="edb-tab-icon">
+            <Icon size={20} />
+          </span>
+          {navExpanded && <span className="edb-tab-label">{label}</span>}
+        </button>
+      ))}
     </div>
   );
 };

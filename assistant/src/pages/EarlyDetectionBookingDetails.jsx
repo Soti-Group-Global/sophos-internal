@@ -265,6 +265,7 @@ const EarlyDetectionBookingDetails = () => {
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
   const [specialistAccordionOpen, setSpecialistAccordionOpen] = useState(true);
   const [managedAccordion, setManagedAccordion] = useState({});
+  const [navExpanded, setNavExpanded] = useState(false);
 
   useEffect(() => {
     if (activeTab !== "medicalHistory" && activeScheduleTab !== "laboratoryTests") {
@@ -2109,7 +2110,7 @@ const EarlyDetectionBookingDetails = () => {
   })();
 
   return (
-    <div className="booking-details-page edb-booking-details-page booking-details-page--compact">
+    <div className={`booking-details-page edb-booking-details-page booking-details-page--compact${navExpanded ? " edb-nav-expanded" : ""}`}>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
       <EDHeader
         booking={booking}
@@ -2121,7 +2122,12 @@ const EarlyDetectionBookingDetails = () => {
       />
 
       <div className="booking-details-content edb-booking-details-content">
-        <EDTabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <EDTabBar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          navExpanded={navExpanded}
+          setNavExpanded={setNavExpanded}
+        />
         <div
           className={`ed-details-body edb-details-body`}
         >
@@ -2206,6 +2212,7 @@ const EarlyDetectionBookingDetails = () => {
                   <div className="ed-medical-history-layout">
                     <EDMedicalSubnav
                       booking={booking}
+                      navExpanded={navExpanded}
                       activeScheduleTab={activeScheduleTab}
                       setActiveScheduleTab={setActiveScheduleTab}
                       activeTestId={activeTestId}
@@ -2241,6 +2248,7 @@ const EarlyDetectionBookingDetails = () => {
                       getFileExtension={getFileExtension}
                       getFileLabel={getFileLabel}
                       formatFileSize={formatFileSize}
+                      formatDateTime={formatDateTime}
                       accessibleDoctorEmails={accessibleDoctorEmails}
                       resolveDoctorEmail={resolveDoctorEmail}
                       specialistForms={specialistForms}

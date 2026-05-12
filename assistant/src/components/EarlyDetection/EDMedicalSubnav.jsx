@@ -46,6 +46,7 @@ const EDMedicalSubnav = ({
   setShowTestNoteEditor,
   setTestNoteDraft,
   setEditingTestNoteId,
+  navExpanded,
 }) => {
   const { t } = useTranslation();
   const [managedAccordion, setManagedAccordion] = useState({});
@@ -99,7 +100,7 @@ const EDMedicalSubnav = ({
     activeScheduleTab === key && !!managedAccordion[key];
 
   return (
-    <aside className="ed-medical-history-sidebar">
+    <aside className={`ed-medical-history-sidebar${navExpanded ? " ed-medical-history-sidebar--nav-expanded" : ""}`}>
       <div className="ed-schedule-tabs ed-schedule-tabs--vertical">
         {subTabs.map(([key, label]) => (
           <React.Fragment key={key}>
