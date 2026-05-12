@@ -472,8 +472,7 @@ function PatientForm() {
     if (!form.gender) e.gender = t("gender_required");
     if (!form.dateOfBirth) e.dateOfBirth = t("dob_required");
     if (!form.phoneNumber.trim()) e.phoneNumber = t("phone_required");
-    if (!form.email.trim()) e.email = t("email_required");
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = t("email_invalid");
+    if (form.email.trim() && !/\S+@\S+\.\S+/.test(form.email)) e.email = t("email_invalid");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -731,7 +730,7 @@ function PatientForm() {
             </div>
             <div className="pf-row">
               <Field name="maxId" label={tg("contacts.max")} half />
-              <Field name="email" label={tg("contacts.email")} type="email" required half />
+              <Field name="email" label={tg("contacts.email")} type="email" half />
             </div>
             <div className="pf-row">
               <Field name="telegramId" label={tg("contacts.telegram_id_placeholder")} />
