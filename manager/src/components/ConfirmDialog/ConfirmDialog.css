@@ -1,0 +1,92 @@
+.cd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 15, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.cd-dialog {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(10, 46, 93, 0.18);
+  width: 100%;
+  max-width: 380px;
+  overflow: hidden;
+  animation: cd-pop 0.18s ease;
+}
+
+@keyframes cd-pop {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.cd-header {
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--color-primary, #0a2e5d) 0%, #0d3a6e 100%);
+}
+
+.cd-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.cd-body {
+  padding: 18px 18px 12px;
+}
+
+.cd-message {
+  margin: 0;
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.cd-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 18px 16px;
+}
+
+.cd-btn {
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.cd-btn--cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.cd-btn--cancel:hover {
+  background: #e5e7eb;
+}
+
+.cd-btn--danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.cd-btn--danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.cd-btn--confirm {
+  background: var(--color-primary, #0a2e5d);
+  color: #fff;
+}
+
+.cd-btn--confirm:hover {
+  background: #0d3a6e;
+}

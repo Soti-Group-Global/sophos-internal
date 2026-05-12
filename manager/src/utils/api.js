@@ -863,6 +863,12 @@ export const addApplication = async (data) => {
   }
 };
 
+// Delete application
+export const deleteApplication = async (id) => {
+  const response = await api.delete(`/applications/${encodeURIComponent(id)}`);
+  return response.data;
+};
+
 // Update application
 export const updateApplication = async (id, data) => {
   try {

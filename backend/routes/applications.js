@@ -67,6 +67,7 @@ const {
   addFollowUpAppointment,
   getCalendarDataForDoctors,
   updateHistoryFormForDoctor,
+  deleteApplication,
 } = require("../controllers/applicationController");
 
 // Multer setup
@@ -74,6 +75,9 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 },
 });
+
+// --- Delete application ---
+router.delete("/:id(*)", auth, deleteApplication);
 
 // --- Document routes ---
 router.post("/:id(*)/documents/file", upload.single("file"), uploadDocumentFile);

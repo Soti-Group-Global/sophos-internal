@@ -47,7 +47,6 @@
     "table_payment_status": "Payment",
     "table_payment": "Payment",
     "submit": "Submit",
-    "cancel": "Cancel",
     "pagination_info": "Showing {{start}} to {{end}} of {{total}} entries",
     "add_document": "Add Document",
     "upload_file": "Upload File",
@@ -138,7 +137,13 @@
     "export_csv": "Export as CSV",
     "export_pdf": "Export as PDF",
     "no_applications": "No applications found",
-    "no_matching_applications": "No applications match your search criteria"
+    "no_matching_applications": "No applications match your search criteria",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "delete_confirm_title": "Delete Record?",
+    "delete_confirm_message": "Are you sure you want to delete record",
+    "delete_success": "Record deleted successfully",
+    "delete_failed": "Failed to delete record"
   },
   "add_application": {
     "title": "Add application",
@@ -172,7 +177,6 @@
     "payment_status": "Payment status",
     "date_and_start_time": "Date and start time",
     "date_time_placeholder": "Select date and start time",
-    "date": "Date",
     "start_time": "Start Time",
     "end_time": "End Time",
     "select_time": "Select time",
@@ -185,21 +189,9 @@
     "promo_code_placeholder": "Enter promo code (optional)",
     "comments": "Comments",
     "comments_placeholder": "Enter any additional comments",
-    "create_payment": "Create Payment / Invoice",
-    "mark_as_paid": "Mark as Paid (Cash Payment)",
     "cash": "Cash",
     "card": "Card",
     "bank_transfer": "Bank Transfer",
-    "payment_terminal": "Payment Terminal",
-    "payment_items": "Payment Items",
-    "service_name": "Service Name",
-    "service_name_placeholder": "In-face and remote consultations",
-    "quantity": "Quantity",
-    "amount": "Amount",
-    "currency": "Currency",
-    "actions": "Actions",
-    "add_item": "Add Item",
-    "total_amount": "Total Amount",
     "documents": "Documents",
     "no_documents": "No documents added",
     "previous_comments": "Previous comments",
@@ -862,15 +854,7 @@
       "November",
       "December"
     ],
-    "weekdays_short": [
-      "MON",
-      "TUE",
-      "WED",
-      "THU",
-      "FRI",
-      "SAT",
-      "SUN"
-    ],
+    "weekdays_short": ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
     "title": "Appointment Schedule",
     "subtitle": "Manage your appointments",
     "loading": "Loading appointments...",
@@ -1078,7 +1062,20 @@
     "view_day": "Day",
     "view_week": "Week",
     "view_month": "Month",
-    "monthsShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    "monthsShort": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ]
   },
   "sidebar": {
     "applications": "Appointments",
@@ -2999,8 +2996,6 @@
       "employee": "Employee",
       "content_manager": "Content manager"
     },
-    "can_manage": "Can Manage",
-    "more": "more",
     "buttons": {
       "view_details": "View details",
       "cancel": "Cancel"
@@ -3008,7 +3003,6 @@
     "tooltips": {
       "view_schedule": "View schedule",
       "templates": "Templates",
-          "templates": "Templates",
       "assign_doctor": "Assign doctor",
       "view_assigned_doctors": "View assigned doctors",
       "send_credentials": "Send login credentials",
@@ -4738,7 +4732,7 @@
     "title": "Early Diagnosis Bookings Management",
     "subtitle": "Manage screening appointments and payments",
     "total_bookings": "Total Bookings",
-    "paid_bookings": "Paid Bookings", 
+    "paid_bookings": "Paid Bookings",
     "pending_bookings": "Pending Bookings",
     "total_revenue": "Total Revenue",
     "search_placeholder": "Search by name, email, booking number...",
@@ -6183,15 +6177,14 @@
     "load_error": "Failed to load corporate registrations",
     "save_error": "Failed to save registration",
     "delete_error": "Failed to delete",
-    "patientName":"Patient name",
-    "email":"Email",
-    "phone":"Phone",
-    "coupon":"Promo code",
-    "date":"Date"
-
+    "patientName": "Patient name",
+    "email": "Email",
+    "phone": "Phone",
+    "coupon": "Promo code",
+    "date": "Date"
   },
 
-    "board": {
+  "board": {
     "pageTitle": "Board",
     "pageSubtitle": "Notes visible to you based on your role",
     "addNote": "Add Note",

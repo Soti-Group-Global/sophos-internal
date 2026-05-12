@@ -3907,6 +3907,19 @@ async function verifyHistoryField(req, res) {
   }
 }
 
+async function deleteApplication(req, res) {
+  try {
+    const { id } = req.params;
+    const app = await Application.findOne({ applicationId: id })
+      || (mongoose.Types.ObjectId.isValid(id) ? await Application.findById(id) : null);
+    if (!app) return res.status(404).json({ message: "Application not found" });
+    await app.deleteOne();
+    res.status(200).json({ message: "Application deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+}
+
 module.exports = {
   uploadDocumentFile,
   uploadDocumentUrl,
@@ -3967,6 +3980,7 @@ module.exports = {
   updateFollowUp,
   getCalendar,
   patchApplication,
+  deleteApplication,
   uploadTestResult,
   getTestResult,
   addFollowUpAppointment,

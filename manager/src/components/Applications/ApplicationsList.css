@@ -592,6 +592,12 @@
   border-color: rgba(10, 46, 93, 0.15);
 }
 
+.row-delete-btn:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
 .app-id-text {
   color: #3b82f6;
   font-weight: 600;

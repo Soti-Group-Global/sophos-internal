@@ -27,6 +27,7 @@ import {
   AlertCircle,
   Edit3,
   ChevronLeft,
+  Trash2,
 } from "lucide-react";
 
 // Helper function to extract multilingual field values
@@ -59,7 +60,9 @@ import {
   addDocument,
   getMedia,
   sendEmail,
+  deleteApplication,
 } from "../../utils/api";
+import ConfirmDialog from "../ConfirmDialog/ConfirmDialog";
 import { useBranch } from "../../context/BranchContext";
 
 import ApplicationDetail from "./ApplicationDetail";
@@ -72,6 +75,7 @@ const ApplicationsList = () => {
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showDocumentPopup, setShowDocumentPopup] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, app: null });
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [filters, setFilters] = useState({
@@ -281,6 +285,18 @@ const ApplicationsList = () => {
 
   const handleCloseDetails = () => {
     setSelectedApplication(null);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    const app = deleteConfirm.app;
+    setDeleteConfirm({ open: false, app: null });
+    try {
+      await deleteApplication(app.applicationId || app._id);
+      setApplications((prev) => prev.filter((a) => a._id !== app._id));
+      toast.success(t("applications.delete_success") || "Запись удалена");
+    } catch {
+      toast.error(t("applications.delete_failed") || "Не удалось удалить запись");
+    }
   };
 
   const handleEditAppointment = (app, e) => {
@@ -1311,6 +1327,16 @@ const ApplicationsList = () => {
                                   >
                                     <File size={12} />
                                   </button>
+                                  <button
+                                    className="row-pdf-btn row-delete-btn"
+                                    title={t("applications.delete") || "Удалить"}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteConfirm({ open: true, app });
+                                    }}
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
                                 </div>
 
                                 {getStatusBadge(app.appointmentStatus)}
@@ -1794,6 +1820,20 @@ const ApplicationsList = () => {
           />
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        title={t("applications.delete_confirm_title") || "Удалить запись?"}
+        message={
+          deleteConfirm.app
+            ? `${t("applications.delete_confirm_message") || "Вы уверены, что хотите удалить запись"} #${deleteConfirm.app.applicationId || deleteConfirm.app._id}?`
+            : ""
+        }
+        confirmLabel={t("applications.delete") || "Удалить"}
+        cancelLabel={t("applications.cancel") || "Отмена"}
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteConfirm({ open: false, app: null })}
+      />
 
       {/* {showWhatsAppChat && (
         <WhatsAppChatBot
