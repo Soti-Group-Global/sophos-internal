@@ -2035,6 +2035,8 @@
     "warning": "Warning",
     "success": "Success",
     "loading": "Loading...",
+    "search": "Search...",
+    "noResults": "No results",
     "noData": "No data available",
     "nameEnglish": "Name (English)",
     "nameRussian": "Name (Russian)",

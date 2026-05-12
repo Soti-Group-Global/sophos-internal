@@ -1569,14 +1569,7 @@ const ApplicationsList = () => {
                     <p>{t("applications.no_matching_applications")}</p>
                     <button
                       className="primary-button"
-                      onClick={() =>
-                        navigate("/applications/add", {
-                          state: {
-                            currentPage,
-                            scrollPosition: window.scrollY,
-                          },
-                        })
-                      }
+                      onClick={() => setShowCreateModal(true)}
                     >
                       <Plus size={16} />
                       {t("applications.add")}
