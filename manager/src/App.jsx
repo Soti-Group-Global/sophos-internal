@@ -336,14 +336,7 @@ function App() {
                 path="/early-detection/payment-failed"
                 element={<EarlyDetectionPaymentFailed />}
               />
-              <Route
-                path="/early-detection/:applicationId"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <EarlyDetectionApplicationDetails />
-                  </RoleProtectedRoute>
-                }
-              />
+              
               <Route
                 path="/messenger"
                 element={
