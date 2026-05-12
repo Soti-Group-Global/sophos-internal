@@ -389,8 +389,8 @@ const EarlyDetectionBookingDetails = () => {
                 isDoctorAccessAllowed(e?.status) &&
                 isWithinAccessWindow(e?.startDateTime, e?.endDateTime),
             )
-              .map((e) => String(e?.doctorEmail || "").trim().toLowerCase())
-              .filter(Boolean),
+            .map((e) => String(e?.doctorEmail || "").trim().toLowerCase())
+            .filter(Boolean),
         );
         console.log("[EDBookingAccess] assistant access fetched", {
           assistantEmail: email,
@@ -492,14 +492,14 @@ const EarlyDetectionBookingDetails = () => {
       setAllEDBookings(Array.isArray(list) ? list : []);
       const listBooking = Array.isArray(list)
         ? list.find((b) => {
-            const currentId = String(bookingId || "");
-            return (
-              String(b?._id || "") === currentId ||
-              String(b?.invoiceNumber || "") === currentId ||
-              String(b?.bookingNumber || "") === currentId ||
-              String(b?.applicationId || "") === currentId
-            );
-          })
+          const currentId = String(bookingId || "");
+          return (
+            String(b?._id || "") === currentId ||
+            String(b?.invoiceNumber || "") === currentId ||
+            String(b?.bookingNumber || "") === currentId ||
+            String(b?.applicationId || "") === currentId
+          );
+        })
         : null;
 
       let fullBooking = null;
@@ -959,7 +959,7 @@ const EarlyDetectionBookingDetails = () => {
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
-          t("earlyDiagnosis.failedToUpdateBooking"),
+        t("earlyDiagnosis.failedToUpdateBooking"),
       );
     } finally {
       updateSectionEditor(section, { saving: false });
@@ -1077,7 +1077,7 @@ const EarlyDetectionBookingDetails = () => {
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          t("earlyDiagnosis.failedToUpdatePayment"),
+        t("earlyDiagnosis.failedToUpdatePayment"),
       );
     } finally {
       setIsSavingManual(false);
@@ -1317,9 +1317,9 @@ const EarlyDetectionBookingDetails = () => {
     const doctorObj = resolveDoctorObject(doctorValue);
     return String(
       doctorObj?.email ||
-        (typeof doctorValue === "string" && doctorValue.includes("@")
-          ? doctorValue
-          : ""),
+      (typeof doctorValue === "string" && doctorValue.includes("@")
+        ? doctorValue
+        : ""),
     )
       .trim()
       .toLowerCase();
@@ -1820,27 +1820,27 @@ const EarlyDetectionBookingDetails = () => {
                   const entry = selectedEntries.find((item) => (item?.files || []).some((entryFile) => normalizeId(entryFile?.fileId) === normalizeId(file?.fileId) || normalizeId(entryFile?._id) === normalizeId(file?._id)));
                   const entryId = entry?._id || selectedEntries[0]?._id;
                   return (
-                  <div key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-td-item">
-                    <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
-                    <div className="ed-td-item-info">
-                      <span className="ed-td-item-name">{getFileLabel(file)}</span>
-                      <span className="ed-td-item-meta">
-                        <Clock size={11} />
-                        {formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)}
-                      </span>
+                    <div key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-td-item">
+                      <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
+                      <div className="ed-td-item-info">
+                        <span className="ed-td-item-name">{getFileLabel(file)}</span>
+                        <span className="ed-td-item-meta">
+                          <Clock size={11} />
+                          {formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)}
+                        </span>
+                      </div>
+                      <div className="ed-td-item-actions">
+                        {renderFileActionButtons(file)}
+                        <button
+                          type="button"
+                          className="ed-td-icon-btn ed-td-icon-btn--delete"
+                          title={t("earlyDiagnosis.delete", "Delete")}
+                          onClick={() => handleDeleteSelectedTestFile(section, entryId, file)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="ed-td-item-actions">
-                      {renderFileActionButtons(file)}
-                      <button
-                        type="button"
-                        className="ed-td-icon-btn ed-td-icon-btn--delete"
-                        title={t("earlyDiagnosis.delete", "Delete")}
-                        onClick={() => handleDeleteSelectedTestFile(section, entryId, file)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
                   );
                 })
               )}
@@ -1994,7 +1994,7 @@ const EarlyDetectionBookingDetails = () => {
     } catch (err) {
       toast.error(
         err?.response?.data?.error ||
-          t("earlyDiagnosis.saveError", "Save failed"),
+        t("earlyDiagnosis.saveError", "Save failed"),
       );
     } finally {
       setSpecialistFormSaving((prev) => ({ ...prev, [idx]: false }));
@@ -2086,13 +2086,13 @@ const EarlyDetectionBookingDetails = () => {
 
   const dobHeader = patientForGeneralTab?.dateOfBirth
     ? new Date(patientForGeneralTab.dateOfBirth).toLocaleDateString(
-        i18n.language === "ru" ? "ru-RU" : "en-US",
-        {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        },
-      )
+      i18n.language === "ru" ? "ru-RU" : "en-US",
+      {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      },
+    )
     : null;
 
   const patientGender = patientForGeneralTab?.gender || null;
@@ -2111,7 +2111,6 @@ const EarlyDetectionBookingDetails = () => {
   return (
     <div className="booking-details-page edb-booking-details-page booking-details-page--compact">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-      <EDTabBar activeTab={activeTab} setActiveTab={setActiveTab} />
       <EDHeader
         booking={booking}
         patientDisplayName={patientDisplayName}
@@ -2122,6 +2121,7 @@ const EarlyDetectionBookingDetails = () => {
       />
 
       <div className="booking-details-content edb-booking-details-content">
+        <EDTabBar activeTab={activeTab} setActiveTab={setActiveTab} />
         <div
           className={`ed-details-body edb-details-body`}
         >
