@@ -805,7 +805,11 @@ const patchPatient = async (req, res) => {
 // Delete a patient
 const deletePatient = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.patientId);
+    const { id } = req.params;
+    let patient = await Patient.findOne({ patientId: id });
+    if (!patient && mongoose.Types.ObjectId.isValid(id)) {
+      patient = await Patient.findById(id);
+    }
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
