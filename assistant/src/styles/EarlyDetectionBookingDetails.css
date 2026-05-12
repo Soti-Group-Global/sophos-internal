@@ -85,21 +85,25 @@
   height: 100%;
 }
 
-/* Remove negative top margin that caused the top crop */
+/* Remove negative top margin and the inherited 24px right padding that creates the gap */
 .layout-main.no-sidebar .edb-booking-details-layout {
   margin-top: 0 !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
 }
 
-/* Conclusion tab: let outer layout be the scroll container so its scrollbar
-   sits at the right edge. Remove inner max-height constraints on both panels. */
+/* Conclusion tab: each panel scrolls independently within the viewport */
 .layout-main.no-sidebar .ed-form-panel {
-  max-height: none;
-  overflow-y: visible;
+  max-height: calc(100vh - 68px);
+  overflow-y: auto;
 }
 
 .layout-main.no-sidebar .ed-report-preview-wrapper {
-  max-height: none;
-  overflow-y: visible;
+  max-height: calc(100vh - 68px);
+  overflow-y: auto;
+  padding-left: 16px;
+  padding-right: 0;
+  align-items: flex-start;
 }
 
 
