@@ -327,7 +327,7 @@ const Patients = () => {
 
               <button
                 className="action-icon-i"
-                onClick={(e) => { e.stopPropagation(); navigate(`/patients/${patient._id}`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/patients/${patient.patientId}`); }}
                 title={t("view_details")}
               >
                 <FaExternalLinkAlt size={13} />
@@ -346,7 +346,7 @@ const Patients = () => {
       );
     } else {
       return (
-        <div key={patient._id} className="patient-card expanded-card" onClick={() => navigate(`/patients/${patient._id}`)} style={{ cursor: 'pointer' }}>
+        <div key={patient._id} className="patient-card expanded-card" onClick={() => navigate(`/patients/${patient.patientId}`)} style={{ cursor: 'pointer' }}>
           <div className="patient-card-content">
             <div className="patient-profile-avatar large">
               <span>{avatarInitials}</span>

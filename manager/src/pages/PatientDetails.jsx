@@ -2,7 +2,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { getPatient, getAllDoctorsProfiles } from '../utils/api';
+import { getPatientByPatientId, getAllDoctorsProfiles } from '../utils/api';
 import PatientDetailsTab from './PatientDetailsTab';
 import MedicalHistoryTab from './MedicalHistoryTab';
 import EarlyDetectionTab from './EarlyDetectionTab';
@@ -24,8 +24,8 @@ function PatientDetails() {
   useEffect(() => {
     const fetchPatient = async () => {
       try {
-        const response = await getPatient(id);
-        setPatient(response.data.patient || response.data);
+        const response = await getPatientByPatientId(id);
+        setPatient(response.patient || response);
         setLoading(false);
       } catch (err) {
         setError(t('error_fetch'));
@@ -130,7 +130,7 @@ function PatientDetails() {
             </div>
           </div>
         </div>
-        <button className="pd-edit-btn" onClick={() => navigate(`/patients/edit/${id}`)}>
+        <button className="pd-edit-btn" onClick={() => navigate(`/patients/edit/${patient._id}`)}>
           <FiEdit2 size={15} />
           <span>{t('edit')}</span>
         </button>
