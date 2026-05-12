@@ -606,14 +606,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-              <Route
-                path="/doctors-profile"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager", "content_manager"]}>
-                    <DoctorProfile />
-                  </RoleProtectedRoute>
-                }
-              />
+              
               
               <Route
                 path="/blogs"
