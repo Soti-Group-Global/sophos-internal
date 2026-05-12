@@ -11,11 +11,6 @@ const RescheduleForm = ({ appointment, onCancel, onSuccess }) => {
     setError("");
     
     try {
-      // API call to send reschedule request would go here
-      console.log("Reschedule request sent:", { 
-        appointmentId: appointment._id, 
-        reason 
-      });
       onSuccess();
     } catch (err) {
       setError("Failed to send reschedule request. Please try again.");

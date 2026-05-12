@@ -47,6 +47,7 @@ import {
 } from "../utils/api";
 import { toast } from "react-toastify";
 import { useBranch } from "../context/BranchContext";
+import SearchBar from "../components/SearchBar/SearchBar";
 
 const Reviews = () => {
   const { t, i18n } = useTranslation();
@@ -941,53 +942,28 @@ const StatusBadge = ({ status }) => {
     <div className="reviews-modern">
       {/* Header */}
       <div className="reviews-header">
-        <div className="page-title-section">
-          <div className="review-breadcrumb">
-            <a href="#" className="review-breadcrumb-link">
-              {t("reviews.breadcrumb.dashboard")}
-            </a>
-            <span className="review-breadcrumb-separator">›</span>
-            <span className="review-breadcrumb-current">
-              {t("reviews.breadcrumb.management")}
-            </span>
-          </div>
+        <div className="reviews-header-title">
+          <h1>{t("reviews.title")}</h1>
+          <p>{t("reviews.subtitle")}</p>
         </div>
-        <div className="reviews-header-content">
-          <div className="reviews-header-title">
-            <h1>{t("reviews.title")}</h1>
-            <p>{t("reviews.subtitle")}</p>
-          </div>
-          <div className="reviews-header-actions">
-            <button className="reviews-btn-refresh" onClick={handleCreateReview}>
-              <FaPlus /> {t("reviews.createReview")}
-            </button>
-            <button
-              className="reviews-btn-refresh"
-              onClick={() => window.location.reload()}
-            >
-              <FaSync /> {t("reviews.refresh")}
-            </button>
-          </div>
+        <div className="reviews-header-actions">
+          <button className="reviews-btn-refresh" onClick={handleCreateReview}>
+            <FaPlus /> {t("reviews.createReview")}
+          </button>
+          <button className="reviews-btn-refresh" onClick={() => window.location.reload()}>
+            <FaSync /> {t("reviews.refresh")}
+          </button>
         </div>
       </div>
 
       {/* Filters and Search */}
       <div className="reviews-filters-section">
-        <div className="reviews-search-box">
-          <FaSearch className="reviews-search-icon" />
-          <input
-            type="text"
-            placeholder={t("reviews.search.placeholder")}
-            value={searchTerm}
-            onChange={handleSearchChange}
-            className="reviews-search-input"
-          />
-          {searchTerm && (
-            <button onClick={clearSearch} className="reviews-clear-search-btn">
-              <FaTimes />
-            </button>
-          )}
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={handleSearchChange}
+          onClear={clearSearch}
+          placeholder={t("reviews.search.placeholder")}
+        />
 
         <div className="reviews-filter-controls">
          

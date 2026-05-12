@@ -1129,6 +1129,29 @@
     max-height: 70vh;
     scrollbar-width: thin;
     scrollbar-color: var(--accent-primary) var(--bg-card);
+    position: relative;
+}
+
+/* Current-time indicator */
+.cal-now-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e53e3e;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.cal-now-dot {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e53e3e;
 }
 
 /* Team column stays sticky while body scrolls */

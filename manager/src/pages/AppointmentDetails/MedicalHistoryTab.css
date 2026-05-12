@@ -54,7 +54,6 @@
   font-weight: 600;
 }
 
-/* Left bar via ::before — never clipped by parent border-radius */
 .mht-subnav-item--active::before {
   content: "";
   position: absolute;
@@ -82,13 +81,11 @@
   color: #0c3870;
 }
 
-/* ── Content area ── */
 .mht-content {
   flex: 1;
   min-width: 0;
   padding: 16px;
   overflow-y: auto;
-  margin-left: 200px;
 }
 
 /* ── Cards grid ── */

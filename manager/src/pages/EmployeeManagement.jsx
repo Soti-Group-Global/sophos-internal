@@ -11,6 +11,7 @@ import {
   Star,
   FileText,
 } from "lucide-react";
+import SearchBar from "../components/SearchBar/SearchBar";
 import EmployeeCard from "../components/EmployeeCard";
 import EmployeeModal from "../components/EmployeeModal";
 import AddEmployeeModal from "../components/AddEmployeeModal";
@@ -350,15 +351,11 @@ function EmployeeManagement() {
       </div>
 
       <div className="employee-management-controls">
-        <div className="employee-search-box">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder={t("employees.search_placeholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("employees.search_placeholder")}
+        />
 
         <div className="employee-tabs">
           <button

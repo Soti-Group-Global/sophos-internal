@@ -395,16 +395,18 @@ span.header-icon {
   justify-content: center;
   gap: 10px;
   border-radius: 5px;
-  border: none;
+  border: 1.5px solid var(--color-primary);
   padding: 5px 10px;
   width: fit-content;
   color: var(--color-primary);
-  background-color: var(--color-primary-light);
+  background-color: #fff;
   margin-bottom: 5px;
+  transition: background 0.15s ease;
 }
 
 .primary-button-light:hover {
   cursor: pointer;
+  background-color: rgba(var(--color-primary-rgb), 0.06);
 }
 
 /* Toast Container - Ensure it appears above all elements including header icons and dropdowns */

@@ -16,6 +16,7 @@
   FiAlertTriangle,
 } from "react-icons/fi";
 import "../../styles/StockRequestsTab.css";
+import SearchBar from "../SearchBar/SearchBar";
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import {
@@ -179,15 +180,11 @@ const StockRequestsTab = () => {
 
       {/* Search and Filter Section */}
       <div className="requestsTab-searchSection">
-        <div className="requestsTab-searchBox">
-          <FiSearch className="requestsTab-searchIcon" />
-          <input
-            type="text"
-            placeholder={t("stockRequests.searchPlaceholder")}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder={t("stockRequests.searchPlaceholder")}
+        />
         <div className="requestsTab-filterControls">
           <select
             value={selectedCategory}

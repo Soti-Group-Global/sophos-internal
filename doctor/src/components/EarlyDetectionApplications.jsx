@@ -165,40 +165,32 @@ const EarlyDetectionApplications = () => {
   useEffect(() => {
     const fetchApplications = async () => {
       const doctorEmail = doctorInfo.email || user?.email;
-      
+
       if (isLoading || !doctorEmail) {
-        console.log("[ED] Skipping fetch - isLoading:", isLoading, "doctorEmail:", doctorEmail);
         return;
       }
 
       try {
         setLoading(true);
         setError(null);
-        
-        console.log("[ED] Fetching applications for email:", doctorEmail);
-        
+
         // Use Promise.allSettled to safely handle the API response
         const [edResult] = await Promise.allSettled([
           getDoctorEarlyDetectionApplications(doctorEmail),
         ]);
 
-        console.log("[ED] API result status:", edResult.status);
-        
+
         // Check if request was fulfilled before accessing data
         const edRaw =
           edResult.status === "fulfilled" &&
-          Array.isArray(edResult.value?.data)
+            Array.isArray(edResult.value?.data)
             ? edResult.value.data
             : [];
         const edAppointments = Array.from(
           new Map(edRaw.map((b) => [String(b?._id || b?.applicationId), b])).values()
         );
 
-        console.log("[ED] Early Detection applications count:", edAppointments.length);
 
-        if (edAppointments.length > 0) {
-          console.log("[ED] Sample:", edAppointments.slice(0, 2));
-        }
 
         setApplications(edAppointments);
       } catch (error) {
@@ -332,7 +324,6 @@ const EarlyDetectionApplications = () => {
           (a.applicationId || "").toLowerCase().includes(term),
       );
     }
-    console.log("[ED] FILTERED_APPS: Total:", applications.length, "Filtered:", result.length, "Filter:", filter);
     if (result.length === 0 && applications.length > 0) {
       console.warn("[ED] All applications filtered out! Current filter:", filter);
     }
@@ -470,14 +461,7 @@ const EarlyDetectionApplications = () => {
       .map((app) => {
         const start = buildDateTime(app.date, app.startTime);
         const end = buildDateTime(app.date, app.endTime);
-        console.log("[WEEK_EVENTS] Mapping app:", {
-          applicationId: app.applicationId,
-          date: app.date,
-          startTime: app.startTime,
-          endTime: app.endTime,
-          parsedStart: start?.format("YYYY-MM-DD HH:mm"),
-          parsedEnd: end?.format("YYYY-MM-DD HH:mm"),
-        });
+
         return {
           id: app.applicationId || app._id,
           title: app.patientName || t("appointment.unknownPatient"),
@@ -494,12 +478,7 @@ const EarlyDetectionApplications = () => {
           ev.end &&
           ev.start.isBetween(selectedWeekStart, selectedWeekEnd, "day", "[]"),
       );
-    
-    console.log("[WEEK_EVENTS] Final weekEvents count:", events.length, "Week range:", {
-      start: selectedWeekStart.format("YYYY-MM-DD"),
-      end: selectedWeekEnd.format("YYYY-MM-DD"),
-    });
-    
+
     return events;
   }, [filteredApplications, selectedWeekStart, selectedWeekEnd, t]);
 
@@ -534,16 +513,16 @@ const EarlyDetectionApplications = () => {
     const top = (startHour - gridStartHour) * slotHeight * 2;
     const height = (endHour - startHour) * slotHeight * 2;
     const statusColors = {
-  confirmed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
-  completed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
-  paid: { border: "#6ee7b7", text: "#065f46", bg: "#d1fae5" },
-  upcoming: { border: "#fde68a", text: "#854d0e", bg: "#fef9c3" },
-  new: { border: "#c4b5fd", text: "#5b21b6", bg: "#ede9fe" },
-  "pending payment": { border: "#f9a8d4", text: "#9d174d", bg: "#fce7f3" },
-  "awaiting for payment": { border: "#fcd34d", text: "#92400e", bg: "#fef3c7" },
-  cancelled: { border: "#fca5a5", text: "#991b1b", bg: "#fee2e2" },
-  unconfirmed: { border: "#fdba74", text: "#9a3412", bg: "#ffedd5" },
-};
+      confirmed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
+      completed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
+      paid: { border: "#6ee7b7", text: "#065f46", bg: "#d1fae5" },
+      upcoming: { border: "#fde68a", text: "#854d0e", bg: "#fef9c3" },
+      new: { border: "#c4b5fd", text: "#5b21b6", bg: "#ede9fe" },
+      "pending payment": { border: "#f9a8d4", text: "#9d174d", bg: "#fce7f3" },
+      "awaiting for payment": { border: "#fcd34d", text: "#92400e", bg: "#fef3c7" },
+      cancelled: { border: "#fca5a5", text: "#991b1b", bg: "#fee2e2" },
+      unconfirmed: { border: "#fdba74", text: "#9a3412", bg: "#ffedd5" },
+    };
     const colors =
       statusColors[event.status?.toLowerCase()] || statusColors.unconfirmed;
     return {
@@ -610,7 +589,7 @@ const EarlyDetectionApplications = () => {
   return (
     <div className="early-detect-container">
       <ToastContainer position="top-right" autoClose={3000} />
-      
+
       {/* Error display */}
       {error && (
         <div style={{
@@ -625,7 +604,7 @@ const EarlyDetectionApplications = () => {
           Error loading applications: {error}
         </div>
       )}
-      
+
       {/* Header with search, filter, view toggle, export */}
       <div className="early-detect-header">
         <h2 className="early-detect-heading">
@@ -753,10 +732,10 @@ const EarlyDetectionApplications = () => {
                         {(() => {
                           const s = appt.appointmentStatus;
                           const config = {
-                            confirmed:   { dot: "#00C853", bg: "#e8f5e9", color: "#1b5e20" },
-                            completed:   { dot: "#3b82f6", bg: "#eff6ff", color: "#1e40af" },
-                            cancelled:   { dot: "#FF1744", bg: "#fce4ec", color: "#b71c1c" },
-                            upcoming:    { dot: "#FFD600", bg: "#fffde7", color: "#f57f17" },
+                            confirmed: { dot: "#00C853", bg: "#e8f5e9", color: "#1b5e20" },
+                            completed: { dot: "#3b82f6", bg: "#eff6ff", color: "#1e40af" },
+                            cancelled: { dot: "#FF1744", bg: "#fce4ec", color: "#b71c1c" },
+                            upcoming: { dot: "#FFD600", bg: "#fffde7", color: "#f57f17" },
                             unconfirmed: { dot: "#FF9800", bg: "#fff3e0", color: "#e65100" },
                           }[s?.toLowerCase()] || { dot: "#9ca3af", bg: "#f9fafb", color: "#6b7280" };
                           return (
@@ -1461,7 +1440,7 @@ const EarlyDetectionApplications = () => {
                   } catch (err) {
                     toast.error(
                       err?.response?.data?.message ||
-                        t("appointments.breakAddFailed"),
+                      t("appointments.breakAddFailed"),
                     );
                   } finally {
                     setBreakSaving(false);

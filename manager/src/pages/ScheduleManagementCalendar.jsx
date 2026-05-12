@@ -1498,14 +1498,6 @@ const ScheduleManagementCalendar = () => {
                           {isClosed && slot.hour===9 && slot.minute===0 && (
                             <div className="dac-closed-label"><XCircle size={10}/>{t("calendar.scheduleClosed")||"Closed"}</div>
                           )}
-                          {!isClosed && !isOff && workingRanges.filter((range) => {
-                            const [sh, sm] = range.startTime.split(":").map(Number);
-                            return sh === slot.hour && sm === slot.minute;
-                          }).map((range, rangeIdx) => (
-                            <div key={rangeIdx} className="dac-schedule-label">
-                              <span className="dac-schedule-label-text">{range.startTime}–{range.endTime}</span>
-                            </div>
-                          ))}
                           {isOff && slot.hour===9 && slot.minute===0 && (() => {
                             const ld = onLeave ? getLeaveDetails(selectedEmail, ds) : null;
                             return (
@@ -1905,14 +1897,6 @@ const ScheduleManagementCalendar = () => {
                                   {isClosed && slot.hour === 9 && slot.minute === 0 && (
                                     <div className="dac-closed-label"><XCircle size={10}/>{t("calendar.scheduleClosed")||"Closed"}</div>
                                   )}
-                                  {!isClosed && !isOff && workingRanges.filter((range) => {
-                                    const [sh, sm] = range.startTime.split(":").map(Number);
-                                    return sh === slot.hour && sm === slot.minute;
-                                  }).map((range, rangeIdx) => (
-                                    <div key={rangeIdx} className="dac-schedule-label">
-                                      <span className="dac-schedule-label-text">{range.startTime}–{range.endTime}</span>
-                                    </div>
-                                  ))}
                                   {isOff && slot.hour === 9 && slot.minute === 0 && (() => {
                                     const ld = onLeave ? getLeaveDetails(doc.email, dateStr) : null;
                                     return (

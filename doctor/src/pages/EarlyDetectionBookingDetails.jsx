@@ -75,35 +75,24 @@ const SPECIALTY_ALIASES = {
 
 const normalizeDoctorEmail = (doctor) => {
   if (!doctor) {
-    console.log("[DEBUG] normalizeDoctorEmail: doctor is null/undefined");
     return null;
   }
 
   if (typeof doctor === "string") {
-    console.log("[DEBUG] normalizeDoctorEmail: doctor is string:", doctor);
     return doctor.toLowerCase();
   }
 
   if (doctor?.email) {
     const normalizedEmail = doctor.email.toLowerCase();
-    console.log("[DEBUG] normalizeDoctorEmail: extracted email from doctor.email:", normalizedEmail);
     return normalizedEmail;
   }
 
   if (doctor?.doctorEmail) {
     const normalizedEmail = doctor.doctorEmail.toLowerCase();
-    console.log("[DEBUG] normalizeDoctorEmail: extracted email from doctor.doctorEmail:", normalizedEmail);
     return normalizedEmail;
   }
 
-  // If doctor is an object but has no email fields
-  console.log("[DEBUG] normalizeDoctorEmail: doctor is object but has no email:", {
-    keys: Object.keys(doctor),
-    type: typeof doctor,
-    hasId: !!doctor._id,
-    hasEmail: !!doctor.email,
-    hasDoctorEmail: !!doctor.doctorEmail,
-  });
+
 
   return null;
 };
@@ -310,12 +299,7 @@ const EarlyDetectionBookingDetails = () => {
   useEffect(() => {
     const tokenEmail = getEmailFromToken();
     const stateEmail = location?.state?.doctorEmail;
-    console.log("[DEBUG] Email extraction:", {
-      fromToken: tokenEmail,
-      fromState: stateEmail,
-      final: currentDoctorEmail,
-      isEmpty: !currentDoctorEmail,
-    });
+
     if (!currentDoctorEmail) {
       console.warn("[WARN] currentDoctorEmail is empty! No email found from token or location state. All specialist tabs will be read-only.");
     }
@@ -673,17 +657,7 @@ const EarlyDetectionBookingDetails = () => {
           if (detailsBooking) {
             foundBooking = detailsBooking;
 
-            // DEBUG: Log specialist consultations when booking is fetched
-            console.log("[DEBUG] Booking loaded from API, specialist consultations:",
-              detailsBooking?.schedule?.specialistConsultations?.map((s, idx) => ({
-                index: idx,
-                title: s.title,
-                doctorId: s.doctor?._id || s.doctor,
-                doctorEmail: s.doctor?.email || "NO EMAIL FIELD",
-                doctorObject: typeof s.doctor,
-                hasDoctor: !!s.doctor,
-              }))
-            );
+
           }
         } catch {
           // Ignore and keep fallback booking object
@@ -693,11 +667,9 @@ const EarlyDetectionBookingDetails = () => {
       // IMPORTANT: Always try to load the real booking if we have an ID and specialist consultations are empty
       if (foundBooking?._id && (!foundBooking?.schedule?.specialistConsultations || foundBooking.schedule.specialistConsultations.length === 0)) {
         try {
-          console.log("[DEBUG] Specialist consultations empty, trying to fetch full booking from API:", foundBooking._id);
           const detailsResponse = await getEarlyDetectionBookingById(foundBooking._id);
           const detailsBooking = unwrapBookingResponse(detailsResponse);
           if (detailsBooking?.schedule?.specialistConsultations?.length > 0) {
-            console.log("[DEBUG] Successfully loaded specialist consultations from API");
             foundBooking = detailsBooking;
           }
         } catch (err) {
@@ -744,21 +716,6 @@ const EarlyDetectionBookingDetails = () => {
 
         setNotFound(false);
 
-        // DEBUG: Log the full booking structure
-        console.log("[DEBUG] Full booking object loaded:", {
-          id: foundBooking._id,
-          bookingNumber: foundBooking.bookingNumber,
-          patientEmail: foundBooking?.patient?.email,
-          scheduleExists: !!foundBooking.schedule,
-          specialistConsultationsLength: foundBooking?.schedule?.specialistConsultations?.length || 0,
-          specialistConsultations: foundBooking?.schedule?.specialistConsultations?.map((s, i) => ({
-            index: i,
-            title: s.title,
-            doctor: s.doctor,
-            hasHistoryForm: !!s.historyForm,
-          })),
-          fullBooking: JSON.stringify(foundBooking).substring(0, 500), // First 500 chars
-        });
 
         setBooking(sanitizeBookingData(foundBooking));
 
@@ -1381,7 +1338,6 @@ const EarlyDetectionBookingDetails = () => {
       // Transform notes to ensure proper structure - handle nested and object note values
       const transformedNotes = normalizeInternalNotes(notesData);
 
-      console.log("Transformed notes:", transformedNotes);
 
       if (transformedNotes.length > 0 || response?.data?.success) {
         setBooking((prev) => ({
@@ -1484,7 +1440,6 @@ const EarlyDetectionBookingDetails = () => {
 
       const response = await deleteEarlyDetectionBookingNote(bookingIdForNotes, noteIdToDelete);
 
-      console.log("Delete note response:", response);
 
       // Handle different response structures
       let notesData = [];
@@ -1496,11 +1451,9 @@ const EarlyDetectionBookingDetails = () => {
         notesData = [response.data];
       }
 
-      console.log("Notes data:", notesData);
 
       // Transform notes to ensure proper structure - handle nested objects
       const transformedNotes = notesData.map((note) => {
-        console.log("Processing note:", note, "note.note type:", typeof note.note);
 
         // Extract note text - handle if it's nested
         let noteText = "";
@@ -1515,8 +1468,6 @@ const EarlyDetectionBookingDetails = () => {
         } else {
           noteText = String(note);
         }
-
-        console.log("Extracted noteText:", noteText);
 
         return {
           _id: note._id || note.id,

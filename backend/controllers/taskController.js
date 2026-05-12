@@ -40,7 +40,6 @@ exports.createTask = async (req, res) => {
 // Debug-only: inspect payload and return task + siblings without mutating
 exports.reorderTasksDebug = async (req, res) => {
   try {
-    console.log("[reorderTasksDebug] payload:", JSON.stringify(req.body));
     const { source, destination, taskId } = req.body || {};
     if (!taskId || !source || !destination) {
       return res.status(400).json({ success: false, message: "taskId, source and destination are required" });
@@ -96,7 +95,6 @@ exports.deleteTask = async (req, res) => {
 // Reorder tasks (for drag & drop)
 exports.reorderTasks = async (req, res) => {
   try {
-    console.log("[reorderTasks] payload:", JSON.stringify(req.body));
     const { source, destination, taskId } = req.body || {};
 
     if (!taskId || !source || !destination) {
@@ -126,7 +124,6 @@ exports.reorderTasks = async (req, res) => {
 
       // Reassign orders sequentially with logging
       try {
-        console.log("[reorderTasks] resequencing same-column, count:", filtered.length);
         await Promise.all(
           filtered.map((t, idx) => Task.findByIdAndUpdate(t._id, { order: idx }, { new: true }))
         );
@@ -146,12 +143,10 @@ exports.reorderTasks = async (req, res) => {
     // Moving across columns
     // Decrement order of tasks after the source index in the source column
     try {
-      console.log("[reorderTasks] shifting source column down", { projectId: task.projectId, fromCol, fromIndex });
       await Task.updateMany(
         { projectId: task.projectId, status: fromCol, order: { $gt: fromIndex } },
         { $inc: { order: -1 } }
       );
-      console.log("[reorderTasks] shifted source column down successfully");
     } catch (err) {
       console.error("[reorderTasks] error shifting source column:", err.stack || err);
       return res.status(500).json({ success: false, message: "Error updating source column orders" });
@@ -159,12 +154,10 @@ exports.reorderTasks = async (req, res) => {
 
     // Increment order of tasks at or after destination index in the target column
     try {
-      console.log("[reorderTasks] shifting destination column up", { projectId: task.projectId, toCol, toIndex });
       await Task.updateMany(
         { projectId: task.projectId, status: toCol, order: { $gte: toIndex } },
         { $inc: { order: 1 } }
       );
-      console.log("[reorderTasks] shifted destination column up successfully");
     } catch (err) {
       console.error("[reorderTasks] error shifting destination column:", err.stack || err);
       return res.status(500).json({ success: false, message: "Error updating destination column orders" });
@@ -175,13 +168,11 @@ exports.reorderTasks = async (req, res) => {
     task.order = toIndex;
     try {
       await task.save();
-      console.log("[reorderTasks] task saved successfully", { taskId: task._id.toString(), status: task.status, order: task.order });
     } catch (err) {
       console.error("[reorderTasks] error saving moved task:", err.stack || err, err);
       return res.status(500).json({ success: false, message: "Error saving moved task" });
     }
 
-    console.log("[reorderTasks] move across columns completed");
     return res.json({ success: true, message: "Task moved across columns successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

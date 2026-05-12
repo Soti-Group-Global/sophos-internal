@@ -25,6 +25,7 @@ import { getPatients, sendPatientEmail, deletePatient } from "../utils/api";
 import WhatsAppChatBot from "./WhatsAppChatBot";
 import TelegramChatBot from "./TelegramChatBot";
 import LoadingComponent from "../components/Loading/LoadingComponent";
+import SearchBar from "../components/SearchBar/SearchBar";
 
 const Patients = () => {
   const { t } = useTranslation("patients");
@@ -238,36 +239,36 @@ const Patients = () => {
   };
 
   const renderActionIcons = (patient) => (
-    <div className="action-icons">
+    <>
       <button
         className="action-icon-i phone-icon"
         title={t("phone")}
-        onClick={() => window.open(`tel:${patient.phoneNumber}`)}
+        onClick={(e) => { e.stopPropagation(); window.open(`tel:${patient.phoneNumber}`); }}
       >
         <FaPhoneAlt />
       </button>
       <button
         className="action-icon-i email-icon"
         title={t("email")}
-        onClick={() => handleEmailClick(patient)}
+        onClick={(e) => { e.stopPropagation(); handleEmailClick(patient); }}
       >
         <IoMail />
       </button>
       <button
         className="action-icon-i whatsapp-icon"
         title={t("whatsapp")}
-        onClick={() => handleWhatsAppClick(patient)}
+        onClick={(e) => { e.stopPropagation(); handleWhatsAppClick(patient); }}
       >
         <FaWhatsapp />
       </button>
       <button
         className="action-icon-i telegram-icon"
         title={t("telegram")}
-        onClick={() => handleTelegramClick(patient)}
+        onClick={(e) => { e.stopPropagation(); handleTelegramClick(patient); }}
       >
         <PiTelegramLogo />
       </button>
-    </div>
+    </>
   );
 
   const renderPatientCard = (patient) => {
@@ -313,11 +314,11 @@ const Patients = () => {
               </div>
             </div>
 
-            <div className="patient-actions">
-              <div className="patient-card-footer">{renderActionIcons(patient)}</div>
+            <div className="action-icons">
+              {renderActionIcons(patient)}
 
               <button
-                className="patient-card-pdf-btn"
+                className="action-icon-i"
                 title="Export as PDF"
                 onClick={(e) => { e.stopPropagation(); setExportModalPatients([patient]); }}
               >
@@ -325,15 +326,15 @@ const Patients = () => {
               </button>
 
               <button
-                className="view-details-icon-btn"
-                onClick={() => navigate(`/patients/${patient._id}`)}
+                className="action-icon-i"
+                onClick={(e) => { e.stopPropagation(); navigate(`/patients/${patient._id}`); }}
                 title={t("view_details")}
               >
-                <FaExternalLinkAlt size={14} />
+                <FaExternalLinkAlt size={13} />
               </button>
 
               <button
-                className="patient-delete-btn"
+                className="action-icon-i action-icon-delete"
                 title={t("delete_patient")}
                 onClick={(e) => { e.stopPropagation(); handleDeletePatient(patient); }}
               >
@@ -352,31 +353,29 @@ const Patients = () => {
               <div className="gender-badge large">{genderIcon}</div>
             </div>
             <div className="patient-info">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <h3
-                  className="patient-name"
-                  onClick={() => navigate(`/patients/edit/${patient._id}`)}
+              <h3
+                className="patient-name"
+                onClick={(e) => { e.stopPropagation(); navigate(`/patients/edit/${patient._id}`); }}
+              >
+                {fullName} <CiEdit className="edit-icon" />
+              </h3>
+              <div className="action-icons">
+                {renderActionIcons(patient)}
+                <button
+                  className="action-icon-i"
+                  title="Export as PDF"
+                  onClick={(e) => { e.stopPropagation(); setExportModalPatients([patient]); }}
                 >
-                  {fullName} <CiEdit className="edit-icon" />
-                </h3>
-                <div style={{ display: "flex", gap: "6px" }}>
-                  <button
-                    className="patient-card-pdf-btn"
-                    title="Export as PDF"
-                    onClick={(e) => { e.stopPropagation(); setExportModalPatients([patient]); }}
-                  >
-                    <FaFilePdf size={13} />
-                  </button>
-                  <button
-                    className="patient-delete-btn"
-                    title={t("delete_patient")}
-                    onClick={(e) => { e.stopPropagation(); handleDeletePatient(patient); }}
-                  >
-                    <FaTrash size={13} />
-                  </button>
-                </div>
+                  <FaFilePdf size={13} />
+                </button>
+                <button
+                  className="action-icon-i action-icon-delete"
+                  title={t("delete_patient")}
+                  onClick={(e) => { e.stopPropagation(); handleDeletePatient(patient); }}
+                >
+                  <FaTrash size={13} />
+                </button>
               </div>
-                 {renderActionIcons(patient)}
               <div className="patient-stats">
                 <div className="stat">
                   <span className="stat-label">{t("email")}</span>
@@ -402,12 +401,8 @@ const Patients = () => {
     <div className="patients-page">
       <div className="page-header">
         <div className="page-title-section">
-          <div className="patient-breadcrumb">
-            <a href="#" className="patient-breadcrumb-link">{t("navigation.dashboard")}</a>
-            <span className="patient-breadcrumb-separator">›</span>
-            <span className="patient-breadcrumb-current">{t("title")}</span>
-          </div>
           <h1 className="patient-page-title">{t("title")}</h1>
+          <p className="page-subtitle">{t("subtitle")}</p>
         </div>
         <button
           onClick={() => navigate("/patients/add")}
@@ -420,15 +415,12 @@ const Patients = () => {
 
       <div className="patients-toolbar">
         <div className="search-section">
-          <div className="search-container">
-            <input
-              type="text"
-              placeholder={t("search_placeholder")}
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="search-input"
-            />
-          </div>
+          <SearchBar
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder={t("search_placeholder")}
+            size="md"
+          />
         </div>
 
         <div className="view-controls">

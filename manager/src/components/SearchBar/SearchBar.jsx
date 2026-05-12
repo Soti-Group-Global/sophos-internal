@@ -6,6 +6,7 @@ const SearchBar = ({
   value = "",
   onChange,
   onClear,
+  onKeyDown,
   placeholder = "Search...",
   className = "",
   style = {},
@@ -37,6 +38,7 @@ const SearchBar = ({
         className="sb-input"
         value={value}
         onChange={onChange}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
         disabled={disabled}

@@ -10,6 +10,7 @@ import "../styles/BlogsManagement.css";
 import LoadingComponent from "../components/Loading/LoadingComponent";
 import { useBranch } from "../context/BranchContext";
 import CommonRichTextEditor from "../components/RichTextEditor/CommonRichTextEditor";
+import SearchBar from "../components/SearchBar/SearchBar";
 
 
 const BlogsManagement = () => {
@@ -400,28 +401,14 @@ const BlogsManagement = () => {
 
       {/* Header Section */}
       <div className="blogs-header">
-        <div className="page-title-section">
-          <div className="blog-breadcrumb">
-            <a href="#" className="blog-breadcrumb-link">{t("blogs.dashboard")}</a>
-            <span className="blog-breadcrumb-separator">/</span>
-            <span className="blog-breadcrumb-current">{t("blogs.management")}</span>
-          </div>
+        <div>
           <h1 className="blog-page-title">{t("blogs.management")}</h1>
+          <p className="blog-page-subtitle">{t("blogs.subtitle")}</p>
         </div>
         <button className="create-blog-btn" onClick={openCreateModal}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 5V19"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-            <path
-              d="M5 12H19"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
+            <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
           {t("blogs.add_new")}
         </button>
@@ -429,17 +416,11 @@ const BlogsManagement = () => {
 
       {/* Filters Section */}
       <div className="filters-section-modern">
-        <div className="search-box-modern">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <input
-            type="text"
-            placeholder={t("blogs.search_placeholder")}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder={t("blogs.search_placeholder")}
+        />
         <div className="filters-group-modern">
           <div className="view-toggle-buttons">
             <button

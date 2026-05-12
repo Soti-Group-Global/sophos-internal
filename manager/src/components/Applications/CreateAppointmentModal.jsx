@@ -302,11 +302,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
       typeof s === "object" ? String(s._id) : String(s)
     );
 
-    console.log("[Doctor Select] doctor object:", doctor);
-    console.log("[Doctor Select] raw specialtyIds:", doctor.specialtyIds);
-    console.log("[Doctor Select] mapped doctorSpecialtyIds:", doctorSpecialtyIds);
-    console.log("[Doctor Select] all loaded specialties:", specialties);
-
+  
     setSelectedDoctors(prev => {
       const updated = [...prev];
       updated[index] = {
@@ -898,9 +894,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
                             </div>
                             {(() => {
                               const q = (doctorEntry.specialtySearch || "").toLowerCase();
-                              console.log("[Specialty Dropdown] doctorSpecialtyIds:", doctorEntry.doctorSpecialtyIds);
-                              console.log("[Specialty Dropdown] total specialties loaded:", specialties.length);
-                              const filtered = specialties.filter(s => {
+                                const filtered = specialties.filter(s => {
                                 // filter by doctor's linked specialtyIds
                                 if (doctorEntry.doctorSpecialtyIds.length > 0 &&
                                     !doctorEntry.doctorSpecialtyIds.includes(String(s._id))) return false;
@@ -912,7 +906,6 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
                                 }
                                 return true;
                               });
-                              console.log("[Specialty Dropdown] filtered result:", filtered);
                               if (filtered.length === 0) {
                                 return <div className="no-doctors">{t("common.noResults") || "No specialties"}</div>;
                               }

@@ -181,10 +181,8 @@ export const doctorSignup = async (data) => {
 export const getEmailFromToken = () => {
   try {
     const token = localStorage.getItem("accessToken");
-    console.log("[DEBUG] getEmailFromToken - token exists:", !!token);
 
     if (!token) {
-      console.warn("[WARN] No accessToken in localStorage");
       return null;
     }
 
@@ -196,15 +194,7 @@ export const getEmailFromToken = () => {
       decoded?.data?.email ||
       null;
 
-    console.log("[DEBUG] Decoded token payload:", {
-      keys: Object.keys(decoded),
-      email,
-      rawEmail: decoded.email,
-      userEmail: decoded.user?.email,
-      id: decoded.id,
-      role: decoded.role,
-      fullPayload: decoded,
-    });
+
 
     if (!email) {
       console.warn(
@@ -775,13 +765,6 @@ export const getAppointmentsByDoctor = async (
   search = ""
 ) => {
   try {
-    console.log("[API] getAppointmentsByDoctor called with:", {
-      doctorEmail,
-      page,
-      limit,
-      status,
-      search,
-    });
 
     const response = await api.get(
       `/applications/doctor/${encodeURIComponent(doctorEmail)}`,
@@ -790,9 +773,6 @@ export const getAppointmentsByDoctor = async (
         headers: {},
       },
     );
-
-    console.log("[API] getAppointmentsByDoctor response status:", response.status);
-    console.log("[API] getAppointmentsByDoctor response data keys:", Object.keys(response.data));
 
     let appointments = [];
     let totalCount = 0;
@@ -811,8 +791,6 @@ export const getAppointmentsByDoctor = async (
       appointments = response.data.appointments || [];
       totalCount = response.data.totalCount || appointments.length;
     }
-
-    console.log("[API] getAppointmentsByDoctor payload count:", appointments.length);
 
     return {
       appointments,
@@ -1145,18 +1123,11 @@ export const requestAssistantAccess = async ({
 };
 
 export const getDoctorEarlyDetectionApplications = (doctorEmail) => {
-  console.log("[API] getDoctorEarlyDetectionApplications called with email:", doctorEmail);
   return api.get(`/early-detection/doctor`, {
     params: { doctorEmail },
     headers: {}
   }).then((response) => {
-    console.log("[API] getDoctorEarlyDetectionApplications response:", {
-      status: response.status,
-      dataType: typeof response.data,
-      isArray: Array.isArray(response.data),
-      length: Array.isArray(response.data) ? response.data.length : 'N/A',
-      firstItem: Array.isArray(response.data) && response.data[0] ? response.data[0] : null,
-    });
+
     return response;
   }).catch((error) => {
     console.error("[API] getDoctorEarlyDetectionApplications error:", error.message, error.response?.data);
@@ -2288,18 +2259,11 @@ export const deleteDoctorBreak = async (breakId) => {
 // ========== Early Detection Booking APIs ==========
 
 export const getEarlyDetectionBookings = async (doctorEmail) => {
-  console.log("[API] getEarlyDetectionBookings called with email:", doctorEmail);
   try {
     const response = await api.get('/early-detection/bookings/calendar', {
       params: doctorEmail ? { doctorEmail } : {},
     });
-    console.log("[API] getEarlyDetectionBookings response:", {
-      status: response.status,
-      dataType: typeof response.data,
-      isArray: Array.isArray(response.data),
-      length: Array.isArray(response.data) ? response.data.length : 'N/A',
-      firstItem: Array.isArray(response.data) && response.data[0] ? response.data[0] : null,
-    });
+
     return response;
   } catch (error) {
     console.error("[API] getEarlyDetectionBookings error:", error.message, error.response?.data);

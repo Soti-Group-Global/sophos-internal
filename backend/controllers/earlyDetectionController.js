@@ -1463,9 +1463,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
     const doctorEmail = req.query.doctorEmail || req.user?.email;
     let query = {};
 
-    console.log("[CALENDAR] === getWeeklyBookingsOnCalendar START ===");
-    console.log("[CALENDAR] doctorEmail:", doctorEmail);
-
+  
     // For doctors/managers: show ALL ED bookings (not just ones where they're assigned)
     // The query is intentionally empty to return all bookings
     // Filtering by specific doctor assignment happens in UI logic, not backend
@@ -1475,7 +1473,6 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(1000);
     
-    console.log("[CALENDAR] Bookings found:", bookings.length, "for doctor:", doctorEmail);
 
     // Manually populate doctor refs in specialist consultations for all bookings
     for (let b of bookings) {
@@ -1493,12 +1490,8 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
     const transformedBookings = bookings.flatMap((booking) => {
       const results = [];
       
-      console.log("[CALENDAR] Processing booking:", booking._id, booking.bookingNumber);
-      console.log("[CALENDAR] - Patient:", booking.patient?._id, booking.patient?.email);
-      console.log("[CALENDAR] - Schedule specialistConsultations length:", booking.schedule?.specialistConsultations?.length);
-      
+          
       const p = booking.patient || {};
-      console.log("[CALENDAR] - Patient fields:", { firstName: p.firstName, lastName: p.lastName, gender: p.gender, dob: p.dateOfBirth });
       const patientDetails = {
         gender: p.gender || null,
         dateOfBirth: p.dateOfBirth || null,
@@ -1534,11 +1527,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
           };
           results.push(transformed);
 
-          console.log(`[CALENDAR] - Specialist ${idx} (${consultation.title}):`, {
-            date: consultation.date,
-            startTime: consultation.startTime,
-            doctorEmail: consultation.doctor?.email,
-          });
+
         });
       } else {
         // If no consultations, still create base entry showing the booking exists
@@ -1565,14 +1554,11 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
           paymentStatus: booking.payment?.status || "pending",
         };
         results.push(transformed);
-        console.log("[CALENDAR] - No specialist consultations found, showing booking only");
       }
       
       return results;
     });
 
-    console.log("[CALENDAR] Transformed results count:", transformedBookings.length);
-    console.log("[CALENDAR] === getWeeklyBookingsOnCalendar END ===");
 
     res.json(transformedBookings);
   } catch (error) {

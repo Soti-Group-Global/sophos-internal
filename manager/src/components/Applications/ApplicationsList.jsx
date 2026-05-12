@@ -42,7 +42,6 @@ import Papa from "papaparse";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import InvoiceModal from "../../pages/InvoiceModal";
 import AddPaymentModal from "../../pages/AppointmentDetails/AddPaymentModal";
 import ContractDocument from "../../pages/ContractDocument";
 import AktDocument from "../../pages/AktDocument";
@@ -53,6 +52,7 @@ import CalendarView from "./CalendarView";
 import CreateAppointmentModal from "./CreateAppointmentModal";
 import ExportPDFModal from "./ExportPDFModal";
 import "./ApplicationsList.css";
+import SearchBar from "../SearchBar/SearchBar";
 
 import {
   getApplications,
@@ -319,11 +319,8 @@ const ApplicationsList = () => {
       const dateObj = new Date(date);
       if (isNaN(dateObj)) return t("applications.na");
 
-      const dateOptions = { year: "numeric", month: "long", day: "numeric" };
-      const formattedDate = dateObj.toLocaleDateString(i18n.language, {
-        ...dateOptions,
-        timeZone: "Europe/Moscow",
-      });
+      const d = new Date(dateObj.toLocaleString("en-US", { timeZone: "Europe/Moscow" }));
+      const formattedDate = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
 
       // startTime / endTime may be plain "HH:mm" strings or full ISO dates
       const toTimeStr = (val) => {
@@ -968,18 +965,14 @@ const ApplicationsList = () => {
                 </div>
 
                 <div className="action-section">
-                  <div className="search-wrapper">
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) =>
-                        e.key === "Enter" && fetchApplications()
-                      }
-                      placeholder={t("applications.search_placeholder")}
-                      className="search-input"
-                    />
-                  </div>
+                  <SearchBar
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && fetchApplications()}
+                    placeholder={t("applications.search_placeholder")}
+                    size="sm"
+                    maxWidth="240px"
+                  />
 
                   <div className="filter-section">
                     <button
@@ -1009,9 +1002,6 @@ const ApplicationsList = () => {
                             <option value="">
                               {t("applications.filter_all")}
                             </option>
-                            <option value="Paid">
-                              {t("applications.status_paid")}
-                            </option>
                             <option value="Cancelled">
                               {t("applications.status_cancelled")}
                             </option>
@@ -1020,9 +1010,6 @@ const ApplicationsList = () => {
                             </option>
                             <option value="Confirmed">
                               {t("applications.status_confirmed")}
-                            </option>
-                            <option value="Pending payment">
-                              {t("applications.status_pending_payment")}
                             </option>
                           </select>
                         </div>

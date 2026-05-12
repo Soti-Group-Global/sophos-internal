@@ -12,7 +12,7 @@ class BigBlueButtonClient {
   ) {
     this.API_SECRET = apiSecret;
     this.BASE_URL = baseUrl.replace(/\/$/, ""); // Remove trailing slash
-    
+
     this.http = axios.create({
       timeout: 30000,
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -41,10 +41,10 @@ class BigBlueButtonClient {
    */
   buildQueryString(params) {
     const queryParts = [];
-    
+
     for (const [key, value] of Object.entries(params)) {
       if (value === undefined || value === null) continue;
-      
+
       // Convert boolean to string "true"/"false"
       let stringValue;
       if (typeof value === 'boolean') {
@@ -55,10 +55,10 @@ class BigBlueButtonClient {
       } else {
         stringValue = String(value);
       }
-      
+
       queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(stringValue)}`);
     }
-    
+
     return queryParts.join('&');
   }
 
@@ -71,12 +71,12 @@ class BigBlueButtonClient {
       if (typeof xmlString === 'object') {
         return xmlString;
       }
-      
+
       // If it's a string starting with [ or {, it's JSON
       if (typeof xmlString === 'string' && (xmlString.trim().startsWith('[') || xmlString.trim().startsWith('{'))) {
         return JSON.parse(xmlString);
       }
-      
+
       // Otherwise parse as XML
       const result = await this.xmlParser.parseStringPromise(xmlString);
       return result.response || result;
@@ -91,31 +91,30 @@ class BigBlueButtonClient {
   async makeGetRequest(callName, params = {}) {
     // Build query string without checksum first
     const queryString = this.buildQueryString(params);
-    
+
     // Generate checksum with the query string
     const checksum = this.generateChecksum(callName, queryString);
-    
+
     // Now add checksum to the query string
-    const finalQueryString = queryString 
+    const finalQueryString = queryString
       ? `${queryString}&checksum=${checksum}`
       : `checksum=${checksum}`;
-    
+
     // BASE_URL is the full API path (e.g., https://server.com/bbb-api)
     const url = `${this.BASE_URL}/${callName}?${finalQueryString}`;
 
     try {
       const response = await this.http.get(url);
-      
+
       // Parse XML response
       const result = await this.parseXmlResponse(response.data);
-      
+
       // Check for BBB-specific errors
       if (result.returncode === "FAILED") {
         const errorMsg = result.messageKey || result.message || `BBB API call ${callName} failed`;
         throw new Error(`BBB API Error: ${errorMsg}`);
       }
-      
-      console.log(`[BBB] ${callName} response:`, result.returncode || 'unknown');
+
       return result;
     } catch (error) {
       // Re-throw with more context
@@ -129,15 +128,15 @@ class BigBlueButtonClient {
   async makePostRequest(callName, params = {}, body = null) {
     // Build query string without checksum first
     const queryString = this.buildQueryString(params);
-    
+
     // Generate checksum with the query string
     const checksum = this.generateChecksum(callName, queryString);
-    
+
     // Now add checksum to the query string
-    const finalQueryString = queryString 
+    const finalQueryString = queryString
       ? `${queryString}&checksum=${checksum}`
       : `checksum=${checksum}`;
-    
+
     // BASE_URL is the full API path (e.g., https://server.com/bbb-api)
     const url = `${this.BASE_URL}/${callName}?${finalQueryString}`;
 
@@ -146,19 +145,18 @@ class BigBlueButtonClient {
       if (body) {
         headers["Content-Type"] = "application/xml; charset=utf-8";
       }
-      
+
       const response = await this.http.post(url, body, { headers });
-      
+
       // Parse XML response
       const result = await this.parseXmlResponse(response.data);
-      
+
       // Check for BBB-specific errors
       if (result.returncode === "FAILED") {
         const errorMsg = result.messageKey || result.message || `BBB API call ${callName} failed`;
         throw new Error(`BBB API Error: ${errorMsg}`);
       }
-      
-      console.log(`[BBB] ${callName} response:`, result.returncode || 'unknown');
+
       return result;
     } catch (error) {
       throw error;
@@ -373,7 +371,7 @@ class BigBlueButtonClient {
    * @returns {object} End meeting response
    */
   async endMeeting(meetingID, password) {
-    const result = await this.makeGetRequest("end", { 
+    const result = await this.makeGetRequest("end", {
       meetingID,
       password // Moderator password is required
     });
@@ -485,7 +483,7 @@ class BigBlueButtonClient {
    */
   async getDefaultConfigXML() {
     const result = await this.makeGetRequest("getDefaultConfigXML");
-    
+
     return {
       status: result.returncode === "SUCCESS",
       config: result.config,
@@ -666,7 +664,7 @@ class BigBlueButtonClient {
    */
   buildPresentationXml(presentations) {
     let xml = '<?xml version="1.0" encoding="UTF-8"?><modules><module name="presentation">';
-    
+
     for (const pres of presentations) {
       if (pres.url) {
         xml += `<document url="${this.escapeXml(pres.url)}"`;
@@ -681,7 +679,7 @@ class BigBlueButtonClient {
         xml += `>${pres.base64}</document>`;
       }
     }
-    
+
     xml += "</module></modules>";
     return xml;
   }
@@ -776,7 +774,7 @@ class BigBlueButtonClient {
       const formats = Array.isArray(recording.playback.format)
         ? recording.playback.format
         : [recording.playback.format];
-      
+
       playbackFormats = formats.map(f => ({
         type: f.type,
         url: f.url,
@@ -815,9 +813,9 @@ class BigBlueButtonClient {
       // Prefer presentation format (full HTML5 playback with webcams/audio/slides)
       // Fallback: podcast (audio only) or any available format
       playbackUrl: playbackFormats.find(f => f.type === "presentation")?.url ||
-                   playbackFormats.find(f => f.type === "podcast")?.url ||
-                   playbackFormats[0]?.url ||
-                   null,
+        playbackFormats.find(f => f.type === "podcast")?.url ||
+        playbackFormats[0]?.url ||
+        null,
     };
   }
 
@@ -850,17 +848,15 @@ class BigBlueButtonClient {
   async createOrJoinRoom(roomId, title, options = {}) {
     // Use banner URL from options or fallback to test URL
     // Only use fallback if bannerUrl is undefined/null, not if it's an empty string
-    let bannerUrl = options.bannerUrl !== undefined && options.bannerUrl !== null 
-      ? options.bannerUrl 
+    let bannerUrl = options.bannerUrl !== undefined && options.bannerUrl !== null
+      ? options.bannerUrl
       : "https://static.wixstatic.com/media/e6f22e_a90a0fab7b764c24805e7e43d165d416~mv2.png";
-    
+
     // First check if meeting is running (with error handling)
     let isRunning = { running: false };
     try {
       isRunning = await this.isMeetingRunning(roomId);
     } catch (error) {
-      console.log("[BBB] createOrJoinRoom - isRunning check error:", error.message);
-      // Continue to create - if it exists, BBB will return the existing one
     }
 
     if (isRunning.running) {
@@ -921,7 +917,7 @@ class BigBlueButtonClient {
       // If the error is "idNotUnique" or "meeting already exists", the meeting is already there
       // Just return success - users can join with deterministic passwords
       if (error.message && (error.message.includes("already exists") || error.message.includes("idNotUnique"))) {
-        
+
         return {
           status: true,
           message: "Room already exists",
@@ -931,7 +927,7 @@ class BigBlueButtonClient {
           moderatorPW: this.generateDeterministicPassword(roomId, "moderator"),
         };
       }
-      
+
       // Re-throw other errors
       throw error;
     }
@@ -953,8 +949,8 @@ class BigBlueButtonClient {
     }
 
     // Determine password based on user role
-    const password = userInfo.isAdmin 
-      ? meetingInfo.moderatorPW 
+    const password = userInfo.isAdmin
+      ? meetingInfo.moderatorPW
       : meetingInfo.attendeePW;
 
     const joinUrl = this.getJoinUrl(roomId, userInfo.name, {
@@ -997,7 +993,7 @@ class BigBlueButtonClient {
         offset: from,
         limit,
       });
-      
+
       if (result.status && result.recordings.length > 0) {
         recordings.push(...result.recordings);
       }
@@ -1040,7 +1036,7 @@ class BigBlueButtonClient {
     if (result.status && result.recordings.length > 0) {
       const recording = result.recordings[0];
       const presentationFormat = recording.playback.find(p => p.type === "presentation");
-      
+
       return {
         status: true,
         token: recordId, // Return recordId as token for compatibility
@@ -1064,34 +1060,21 @@ const bbbClient = new BigBlueButtonClient(
 
 // Test function
 async function testBBBClient() {
-  console.log("Testing BigBlueButton Client with your server...");
-  
+
   try {
-    // Test 1: Get meetings
-    console.log("\n1. Testing getMeetings...");
+
     const meetings = await bbbClient.getMeetings();
-    console.log(`Success! Found ${meetings.meetings.length} meetings`);
-    
-    // Test 2: Create a test meeting
-    console.log("\n2. Testing createMeeting...");
+
+
     const testMeetingId = `test-${Date.now()}`;
     const newMeeting = await bbbClient.createMeeting(
       testMeetingId,
       "Test Meeting from Client"
     );
-    console.log("Meeting created:", {
-      id: newMeeting.meetingID,
-      moderatorPW: newMeeting.moderatorPW,
-      attendeePW: newMeeting.attendeePW
-    });
-    
-    // Test 3: Check if meeting is running
-    console.log("\n3. Testing isMeetingRunning...");
+
     const running = await bbbClient.isMeetingRunning(testMeetingId);
-    console.log(`Meeting running: ${running.running}`);
-    
-    // Test 4: Get join URLs
-    console.log("\n4. Testing join URLs...");
+
+
     const moderatorUrl = bbbClient.getJoinUrl(testMeetingId, "Moderator", {
       password: newMeeting.moderatorPW,
       isModerator: true
@@ -1100,23 +1083,15 @@ async function testBBBClient() {
       password: newMeeting.attendeePW,
       isModerator: false
     });
-    console.log(`Moderator URL: ${moderatorUrl.substring(0, 80)}...`);
-    console.log(`Attendee URL: ${attendeeUrl.substring(0, 80)}...`);
-    
-    // Test 5: Get meeting info
-    console.log("\n5. Testing getMeetingInfo...");
+
     const meetingInfo = await bbbClient.getMeetingInfo(testMeetingId, newMeeting.moderatorPW);
-    console.log(`Meeting info: ${meetingInfo.meetingName} with ${meetingInfo.participantCount} participants`);
-    
-    // Test 6: Get recordings
-    console.log("\n6. Testing getRecordings...");
+
+
     const recordings = await bbbClient.getRecordings();
-    console.log(`Found ${recordings.recordings.length} recordings`);
-    
-    console.log("\n✅ All tests completed successfully!");
-    
+
+
   } catch (error) {
-    console.error("❌ Test failed:", error.message);
+    console.error("Test failed:", error.message);
     console.error("Stack:", error.stack);
   }
 }
@@ -1126,7 +1101,7 @@ module.exports = {
   BigBlueButtonClient,
   bbbClient,
   testBBBClient,
-  
+
   // Main instance methods
   createMeeting: bbbClient.createMeeting.bind(bbbClient),
   getJoinUrl: bbbClient.getJoinUrl.bind(bbbClient),
@@ -1143,7 +1118,7 @@ module.exports = {
   insertDocument: bbbClient.insertDocument.bind(bbbClient),
   getRecordingTextTracks: bbbClient.getRecordingTextTracks.bind(bbbClient),
   getDefaultConfigXML: bbbClient.getDefaultConfigXML.bind(bbbClient),
-  
+
   // PlugNMeet-compatible methods
   createRoom: bbbClient.createMeeting.bind(bbbClient),
   isRoomActive: bbbClient.isRoomActive.bind(bbbClient),

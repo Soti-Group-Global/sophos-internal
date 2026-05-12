@@ -358,76 +358,18 @@
 }
 
 /* ── Cover page ──────────────────────────────────────────── */
-/* ── Cover page redesign ─────────────────────────────────────── */
-.ed-cover-page {
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  position: relative;
-}
-
-/* Top-left gradient corner accent */
-.ed-cover-corner-tl {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(ellipse at top left, #2d4a8a 0%, #4a6fbc 35%, transparent 70%);
-  opacity: 0.18;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: 0 0 100% 0;
-}
-
-/* Bottom-right gradient corner accent */
-.ed-cover-corner-br {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(ellipse at bottom right, #1a2b6b 0%, #3a5baa 35%, transparent 70%);
-  opacity: 0.15;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: 100% 0 0 0;
-}
-
-/* Content sits above the corner gradients */
-.ed-cover-content {
-  position: relative;
-  z-index: 1;
+.ed-cover-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  height: 100%;
-  padding: 80px 64px 80px 64px;
-  box-sizing: border-box;
-  gap: 28px;
+  padding-top: 20px;
 }
 
-.ed-cover-top {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-}
-
-.ed-cover-top-left {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding-right: 32px;
-}
-
-.ed-cover-top-title {
-  font-size: 13pt;
+.ed-cover-program-title {
+  font-size: 12pt;
+  font-weight: 700;
   color: #2d3561;
-  line-height: 1.5;
-  font-weight: 400;
-  margin: 0;
+  margin: 0 0 10px;
 }
 
 .ed-cover-top-predict {
@@ -939,7 +881,7 @@
 
 .ed-signatures-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: 30px;
   padding-top: 10px;
 }

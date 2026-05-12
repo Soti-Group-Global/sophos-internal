@@ -117,7 +117,7 @@ const fetchSidebarData = async () => {
         : Promise.resolve([]),
     ]);
 
-    // ✅ Get actual arrays from API responses
+    //  Get actual arrays from API responses
     const doctorsData = docRes.data?.doctors || docRes.doctors || [];
     const managersData = managerRes.data?.managers || managerRes.managers || [];
     const headManagersData = managerRes.data?.headManagers || managerRes.headManagers || [];
@@ -126,13 +126,9 @@ const fetchSidebarData = async () => {
       : assistantRes.data?.assistants || assistantRes.assistants || [];
     const headAssistantsData = [];
 
-    // ✅ Log what you’re getting
-    console.log("Doctors:", doctorsData.length);
-    console.log("Managers:", managersData.length);
-    console.log("Assistants:", assistantsData.length);
-    console.log("Head Assistants:", headAssistantsData.length);
+   
 
-    // ✅ Format Doctors
+    //  Format Doctors
     const formattedDoctors = doctorsData.map((d) => ({
       ...d,
       fullName: buildFullName(d) || d.email?.split("@")?.[0] || "", // fallback
@@ -142,7 +138,7 @@ const fetchSidebarData = async () => {
       role: d.role || "doctor",
     }));
 
-    // ✅ Format Managers
+    //  Format Managers
     const formattedManagers = managersData.map((m) => ({
       ...m,
       fullName: buildFullName(m) || m.email?.split("@")?.[0] || "",
@@ -152,7 +148,7 @@ const fetchSidebarData = async () => {
       role: "manager",
     }));
 
-    // ✅ Format Head Managers
+    //  Format Head Managers
     const formattedHeadManagers = headManagersData.map((hm) => ({
       ...hm,
       fullName: buildFullName(hm) || hm.email?.split("@")?.[0] || "",
@@ -162,7 +158,7 @@ const fetchSidebarData = async () => {
       role: "head_manager",
     }));
 
-    // ✅ Format Assistants
+    //  Format Assistants
     const formattedAssistants = assistantsData.map((a) => ({
       ...a,
       fullName: buildFullName(a) || a.email?.split("@")?.[0] || "",
@@ -172,7 +168,7 @@ const fetchSidebarData = async () => {
       role: "assistant",
     }));
 
-    // ✅ Format Head Assistants
+    //  Format Head Assistants
     const formattedHeadAssistants = headAssistantsData.map((ha) => ({
       ...ha,
       fullName: buildFullName(ha) || ha.email?.split("@")?.[0] || "",
@@ -193,7 +189,7 @@ const fetchSidebarData = async () => {
       },
     ];
 
-    // ✅ Update state
+    //  Update state
     setDoctors(formattedDoctors);
     setManagers(combinedManagersEntity);
     setHeadManagers([]);
@@ -266,7 +262,6 @@ const fetchSidebarData = async () => {
         ...(fileData && fileData),
       };
 
-      console.log("Sending message with payload:", payload);
 
       await sendChatMessage(payload);
       await fetchMessages(selectedRecipient.email);

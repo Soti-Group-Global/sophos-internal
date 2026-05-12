@@ -32,6 +32,7 @@ import Select from "react-select";
 import CommonRichTextEditor from "../components/RichTextEditor/CommonRichTextEditor";
 import { useBranch } from "../context/BranchContext";
 import "../styles/Services.css";
+import SearchBar from "../components/SearchBar/SearchBar";
 
 const Services = () => {
   const { t, i18n } = useTranslation();
@@ -312,7 +313,7 @@ const Services = () => {
   };
 
   const doctorOptions = doctors.map((doctor) => {
-    const lName = typeof doctor.lastName === 'object' 
+    const lName = typeof doctor.lastName === 'object'
       ? (doctor.lastName?.[i18n.language] || doctor.lastName?.en || "")
       : (doctor.lastName || "");
     const fName = typeof doctor.firstName === 'object'
@@ -342,19 +343,14 @@ const Services = () => {
       <div className="servmgmt-header-premium">
         <div className="servmgmt-title-section">
           {isSplitView && (
-            <button className="servmgmt-back-btn" onClick={handleBackToList} style={{ marginBottom: '8px', border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)', fontWeight: '600', cursor: 'pointer' }}>
+            <button className="servmgmt-back-btn" onClick={handleBackToList}>
               <ArrowLeft size={16} />
               {t("services.actions.backToList")}
             </button>
           )}
-          <div className="service-breadcrumb">
-            <a href="#" className="service-breadcrumb-link">{t("services.breadcrumb.dashboard") || "Dashboard"}</a>
-            <span className="service-breadcrumb-separator">/</span>
-            <span className="service-breadcrumb-current">{t("services.breadcrumb.management") || "Services Management"}</span>
-          </div>
           <h1>{t("services.title")}</h1>
+          <p>{t("services.subtitle") || "Manage your clinic services"}</p>
         </div>
-
         <div className="servmgmt-actions-premium">
           {!isSplitView && (
             <button className="servmgmt-add-btn-premium" onClick={() => setShowServiceModal(true)}>
@@ -366,16 +362,11 @@ const Services = () => {
       </div>
 
       {/* Search Section */}
-      <div className="servmgmt-search-wrapper">
-        <Search className="servmgmt-search-icon-premium" size={18} />
-        <input
-          type="text"
-          placeholder={t("services.search.placeholder")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="servmgmt-search-input-premium"
-        />
-      </div>
+      <SearchBar
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={t("services.search.placeholder")}
+      />
 
       {/* Branch Status */}
       <p className="servmgmt-subtitle-premium">

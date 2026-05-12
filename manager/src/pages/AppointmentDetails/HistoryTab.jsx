@@ -384,6 +384,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   const handleSelectPastAppointment = useCallback(async (apptId) => {
     setSelectedConsultationId(apptId);
+    setActiveNavItem("specialistConsultation");
     if (apptId === application?.applicationId) {
       setSelectedApptData(null);
       return;
@@ -1449,7 +1450,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
             </div>
           ) : activeNavItem === "conclusion" ? (
             <div className="ht-conclusion-wrap">
-              <AppointmentReport booking={application} />
+              <AppointmentReport booking={application} pastConsultations={patientAppointments} />
             </div>
           ) : (activeNavItem === "laboratoryAnalysis" || activeNavItem === "studiesManipulations") && !selectedTest ? (() => {
             const allTests = activeNavItem === "laboratoryAnalysis" ? labTests : studyTests;

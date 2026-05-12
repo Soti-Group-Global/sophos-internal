@@ -113,7 +113,7 @@ const getAllPatients = async (req, res) => {
 // Get a single patient by ID
 const getPatientById = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.patientId);
+    const patient = await Patient.findById(req.params.id);
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
@@ -347,7 +347,6 @@ const createLegalRepresentative = async (req, res) => {
     res.status(201).json({ message: "Legal representative added successfully", legalRepresentatives: patient.legalRepresentatives });
   }
   catch(error){
-    console.log("Error creating legal representative:", error);
     res.status(500).json({ message: "Error creating legal representative" });
   }
 };
@@ -379,7 +378,6 @@ const updateLegalRepresentative = async (req, res) => {
         res.status(200).json({ message: "Legal representative updated successfully", legalRepresentatives: patient.legalRepresentatives });
     }
     catch(error){
-        console.log("Error updating legal representative:", error);
         res.status(500).json({ message: "Error updating legal representative" });
     }
 }
@@ -720,7 +718,6 @@ const updatePatient = async (req, res) => {
 
         res.status(200).json({ message: "Patient updated successfully", patient: updatedPatient });
      } catch (error) {
-        console.log("Error updating patient:", error);
         res.status(500).json({ message: "Error updating patient" });
      }
 };

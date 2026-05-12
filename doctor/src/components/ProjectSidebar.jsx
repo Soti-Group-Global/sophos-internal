@@ -41,7 +41,6 @@ function ProjectSidebar({
     setIsLoading(true);
     try {
       const data = await getProjects(currentUserEmail, user.role);
-      console.log(data);
       setProjects(data);
     } catch (error) {
       console.error("Error loading projects:", error);

@@ -207,13 +207,7 @@ const Appointments = () => {
   // helper for clicking calendar events
   const handleCalendarEventClick = (ev) => {
     const appointmentId = ev.applicationId || ev.id;
-    console.log("calendar event clicked", {
-      appointmentId,
-      date: ev?.start ? formatDateISO(ev.start.toDate()) : "",
-      startTime: ev?.start ? formatTimeHHMM(ev.start.toDate()) : "",
-      endTime: ev?.end ? formatTimeHHMM(ev.end.toDate()) : "",
-      eventType: ev.type,
-    });
+
     if (!appointmentId) return;
     // don't pass the full ev object (contains functions/moment instances)
     if (ev.type === "earlyDetection") {
@@ -520,10 +514,8 @@ const Appointments = () => {
   const fetchAppointments = useCallback(async () => {
     const tokenEmail = getEmailFromToken();
     const doctorEmail = doctorInfo.email || tokenEmail;
-    console.log("[PAGE] fetchAppointments doctorEmail:", doctorEmail, {
-      tokenEmail,
-      doctorInfoEmail: doctorInfo.email,
-    });
+
+
     if (!doctorEmail) {
       setError("Doctor not authenticated");
       setLoading(false);
@@ -570,9 +562,6 @@ const Appointments = () => {
 
       const mergedAppointments = [...normalizedRegular, ...normalizedEarlyDetection];
 
-      console.log("[PAGE] fetchAppointments result count:", mergedAppointments.length);
-      console.log("[PAGE] fetchAppointments sample:", mergedAppointments.slice(0, 3));
-
       setAppointments(mergedAppointments);
       setTotalRecords(mergedAppointments.length);
       setCurrentPage(1);
@@ -598,7 +587,6 @@ const Appointments = () => {
       endTime: appt.endTime ? formatTimeHHMM(appt.endTime) : "",
     }));
 
-    console.log("actual appointments (formatted)", formattedAppointments);
   }, [appointments]);
 
   const getPatientName = (appt) => {

@@ -16,6 +16,7 @@ import {
   FiSearch,
 } from "react-icons/fi";
 import "../../styles/InventoryTab.css";
+import SearchBar from "../SearchBar/SearchBar";
 
 const InventoryTab = () => {
   const { t } = useTranslation();
@@ -179,15 +180,11 @@ const InventoryTab = () => {
 
       {/* Search and Filter Section */}
       <div className="inventoryTab-searchSection">
-        <div className="inventoryTab-searchBox">
-          <FiSearch className="inventoryTab-searchIcon" />
-          <input
-            type="text"
-            placeholder={t('inventory.search_placeholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder={t('inventory.search_placeholder')}
+        />
         <div className="inventoryTab-filterControls">
           <select
             value={selectedCategory}

@@ -1288,24 +1288,20 @@ function FinalDiagnosisSection({ patient, onRefresh }) {
     const loadLists = async () => {
       try {
         const docResp = await getDoctors();
-        console.log("[DEBUG] docResp:", docResp);
         const docArray = Array.isArray(docResp) ? docResp : (docResp?.doctors || []);
         const docNames = docArray.map((d) => {
           const first = d.firstName?.en || d.firstName || "";
           const last = d.lastName?.en || d.lastName || "";
           return `${first} ${last}`.trim();
         }).filter(Boolean);
-        console.log("[DEBUG] docNames:", docNames);
         setDoctorOptions(docNames);
       } catch (err) {
         console.error("[DEBUG] Failed to fetch doctors:", err);
       }
       try {
         const specResp = await getSpecialties();
-        console.log("[DEBUG] specResp:", specResp);
         const specArray = Array.isArray(specResp) ? specResp : (specResp?.specialties || specResp?.data || []);
         const specNames = specArray.map((s) => s.name).filter(Boolean);
-        console.log("[DEBUG] specNames:", specNames);
         setSpecialtyOptions(specNames);
       } catch (err) {
         console.error("[DEBUG] Failed to fetch specialties:", err);

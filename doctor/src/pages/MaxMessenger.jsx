@@ -68,7 +68,6 @@ export default function MaxMessenger() {
     setLoading(true);
     try {
       const data = client_name ? await filterMaxChats(client_name) : await getMaxChats();
-      console.log("Fetched data:", data); // Debug: Check the response
       setChats(
         (data.chats || []).map((chat) => ({
           id: chat.id,
@@ -171,9 +170,7 @@ export default function MaxMessenger() {
   const handleScroll = () => {
     if (!messagesContainerRef.current || loading) return;
     const { scrollTop } = messagesContainerRef.current;
-    if (scrollTop < 50) {
-      console.log("Load older messages..."); // Implement pagination if needed
-    }
+
   };
 
   return (

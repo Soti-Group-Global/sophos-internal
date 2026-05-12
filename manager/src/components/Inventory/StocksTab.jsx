@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { useBranch } from "../../context/BranchContext";
 import "../../styles/StocksTab.css";
+import SearchBar from "../SearchBar/SearchBar";
 
 const StocksTab = () => {
   const { t } = useTranslation();
@@ -173,14 +174,11 @@ useEffect(() => {
 
       {/* Search and Filter Section */}
       <div className="stocksTab-controls">
-        <div className="stocksTab-searchBox">
-          <input
-            type="text"
-            placeholder={t('stocks.search_placeholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder={t('stocks.search_placeholder')}
+        />
         <div className="stocksTab-filters">
           <select
             value={filterLocation}

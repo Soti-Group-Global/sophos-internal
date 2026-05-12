@@ -96,7 +96,6 @@ const AppointmentTab = ({ appointmentId, currentUser, patient }) => {
       setError(null);
 
       const data = await getAppointmentById(appointmentId);
-          console.log("Fetched appointment data:", data); // Debug log
       // Initialize all state at once for consistency
       setAppointment(data);
       setEditValues({

@@ -346,6 +346,9 @@
   overflow: auto;
   background: var(--color-card);
   min-height: 300px;
+  margin: 16px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
 
 /* Loading State */
@@ -405,11 +408,11 @@
 }
 
 .apps-list-header-row {
-  height: 60px;
+  height: 44px;
 }
 
 .apps-list-header-cell {
-  padding: 16px 20px;
+  padding: 10px 14px;
   text-align: left;
   font-weight: 700;
   color: var(--color-text-inverse);
@@ -422,11 +425,11 @@
 }
 
 .apps-list-header-cell:first-child {
-  padding-left: 20px;
+  padding-left: 14px;
 }
 
 .apps-list-header-cell:last-child {
-  padding-right: 20px;
+  padding-right: 14px;
 }
 
 /* Sortable Column Styling */
@@ -518,7 +521,7 @@
 }
 
 .apps-list-data-table tbody tr td {
-  padding: 16px 20px;
+  padding: 10px 14px;
   vertical-align: top;
   white-space: nowrap;
   color: var(--color-text-primary);
@@ -530,7 +533,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-height: 60px;
+  min-height: 40px;
 }
 
 /* Appointment Cell */
@@ -653,15 +656,15 @@
 .status-badge-app {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 4px;
+  padding: 1px 6px;
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-caption);
+  font-size: 11px;
   font-weight: 600;
   text-transform: capitalize;
   width: fit-content;
-  letter-spacing: 0.3px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
@@ -925,9 +928,9 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #dcfce7;
-  color: #166534;
-  border: none;
+  background: #fff;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
@@ -937,7 +940,7 @@
 }
 
 .payment-btn:hover {
-  background: #bbf7d0;
+  background: rgba(var(--color-primary-rgb), 0.06);
 }
 
 .document-actions {
@@ -959,12 +962,13 @@
 }
 
 .doc-btn.enabled {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #fff;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
 }
 
 .doc-btn.enabled:hover {
-  background: #bfdbfe;
+  background: rgba(var(--color-primary-rgb), 0.06);
 }
 
 .doc-btn.disabled {

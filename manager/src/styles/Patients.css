@@ -74,74 +74,34 @@
 
 
 
-/* Premium Compact Header */
+/* Page Header — Service Manager style */
 .page-header {
-  margin: 24px 24px 0;
-  background: var(--hd-bg-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 24px 32px;
-  border-radius: var(--hd-radius-2xl);
-  border: 1px solid var(--hd-border-light);
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  position: relative;
-  box-shadow: var(--hd-shadow-md);
-  overflow: hidden;
-  z-index: 1;
-  gap: 16px;
+  padding: 24px 24px 0;
+  margin-bottom: 0;
 }
 
 .page-title-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.patient-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--hd-text-muted);
-  font-weight: 500;
-}
-
-.patient-breadcrumb-link {
-  color: var(--hd-text-muted);
-  text-decoration: none;
-  transition: color var(--hd-transition-fast);
-}
-
-.patient-breadcrumb-link:hover {
-  color: var(--hd-primary);
-}
-
-.patient-breadcrumb-separator {
-  color: var(--hd-text-muted);
-  margin: 0 4px;
-}
-
-.patient-breadcrumb-current {
-  color: var(--hd-primary);
-  font-weight: 600;
+  gap: 4px;
 }
 
 .patient-page-title {
+  font-size: 22px;
   font-weight: 700;
-  color: var(--hd-text-primary);
-  margin: 0;
+  color: #1e293b;
+  margin: 0 0 4px 0;
   line-height: 1.2;
-  background: var(--hd-gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .page-subtitle {
-  color: var(--hd-text-muted);
+  font-size: 14px;
+  color: #64748b;
   margin: 0;
-  font-weight: 500;
 }
 
 .add-patient-btn {
@@ -152,7 +112,7 @@
   background: var(--hd-primary);
   color: white;
   padding: 12px 24px;
-  border-radius: var(--hd-radius-lg);
+  border-radius: 6px;
   font-weight: 600;
   border: none;
   cursor: pointer;
@@ -250,7 +210,7 @@
   background: var(--hd-bg-glass);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border-radius: var(--hd-radius-lg);
+  border-radius: 6px;
   padding: 4px;
   border: 2px solid var(--hd-border-light);
   box-shadow: var(--hd-shadow-xs);
@@ -288,7 +248,7 @@
   background: var(--hd-bg-glass);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border-radius: var(--hd-radius-lg);
+  border-radius: 6px;
   border: 1px solid var(--hd-border-light);
   box-shadow: var(--hd-shadow-xs);
   white-space: nowrap;
@@ -322,7 +282,7 @@
   background: var(--hd-bg-glass);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: var(--hd-radius-xl);
+  border-radius: 6px;
   border: 1px solid var(--hd-border-light);
   transition: all var(--hd-transition-base);
   position: relative;
@@ -330,26 +290,8 @@
   box-shadow: var(--hd-shadow-sm);
 }
 
-.patient-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--hd-gradient-primary);
-  opacity: 0;
-  transition: opacity var(--hd-transition-base);
-}
-
 .patient-card:hover {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: var(--hd-shadow-lg);
-  border-color: var(--hd-border-medium);
-}
-
-.patient-card:hover::before {
-  opacity: 1;
+  box-shadow: var(--hd-shadow-md);
 }
 
 /* Compact Card Styles */
@@ -395,9 +337,17 @@
 
 .expanded-card .patient-info {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .expanded-card .patient-name {
+  justify-content: center;
+}
+
+.expanded-card .action-icons {
   justify-content: center;
 }
 
@@ -406,6 +356,7 @@
   grid-template-columns: 1fr;
   gap: 6px;
   margin-top: 8px;
+  width: 100%;
 }
 
 .expanded-card .stat {
@@ -451,10 +402,10 @@
 /* Premium Compact Avatar */
 .patient-profile-avatar {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   background: var(--hd-gradient-primary);
-  border-radius: var(--hd-radius-lg);
+  border-radius: var(--hd-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -467,8 +418,8 @@
 }
 
 .patient-profile-avatar.large {
-  width: 64px;
-  height: 64px;
+  width: 36px;
+  height: 36px;
 }
 
 .patient-profile-avatar span {
@@ -539,7 +490,7 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--hd-text-primary);
-  margin: 0 0 6px 0;
+  margin: 0 0 2px 0;
   cursor: pointer;
   transition: color var(--hd-transition-fast);
   white-space: nowrap;
@@ -570,11 +521,11 @@
 }
 
 .age-badge {
-  padding: 2px 6px;
+  padding: 1px 4px;
   background: var(--hd-primary-light);
   color: var(--hd-primary);
   border-radius: var(--hd-radius-sm);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.2px;
@@ -601,7 +552,7 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--hd-border-light);
   background: #fff;
   color: #64748b;
@@ -616,7 +567,7 @@
   border-color: #0a2e5d;
 }
 
-/* Export PDF button — per card */
+/* Export PDF button — per card (legacy, kept for expanded card) */
 .patient-card-pdf-btn {
   display: inline-flex;
   align-items: center;
@@ -722,70 +673,48 @@
 
 .action-icons {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 6px;
-  justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .action-icon-i {
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--hd-border-light);
-  border-radius: var(--hd-radius-lg);
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--hd-border-light);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all var(--hd-transition-base);
-  background: var(--hd-bg-glass);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: var(--hd-shadow-xs);
+  background: transparent;
+  color: var(--hd-text-secondary);
+  font-size: 13px;
 }
 
 .action-icon-i:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--hd-shadow-sm);
-}
-
-.phone-icon {
+  background: var(--hd-primary-ultra-light);
+  border-color: var(--hd-primary);
   color: var(--hd-primary);
 }
 
-.phone-icon:hover {
-  background: var(--hd-primary);
-  border-color: var(--hd-primary);
+.action-icon-delete {
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+.action-icon-delete:hover {
+  background: #ef4444;
+  border-color: #ef4444;
   color: white;
 }
 
-.email-icon {
-  color: var(--hd-warning);
-}
-
-.email-icon:hover {
-  background: var(--hd-warning);
-  border-color: var(--hd-warning);
-  color: white;
-}
-
-.whatsapp-icon {
-  color: var(--hd-success);
-}
-
-.whatsapp-icon:hover {
-  background: var(--hd-success);
-  border-color: var(--hd-success);
-  color: white;
-}
-
-.telegram-icon {
-  color: var(--hd-info);
-}
-
-.telegram-icon:hover {
-  background: var(--hd-info);
-  border-color: var(--hd-info);
-  color: white;
-}
+.phone-icon { color: var(--hd-primary); }
+.email-icon { color: var(--hd-warning); }
+.whatsapp-icon { color: var(--hd-success); }
+.telegram-icon { color: var(--hd-info); }
 
 /* Premium Loading State */
 .loading-container {

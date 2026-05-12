@@ -3,11 +3,11 @@
 }
 
 .add-service-btn {
-    background: linear-gradient(135deg, #0b3b6f 0%, #0f5ea8 100%);
+    background: #0a2f5e;
     color: #fff;
     border: none;
     padding: 11px 20px;
-    border-radius: 12px;
+    border-radius: 8px;
     cursor: pointer;
     margin-left: 100px;
     font-weight: 600;

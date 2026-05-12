@@ -175,6 +175,74 @@
   flex-shrink: 0;
 }
 
+/* Schedule availability legend (sidebar) */
+.cal-schedule-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px;
+  background: #1a202c;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.cal-schedule-legend-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  margin-bottom: 2px;
+}
+
+.cal-schedule-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+.cal-sleg-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.cal-sleg-dot--working {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.cal-sleg-dot--break {
+  background: repeating-linear-gradient(
+    45deg,
+    #fde68a,
+    #fde68a 3px,
+    #fef3c7 3px,
+    #fef3c7 7px
+  );
+  border: 1px solid #fbbf24;
+}
+
+.cal-sleg-dot--leave {
+  background: repeating-linear-gradient(
+    45deg,
+    #fca5a5,
+    #fca5a5 3px,
+    #fee2e2 3px,
+    #fee2e2 7px
+  );
+  border: 1px solid #f87171;
+}
+
+.cal-sleg-dot--outside {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  opacity: 0.8;
+}
+
 .mini-calendar-header {
   display: flex;
   align-items: center;
@@ -333,10 +401,28 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 500;
+}
+
+.cal-day-count {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 2px;
+  border-radius: 6px;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 12px;
+  text-align: center;
+  pointer-events: none;
 }
 
 .calendar-day:hover {
@@ -358,28 +444,6 @@
   background: #3b82f6;
   color: white;
   border-radius: 50%;
-}
-
-/* Application count badge on mini-calendar days */
-.calendar-day {
-  position: relative;
-}
-
-.cal-day-count {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  min-width: 13px;
-  height: 13px;
-  padding: 0 2px;
-  border-radius: 999px;
-  background: #f59e0b;
-  color: #fff;
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 13px;
-  text-align: center;
-  pointer-events: none;
 }
 
 .add-appointment-btn {
@@ -464,11 +528,12 @@
   border-radius: 12px;
 }
 
-.calendar-scroll-wrapper {
+/* Shared horizontal scroll wrapper — header + body scroll together */
+.cal-scroll-wrapper {
   flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -477,10 +542,11 @@
   display: flex;
   background: white;
   border-bottom: 2px solid #e5e7eb;
-  flex-shrink: 0;
+  position: sticky;
+  top: 0;
   z-index: 10;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   min-width: max-content;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .time-column-header {
@@ -495,13 +561,12 @@
   flex-shrink: 0;
   position: sticky;
   left: 0;
-  z-index: 11;
+  z-index: 12;
 }
 
 .doctor-column-header {
-  width: 200px;
-  min-width: 200px;
-  flex-shrink: 0;
+  flex: 0 0 160px;
+  width: 160px;
   padding: 8px 10px;
   display: flex;
   align-items: center;
@@ -512,8 +577,8 @@
 }
 
 .doctor-avatar {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #2d3748;
   color: white;
@@ -521,21 +586,20 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 
 .doctor-header-content {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  padding: 3px;
-  border-radius: 6px;
+  padding: 4px;
+  border-radius: 8px;
   transition: background-color 0.2s;
   min-width: 0;
   overflow: hidden;
-  width: 100%;
 }
 
 .doctor-header-content:hover {
@@ -545,7 +609,6 @@
 .doctor-info {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
 }
 
 .doctor-name {
@@ -556,16 +619,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 110px;
 }
 
 .doctor-specialty {
   font-size: 10px;
   color: #6b7280;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 110px;
 }
 
 /* Doctor Menu Dropdown */
@@ -610,6 +675,48 @@
   flex: 1;
 }
 
+.doctor-menu-item--danger {
+  color: #dc2626;
+}
+.doctor-menu-item--danger svg {
+  color: #dc2626;
+}
+.doctor-menu-item--danger:hover {
+  background-color: #fef2f2;
+}
+
+/* Close confirm modal */
+.dac-close-confirm-modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  width: 420px;
+  max-width: 95vw;
+  overflow: hidden;
+}
+
+.dac-close-confirm-text {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.dac-lf-danger-btn {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.dac-lf-danger-btn:hover {
+  background: #b91c1c;
+}
+
 /* Calendar Body */
 .calendar-body {
   display: flex;
@@ -617,7 +724,31 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: visible;
+  position: relative;
   min-width: max-content;
+}
+
+.cal-now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ef4444;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.cal-now-dot {
+  position: absolute;
+  left: 72px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  transform: translateY(-50%) translateX(-50%);
+  top: 50%;
 }
 
 .time-slots-column {
@@ -654,15 +785,13 @@
 
 .appointments-grid {
   display: flex;
-  min-width: max-content;
-  flex: 1;
   position: relative;
+  flex-shrink: 0;
 }
 
 .doctor-column {
-  width: 200px;
-  min-width: 200px;
-  flex-shrink: 0;
+  flex: 0 0 160px;
+  width: 160px;
   border-right: 1px solid #e5e7eb;
   position: relative;
 }
@@ -736,17 +865,13 @@
 
 /* Appointment Block */
 .appointment-block {
-  --calendar-appointment-accent: var(--appt-default-color);
-  --calendar-appointment-bg: var(--appt-default-bg);
-  --calendar-appointment-text: var(--appt-default-text);
   position: absolute;
   left: 2px;
   right: 2px;
   top: 2px;
-  background: linear-gradient(180deg, #173d71 0%, #0A2E5D 100%);
+  background: #0A2E5D;
   border-radius: 6px;
-  border-left: 4px solid var(--calendar-appointment-accent);
-  padding: 6px 8px 6px 10px;
+  padding: 6px 8px;
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -758,17 +883,6 @@
   gap: 2px;
 }
 
-.appointment-block::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--calendar-appointment-accent);
-  opacity: 0.95;
-}
-
 .appointment-block:hover {
   transform: translateX(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -776,22 +890,47 @@
 }
 
 .appointment-block.selected {
-  outline: 2px solid rgba(255, 255, 255, 0.9);
-  outline-offset: -2px;
+  border: 2px solid #0A2E5D;
   box-shadow: 0 4px 12px rgba(10, 46, 93, 0.4);
   z-index: 3;
 }
 
 /* Appointment status colors */
-.appointment-block.appt-status--confirmed   { --calendar-appointment-accent: var(--appt-confirmed-color); --calendar-appointment-bg: var(--appt-confirmed-bg); --calendar-appointment-text: var(--appt-confirmed-text); }
-.appointment-block.appt-status--completed   { --calendar-appointment-accent: var(--appt-completed-color); --calendar-appointment-bg: var(--appt-completed-bg); --calendar-appointment-text: var(--appt-completed-text); }
-.appointment-block.appt-status--upcoming    { --calendar-appointment-accent: var(--appt-upcoming-color); --calendar-appointment-bg: var(--appt-upcoming-bg); --calendar-appointment-text: var(--appt-upcoming-text); }
-.appointment-block.appt-status--cancelled   { --calendar-appointment-accent: var(--appt-cancelled-color); --calendar-appointment-bg: var(--appt-cancelled-bg); --calendar-appointment-text: var(--appt-cancelled-text); }
-.appointment-block.appt-status--pending     { --calendar-appointment-accent: var(--appt-pending-color); --calendar-appointment-bg: var(--appt-pending-bg); --calendar-appointment-text: var(--appt-pending-text); }
-.appointment-block.appt-status--paid        { --calendar-appointment-accent: var(--appt-paid-color); --calendar-appointment-bg: var(--appt-paid-bg); --calendar-appointment-text: var(--appt-paid-text); }
-.appointment-block.appt-status--unconfirmed { --calendar-appointment-accent: var(--appt-unconfirmed-color); --calendar-appointment-bg: var(--appt-unconfirmed-bg); --calendar-appointment-text: var(--appt-unconfirmed-text); }
-.appointment-block.appt-status--noshow      { --calendar-appointment-accent: var(--appt-noshow-color); --calendar-appointment-bg: var(--appt-noshow-bg); --calendar-appointment-text: var(--appt-noshow-text); }
-.appointment-block.appt-status--default     { --calendar-appointment-accent: var(--appt-default-color); --calendar-appointment-bg: var(--appt-default-bg); --calendar-appointment-text: var(--appt-default-text); }
+.appointment-block.appt-status--confirmed {
+  background: var(--appt-confirmed-color);
+}
+
+.appointment-block.appt-status--paid {
+  background: var(--appt-paid-color);
+}
+
+.appointment-block.appt-status--completed {
+  background: var(--appt-completed-color);
+}
+
+.appointment-block.appt-status--upcoming {
+  background: var(--appt-upcoming-color);
+}
+
+.appointment-block.appt-status--unconfirmed {
+  background: var(--appt-unconfirmed-color);
+}
+
+.appointment-block.appt-status--cancelled {
+  background: var(--appt-cancelled-color);
+}
+
+.appointment-block.appt-status--noshow {
+  background: var(--appt-noshow-color);
+}
+
+.appointment-block.appt-status--pending {
+  background: var(--appt-pending-color);
+}
+
+.appointment-block.appt-status--default {
+  background: var(--appt-default-color);
+}
 
 .appointment-time {
   font-size: 11px;
@@ -813,128 +952,41 @@
   text-overflow: ellipsis;
 }
 
-.appointment-status-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: 2px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
 .appointment-status-badge {
-  display: inline-block;
-  max-width: 100%;
-  margin-top: 2px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.2);
   padding: 2px 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.92);
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.appointment-status-dot {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
-}
-
-.appointment-status-text {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.92);
-  line-height: 1.2;
+  border-radius: 3px;
+  display: inline-block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
 }
 
-/* Full status color treatment for Applications page calendar only */
-.applications-calendar-view-layout .appointment-block {
-  background: var(--calendar-appointment-accent);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-left: 4px solid rgba(255, 255, 255, 0.42);
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.14);
+@keyframes appt-dot-wave {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
 }
 
-.applications-calendar-view-layout .appointment-block:hover {
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
-}
-
-.applications-calendar-view-layout .appointment-block.selected {
-  outline: 2px solid rgba(255, 255, 255, 0.78);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.22);
-}
-
-.applications-calendar-view-layout .appointment-time,
-.applications-calendar-view-layout .appointment-patient {
-  color: inherit;
-}
-
-.applications-calendar-view-layout .appointment-status-row,
-.applications-calendar-view-layout .appointment-status-badge {
-  background: rgba(0, 0, 0, 0.12);
-  border-color: rgba(0, 0, 0, 0.10);
-}
-
-.applications-calendar-view-layout .appointment-status-text,
-.applications-calendar-view-layout .appointment-status-badge {
-  color: inherit;
-}
-
-.applications-calendar-view-layout .appointment-status-dot {
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
-}
-
-/* Allow dot waves to render outside block bounds */
-.applications-calendar-view-layout .appointment-block {
-  overflow: visible;
-}
-
-/* Upcoming live dot with wave animation */
-.upcoming-live-dot {
+.appt-upcoming-dot {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 11px;
-  height: 11px;
+  top: 9px;
+  right: 9px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: var(--dot-fill, rgba(255, 255, 255, 0.9));
-  border: 2px solid var(--dot-ring, rgba(255, 255, 255, 0.8));
-  display: block;
-  z-index: 5;
-  animation: upcoming-dot-pulse 1.8s ease-in-out infinite;
-}
-
-.upcoming-live-dot::before,
-.upcoming-live-dot::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: var(--dot-ring, rgba(255, 255, 255, 0.5));
-  animation: upcoming-ring-wave 1.8s ease-out infinite;
-}
-
-.upcoming-live-dot::after {
-  animation-delay: 0.9s;
-}
-
-@keyframes upcoming-dot-pulse {
-  0%, 100% { transform: scale(1);    opacity: 1;    }
-  50%       { transform: scale(1.15); opacity: 0.85; }
-}
-
-@keyframes upcoming-ring-wave {
-  0%   { transform: scale(1);   opacity: 0.65; }
-  100% { transform: scale(3.5); opacity: 0;    }
+  background: rgba(0, 0, 0, 0.45);
+  animation: appt-dot-wave 1.4s ease-out infinite;
+  flex-shrink: 0;
 }
 
 /* Responsive */
@@ -990,11 +1042,13 @@
   }
 
   .doctor-column-header {
-    min-width: 150px;
+    flex: 0 0 140px;
+    width: 140px;
   }
 
   .doctor-column {
-    min-width: 150px;
+    flex: 0 0 140px;
+    width: 140px;
   }
 }
 
@@ -1020,10 +1074,11 @@
   }
   
   .doctor-column-header {
+    flex: 0 0 120px;
+    width: 120px;
     flex-direction: column;
     align-items: flex-start;
     padding: 8px;
-    min-width: 120px;
   }
   
   .doctor-avatar {
@@ -1043,26 +1098,6 @@
   .doctor-column {
     min-width: 120px;
   }
-}
-
-/* ── Current-time indicator ──────────────────────────────────────────────── */
-.cal-now-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #ef4444;
-  z-index: 20;
-  pointer-events: none;
-}
-.cal-now-dot {
-  position: absolute;
-  left: 74px;
-  top: -5px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #ef4444;
 }
 
 /* Scrollbar Styling */
@@ -1114,213 +1149,217 @@
 }
 
 /* Break Modal */
-.modal-overlay {
+.bm-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
 
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 420px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+.bm-content {
+  background: #fff;
+  border-radius: 14px;
+  width: 92%;
+  max-width: 440px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
 }
 
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  background-color: #0A2E5D;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-}
-
-.break-modal-header {
+/* Header */
+.bm-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  background-color: #0A2E5D;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  align-items: flex-start;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.break-modal-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: white;
+.bm-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bm-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0A2E5D;
   margin: 0;
 }
 
-.break-modal-close {
+.bm-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.bm-close {
   background: none;
   border: none;
-  font-size: 28px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 22px;
+  color: #9ca3af;
   cursor: pointer;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  line-height: 1;
+  margin-top: 2px;
 }
 
-.break-modal-close:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+.bm-close:hover {
+  background-color: #f3f4f6;
+  color: #374151;
 }
 
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+/* Body */
+.bm-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Field group */
+.bm-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.bm-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+/* Input box with icon */
+.bm-input-box {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.modal-close:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.doctor-name-display {
-  font-size: 15px;
-  color: #374151;
-  margin-bottom: 16px;
-  font-weight: 500;
-}
-
-.break-time-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.time-input {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  outline: none;
+  gap: 10px;
+  background: #f3f6fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 11px 14px;
   transition: border-color 0.2s;
 }
 
-.time-input:focus {
+.bm-input-box:focus-within {
   border-color: #0A2E5D;
+  background: #fff;
 }
 
-.time-separator {
-  color: #6b7280;
-  font-size: 16px;
-}
-
-.delete-break-btn {
-  background: none;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 20px;
-  color: #9ca3af;
-  transition: all 0.2s;
-}
-
-.delete-break-btn:hover {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-  color: #dc2626;
-}
-
-.add-break-btn {
-  background: none;
-  border: none;
+.bm-input-icon {
   color: #0A2E5D;
+  flex-shrink: 0;
+}
+
+.bm-date-input,
+.bm-time-input {
+  border: none;
+  background: transparent;
   font-size: 14px;
   font-weight: 500;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.add-break-btn:hover {
-  background-color: #e8f0fb;
-}
-
-.comment-section {
-  margin-top: 16px;
-}
-
-.comment-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-
-.comment-textarea {
+  color: #1e293b;
+  outline: none;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Read-only date display in break modal */
+.bm-date-readonly {
+  background: #f8fafc;
+  cursor: default;
+}
+
+.bm-date-readonly:focus-within {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+
+.bm-date-readonly-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* START / END TIME side by side */
+.bm-times-row {
+  display: flex;
+  gap: 14px;
+}
+
+/* Textarea */
+.bm-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f3f6fa;
   font-size: 14px;
   color: #374151;
   resize: vertical;
   outline: none;
   transition: border-color 0.2s;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
-.comment-textarea:focus {
+.bm-textarea::placeholder {
+  color: #b0b8c4;
+}
+
+.bm-textarea:focus {
   border-color: #0A2E5D;
+  background: #fff;
 }
 
-.modal-footer {
-  padding: 16px 24px;
+/* Footer */
+.bm-footer {
+  padding: 16px 24px 20px;
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid #f3f4f6;
+  gap: 12px;
+  border-top: 1px solid #f0f0f0;
 }
 
-.save-btn {
+.bm-cancel-btn {
+  background: none;
+  border: none;
+  color: #0A2E5D;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 8px;
+  transition: background-color 0.15s;
+}
+
+.bm-cancel-btn:hover {
+  background-color: #f3f6fa;
+}
+
+.bm-save-btn {
   background-color: #0A2E5D;
   color: white;
   border: none;
-  padding: 10px 32px;
+  padding: 10px 28px;
   border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
@@ -1328,6 +1367,353 @@
   transition: background-color 0.2s;
 }
 
-.save-btn:hover {
+.bm-save-btn:hover {
   background-color: #0f3d7a;
 }
+
+/* ── Existing breaks list inside break modal ─────────────────────────────── */
+.bm-existing-section {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bm-existing-label {
+  color: #9ca3af !important;
+}
+
+.bm-existing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bm-existing-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef9ec;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  flex-wrap: wrap;
+}
+
+.bm-existing-icon {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.bm-existing-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.bm-existing-dates {
+  font-size: 11px;
+  color: #b45309;
+  background: #fde68a;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.bm-existing-comment {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+  margin-left: auto;
+}
+
+.bm-existing-delete {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #d97706;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bm-existing-delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Drag-to-select highlight (Google Calendar style) ────────────────────── */
+.bm-drag-highlight {
+  background-color: rgba(22, 101, 52, 0.12) !important;
+  border-left:  2px dashed rgba(22, 101, 52, 0.7);
+  border-right: 2px dashed rgba(22, 101, 52, 0.7);
+  cursor: ns-resize;
+  position: relative;
+}
+
+.bm-drag-first {
+  border-top: 2px dashed rgba(22, 101, 52, 0.7);
+}
+
+.bm-drag-last {
+  border-bottom: 2px dashed rgba(22, 101, 52, 0.7);
+}
+
+.bm-drag-time-start {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #166534;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+  z-index: 2;
+}
+
+.bm-drag-time-end {
+  position: absolute;
+  bottom: 2px;
+  right: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #166534;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+  z-index: 2;
+}
+
+.bm-dragging,
+.bm-dragging * {
+  user-select: none;
+  cursor: ns-resize;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WEEKLY SCHEDULE MODAL  (wsm- prefix)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.wsm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.wsm-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 620px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.wsm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.wsm-header-text { display: flex; flex-direction: column; gap: 3px; }
+.wsm-title  { font-size: 20px; font-weight: 700; color: #0A2E5D; margin: 0; }
+.wsm-subtitle { font-size: 13px; color: #6b7280; margin: 0; }
+.wsm-close {
+  background: none; border: none; font-size: 22px; color: #9ca3af;
+  cursor: pointer; line-height: 1; padding: 0 2px; border-radius: 4px; transition: background 0.15s;
+}
+.wsm-close:hover { background: #f3f4f6; color: #374151; }
+
+/* Body */
+.wsm-body {
+  padding: 12px 20px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* Day section card */
+.wsm-day-section {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.wsm-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+/* Day Off rows: remove inner bottom border so it looks clean */
+.wsm-day-section.wsm-day-off > .wsm-day-header {
+  border-bottom: none;
+  background: #f3f4f6;
+}
+
+.wsm-day-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0A2E5D;
+}
+
+.wsm-day-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Working / Day Off status dropdown */
+.wsm-status-select {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  min-width: 96px;
+  flex-shrink: 0;
+  appearance: auto;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.wsm-status-on  { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.wsm-status-on:hover, .wsm-status-on:focus  { background: #a7f3d0; border-color: #34d399; }
+.wsm-status-off { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.wsm-status-off:hover, .wsm-status-off:focus { background: #fecaca; border-color: #f87171; }
+
+/* Add Slot button */
+.wsm-add-slot-btn {
+  background: none;
+  border: 1px dashed #0A2E5D;
+  color: #0A2E5D;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.wsm-add-slot-btn:hover { background: #eff6ff; }
+
+/* Slots list */
+.wsm-slots-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.wsm-no-slots {
+  display: block;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Individual slot row */
+.wsm-slot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-top: 1px solid #f3f4f6;
+  background: #fff;
+  transition: background 0.12s;
+}
+.wsm-slot-row:hover { background: #fafafa; }
+.wsm-slot-working { border-left: 3px solid #10b981; }
+.wsm-slot-break   { border-left: 3px solid #f59e0b; }
+
+/* Slot type dropdown */
+.wsm-slot-type-select {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  min-width: 96px;
+  flex-shrink: 0;
+}
+.wsm-slot-type-working { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.wsm-slot-type-break   { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+/* Time inputs */
+.wsm-time-input {
+  background: #f3f6fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  padding: 5px 8px;
+  font-size: 13px;
+  color: #1f2937;
+  width: 96px;
+  flex-shrink: 0;
+  outline: none;
+  transition: border 0.15s;
+}
+.wsm-time-input:focus { border-color: #0A2E5D; background: #fff; }
+
+.wsm-time-sep {
+  color: #9ca3af;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Remove slot */
+.wsm-slot-remove {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%; border: none;
+  background: transparent; color: #9ca3af;
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; transition: background 0.15s, color 0.15s;
+}
+.wsm-slot-remove:hover { background: #fee2e2; color: #dc2626; }
+
+/* Footer */
+.wsm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 4px;
+}
+.wsm-cancel-btn {
+  background: transparent; border: none; font-size: 14px; font-weight: 500;
+  color: #0A2E5D; cursor: pointer; padding: 8px 16px; border-radius: 8px; transition: background 0.15s;
+}
+.wsm-cancel-btn:hover { background: #f3f4f6; }
+.wsm-save-btn {
+  background: #0A2E5D; color: #fff; border: none; font-size: 14px; font-weight: 600;
+  padding: 9px 22px; border-radius: 8px; cursor: pointer; transition: background 0.15s;
+}
+.wsm-save-btn:hover:not(:disabled) { background: #0f3d7a; }
+.wsm-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }

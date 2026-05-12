@@ -24,7 +24,7 @@ function formatDate(dateStr) {
 
 
 
-function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4 }) {
+function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4, doctorName, doctorRole }) {
   const measureRef = useRef(null);
   const bodyProbeRef = useRef(null); // measures actual available body height
   const slotsRef = useRef([]); // persists across renders
@@ -139,16 +139,13 @@ function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4 }) {
 
   const signatures = (
     <div className="ed-signatures-row">
-      <div className="ed-signature-block">
-        <div className="ed-signature-line">………………………………</div>
-        <strong>Глотов Михаил Николаевич</strong>
-        <div className="ed-signature-role">Врач-терапевт.</div>
-      </div>
-      <div className="ed-signature-block">
-        <div className="ed-signature-line">………………………………</div>
-        <strong>Субраманиан Сомасундарам</strong>
-        <div className="ed-signature-role">Генеральный директор</div>
-      </div>
+      {(doctorName || doctorRole) && (
+        <div className="ed-signature-block">
+          <div className="ed-signature-line">………………………………</div>
+          {doctorName && <strong>{doctorName}</strong>}
+          {doctorRole && <div className="ed-signature-role">{doctorRole}</div>}
+        </div>
+      )}
     </div>
   );
 
@@ -210,13 +207,21 @@ function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4 }) {
   );
 }
 
-export default function AppointmentReport({ booking }) {
+export default function AppointmentReport({ booking, pastConsultations = [] }) {
   const reportRef = useRef(null);
   const [generating, setGenerating] = useState(false);
 
   const patient = booking?.patient || {};
   const fullName = [patient.firstName, patient.middleName, patient.lastName]
     .filter(Boolean).join(" ").trim() || "—";
+
+  const doctorName = (() => {
+    const d = booking?.doctor;
+    if (d) return [d.lastName, d.firstName, d.middleName].filter(Boolean).join(" ") || null;
+    const entry = booking?.doctors?.[0];
+    return entry?.doctorName || null;
+  })();
+  const doctorRole = booking?.doctor?.specialization || booking?.doctors?.[0]?.specialization || null;
   const dob = patient.dateOfBirth ? formatDate(patient.dateOfBirth) : "—";
   const phone = patient.phone || "—";
   const email = patient.email || "—";
@@ -320,7 +325,7 @@ export default function AppointmentReport({ booking }) {
       </div>
       <div className="ed-page-footer">
         <span>{CLINIC_INFO.address}</span>
-        <span>тел: <strong>{CLINIC_INFO.phone}</strong> &nbsp; | &nbsp; email: {CLINIC_INFO.email} &nbsp; | &nbsp; <strong>{CLINIC_INFO.website}</strong></span>
+        <span>тел: <strong>{CLINIC_INFO.phone}</strong> &nbsp; | &nbsp; Почта: {CLINIC_INFO.email} &nbsp; | &nbsp; <strong>{CLINIC_INFO.website}</strong></span>
       </div>
       <div className="ed-page-footer-bar">
         ИНН 9727077651 &nbsp; · &nbsp; ОГРН 1247700412068 &nbsp; · &nbsp; Ежедневно с 09:00 до 21:00
@@ -345,51 +350,22 @@ export default function AppointmentReport({ booking }) {
         <div ref={reportRef} className="ed-report-doc">
 
           {/* ─── PAGE 1: Cover ─── */}
-          <div className="ed-page ed-cover-page">
-
-            {/* Top-left gradient corner */}
-            <div className="ed-cover-corner-tl" aria-hidden="true" />
-            {/* Bottom-right gradient corner */}
-            <div className="ed-cover-corner-br" aria-hidden="true" />
-
-            {/* Content layer */}
-            <div className="ed-cover-content">
-
-              {/* Top: title left | divider | logo right */}
-              <div className="ed-cover-top">
-                <div className="ed-cover-top-left">
-                  <div className="ed-cover-top-title">Индивидуальная ранняя<br />диагностика заболеваний</div>
-                  <div className="ed-cover-top-predict">«ПРЕДИКТ»</div>
-                </div>
-                <div className="ed-cover-top-divider" />
-                <div className="ed-cover-top-right">
-                  <img src="/logo_ru.png" alt="SOFOS" className="ed-cover-sophos-logo" crossOrigin="anonymous" />
-                </div>
-              </div>
-
-              <hr className="ed-cover-rule" />
-
-              {/* Patient info */}
+          <div className="ed-page">
+            <PageHeader />
+            <div className="ed-cover-body">
+              <div className="ed-cover-program-title">Индивидуальная ранняя диагностика заболеваний «ПРЕДИКТ»</div>
+              <hr className="ed-header-line" style={{ marginTop: 10 }} />
               <div className="ed-cover-info">
                 <div className="ed-cover-info-row"><strong>ФИО:</strong> {coverFields.fullName}</div>
                 <div className="ed-cover-info-row"><strong>Дата рождения:</strong> {coverFields.dob} год</div>
-                <div className="ed-cover-info-row"><strong>Телефон:</strong> {coverFields.phone !== "—" ? coverFields.phone : ""}</div>
-                <div className="ed-cover-info-row"><strong>Электронная почта:</strong> {coverFields.email !== "—" ? coverFields.email : ""}</div>
+                <div className="ed-cover-info-row"><strong>Телефон:</strong> {coverFields.phone !== "—" ? coverFields.phone : "—"}</div>
+                <div className="ed-cover-info-row"><strong>Электронная почта:</strong> {coverFields.email !== "—" ? coverFields.email : "—"}</div>
                 <div className="ed-cover-info-row"><strong>ID пациента:</strong> {coverFields.patientId}</div>
                 <div className="ed-cover-info-row"><strong>Название программы:</strong> {coverFields.programName}</div>
                 <div className="ed-cover-info-row"><strong>Дата обследования:</strong> {coverFields.examDate} год</div>
               </div>
-
-              {/* Clinic address */}
-              <div className="ed-cover-clinic">
-                <div className="ed-cover-clinic-name">Медицинский центр «СОФОС»</div>
-                <div className="ed-cover-clinic-line">Бизнес-центр «Квартал West»</div>
-                <div className="ed-cover-clinic-line">Аминьевское шоссе, 6, г. Москва, Российская Федерация, 119517</div>
-                <div className="ed-cover-clinic-line">☎ +7-495-324-11-11; contact@sophos-med.ru</div>
-                <div className="ed-cover-clinic-line">⊕ www.sophos-med.ru</div>
-              </div>
-
             </div>
+            <PageFooter pageNum={1} />
           </div>
 
 
@@ -420,7 +396,9 @@ export default function AppointmentReport({ booking }) {
               "clinicalDiagnosis", "treatmentPlan",
             ];
 
-            const consultations = booking?.consultations || [];
+            const consultations = booking?.consultations?.length
+              ? booking.consultations
+              : (booking?.historyForm ? [{ historyForm: booking.historyForm }] : []);
 
             // Build flat list of items — each measured individually for page splitting
             const items = [];
@@ -429,15 +407,6 @@ export default function AppointmentReport({ booking }) {
             consultations.forEach((c, ci) => {
               const hf = c.historyForm || {};
 
-              items.push({
-                key: `cons-hdr-${ci}`,
-                keepWithNext: true,
-                el: (
-                  <div className="ed-section-header-box">
-                    <h2 className="ed-section-header-title">Консультация специалиста</h2>
-                  </div>
-                ),
-              });
 
               FIELD_ORDER.forEach(fieldId => {
                 const val = hf[fieldId]?.value;
@@ -477,7 +446,7 @@ export default function AppointmentReport({ booking }) {
               + "|" + page4Entries.map(e => e.name + e.text).join(",")
               + "|" + diagnosisText + "|" + followUpText + "|" + recommendationsText;
 
-            return <ConclusionPages key={contentKey} items={items} PageHeader={PageHeader} PageFooter={PageFooter} startPage={2} />;
+            return <ConclusionPages key={contentKey} items={items} PageHeader={PageHeader} PageFooter={PageFooter} startPage={2} doctorName={doctorName} doctorRole={doctorRole} />;
           })()}
 
         </div>
