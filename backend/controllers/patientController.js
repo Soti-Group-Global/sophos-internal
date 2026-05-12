@@ -191,33 +191,36 @@ const addPatient = async (req, res) => {
       comments, notificationLanguage,
     } = req.body;
 
-    // Check if patient with this email already exists
-    const existingPatient = await Patient.findOne({ email });
-    if (existingPatient) {
-      return res.status(400).json({ message: 'Patient with this email already exists' });
-    }
+    // Check for duplicate email only when email is provided
+    let user = null;
+    if (email && email.trim()) {
+      const existingPatient = await Patient.findOne({ email });
+      if (existingPatient) {
+        return res.status(400).json({ message: 'Patient with this email already exists' });
+      }
 
-    // Check if user with this email already exists
-    let user = await User.findOne({ email });
+      // Check if user with this email already exists
+      user = await User.findOne({ email });
 
-    // If user doesn't exist, create one
-    if (!user) {
-      const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+      // If user doesn't exist, create one
+      if (!user) {
+        const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-      user = new User({
-        email,
-        password: hashedPassword,
-        role: 'patient',
-        profileCompleted: false,
-      });
-
-      await user.save();
-    } else {
-      if (user.role !== 'patient') {
-        return res.status(400).json({
-          message: `A user with this email already exists with role: ${user.role}. Cannot create patient profile.`
+        user = new User({
+          email,
+          password: hashedPassword,
+          role: 'patient',
+          profileCompleted: false,
         });
+
+        await user.save();
+      } else {
+        if (user.role !== 'patient') {
+          return res.status(400).json({
+            message: `A user with this email already exists with role: ${user.role}. Cannot create patient profile.`
+          });
+        }
       }
     }
 
@@ -235,7 +238,7 @@ const addPatient = async (req, res) => {
       maxId: maxId || '',
       telegramNickname: telegramNickname || '',
       telegramId: telegramId || '',
-      email,
+      email: email && email.trim() ? email.trim() : undefined,
       newsletter: newsletter || false,
       egisz: egisz || false,
       instagram: instagram || '',

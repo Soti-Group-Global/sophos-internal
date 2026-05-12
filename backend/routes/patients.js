@@ -53,7 +53,7 @@ router.post(
     body('lastName').trim().notEmpty().withMessage('Last name is required'),
     body('gender').isIn(['Male', 'Female', 'Other']).withMessage('Invalid gender'),
     body('dateOfBirth').matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Invalid date format. Use YYYY-MM-DD.'),
-    body('email').isEmail().withMessage('Invalid email'),
+    body('email').optional({ checkFalsy: true }).isEmail().withMessage('Invalid email'),
     body('phoneNumber').trim().notEmpty().withMessage('Phone number is required'),
   ],
   patientController.addPatient
