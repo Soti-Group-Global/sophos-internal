@@ -24,10 +24,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Profile = lazy(() => import("./pages/Profile"));
-const Doctors = lazy(() => import("./pages/Doctors"));
-const AddDoctorForm = lazy(() => import("./pages/AddDoctorForm"));
-const EditDoctorForm = lazy(() => import("./pages/EditDoctorForm"));
-const DoctorDetails = lazy(() => import("./pages/DoctorDetails"));
+
 const Schedule = lazy(() => import("./pages/Schedule"));
 const Patients = lazy(() => import("./pages/Patients"));
 const PatientForm = lazy(() => import("./pages/PatientForm"));
@@ -46,7 +43,6 @@ const Promos = lazy(() => import("./pages/Promos"));
 const Assistants = lazy(() => import("./pages/Assistants"));
 const AssistantDetails = lazy(() => import("./pages/AssistantDetails"));
 const AddAssistantForm = lazy(() => import("./pages/AddAssistantForm"));
-const EditAssistantForm = lazy(() => import("./pages/EditAssistantForm"));
 const Analysis = lazy(() => import("./pages/Analysis"));
 const AddSpecialtyForm = lazy(() => import("./pages/AddSpecialtyForm"));
 const EditSpecialtyForm = lazy(() => import("./pages/EditSpecialtyForm"));
@@ -62,7 +58,6 @@ const ProjectWorkspace = lazy(() => import("./pages/ProjectWorkspace"));
 const ScheduleManagement = lazy(() => import("./pages/ScheduleManagementCalendar"));
 const ConsultationPage = lazy(() => import("./pages/ConsultationPage"));
 const ScheduleConsultation = lazy(() => import("./pages/ScheduleConsultation"));
-const DoctorProfile = lazy(() => import("./pages/DoctorProfile"));
 const DoctorAppointmentsCalendar = lazy(() => import("./pages/DoctorAppointmentsCalendar"));
 const DoctorTemplatesPage = lazy(() => import("./pages/DoctorTemplatesPage"));
 const DoctorProfileDetails = lazy(() => import("./pages/DoctorProfileDetails"));
@@ -81,13 +76,8 @@ const CorporateRegistration = lazy(() => import("./pages/CorporateRegistration")
 
 // Lazy-loaded components used as pages
 const ApplicationsList = lazy(() => import("./components/Applications/ApplicationsList"));
-const AddApplicationForm = lazy(() => import("./components/Applications/AddApplicationForm"));
-const EditApplicationForm = lazy(() => import("./components/Applications/EditApplicationForm"));
-const ApplicationDetails = lazy(() => import("./components/Applications/ApplicationDetails"));
 const ApplicationDetail = lazy(() => import("./components/Applications/ApplicationDetail"));
 const AppointmentDetailsPage = lazy(() => import("./pages/AppointmentDetailsPage"));
-const EarlyDetection = lazy(() => import("./components/EarlyDetection/EarlyDetection"));
-const EarlyDetectionApplicationDetails = lazy(() => import("./components/EarlyDetection/EarlyDetectionApplicationsDetails"));
 
 const LoadingScreen = () => (
   <div style={{
@@ -288,22 +278,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-              <Route
-                path="/applications/add"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <AddApplicationForm />
-                  </RoleProtectedRoute>
-                }
-              />
-              <Route
-                path="/applications/edit/:id"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <EditApplicationForm />
-                  </RoleProtectedRoute>
-                }
-              />
+              
               <Route
                 path="/applications/details/:id"
                 element={
@@ -320,22 +295,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-              <Route
-                path="/patients/medical-history/:appointmentId"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <ApplicationDetails />
-                  </RoleProtectedRoute>
-                }
-              />
-              <Route
-                path="/early-detection"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <EarlyDetection />
-                  </RoleProtectedRoute>
-                }
-              />
+            
               <Route
                 path="/early-detection/bookings"
                 element={
@@ -450,38 +410,6 @@ function App() {
               />
 
               {/* Corporate routes */}
-              <Route
-                path="/doctors"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <Doctors />
-                  </RoleProtectedRoute>
-                }
-              />
-              <Route
-                path="/doctors/add"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <AddDoctorForm />
-                  </RoleProtectedRoute>
-                }
-              />
-              <Route
-                path="/doctors/edit/:id"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <EditDoctorForm />
-                  </RoleProtectedRoute>
-                }
-              />
-              <Route
-                path="/doctors/:id"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <DoctorDetails />
-                  </RoleProtectedRoute>
-                }
-              />
               <Route
                 path="/doctors/:email/schedule"
                 element={
@@ -602,14 +530,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-              <Route
-                path="/assistants/edit/:id"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager"]}>
-                    <EditAssistantForm />
-                  </RoleProtectedRoute>
-                }
-              />
+             
               <Route
                 path="/analysis"
                 element={
@@ -700,14 +621,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-              <Route
-                path="/doctors-profile/:id"
-                element={
-                  <RoleProtectedRoute allowedRoles={["super_admin", "manager", "head_manager", "content_manager"]}>
-                    <DoctorProfile />
-                  </RoleProtectedRoute>
-                }
-              />
+              
               <Route
                 path="/blogs"
                 element={
