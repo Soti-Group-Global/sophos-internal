@@ -23,6 +23,7 @@ const Header = ({ onMenuToggle, isSidebarOpen }) => {
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
+    middleName: "",
     profilePicture: null,
     branches: [],
   });
@@ -60,6 +61,7 @@ const Header = ({ onMenuToggle, isSidebarOpen }) => {
         const {
           firstName,
           lastName,
+          middleName,
           profilePicture,
           branches: profileBranches,
           branch: singleBranch,
@@ -77,6 +79,7 @@ const Header = ({ onMenuToggle, isSidebarOpen }) => {
         setProfileData({
           firstName: firstName || "",
           lastName: lastName || "",
+          middleName: middleName || "",
           profilePicture: profilePicture || null,
           branches: fallbackBranches,
         });
@@ -147,7 +150,9 @@ const Header = ({ onMenuToggle, isSidebarOpen }) => {
 
   const fullName =
     profileData.firstName || profileData.lastName
-      ? `${profileData.firstName} ${profileData.lastName}`.trim()
+      ? [profileData.lastName, profileData.firstName, profileData.middleName]
+          .filter(Boolean)
+          .join(" ")
       : user?.email || t("user.manager");
 
   // Check if we have branches to show
@@ -247,9 +252,6 @@ const Header = ({ onMenuToggle, isSidebarOpen }) => {
           </div>
           <div className="user-info">
             <div className="user-name">{fullName}</div>
-            <div className="user-location">
-              {t("user.office")} - {currentDate} | {currentTime}
-            </div>
           </div>
         </div>
       )}

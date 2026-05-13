@@ -41,7 +41,9 @@ const Header = ({ toggleSidebar, isMobile }) => {
   const displayName = (() => {
     const first = user?.firstName?.[lang] || user?.firstName?.en || "";
     const last = user?.lastName?.[lang] || user?.lastName?.en || "";
-    const full = `${first} ${last}`.trim();
+    const middle = user?.middleName?.[lang] || user?.middleName?.en || "";
+
+    const full = `${last} ${first} ${middle}`.trim();
     return full || user?.email || t("general.doctor");
   })();
 
@@ -152,10 +154,6 @@ const Header = ({ toggleSidebar, isMobile }) => {
         </div>
         <div className="user-info">
           <div className="user-name">{displayName}</div>
-          <div className="user-location">
-            {branch ? `${branch?.[lang] || branch?.en || ""} Clinic` : t("general.office")} – {currentDate}{" "}
-            | {currentTime}
-          </div>
         </div>
       </div>
 
@@ -182,11 +180,10 @@ const Header = ({ toggleSidebar, isMobile }) => {
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
-                    className={`language-popup__option ${
-                      i18n.language === lang.code
+                    className={`language-popup__option ${i18n.language === lang.code
                         ? "language-popup__option--active"
                         : ""
-                    }`}
+                      }`}
                     onClick={() => handleLanguageSelect(lang.code)}
                   >
                     <ReactCountryFlag
