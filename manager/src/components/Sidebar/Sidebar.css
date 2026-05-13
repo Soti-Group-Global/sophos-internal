@@ -38,15 +38,16 @@
 /* Header Section */
 .sidebar-header {
   padding: 15px;
-  margin: auto;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .sidebar-logo {
   width: 120px;
   height: auto;
-  margin-top: auto;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
@@ -54,6 +55,29 @@
 .sidebar.sidebar-minimized .sidebar-logo {
   opacity: 0;
   visibility: hidden;
+  width: 0;
+}
+
+/* Desktop toggle button */
+.sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(10, 46, 93, 0.08);
+  color: #0a2e5d;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-toggle-btn:hover {
+  background: rgba(10, 46, 93, 0.15);
+}
+.sidebar.sidebar-minimized .sidebar-header {
+  justify-content: center;
 }
 
 .header-logo {

@@ -16,6 +16,8 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  ChevronsRight,
+  ChevronsLeft,
   X,
   Send,
   MessageCircle,
@@ -136,18 +138,6 @@ const Sidebar2 = ({ isMobileOpen = false, onMobileClose, onToggleSidebar }) => {
           ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"}
           ${isMobileOpen ? "mobile-open" : ""}
         `}
-        onMouseEnter={() => {
-          if (!isMobileOpen) {
-            setIsSidebarOpen(true);
-            if (onToggleSidebar) onToggleSidebar(true);
-          }
-        }}
-        onMouseLeave={() => {
-          if (!isMobileOpen) {
-            setIsSidebarOpen(false);
-            if (onToggleSidebar) onToggleSidebar(false);
-          }
-        }}
       >
         {isMobileOpen && (
           <button onClick={onMobileClose} className="mobile-close-btn">
@@ -161,6 +151,15 @@ const Sidebar2 = ({ isMobileOpen = false, onMobileClose, onToggleSidebar }) => {
             alt={t("sidebar.logo_alt")}
             className="sidebar-logo"
           />
+          {!isMobileOpen && (
+            <button
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title={isSidebarOpen ? "Collapse" : "Expand"}
+            >
+              {isSidebarOpen ? <ChevronsLeft size={16} /> : <ChevronsRight size={16} />}
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">

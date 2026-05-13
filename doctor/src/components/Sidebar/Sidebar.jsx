@@ -12,6 +12,8 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  ChevronsRight,
+  ChevronsLeft,
   X,
 } from "lucide-react";
 import "./Sidebar.css";
@@ -30,17 +32,6 @@ const Sidebar = ({ collapsed, toggleSidebar, isMobile }) => {
   const { t , i18n} = useTranslation();
   const currentLogo = i18n.language === "ru" ? logo_ru : logo_en;
 
-  // handlers for hover-open behavior
-  const handleMouseEnter = () => {
-    if (!isMobile && collapsed) {
-      toggleSidebar();
-    }
-  };
-  const handleMouseLeave = () => {
-    if (!isMobile && !collapsed) {
-      toggleSidebar();
-    }
-  };
 
 
   const navigationGroups = [
@@ -102,9 +93,6 @@ const Sidebar = ({ collapsed, toggleSidebar, isMobile }) => {
           ${collapsed ? "sidebar-closed" : "sidebar-open"}
           ${isMobile ? "mobile" : ""}
         `}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-
       >
         {isMobile && (
           <button onClick={toggleSidebar} className="mobile-close-btn">
@@ -112,12 +100,17 @@ const Sidebar = ({ collapsed, toggleSidebar, isMobile }) => {
           </button>
         )}
 
-        {/* <button onClick={toggleSidebar} className="sidebar-toggle desktop-only">
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button> */}
-
         <div className="sidebar-header">
           <img src={currentLogo} alt={t("sidebar.logo_alt")} className="sidebar-logo" />
+          {!isMobile && (
+            <button
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title={collapsed ? "Expand" : "Collapse"}
+            >
+              {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">

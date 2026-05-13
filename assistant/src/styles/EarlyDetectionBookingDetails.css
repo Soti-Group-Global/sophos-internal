@@ -3098,17 +3098,17 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: 64px;
+  width: 52px;
   box-sizing: border-box;
   z-index: 210;
   background: #fff;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #e5e7eb;
-  padding: 12px 0;
+  padding: 8px 0;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 4px;
   margin: 0;
   border-radius: 0;
   margin-top: 66px;
@@ -3116,14 +3116,14 @@
 }
 
 .booking-details-page--compact .edb-tab {
-  width: 48px;
-  height: 48px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  font-size: 0; /* Hide text */
+  border-radius: 8px;
+  font-size: 0;
   position: relative;
   transition: all 0.2s ease;
   margin: 0;
@@ -3137,8 +3137,8 @@
 }
 
 .booking-details-page--compact .edb-tab .edb-tab-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 
 .booking-details-page--compact .edb-tab.active {
@@ -3181,12 +3181,12 @@
 
 /* Toggle button inside the sidebar */
 .booking-details-page--compact .edb-tab-toggle {
-  width: 40px;
-  height: 32px;
+  width: 32px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: #9ca3af;
   border: none;
@@ -3204,28 +3204,28 @@
 
 /* Expanded sidebar */
 .booking-details-page--compact.edb-nav-expanded .edb-tab-bar {
-  width: 190px;
+  width: 170px;
   box-sizing: border-box;
   align-items: flex-start;
-  padding: 12px 10px;
+  padding: 8px 8px;
 }
 
 .booking-details-page--compact.edb-nav-expanded .edb-tab {
   width: 100%;
   justify-content: flex-start;
-  gap: 10px;
-  padding: 0 10px;
-  font-size: 13px;
-  border-radius: 8px;
+  gap: 8px;
+  padding: 0 8px;
+  font-size: 12px;
+  border-radius: 6px;
 }
 
 .booking-details-page--compact.edb-nav-expanded .edb-tab.active {
   border-left: 3px solid #0f3f7f;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 6px 6px 0;
 }
 
 .edb-tab-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: inherit;
   white-space: nowrap;
@@ -3235,7 +3235,7 @@
 
 /* Widen content offset when sidebar expands */
 .edb-nav-expanded .edb-booking-details-content {
-  padding-left: 190px;
+  padding-left: 170px;
   transition: padding-left 0.2s ease;
 }
 
@@ -3327,22 +3327,25 @@ body.hide-global-sidebar .adp-app-sidebar {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  padding-left: 64px;
+  padding-left: 52px;
 }
 
 .edb-details-body {
   display: flex;
+  flex-direction: column;
+  flex: 1;
   min-height: 0;
+  height: 100%;
 }
 
 .edb-booking-details-layout {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: clip;
+  overflow: hidden;
   background: #f5f7fa;
   margin-top: 0;
 }
@@ -3421,6 +3424,8 @@ body.hide-global-sidebar .adp-app-sidebar {
   flex: 1;
   min-height: 0;
   padding: 24px 28px 90px;
+  overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: #98a2b3 #eef2f7;
   margin-top: -20px;
@@ -4269,6 +4274,10 @@ body.hide-global-sidebar .adp-app-sidebar {
   position: static;
   top: unset;
   max-width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-section {
@@ -4277,7 +4286,8 @@ body.hide-global-sidebar .adp-app-sidebar {
 
 .edb-history-section {
   padding: 28px !important;
-  max-height: calc(100vh - 230px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #9aa8ba #e6ebf2;
@@ -4285,7 +4295,8 @@ body.hide-global-sidebar .adp-app-sidebar {
 }
 
 .edb-notes-section {
-  max-height: calc(100vh - 230px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #9aa8ba #e6ebf2;
@@ -5794,7 +5805,7 @@ body.hide-global-sidebar .adp-app-sidebar {
 /* ── Medical history sidebar — fixed, styled like doctor ht-sub-sidebar ── */
 .ed-medical-history-sidebar {
   position: fixed;
-  left: 64px;
+  left: 52px;
   top: 68px;
   width: 200px;
   height: calc(100vh - 68px);
@@ -5810,13 +5821,13 @@ body.hide-global-sidebar .adp-app-sidebar {
 
 /* Shift sub-sidebar right when main nav is expanded */
 .ed-medical-history-sidebar--nav-expanded {
-  left: 190px;
+  left: 170px;
   z-index: 215;
 }
 
 /* Shift content indent to match — sidebar and content are siblings inside ed-medical-history-layout */
 .ed-medical-history-sidebar--nav-expanded ~ .ed-medical-history-content {
-  padding-left: calc(200px + 126px); /* 200px sub-sidebar + 126px main nav expansion */
+  padding-left: calc(200px + 118px); /* 200px sub-sidebar + 118px main nav expansion */
 }
 
 .ed-medical-history-layout {

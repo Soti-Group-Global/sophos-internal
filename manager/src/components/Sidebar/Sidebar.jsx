@@ -15,6 +15,8 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  ChevronsRight,
+  ChevronsLeft,
   X,
   Send,
   MessageCircle,
@@ -350,8 +352,6 @@ const Sidebar = ({ isSidebarOpen = false, isMobileOpen = false, onMobileClose, o
         } ${isMobileOpen ? "mobile-open" : ""} ${
           isMobileDevice ? "mobile-device" : ""
         }`}
-        onMouseEnter={() => { if (!isMobileDevice && !isSidebarOpen && onToggleSidebar) onToggleSidebar(); }}
-        onMouseLeave={() => { if (!isMobileDevice && isSidebarOpen && onToggleSidebar) onToggleSidebar(); }}
       >
         {/* Mobile close button */}
         {isMobileDevice && isMobileOpen && (
@@ -360,14 +360,21 @@ const Sidebar = ({ isSidebarOpen = false, isMobileOpen = false, onMobileClose, o
           </button>
         )}
 
-        {/* Desktop toggle button - hidden, hover used instead */}
-
         <div className="sidebar-header">
           <img
             src={getCurrentLogo()}
             alt={translate("logo_alt", "Health Direct Logo")}
             className="sidebar-logo"
           />
+          {!isMobileDevice && (
+            <button
+              className="sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              title={isSidebarOpen ? "Collapse" : "Expand"}
+            >
+              {isSidebarOpen ? <ChevronsLeft size={16} /> : <ChevronsRight size={16} />}
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
