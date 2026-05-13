@@ -333,7 +333,7 @@ const Appointments = () => {
 
       const earlyDetectionApps =
         earlyDetectionResponse.status === "fulfilled" &&
-        Array.isArray(earlyDetectionResponse.value?.data)
+          Array.isArray(earlyDetectionResponse.value?.data)
           ? earlyDetectionResponse.value.data
           : [];
       const earlyMapped = earlyDetectionApps
@@ -482,16 +482,16 @@ const Appointments = () => {
     const top = (startHour - gridStartHour) * slotHeight * 2;
     const height = (endHour - startHour) * slotHeight * 2;
     const statusColors = {
-  confirmed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
-  completed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
-  paid: { border: "#6ee7b7", text: "#065f46", bg: "#d1fae5" },
-  upcoming: { border: "#fde68a", text: "#854d0e", bg: "#fef9c3" },
-  new: { border: "#c4b5fd", text: "#5b21b6", bg: "#ede9fe" },
-  "pending payment": { border: "#f9a8d4", text: "#9d174d", bg: "#fce7f3" },
-  "awaiting for payment": { border: "#fcd34d", text: "#92400e", bg: "#fef3c7" },
-  cancelled: { border: "#fca5a5", text: "#991b1b", bg: "#fee2e2" },
-  unconfirmed: { border: "#fdba74", text: "#9a3412", bg: "#fed7aa" },
-};
+      confirmed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
+      completed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
+      paid: { border: "#6ee7b7", text: "#065f46", bg: "#d1fae5" },
+      upcoming: { border: "#fde68a", text: "#854d0e", bg: "#fef9c3" },
+      new: { border: "#c4b5fd", text: "#5b21b6", bg: "#ede9fe" },
+      "pending payment": { border: "#f9a8d4", text: "#9d174d", bg: "#fce7f3" },
+      "awaiting for payment": { border: "#fcd34d", text: "#92400e", bg: "#fef3c7" },
+      cancelled: { border: "#fca5a5", text: "#991b1b", bg: "#fee2e2" },
+      unconfirmed: { border: "#fdba74", text: "#9a3412", bg: "#fed7aa" },
+    };
     const key = (event.status || "").toLowerCase();
     const colors = statusColors[key] || statusColors.unconfirmed;
     return {
@@ -541,7 +541,7 @@ const Appointments = () => {
 
       const earlyDetectionRaw =
         earlyDetectionResult.status === "fulfilled" &&
-        Array.isArray(earlyDetectionResult.value?.data)
+          Array.isArray(earlyDetectionResult.value?.data)
           ? earlyDetectionResult.value.data
           : [];
       const earlyDetectionAppointments = Array.from(
@@ -1060,7 +1060,7 @@ const Appointments = () => {
                   } catch (err) {
                     toast.error(
                       err?.response?.data?.message ||
-                        t("appointments.breakAddFailed"),
+                      t("appointments.breakAddFailed"),
                     );
                   } finally {
                     setBreakSaving(false);
@@ -1353,33 +1353,40 @@ const Appointments = () => {
                   </div>
                 ))}
               </div>
-              {miniCalWeeks.map((week, wIdx) => (
-                <div key={wIdx} className="mini-cal-week-row">
-                  {week.map((day, dIdx) => {
-                    const isCurrentMonth = day.month() === miniCalMonth.month();
-                    const isToday = day.isSame(moment(), "day");
-                    const isSelected = day.isSame(selectedDay, "day");
-                    const dayKey = day.format("YYYY-MM-DD");
-                    const dayCount = miniCalDayEventCounts[dayKey] || 0;
-                    return (
-                      <div
-                        key={dIdx}
-                        className={`mini-cal-day ${
-                          !isCurrentMonth ? "outside" : ""
-                        } ${isToday ? "today" : ""}${isSelected ? " selected" : ""}`}
-                        onClick={() => handleDaySelect(day)}
-                      >
-                        <span>{day.date()}</span>
-                        {dayCount > 0 && (
-                          <span className="mini-cal-day-count">
-                            {dayCount}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+              {miniCalWeeks.map((week, wIdx) => {
+                const isWeekSelected = week.some((day) =>
+                  day.isSameOrAfter(selectedWeekStart, "day") &&
+                  day.isSameOrBefore(selectedWeekStart.clone().endOf("isoWeek"), "day")
+                );
+                return (
+                  <div
+                    key={wIdx}
+                    className={`mini-cal-week-row${isWeekSelected ? " selected" : ""}`}
+                    onClick={() => handleDaySelect(week[0])}
+                  >
+                    {week.map((day, dIdx) => {
+                      const isCurrentMonth = day.month() === miniCalMonth.month();
+                      const isToday = day.isSame(moment(), "day");
+                      const dayKey = day.format("YYYY-MM-DD");
+                      const dayCount = miniCalDayEventCounts[dayKey] || 0;
+                      return (
+                        <div
+                          key={dIdx}
+                          className={`mini-cal-day ${!isCurrentMonth ? "outside" : ""} ${isToday ? "today" : ""}`}
+                          onClick={(e) => { e.stopPropagation(); handleDaySelect(day); }}
+                        >
+                          <span>{day.date()}</span>
+                          {dayCount > 0 && (
+                            <span className="mini-cal-day-count">
+                              {dayCount}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
             <button
               className="mini-cal-today-btn"
@@ -1541,9 +1548,8 @@ const Appointments = () => {
                     {weekDays.map((day, idx) => (
                       <div
                         key={idx}
-                        className={`week-day-header ${
-                          day.isSame(moment(), "day") ? "today" : ""
-                        }${day.isSame(selectedDay, "day") ? " selected-day" : ""}${!canModifyDay(day) ? " disabled-day" : ""}`}
+                        className={`week-day-header ${day.isSame(moment(), "day") ? "today" : ""
+                          }${day.isSame(selectedDay, "day") ? " selected-day" : ""}${!canModifyDay(day) ? " disabled-day" : ""}`}
                         onClick={(e) => {
                           const rect = e.currentTarget.getBoundingClientRect();
                           setDayMenuPos({
@@ -1579,9 +1585,8 @@ const Appointments = () => {
                       {timeSlots.map((slot) => (
                         <div
                           key={slot}
-                          className={`time-gutter-cell ${
-                            slot.endsWith(":30") ? "half" : ""
-                          }`}
+                          className={`time-gutter-cell ${slot.endsWith(":30") ? "half" : ""
+                            }`}
                         >
                           {slot.endsWith(":00") ? slot : ""}
                         </div>
@@ -1597,9 +1602,8 @@ const Appointments = () => {
                         {timeSlots.map((slot) => (
                           <div
                             key={slot}
-                            className={`week-time-cell ${
-                              slot.endsWith(":30") ? "half" : ""
-                            }`}
+                            className={`week-time-cell ${slot.endsWith(":30") ? "half" : ""
+                              }`}
                           ></div>
                         ))}
 

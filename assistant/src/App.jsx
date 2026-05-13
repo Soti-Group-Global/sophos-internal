@@ -32,7 +32,6 @@ const Profile                        = lazy(() => import("./pages/Profile"));
 const ProjectWorkspace               = lazy(() => import("./pages/ProjectWorkspace"));
 const PatientDetails                 = lazy(() => import("./pages/PatientDetails"));
 const MedicalHistoryDetail           = lazy(() => import("./components/PatientDetails/MedicalHistoryDetail"));
-const AppointmentDetails             = lazy(() => import("./pages/AppointmentDetails"));
 const AppointmentDetailsPage         = lazy(() => import("./pages/AppointmentDetailsPage"));
 const EarlyDetectionBookingDetails = lazy(() => import("./pages/EarlyDetectionBookingDetails"));
 const AssistantLogin                 = lazy(() => import("./pages/AssitantLogin"));
@@ -43,7 +42,6 @@ const ScheduleManagement             = lazy(() => import("./pages/ScheduleManage
 const StockManagement                = lazy(() => import("./pages/StockManagement"));
 const InventoryManagement            = lazy(() => import("./pages/InventoryManagement"));
 const StockRequest                   = lazy(() => import("./pages/StockRequest"));
-const ApplicationDetail              = lazy(() => import("./pages/ApplicationDetail"));
 const MeetingRoom                    = lazy(() => import("./pages/MeetingRoom"));
 
 const PageLoader = () => (

@@ -782,8 +782,9 @@
 }
 .dac-week-row:hover .calendar-day.today,
 .dac-week-row.hovered .calendar-day.today {
-  background: rgba(59, 130, 246, 0.5);
-  color: #fff;
+  background: #ffffff;
+  color: #0c3870;
+  border: 2px solid #0c3870;
 }
 .dac-week-row.selected {
   background: #3b82f6;
@@ -797,8 +798,9 @@
   color: rgba(255, 255, 255, 0.5);
 }
 .dac-week-row.selected .calendar-day.today {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background: #ffffff;
+  color: #0c3870;
+  border: 2px solid #0c3870;
   border-radius: 50%;
 }
 
@@ -849,8 +851,10 @@
   line-height: 1;
 }
 .dac-day-number.today {
-  background: #0c3870;
-  color: #ffffff;
+  background: #ffffff;
+  color: #0c3870;
+  border: 2px solid #0c3870;
+  font-weight: 700;
 }
 
 .dac-today-col .dac-day-label {

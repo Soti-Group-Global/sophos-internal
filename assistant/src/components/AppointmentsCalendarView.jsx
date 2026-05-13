@@ -132,6 +132,11 @@ const AppointmentsCalendarView = () => {
   const monthNames  = useMemo(() => getMonthNames(locale), [locale]);
   const weekdays    = isRu ? WEEKDAYS_RU : WEEKDAYS_EN;
   const weekDays    = useMemo(() => getWeekDays(currentDate), [currentDate]);
+  const miniWeeks   = useMemo(() => {
+    const weeks = [];
+    for (let i = 0; i < miniDays.length; i += 7) weeks.push(miniDays.slice(i, i + 7));
+    return weeks;
+  }, [miniDays]);
 
   const yearOptions = useMemo(() => {
     const cy = today.getFullYear();
@@ -332,23 +337,32 @@ const AppointmentsCalendarView = () => {
 
           {/* Day grid */}
           <div className="edcv2-days-grid">
-            {miniDays.map((obj, idx) => {
-              const ymd     = toYMD(obj.date);
-              const isToday = ymd === todayYMD;
-              const isSel   = ymd === selectedYMD;
-              const dayCount = miniByDay[ymd] || 0;
+            {miniWeeks.map((week, wIdx) => {
+              const isWeekSelected = toYMD(week[0].date) === weekStartYMD;
               return (
-                <button key={idx}
-                  className={[
-                    "edcv2-day",
-                    !obj.current ? "edcv2-day--other"    : "",
-                    isToday      ? "edcv2-day--today"    : "",
-                    isSel        ? "edcv2-day--selected" : "",
-                  ].join(" ")}
-                  onClick={() => setCurrentDate(new Date(obj.date))}>
-                  {obj.day}
-                  {dayCount > 0 && <span className="edcv2-day-count-badge">{dayCount}</span>}
-                </button>
+                <div
+                  key={wIdx}
+                  className={`edcv2-week-row${isWeekSelected ? " edcv2-week-row--selected" : ""}`}
+                  onClick={() => setCurrentDate(new Date(week[0].date))}
+                >
+                  {week.map((obj, dIdx) => {
+                    const ymd      = toYMD(obj.date);
+                    const isToday  = ymd === todayYMD;
+                    const dayCount = miniByDay[ymd] || 0;
+                    return (
+                      <button key={dIdx}
+                        className={[
+                          "edcv2-day",
+                          !obj.current ? "edcv2-day--other" : "",
+                          isToday      ? "edcv2-day--today" : "",
+                        ].join(" ")}
+                        onClick={(e) => { e.stopPropagation(); setCurrentDate(new Date(obj.date)); }}>
+                        {obj.day}
+                        {dayCount > 0 && <span className="edcv2-day-count-badge">{dayCount}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
               );
             })}
           </div>

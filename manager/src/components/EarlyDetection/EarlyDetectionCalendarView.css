@@ -182,7 +182,7 @@
 }
 .edcv2-day:hover   { background: #374151; }
 .edcv2-day--other  { color: #6b7280; }
-.edcv2-day--today  { background: #0c3870; color: white; font-weight: 700; border-radius: 50%; }
+.edcv2-day--today  { background: #ffffff; color: #0c3870; font-weight: 700; border-radius: 50%; border: 2px solid #0c3870; }
 .edcv2-day--selected { background: #3b82f6; color: white; font-weight: 700; border-radius: 50%; }
 
 .edcv2-day-count {

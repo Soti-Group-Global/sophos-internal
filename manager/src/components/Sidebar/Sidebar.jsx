@@ -146,7 +146,7 @@ const Sidebar = ({ isSidebarOpen = false, isMobileOpen = false, onMobileClose, o
       //  { icon: BookOpen, key: "blogs", path: "/blogs" },
         { icon: ClipboardPlus, key: "services", path: "/services" },
         { icon: ClipboardList, key: "serviceManager", path: "/service-manager" },
-        { icon: CalendarCheck , key: "schedule Management", path: "/schedule" },
+        { icon: CalendarCheck , key: "scheduleManagement", path: "/schedule" },
       //  { icon: ClipboardPlus, key: "vacancies", path: "/vacancies" },
       //  { icon: Star, key: "reviews", path: "/reviews" },
       //  { icon: Image, key: "promos", path: "/promos" },

@@ -631,7 +631,6 @@ const EarlyDetectionApplications = () => {
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              <span className="csv-btn-text">{t("EarlyDetectionApplications.exportCSV")}</span>
             </button>
           )}
 
@@ -871,31 +870,40 @@ const EarlyDetectionApplications = () => {
                   </div>
                 ))}
               </div>
-              {miniCalWeeks.map((week, wIdx) => (
-                <div key={wIdx} className="mini-cal-week-row">
-                  {week.map((day, dIdx) => {
-                    const isCurrentMonth = day.month() === miniCalMonth.month();
-                    const isToday = day.isSame(moment(), "day");
-                    const isSelected = day.isSame(selectedDay, "day");
-                    const dayKey = day.format("YYYY-MM-DD");
-                    const dayCount = miniCalDayEventCounts[dayKey] || 0;
-                    return (
-                      <div
-                        key={dIdx}
-                        className={`mini-cal-day ${!isCurrentMonth ? "outside" : ""} ${isToday ? "today" : ""}${isSelected ? " selected" : ""}`}
-                        onClick={() => handleDaySelect(day)}
-                      >
-                        <span>{day.date()}</span>
-                        {dayCount > 0 && (
-                          <span className="mini-cal-day-count">
-                            {dayCount}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+              {miniCalWeeks.map((week, wIdx) => {
+                const isWeekSelected = week.some((day) =>
+                  day.isSameOrAfter(selectedWeekStart, "day") &&
+                  day.isSameOrBefore(selectedWeekStart.clone().endOf("isoWeek"), "day")
+                );
+                return (
+                  <div
+                    key={wIdx}
+                    className={`mini-cal-week-row${isWeekSelected ? " selected" : ""}`}
+                    onClick={() => handleDaySelect(week[0])}
+                  >
+                    {week.map((day, dIdx) => {
+                      const isCurrentMonth = day.month() === miniCalMonth.month();
+                      const isToday = day.isSame(moment(), "day");
+                      const dayKey = day.format("YYYY-MM-DD");
+                      const dayCount = miniCalDayEventCounts[dayKey] || 0;
+                      return (
+                        <div
+                          key={dIdx}
+                          className={`mini-cal-day ${!isCurrentMonth ? "outside" : ""} ${isToday ? "today" : ""}`}
+                          onClick={(e) => { e.stopPropagation(); handleDaySelect(day); }}
+                        >
+                          <span>{day.date()}</span>
+                          {dayCount > 0 && (
+                            <span className="mini-cal-day-count">
+                              {dayCount}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
 
             <button

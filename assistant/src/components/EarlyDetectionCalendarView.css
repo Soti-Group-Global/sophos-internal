@@ -144,8 +144,38 @@
 /* Day grid */
 .edcv2-days-grid {
   display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+.edcv2-week-row {
+  display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 0.15s;
+}
+.edcv2-week-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.edcv2-week-row--selected {
+  background: #3483f7;
+  border-radius: 999px;
+}
+.edcv2-week-row--selected .edcv2-day {
+  background: transparent;
+  color: #fff;
+  border-radius: 0;
+}
+.edcv2-week-row--selected .edcv2-day--other {
+  color: rgba(255, 255, 255, 0.45);
+}
+.edcv2-week-row--selected .edcv2-day--today {
+  background: #ffffff;
+  color: #3483f7;
+  border-radius: 50%;
+  font-weight: 700;
+  border: none;
 }
 .edcv2-day {
   aspect-ratio: 1;
@@ -162,10 +192,11 @@
   justify-content: center;
   position: relative;
   transition: background 0.12s;
+  min-width: 0;
 }
-.edcv2-day:hover         { background: rgba(255,255,255,0.1); }
+.edcv2-day:hover         { background: rgba(255,255,255,0.1); border-radius: 50%; }
 .edcv2-day--other        { color: #4a5568; }
-.edcv2-day--today        { background: #0c3870; color: white; font-weight: 700; border-radius: 50%; }
+.edcv2-day--today        { background: #ffffff; color: #0c3870; font-weight: 700; border-radius: 50%; border: 2px solid #0c3870; }
 .edcv2-day--selected     { background: #3b82f6; color: white; font-weight: 700; border-radius: 50%; }
 
 .edcv2-has-dot {

@@ -598,18 +598,31 @@
 
 .early-detect-container .mini-cal-week-row:hover {
   background: #334155;
+  border-radius: 999px;
 }
 
 .early-detect-container .mini-cal-week-row.selected {
-  background: rgba(222, 226, 231, 0.1);
+  background: #3483f7;
+  border-radius: 999px;
 }
 
 .early-detect-container .mini-cal-week-row.selected .mini-cal-day {
   color: #fff;
+  background: transparent;
+  border-radius: 0;
+  border: none;
 }
 
 .early-detect-container .mini-cal-week-row.selected .mini-cal-day.outside {
   color: rgba(255, 255, 255, 0.5);
+}
+
+.early-detect-container .mini-cal-week-row.selected .mini-cal-day.today {
+  background: #ffffff;
+  color: #3483f7;
+  border-radius: 50%;
+  border: none;
+  font-weight: 700;
 }
 
 .early-detect-container .mini-cal-day {
@@ -658,9 +671,10 @@
 .early-detect-container .mini-cal-day.today {
   font-weight: 700;
   position: relative;
-  background: #3b82f5;
-  color: #ffffff;
+  background: #ffffff;
+  color: #0c3870;
   border-radius: 50%;
+  border: 2px solid #0c3870;
 }
 
 /* selected (non-today) date box */
@@ -900,7 +914,16 @@
 }
 
 .early-detect-container .week-day-header.today .week-day-date {
-  color: #94a3b8;
+  background: #ffffff;
+  color: #0c3870;
+  border: 2px solid #0c3870;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
 }
 
 .early-detect-container .week-grid-body {
