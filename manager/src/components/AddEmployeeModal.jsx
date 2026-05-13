@@ -20,7 +20,7 @@ import "../styles/AddEmployeeModal.css";
 import { socket } from "../utils/socket";
 // import { toast } from "react-toastify";
 
-function AddEmployeeModal({ isOpen, onClose, onAdd, defaultEmployeeType }) {
+function AddEmployeeModal({ isOpen, onClose, onAdd, defaultEmployeeType, onDoctorSelect }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [employeeType, setEmployeeType] = useState(defaultEmployeeType || "");
@@ -56,11 +56,6 @@ function AddEmployeeModal({ isOpen, onClose, onAdd, defaultEmployeeType }) {
   const employeeTypeOptions = [
     { value: "manager", label: t("add_employee.types.manager"), icon: "👔" },
     { value: "doctor", label: t("add_employee.types.doctor"), icon: "🩺" },
-    {
-      value: "head_doctor",
-      label: t("add_employee.types.head_doctor"),
-      icon: "👨‍⚕️",
-    },
     {
       value: "speciality",
       label: t("add_employee.types.speciality"),
@@ -522,9 +517,14 @@ function AddEmployeeModal({ isOpen, onClose, onAdd, defaultEmployeeType }) {
                   value={employeeTypeOptions.find(
                     (opt) => opt.value === employeeType
                   )}
-                  onChange={(selected) =>
-                    setEmployeeType(selected?.value || "")
-                  }
+                  onChange={(selected) => {
+                    const val = selected?.value || "";
+                    if (val === "doctor" && onDoctorSelect) {
+                      onDoctorSelect();
+                      return;
+                    }
+                    setEmployeeType(val);
+                  }}
                   styles={customSelectStyles}
                   placeholder={t(
                     "add_employee.placeholders.select_employee_type"
@@ -538,7 +538,7 @@ function AddEmployeeModal({ isOpen, onClose, onAdd, defaultEmployeeType }) {
                 )}
               </div>
 
-              {employeeType && ["doctor", "head_doctor", "speciality"].includes(employeeType) ? (
+              {employeeType && ["speciality"].includes(employeeType) ? (
                 <div className="doctor-redirect-message">
                   <div className="redirect-icon">🩺</div>
                   <h3 className="redirect-title">

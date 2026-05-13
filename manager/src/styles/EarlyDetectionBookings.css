@@ -110,32 +110,16 @@
   transform: translateY(0);
 }
 
-.ed-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 12px;
-}
-
-.ed-breadcrumb-item {
-  color: #6b7280;
-}
-
-.ed-breadcrumb-item.active {
-  color: #1f2937;
-  font-weight: 500;
-}
-
-.ed-breadcrumb-separator {
-  color: #d1d5db;
-}
-
 .ed-modern-title {
   font-size: 20px;
   font-weight: 700;
   color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.ed-modern-description {
+  font-size: 13px;
+  color: #6b7280;
   margin: 0;
 }
 

@@ -60,6 +60,8 @@ function EmployeeManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [defaultEmployeeType, setDefaultEmployeeType] = useState(null);
   const [isAddDoctorModalOpen, setIsAddDoctorModalOpen] = useState(false);
+  const [isDoctorViewOpen, setIsDoctorViewOpen] = useState(false);
+  const [selectedDoctorForView, setSelectedDoctorForView] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const { selectedBranch } = useBranch();
@@ -168,9 +170,14 @@ function EmployeeManagement() {
   };
 
   const handleViewDetails = (employee, type) => {
-    setSelectedEmployee(employee);
-    setSelectedType(type);
-    setIsDetailModalOpen(true);
+    if (type === "doctor" || type === "head_doctor") {
+      setSelectedDoctorForView(employee);
+      setIsDoctorViewOpen(true);
+    } else {
+      setSelectedEmployee(employee);
+      setSelectedType(type);
+      setIsDetailModalOpen(true);
+    }
   };
 
   const handleUpdate = (updatedEmployee) => {
@@ -536,6 +543,10 @@ function EmployeeManagement() {
         }}
         onAdd={handleAddEmployee}
         defaultEmployeeType={defaultEmployeeType}
+        onDoctorSelect={() => {
+          setIsAddModalOpen(false);
+          setIsAddDoctorModalOpen(true);
+        }}
       />
 
       {isAddDoctorModalOpen && (
@@ -545,6 +556,22 @@ function EmployeeManagement() {
           onClose={() => setIsAddDoctorModalOpen(false)}
           onSave={() => {
             setIsAddDoctorModalOpen(false);
+            if (selectedBranch) loadEmployees(selectedBranch);
+          }}
+        />
+      )}
+
+      {isDoctorViewOpen && (
+        <DoctorProfileDetails
+          doctor={selectedDoctorForView}
+          isEdit={true}
+          onClose={() => {
+            setIsDoctorViewOpen(false);
+            setSelectedDoctorForView(null);
+          }}
+          onSave={() => {
+            setIsDoctorViewOpen(false);
+            setSelectedDoctorForView(null);
             if (selectedBranch) loadEmployees(selectedBranch);
           }}
         />

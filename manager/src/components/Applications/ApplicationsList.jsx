@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -28,6 +29,7 @@ import {
   Edit3,
   ChevronLeft,
   Trash2,
+  UploadCloud,
 } from "lucide-react";
 
 // Helper function to extract multilingual field values
@@ -1508,7 +1510,7 @@ const ApplicationsList = () => {
                             <td className="payment-cell">
                               <div className="cell-content">
                                 <button
-                                  className="primary-button-light"
+                                  className="primary-button-light pay-add-invoice-btn"
                                   onClick={(e) => handleAddInvoice(app, e)}
                                 >
                                   <Plus size={14} />
@@ -1517,7 +1519,7 @@ const ApplicationsList = () => {
 
                                 <div className="document-actions">
                                   <button
-                                    className={`primary-button-light ${
+                                    className={`primary-button-light pay-contract-btn ${
                                       hasPendingOrPaidPayment(app)
                                         ? "enabled"
                                         : "disabled"
@@ -1534,7 +1536,7 @@ const ApplicationsList = () => {
                                   </button>
 
                                   <button
-                                    className={`primary-button-light ${
+                                    className={`primary-button-light pay-akt-btn ${
                                       hasPaidPayment(app)
                                         ? "enabled"
                                         : "disabled"
@@ -1605,7 +1607,7 @@ const ApplicationsList = () => {
       )}
 
       {/* Modals and Popups */}
-      {showDocumentPopup && (
+      {showDocumentPopup && createPortal(
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
@@ -1655,16 +1657,27 @@ const ApplicationsList = () => {
 
               {documentInput.type === "file" ? (
                 <div className="file-input-section">
-                  <input
-                    type="file"
-                    onChange={(e) =>
-                      setDocumentInput({
-                        ...documentInput,
-                        file: e.target.files[0],
-                      })
-                    }
-                    className="app-file-input"
-                  />
+                  <div className={`file-upload-area ${documentInput.file ? "has-file" : ""}`}>
+                    <input
+                      type="file"
+                      onChange={(e) =>
+                        setDocumentInput({
+                          ...documentInput,
+                          file: e.target.files[0],
+                        })
+                      }
+                    />
+                    <div className="file-upload-icon">
+                      <UploadCloud size={20} />
+                    </div>
+                    <div className="file-upload-text">
+                      <strong>{documentInput.file ? documentInput.file.name : t("applications.upload_file")}</strong>
+                      {!documentInput.file && <span>{t("applications.click_or_drag") || "Click or drag a file here"}</span>}
+                    </div>
+                    {documentInput.file && (
+                      <div className="file-upload-name">{documentInput.file.name}</div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="url-input-section">
@@ -1697,18 +1710,19 @@ const ApplicationsList = () => {
             </div>
 
             <div className="modal-footer">
-              <button onClick={handleDocumentSubmit} className="submit-button">
-                {t("applications.submit")}
-              </button>
               <button
                 onClick={() => setShowDocumentPopup(false)}
                 className="cancel-button"
               >
                 {t("applications.cancel")}
               </button>
+              <button onClick={handleDocumentSubmit} className="submit-button">
+                {t("applications.submit")}
+              </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {showEmailPopup && (

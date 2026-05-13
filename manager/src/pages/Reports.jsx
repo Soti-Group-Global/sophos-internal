@@ -52,7 +52,6 @@ const Reports = () => {
 
   const reportTypeOptions = [
     { value: "all", label: t("reports.reportTypeOptions.all") },
-    { value: "applications", label: t("reports.reportTypeOptions.applications") },
     { value: "early-detection", label: t("reports.reportTypeOptions.earlyDetection") },
   ];
 
@@ -241,9 +240,15 @@ const Reports = () => {
       )}
 
       {/* ─── Content ─── */}
+      {!loading && !data.summary && (
+        <div className="rpt-coming-soon">
+          <FiBarChart2 size={36} />
+          <p>{t("reports.actions.comingSoon", "Analytics dashboard is coming soon. Backend integration pending.")}</p>
+        </div>
+      )}
       {loading ? (
         <LoadingComponent message={t("reports.actions.loadingDescription")} />
-      ) : (
+      ) : data.summary ? (
         <div className="rpt-content">
           <section className="rpt-section">
             <AnalyticsCards summary={data.summary} t={t} />
@@ -264,7 +269,7 @@ const Reports = () => {
             </div>
           </section>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

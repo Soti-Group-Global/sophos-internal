@@ -2958,31 +2958,33 @@ export const createPurchaseOrderWithPDF = async (orderData) => {
   }
 };
 
-export const getAnalyticsSummary = async (type, params = {}) =>
-  api.get(`/${type}/analytics/summary`, { params }).then((res) => res.data);
+const analyticsGet = async (url, params) => {
+  try {
+    const res = await api.get(url, { params });
+    return res.data;
+  } catch (err) {
+    if (err?.response?.status === 404) return null;
+    throw err;
+  }
+};
 
-export const getRevenueTrend = async (type, params = {}) =>
-  api
-    .get(`/${type}/analytics/revenue-trend`, { params })
-    .then((res) => res.data);
+export const getAnalyticsSummary = (type, params = {}) =>
+  analyticsGet(`/${type}/analytics/summary`, params);
 
-export const getDoctorPerformance = async (type, params = {}) =>
-  api
-    .get(`/${type}/analytics/doctor-performance`, { params })
-    .then((res) => res.data);
+export const getRevenueTrend = (type, params = {}) =>
+  analyticsGet(`/${type}/analytics/revenue-trend`, params);
 
-export const getVerificationStats = async (type, params = {}) =>
-  api
-    .get(`/${type}/analytics/verification-stats`, { params })
-    .then((res) => res.data);
+export const getDoctorPerformance = (type, params = {}) =>
+  analyticsGet(`/${type}/analytics/doctor-performance`, params);
 
-export const getSpecialtiesData = async (type, params = {}) =>
-  api.get(`/${type}/analytics/specialties`, { params }).then((res) => res.data);
+export const getVerificationStats = (type, params = {}) =>
+  analyticsGet(`/${type}/analytics/verification-stats`, params);
 
-export const getServiceGrowth = async (type, params = {}) =>
-  api
-    .get(`/${type}/analytics/service-growth`, { params })
-    .then((res) => res.data);
+export const getSpecialtiesData = (type, params = {}) =>
+  analyticsGet(`/${type}/analytics/specialties`, params);
+
+export const getServiceGrowth = (type, params = {}) =>
+  analyticsGet(`/${type}/analytics/service-growth`, params);
 
 // === Max Messenger APIs ===
 export const getMaxChats = async () => {

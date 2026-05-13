@@ -50,9 +50,11 @@
     "pagination_info": "Показано с {{start}} по {{end}} из {{total}} записей",
     "add_document": "Добавить документ",
     "upload_file": "Загрузить файл",
+    "click_or_drag": "Нажмите или перетащите файл сюда",
     "cloud_link": "Ссылка на облако",
     "document_url_placeholder": "Введите URL документа",
     "document_name": "Имя документа",
+    "submit": "Отправить",
     "submit_btn": "Отправить",
     "cancel_btn": "Отмена",
     "new_email": "Новое письмо",
@@ -3658,7 +3660,8 @@
       "refresh": "Обновить",
       "export": "Экспорт",
       "loading": "Загрузка аналитики",
-      "loadingDescription": "Сбор последних данных и аналитики..."
+      "loadingDescription": "Сбор последних данных и аналитики...",
+      "selectDateRange": "Выберите диапазон дат для просмотра аналитики"
     },
     "statusOptions": {
       "appointment": {
@@ -3986,7 +3989,8 @@
       "uploadPhoto": "Загрузить фото",
       "patientName": "Имя пациента",
       "reviewDescription": "Напишите текст отзыва...",
-      "professionalDevelopments": "Профессиональное развитие"
+      "professionalDevelopments": "Профессиональное развитие",
+      "dateOfBirth": "ДД/ММ/ГГГГ"
     },
     "options": {
       "gender": {
@@ -5187,6 +5191,7 @@
     "failedToLoadBooking": "Не удалось загрузить запись",
     "dashboard": "Панель управления",
     "earlyDiagnosisBookingsManagement": "Управление записями на раннюю диагностику",
+    "earlyDiagnosisBookingsDescription": "Управляйте и отслеживайте все записи на скрининговые исследования по всем филиалам.",
     "addNewBooking": "Добавить новую запись",
     "totalBookings": "Всего записей",
     "paidBookings": "Оплаченных записей",

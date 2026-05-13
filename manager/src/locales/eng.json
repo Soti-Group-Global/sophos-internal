@@ -50,6 +50,7 @@
     "pagination_info": "Showing {{start}} to {{end}} of {{total}} entries",
     "add_document": "Add Document",
     "upload_file": "Upload File",
+    "click_or_drag": "Click or drag a file here",
     "cloud_link": "Cloud Link",
     "document_url_placeholder": "Enter document URL",
     "document_name": "Document name",
@@ -3574,7 +3575,8 @@
       "refresh": "Refresh",
       "export": "Export",
       "loading": "Loading analytics",
-      "loadingDescription": "Gathering the latest data and insights..."
+      "loadingDescription": "Gathering the latest data and insights...",
+      "selectDateRange": "Select a date range to view analytics"
     },
     "statusOptions": {
       "appointment": {
@@ -3899,7 +3901,8 @@
       "uploadPhoto": "Upload photo",
       "patientName": "Enter patient name",
       "reviewDescription": "Write review description...",
-      "professionalDevelopments": "Professional Development"
+      "professionalDevelopments": "Professional Development",
+      "dateOfBirth": "DD/MM/YYYY"
     },
     "options": {
       "gender": {
@@ -5213,6 +5216,7 @@
     "failedToLoadBooking": "Failed to load booking",
     "dashboard": "Dashboard",
     "earlyDiagnosisBookingsManagement": "Early Diagnosis Bookings Management",
+    "earlyDiagnosisBookingsDescription": "Manage and track all early diagnosis screening bookings across branches.",
     "addNewBooking": "Add New Booking",
     "totalBookings": "Total Bookings",
     "paidBookings": "Paid Bookings",

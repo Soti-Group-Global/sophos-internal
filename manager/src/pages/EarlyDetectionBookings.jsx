@@ -351,12 +351,8 @@ const EarlyDetectionBookings = () => {
       {/* Header */}
       <div className="ed-modern-header">
         <div className="ed-header-left">
-          <div className="ed-breadcrumb">
-            <span className="ed-breadcrumb-item">{t('earlyDiagnosis.dashboard')}</span>
-            <span className="ed-breadcrumb-separator">›</span>
-            <span className="ed-breadcrumb-item active">{t('earlyDiagnosis.earlyDiagnosisBookings')}</span>
-          </div>
           <h1 className="ed-modern-title">{t('earlyDiagnosis.earlyDiagnosisBookingsManagement')}</h1>
+          <p className="ed-modern-description">{t('earlyDiagnosis.earlyDiagnosisBookingsDescription')}</p>
         </div>
         <div className="ed-header-actions">
           <div className="ed-view-toggle">

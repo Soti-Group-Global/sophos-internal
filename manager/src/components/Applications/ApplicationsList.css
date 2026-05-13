@@ -408,16 +408,16 @@
 }
 
 .apps-list-header-row {
-  height: 44px;
+  height: 36px;
 }
 
 .apps-list-header-cell {
-  padding: 10px 14px;
+  padding: 7px 10px;
   text-align: left;
   font-weight: 700;
   color: var(--color-text-inverse);
-  font-size: var(--font-size-secondary-text);
-  letter-spacing: 0.5px;
+  font-size: 11px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   background: transparent;
   border: none;
@@ -425,11 +425,11 @@
 }
 
 .apps-list-header-cell:first-child {
-  padding-left: 14px;
+  padding-left: 10px;
 }
 
 .apps-list-header-cell:last-child {
-  padding-right: 14px;
+  padding-right: 10px;
 }
 
 /* Sortable Column Styling */
@@ -521,11 +521,11 @@
 }
 
 .apps-list-data-table tbody tr td {
-  padding: 10px 14px;
+  padding: 7px 10px;
   vertical-align: top;
   white-space: nowrap;
   color: var(--color-text-primary);
-  font-size: var(--font-size-body);
+  font-size: 12px;
 }
 
 /* Cell Content */
@@ -533,14 +533,14 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-height: 40px;
+  min-height: 32px;
 }
 
 /* Appointment Cell */
 .appointment-cell {}
 
 .applicationId-text {
-  font-size: var(--font-size-secondary-text);
+  font-size: 11px;
   font-weight: 700;
   color: var(--color-primary);
   letter-spacing: 0.3px;
@@ -555,7 +555,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   padding: 0;
-  font-size: var(--font-size-body);
+  font-size: 12px;
 }
 
 .app-id-link:hover,
@@ -601,7 +601,7 @@
 .app-id-text {
   color: #3b82f6;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .edit-icon-btn {
@@ -630,7 +630,7 @@
 .doctor-name-link {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: none;
   border: none;
   color: var(--color-primary);
@@ -639,7 +639,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   padding: 0;
-  font-size: var(--font-size-body);
+  font-size: 12px;
 }
 
 .patient-name-link:hover,
@@ -652,10 +652,10 @@
 .doctor-name-text {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: #1e293b;
   font-weight: 600;
-  font-size: var(--font-size-body);
+  font-size: 12px;
 }
 
 /* Status Badge */
@@ -932,17 +932,17 @@
   width: fit-content;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 5px;
+  padding: 5px 9px;
   background: #fff;
   color: var(--color-primary);
   border: 1.5px solid var(--color-primary);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .payment-btn:hover {
@@ -958,10 +958,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: none;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1261,8 +1261,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(107, 108, 109, 0.85);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1270,15 +1269,6 @@
   padding: 16px;
 }
 
-body:has(.modal-overlay) .sidebar,
-body:has(.modal-overlay) .header,
-body:has(.modal-overlay) .sidebar *,
-body:has(.modal-overlay) .header *,
-body:has(.modal-overlay) .layout-top-bar {
-  visibility: hidden !important;
-  pointer-events: none !important;
-  opacity: 0 !important;
-}
 
 .modal-content {
   background: white;
@@ -1452,8 +1442,7 @@ body:has(.modal-overlay) .layout-top-bar {
   gap: 12px;
 }
 
-.text-input,
-.app-file-input {
+.text-input {
   width: 100%;
   padding: 9px 12px;
   border: 1px solid rgba(152, 195, 250, 0.4);
@@ -1462,12 +1451,85 @@ body:has(.modal-overlay) .layout-top-bar {
   transition: all 0.2s ease;
 }
 
-.text-input:focus,
-.app-file-input:focus {
+.text-input:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(152, 195, 250, 0.2);
   background: rgba(152, 195, 250, 0.03);
+}
+
+.file-upload-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 20px;
+  border: 2px dashed rgba(10, 46, 93, 0.25);
+  border-radius: 12px;
+  background: rgba(10, 46, 93, 0.03);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+  border-color: #0a2e5d;
+  background: rgba(10, 46, 93, 0.06);
+}
+
+.file-upload-area.has-file {
+  border-color: #0a2e5d;
+  background: rgba(10, 46, 93, 0.05);
+}
+
+.file-upload-area input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.file-upload-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(10, 46, 93, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0a2e5d;
+}
+
+.file-upload-text {
+  text-align: center;
+}
+
+.file-upload-text strong {
+  display: block;
+  font-size: 13px;
+  color: #0a2e5d;
+  font-weight: 600;
+}
+
+.file-upload-text span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.file-upload-name {
+  font-size: 12px;
+  color: #0a2e5d;
+  font-weight: 500;
+  background: rgba(10, 46, 93, 0.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .text-input.readonly {
@@ -2090,4 +2152,18 @@ body:has(.document-modal-overlay) .layout-top-bar {
   .calendar-appointments-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
+}
+
+/* Payment cell unique button styles */
+.pay-add-invoice-btn {
+  font-size: 11px;
+  padding: 5px 9px;
+  gap: 5px;
+}
+
+.pay-contract-btn,
+.pay-akt-btn {
+  font-size: 10px;
+  padding: 4px 8px;
+  gap: 4px;
 }

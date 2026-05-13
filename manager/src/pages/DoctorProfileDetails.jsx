@@ -33,6 +33,7 @@ import "../styles/EmployeeModal.css";
 import "../styles/DoctorProfileDetails.css";
 import { getProfile } from "../utils/api";
 import SpecialtyManagementPopup from "../components/SpecialtyManagementPopup";
+import CustomCalendar from "../components/CustomCalendar/CustomCalendar";
 
 const DoctorProfileDetails = ({
   doctor,
@@ -117,6 +118,8 @@ const DoctorProfileDetails = ({
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [doctorProfileId, setDoctorProfileId] = useState(null);
+  const [effectiveIsEdit, setEffectiveIsEdit] = useState(isEdit);
   const navigate = useNavigate();
   const formRef = useRef();
   const fileInputRef = useRef();
@@ -327,16 +330,63 @@ const DoctorProfileDetails = ({
   useEffect(() => {
     const initializeDoctorData = async () => {
       if (isEdit && doctor) {
+        // Fetch the full doctor profile — try by ID first, then fall back to email
+        const pickProfile = (res) =>
+          [res?.profile, res?.data, res?.doctor, res].find((x) => x?._id) || null;
+
+        let fullDoctor = null;
+        const doctorId = doctor._id || doctor.id;
+
+        // 1. Try by ID (the employee list _id is typically the profile ID)
+        if (doctorId) {
+          try {
+            const res = await getDoctorProfileById(doctorId);
+            fullDoctor = pickProfile(res);
+          } catch (_) {}
+        }
+
+        // 2. Fallback: try by email
+        if (!fullDoctor && doctor.email) {
+          try {
+            const res = await getDoctorProfileByEmail(doctor.email);
+            fullDoctor = pickProfile(res);
+          } catch (_) {}
+        }
+
+        if (fullDoctor) {
+          setDoctorProfileId(fullDoctor._id);
+          setEffectiveIsEdit(true);
+        } else {
+          // No profile found — will create a new one on save
+          setDoctorProfileId(null);
+          setEffectiveIsEdit(false);
+          fullDoctor = doctor;
+        }
+
+        // Normalize string fields (employee user objects have plain strings, profiles have {en,ru})
+        const toMultilingual = (val) =>
+          val && typeof val === "string" ? { en: val, ru: "" } : val || { en: "", ru: "" };
+
+        // Cross-fill empty multilingual name from original doctor user object as fallback
+        const fillName = (profileVal, userVal) => {
+          const ml = toMultilingual(profileVal);
+          if (!ml.en && !ml.ru && userVal) return toMultilingual(userVal);
+          return ml;
+        };
+
+        // Use fullDoctor from here on
+        const doctor_ = fullDoctor;
+
         // Convert languages array to react-select format
         const selectedLanguages = languageOptions.filter((lang) =>
-          doctor.languages?.some(
+          doctor_.languages?.some(
             (docLang) => docLang.en === lang.value || docLang.ru === lang.label
           )
         );
 
         // Convert branches array to react-select format
         const selectedBranches = branchOptions.filter((branch) =>
-          doctor.branches?.some(
+          doctor_.branches?.some(
             (docBranch) =>
               docBranch.en === branch.value || docBranch.ru === branch.label
           )
@@ -344,51 +394,51 @@ const DoctorProfileDetails = ({
 
 
         setFormData({
-          firstName: doctor.firstName || { en: "", ru: "" },
-          middleName: doctor.middleName || { en: "", ru: "" },
-          lastName: doctor.lastName || { en: "", ru: "" },
-          email: doctor.email || "",
-          phoneNumber: doctor.phoneNumber || "",
-          dateOfBirth: doctor.dateOfBirth
-            ? new Date(doctor.dateOfBirth).toISOString().split("T")[0]
+          firstName: fillName(doctor_.firstName, doctor.firstName),
+          middleName: fillName(doctor_.middleName, doctor.middleName),
+          lastName: fillName(doctor_.lastName, doctor.lastName),
+          email: doctor_.email || "",
+          phoneNumber: doctor_.phoneNumber || "",
+          dateOfBirth: doctor_.dateOfBirth
+            ? new Date(doctor_.dateOfBirth).toISOString().split("T")[0]
             : "",
-          expert: doctor.expert || false,
-          specialist: doctor.specialist || false,
-          gender: doctor.gender || "Male",
-          age: doctor.age || "",
-          photo: doctor.photo || "",
-          specialtyIds: Array.isArray(doctor.specialtyIds) 
-            ? doctor.specialtyIds.map(s => typeof s === 'object' ? s._id : s)
-            : doctor.specialtyIds ? [typeof doctor.specialtyIds === 'object' ? doctor.specialtyIds._id : doctor.specialtyIds] : [],
-          subSpecialityIds: Array.isArray(doctor.subSpecialityIds)
-            ? doctor.subSpecialityIds.map(s => typeof s === 'object' ? s._id : s)
-            : doctor.subSpecialityIds ? [typeof doctor.subSpecialityIds === 'object' ? doctor.subSpecialityIds._id : doctor.subSpecialityIds] : [],
-          position: doctor.position || { en: "", ru: "" },
-          regalia: doctor.regalia || { en: "", ru: "" },
-          location: doctor.location || { en: "", ru: "" },
+          expert: doctor_.expert || false,
+          specialist: doctor_.specialist || false,
+          gender: doctor_.gender || "Male",
+          age: doctor_.age || "",
+          photo: doctor_.photo || "",
+          specialtyIds: Array.isArray(doctor_.specialtyIds)
+            ? doctor_.specialtyIds.map(s => typeof s === 'object' ? s._id : s)
+            : doctor_.specialtyIds ? [typeof doctor_.specialtyIds === 'object' ? doctor_.specialtyIds._id : doctor_.specialtyIds] : [],
+          subSpecialityIds: Array.isArray(doctor_.subSpecialityIds)
+            ? doctor_.subSpecialityIds.map(s => typeof s === 'object' ? s._id : s)
+            : doctor_.subSpecialityIds ? [typeof doctor_.subSpecialityIds === 'object' ? doctor_.subSpecialityIds._id : doctor_.subSpecialityIds] : [],
+          position: toMultilingual(doctor_.position),
+          regalia: toMultilingual(doctor_.regalia),
+          location: toMultilingual(doctor_.location),
           languages: selectedLanguages,
-          services: doctor.services || { online: false, offline: false },
+          services: doctor_.services || { online: false, offline: false },
           branches: selectedBranches,
-          yearOfExperience: doctor.yearOfExperience || 0,
-          internationalMemberships: doctor.internationalMemberships || {
+          yearOfExperience: doctor_.yearOfExperience || 0,
+          internationalMemberships: doctor_.internationalMemberships || {
             en: "",
             ru: "",
           },
-          russianMemberships: doctor.russianMemberships || { en: "", ru: "" },
-          professionalDevelopments: doctor.professionalDevelopments || { en: "", ru: "" },
-          awards: doctor.awards || { en: "", ru: "" },
-          workExperience: doctor.workExperience || { en: "", ru: "" },
-          education: doctor.education || { en: "", ru: "" },
-          advancedTraining: doctor.advancedTraining || { en: "", ru: "" },
-          scientificActivities: doctor.scientificActivities || {
+          russianMemberships: doctor_.russianMemberships || { en: "", ru: "" },
+          professionalDevelopments: doctor_.professionalDevelopments || { en: "", ru: "" },
+          awards: doctor_.awards || { en: "", ru: "" },
+          workExperience: doctor_.workExperience || { en: "", ru: "" },
+          education: doctor_.education || { en: "", ru: "" },
+          advancedTraining: doctor_.advancedTraining || { en: "", ru: "" },
+          scientificActivities: doctor_.scientificActivities || {
             en: "",
             ru: "",
           },
-          reviews: doctor.reviews || [],
-          feesAmount: doctor.feesAmount || "",
-          currency: doctor.currency || "RUB",
-          about: doctor.about || { en: "", ru: "" },
-          status: doctor.status || "active",
+          reviews: doctor_.reviews || [],
+          feesAmount: doctor_.feesAmount || "",
+          currency: doctor_.currency || "RUB",
+          about: doctor_.about || { en: "", ru: "" },
+          status: doctor_.status || "active",
         });
 
         // Handle profile image - CLEAR FIRST to prevent caching
@@ -399,10 +449,10 @@ const DoctorProfileDetails = ({
         }));
 
         // Then load new image if exists
-        if (doctor.profileFileId) {
+        if (doctor_.profileFileId) {
           try {
             const imageResponse = await getDoctorsProfileImage(
-              doctor.profileFileId
+              doctor_.profileFileId
             );
             if (imageResponse.imageUrl) {
               setPhotoPreview(imageResponse.imageUrl);
@@ -416,14 +466,14 @@ const DoctorProfileDetails = ({
               setFormData((prev) => ({ ...prev, photo: base64Image }));
             }
           } catch (error) {
-            if (doctor.photo) {
-              setPhotoPreview(doctor.photo);
+            if (doctor_.photo) {
+              setPhotoPreview(doctor_.photo);
             }
           }
-        } else if (doctor.photo) {
-          setPhotoPreview(doctor.photo);
-        } else if (doctor.profilePicture) {
-          const base64Image = `data:image/jpeg;base64,${doctor.profilePicture}`;
+        } else if (doctor_.photo) {
+          setPhotoPreview(doctor_.photo);
+        } else if (doctor_.profilePicture) {
+          const base64Image = `data:image/jpeg;base64,${doctor_.profilePicture}`;
           setPhotoPreview(base64Image);
           setFormData((prev) => ({ ...prev, photo: base64Image }));
         }
@@ -705,8 +755,14 @@ const DoctorProfileDetails = ({
         formDataToSend.append("profileImage", selectedFile);
       }
 
+      // Ensure age is always calculated from DOB before submitting
+      const resolvedAge = formData.dateOfBirth
+        ? calculateAge(formData.dateOfBirth)
+        : formData.age;
+
       const submitData = {
         ...formData,
+        age: resolvedAge || formData.age,
         languages: formData.languages.map((lang) => ({
           en: lang.value,
           ru: getReverseTranslation(lang.value, "en", "ru"),
@@ -720,13 +776,16 @@ const DoctorProfileDetails = ({
       const { photo, removeProfilePhoto, ...dataWithoutPhoto } = submitData;
 
       Object.keys(dataWithoutPhoto).forEach((key) => {
+        const val = dataWithoutPhoto[key];
+        // Skip empty age (e.g. 0 from invalid DOB) — let backend calculate from dateOfBirth
+        if (key === "age" && (!val || val === "0" || val === 0)) return;
         if (
-          typeof dataWithoutPhoto[key] === "object" &&
-          dataWithoutPhoto[key] !== null
+          typeof val === "object" &&
+          val !== null
         ) {
-          formDataToSend.append(key, JSON.stringify(dataWithoutPhoto[key]));
+          formDataToSend.append(key, JSON.stringify(val));
         } else {
-          formDataToSend.append(key, dataWithoutPhoto[key]);
+          formDataToSend.append(key, val);
         }
       });
 
@@ -741,9 +800,9 @@ const DoctorProfileDetails = ({
       };
 
       let response;
-      if (isEdit) {
+      if (effectiveIsEdit) {
         response = await updateDoctorProfile(
-          doctor._id,
+          doctorProfileId,
           formDataToSend,
           config
         );
@@ -751,6 +810,11 @@ const DoctorProfileDetails = ({
       } else {
         response = await createDoctorProfile(formDataToSend, config);
         showSuccessToast(t("doctorProfile.notifications.createSuccess"));
+        // After creating, switch to edit mode with the new profile's ID
+        if (response?._id) {
+          setDoctorProfileId(response._id);
+          setEffectiveIsEdit(true);
+        }
       }
 
       setHasUnsavedChanges(false);
@@ -758,9 +822,10 @@ const DoctorProfileDetails = ({
       setFormData((prev) => ({ ...prev, removeProfilePhoto: false }));
 
       // Refetch doctor data after save to get updated values
-      if (isEdit && doctor._id) {
+      const profileId = doctorProfileId || response?._id;
+      if (profileId) {
         try {
-          const updatedDoctor = await getDoctorProfileById(doctor._id);
+          const updatedDoctor = await getDoctorProfileById(profileId);
           if (updatedDoctor) {
             // Update the form with fresh data from server
             setFormData(prev => ({
@@ -883,340 +948,183 @@ const DoctorProfileDetails = ({
   // Render Common Tab (shared across languages)
   const renderCommonTab = () => (
     <div className="tab-content">
-      {/* Photo Upload Section */}
-      <div className="form-section">
-        <h3>{t("doctorProfile.sections.profilePhoto")}</h3>
+      <div className="dpd-single-section">
+
+        {/* Profile Photo */}
+        <p className="dpd-field-heading">{t("doctorProfile.sections.profilePhoto")}</p>
         <div className="photo-upload-section">
           <div className="photo-preview-container">
             {photoPreview ? (
               <div className="photo-preview-wrapper">
-                <img
-                  src={photoPreview}
-                  alt={t("doctorProfile.placeholders.profilePhoto")}
-                  className="photo-preview"
-                />
-                <button
-                  type="button"
-                  className="photo-remove-btn"
-                  onClick={handleRemovePhoto}
-                  disabled={uploadingPhoto}
-                >
+                <img src={photoPreview} alt={t("doctorProfile.placeholders.profilePhoto")} className="photo-preview" />
+                <button type="button" className="photo-remove-btn" onClick={handleRemovePhoto} disabled={uploadingPhoto}>
                   <FaTimesCircle />
                 </button>
               </div>
             ) : (
-              <div
-                className="photo-upload-placeholder"
-                onClick={handlePhotoClick}
-              >
+              <div className="photo-upload-placeholder" onClick={handlePhotoClick}>
                 <FaCamera className="photo-upload-icon" />
                 <span>{t("doctorProfile.placeholders.uploadPhoto")}</span>
               </div>
             )}
           </div>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handlePhotoUpload}
-            accept="image/jpeg,image/jpg,image/png,image/gif"
-            style={{ display: "none" }}
-          />
-
+          <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/jpeg,image/jpg,image/png,image/gif" style={{ display: "none" }} />
           <div className="photo-upload-info">
-            <p className="photo-upload-hint">
-              {t("doctorProfile.hints.photoUpload")}
-            </p>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handlePhotoClick}
-              disabled={uploadingPhoto}
-            >
-              {uploadingPhoto ? (
-                t("doctorProfile.actions.uploading")
-              ) : (
-                <>
-                  <FaCamera className="btn-icon" />
-                  {photoPreview
-                    ? t("doctorProfile.actions.changePhoto")
-                    : t("doctorProfile.actions.uploadPhoto")}
-                </>
+            <p className="photo-upload-hint">{t("doctorProfile.hints.photoUpload")}</p>
+            <button type="button" className="btn-secondary" onClick={handlePhotoClick} disabled={uploadingPhoto}>
+              {uploadingPhoto ? t("doctorProfile.actions.uploading") : (
+                <><FaCamera className="btn-icon" />{photoPreview ? t("doctorProfile.actions.changePhoto") : t("doctorProfile.actions.uploadPhoto")}</>
               )}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Basic Information - Common Fields */}
-      <div className="form-section">
-        <h3>{t("doctorProfile.sections.basicInfo")}</h3>
-        <div className="doctor-form-row">
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.email")} <RequiredStar />
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.phoneNumber")} <RequiredStar />
-            </label>
-            <PhoneInput
-              country={"ru"}
-              value={formData.phoneNumber?.replace("+", "")}
-              onChange={handlePhoneChange}
-              inputProps={{ required: true }}
-              containerClass="phone-input-container"
-              inputClass="phone-input"
-              buttonClass="phone-button"
-              dropdownClass="phone-dropdown"
-            />
-          </div>
-        </div>
-
-        <div className="doctor-form-row">
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.dateOfBirth")} <RequiredStar />
-            </label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.gender")} <RequiredStar />
-            </label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="Male">
-                {t("doctorProfile.options.gender.male")}
-              </option>
-              <option value="Female">
-                {t("doctorProfile.options.gender.female")}
-              </option>
-              <option value="Other">
-                {t("doctorProfile.options.gender.other")}
-              </option>
-            </select>
-          </div>
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.age")} <RequiredStar />
-            </label>
-            <input
-              type="number"
-              name="age"
-              value={formData.age}
-              onChange={handleInputChange}
-              min="1"
-              max="150"
-              required
-              readOnly
-              className="readonly-input"
-            />
-          </div>
-          <div className="doctor-form-group">
-            <label>{t("doctorProfile.fields.yearOfExperience")} <RequiredStar /></label>
-            <input
-              type="number"
-              name="yearOfExperience"
-              value={formData.yearOfExperience}
-              onChange={handleInputChange}
-              min="0"
-              step="1"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Services & Languages */}
-      <div className="form-section">
-        <h3>{t("doctorProfile.sections.servicesLanguages")}</h3>
+        {/* Email */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.email")} <RequiredStar /></p>
         <div className="doctor-form-group">
-          <label>
-            {t("doctorProfile.fields.services")} <RequiredStar />
-          </label>
+          <input type="email" name="email" value={formData.email} onChange={handleInputChange} required />
+        </div>
+
+        {/* Phone */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.phoneNumber")} <RequiredStar /></p>
+        <div className="doctor-form-group">
+          <PhoneInput
+            country={"ru"}
+            value={formData.phoneNumber?.replace("+", "")}
+            onChange={handlePhoneChange}
+            inputProps={{ required: true }}
+            containerClass="phone-input-container"
+            inputClass="phone-input"
+            buttonClass="phone-button"
+            dropdownClass="phone-dropdown"
+          />
+        </div>
+
+        {/* Date of Birth */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.dateOfBirth")} <RequiredStar /></p>
+        <div className="doctor-form-group">
+          <CustomCalendar
+            value={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
+            onChange={(date) => {
+              const yyyy = date.getFullYear();
+              const mm = String(date.getMonth() + 1).padStart(2, "0");
+              const dd = String(date.getDate()).padStart(2, "0");
+              setFormData((prev) => ({ ...prev, dateOfBirth: `${yyyy}-${mm}-${dd}` }));
+            }}
+            maxDate={new Date()}
+            dateFormat="dd/MM/yyyy"
+            placeholder={t("doctorProfile.placeholders.dateOfBirth") || "DD/MM/YYYY"}
+          />
+        </div>
+
+        {/* Age (auto) */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.age")} <RequiredStar /></p>
+        <div className="doctor-form-group">
+          <input type="number" name="age" value={formData.age} onChange={handleInputChange} min="1" max="150" required readOnly className="readonly-input" />
+        </div>
+
+        {/* Gender */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.gender")} <RequiredStar /></p>
+        <div className="doctor-form-group">
+          <select name="gender" value={formData.gender} onChange={handleInputChange} required>
+            <option value="Male">{t("doctorProfile.options.gender.male")}</option>
+            <option value="Female">{t("doctorProfile.options.gender.female")}</option>
+            <option value="Other">{t("doctorProfile.options.gender.other")}</option>
+          </select>
+        </div>
+
+        {/* Experience */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.yearOfExperience")} <RequiredStar /></p>
+        <div className="doctor-form-group">
+          <input type="number" name="yearOfExperience" value={formData.yearOfExperience} onChange={handleInputChange} min="0" step="1" required />
+        </div>
+
+        {/* Services */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.services")} <RequiredStar /></p>
+        <div className="doctor-form-group">
           <div className="checkbox-group">
             <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.services.online}
-                onChange={() => handleServicesChange("online")}
-              />
+              <input type="checkbox" checked={formData.services.online} onChange={() => handleServicesChange("online")} />
               <span className="checkmark"></span>
               {t("doctorProfile.options.services.online")}
             </label>
             <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.services.offline}
-                onChange={() => handleServicesChange("offline")}
-              />
+              <input type="checkbox" checked={formData.services.offline} onChange={() => handleServicesChange("offline")} />
               <span className="checkmark"></span>
               {t("doctorProfile.options.services.offline")}
             </label>
           </div>
         </div>
 
+        {/* Branches */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.branches")}</p>
         <div className="doctor-form-group">
-          <label>{t("doctorProfile.fields.branches")}</label>
-          <Select
-            isMulti
-            name="branches"
-            options={branchOptions}
-            className="basic-multi-select"
-            classNamePrefix="select"
-            value={formData.branches}
-            onChange={handleBranchChange}
-            placeholder={t("doctorProfile.placeholders.branches")}
-            styles={customSelectStyles}
-          />
-          <small className="input-hint">
-            {t("doctorProfile.hints.selectMultiple")}
-          </small>
+          <Select isMulti name="branches" options={branchOptions} className="basic-multi-select" classNamePrefix="select" value={formData.branches} onChange={handleBranchChange} placeholder={t("doctorProfile.placeholders.branches")} styles={customSelectStyles} />
+          <small className="input-hint">{t("doctorProfile.hints.selectMultiple")}</small>
         </div>
 
-      </div>
-
-      {/* Specialty & Sub-Specialty */}
-      <div className="form-section">
-        <h3>
-          {t("doctorProfile.sections.specialtyInfo") || "Specialty Information"}
-          <button
-            type="button"
-            className="settings-icon-btn"
-            onClick={() => setShowSpecialtyPopup(true)}
-            title="Manage Specialties"
-          >
+        {/* Specialty */}
+        <p className="dpd-field-heading">
+          {t("doctorProfile.fields.specialty")} <RequiredStar />
+          <button type="button" className="settings-icon-btn" onClick={() => setShowSpecialtyPopup(true)} title="Manage Specialties" style={{ marginLeft: 8 }}>
             <FaCog />
           </button>
-        </h3>
-        <div className="doctor-form-row">
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.specialty")} <RequiredStar />
-            </label>
-            <Select
-              isMulti
-              placeholder={t("common.select") || "Select..."}
-              value={(specialties || [])
-                .filter(specialty => formData.specialtyIds?.includes(specialty._id))
-                .map(specialty => ({
-                  value: specialty._id,
-                  label: i18n.language === 'ru' ? specialty.name_ru : specialty.name_en
-                }))}
-              onChange={handleSpecialtyChange}
-              options={(specialties || []).map(specialty => ({
-                value: specialty._id,
-                label: i18n.language === 'ru' ? specialty.name_ru : specialty.name_en
-              }))}
-              className="react-select-container"
-              classNamePrefix="react-select"
-            />
-          </div>
-          <div className="doctor-form-group">
-            <label>{t("doctorProfile.fields.subSpecialties")}</label>
-            <Select
-              isMulti
-              placeholder={t("common.select") || "Select..."}
-              value={(subSpecialities || [])
-                .filter(subSpeciality => formData.subSpecialityIds?.includes(subSpeciality._id))
-                .map(subSpeciality => ({
-                  value: subSpeciality._id,
-                  label: i18n.language === 'ru' ? subSpeciality.name_ru : subSpeciality.name_en
-                }))}
-              onChange={handleSubSpecialtyChange}
-              options={(subSpecialities || []).map(subSpeciality => ({
-                value: subSpeciality._id,
-                label: i18n.language === 'ru' ? subSpeciality.name_ru : subSpeciality.name_en
-              }))}
-              isDisabled={!formData.specialtyIds || formData.specialtyIds.length === 0}
-              className="react-select-container"
-              classNamePrefix="react-select"
-            />
-            <small className="input-hint">
-              {(!formData.specialtyIds || formData.specialtyIds.length === 0) && (t("doctorProfile.hints.selectSpecialtyFirst") || "Select specialty first")}
-            </small>
-          </div>
-        </div>
-      </div>
-
-      {/* Fees */}
-      <div className="form-section">
-        <h3>{t("doctorProfile.sections.fees")}</h3>
-        <div className="doctor-form-row">
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.feesAmount")}
-            </label>
-            <input
-              type="number"
-              name="feesAmount"
-              value={formData.feesAmount}
-              onChange={handleInputChange}
-              min="0"
-              step="0.01"
-            />
-          </div>
-          <div className="doctor-form-group">
-            <label>
-              {t("doctorProfile.fields.currency")} <RequiredStar />
-            </label>
-            <select
-              name="currency"
-              value={formData.currency}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="RUB">
-                {t("doctorProfile.options.currency.rub")}
-              </option>
-              <option value="INR">
-                {t("doctorProfile.options.currency.inr")}
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Status */}
-      <div className="form-section">
-        <h3>{t("doctorProfile.sections.status")}</h3>
+        </p>
         <div className="doctor-form-group">
-          <label>{t("doctorProfile.fields.status")}</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleInputChange}
-          >
-            <option value="active">
-              {t("doctorProfile.options.status.active")}
-            </option>
-            <option value="inactive">
-              {t("doctorProfile.options.status.inactive")}
-            </option>
-            <option value="pending">
-              {t("doctorProfile.options.status.pending")}
-            </option>
+          <Select
+            isMulti
+            placeholder={t("common.select") || "Select..."}
+            value={(specialties || []).filter(s => formData.specialtyIds?.includes(s._id)).map(s => ({ value: s._id, label: i18n.language === "ru" ? s.name_ru : s.name_en }))}
+            onChange={handleSpecialtyChange}
+            options={(specialties || []).map(s => ({ value: s._id, label: i18n.language === "ru" ? s.name_ru : s.name_en }))}
+            className="react-select-container"
+            classNamePrefix="react-select"
+          />
+        </div>
+
+        {/* Sub-Specialty */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.subSpecialties")}</p>
+        <div className="doctor-form-group">
+          <Select
+            isMulti
+            placeholder={t("common.select") || "Select..."}
+            value={(subSpecialities || []).filter(s => formData.subSpecialityIds?.includes(s._id)).map(s => ({ value: s._id, label: i18n.language === "ru" ? s.name_ru : s.name_en }))}
+            onChange={handleSubSpecialtyChange}
+            options={(subSpecialities || []).map(s => ({ value: s._id, label: i18n.language === "ru" ? s.name_ru : s.name_en }))}
+            isDisabled={!formData.specialtyIds || formData.specialtyIds.length === 0}
+            className="react-select-container"
+            classNamePrefix="react-select"
+          />
+          {(!formData.specialtyIds || formData.specialtyIds.length === 0) && (
+            <small className="input-hint">{t("doctorProfile.hints.selectSpecialtyFirst") || "Select specialty first"}</small>
+          )}
+        </div>
+
+        {/* Consultation Fee */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.feesAmount")}</p>
+        <div className="doctor-form-group">
+          <input type="number" name="feesAmount" value={formData.feesAmount} onChange={handleInputChange} min="0" step="0.01" />
+        </div>
+
+        {/* Currency */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.currency")} <RequiredStar /></p>
+        <div className="doctor-form-group">
+          <select name="currency" value={formData.currency} onChange={handleInputChange} required>
+            <option value="RUB">{t("doctorProfile.options.currency.rub")}</option>
+            <option value="INR">{t("doctorProfile.options.currency.inr")}</option>
           </select>
         </div>
+
+        {/* Status */}
+        <p className="dpd-field-heading">{t("doctorProfile.fields.status")}</p>
+        <div className="doctor-form-group">
+          <select name="status" value={formData.status} onChange={handleInputChange}>
+            <option value="active">{t("doctorProfile.options.status.active")}</option>
+            <option value="inactive">{t("doctorProfile.options.status.inactive")}</option>
+            <option value="pending">{t("doctorProfile.options.status.pending")}</option>
+          </select>
+        </div>
+
       </div>
     </div>
   );
@@ -1281,41 +1189,6 @@ const DoctorProfileDetails = ({
         </div>
       </div>
 
-      {/* Professional Information */}
-      <div className="form-section">
-        <h3>{t("doctorProfile.sections.professionalInfo")}</h3>
-        <div className="doctor-form-row">
-          <div className="doctor-form-group">
-            <label>{t("doctorProfile.fields.description")} <RequiredStar /></label>
-            <input
-              type="text"
-              value={formData.position[language] || ""}
-              onChange={(e) =>
-                handleMultilingualInputChange(
-                  "position",
-                  language,
-                  e.target.value
-                )
-              }
-            />
-          </div>
-          <div className="doctor-form-group">
-            <label>{t("doctorProfile.fields.regalia")}</label>
-            <input
-              type="text"
-              value={formData.regalia[language] || ""}
-              onChange={(e) =>
-                handleMultilingualInputChange(
-                  "regalia",
-                  language,
-                  e.target.value
-                )
-              }
-              placeholder={t("doctorProfile.placeholders.regalia")}
-            />
-          </div>
-        </div>
-      </div>
 
     </div>
   );
@@ -1343,12 +1216,12 @@ const DoctorProfileDetails = ({
         <div className="employee-modal-header-modern">
           <div className="header-left-section">
             <h2>
-              {isEdit
+              {effectiveIsEdit
                 ? t("doctorProfile.actions.updateProfile")
                 : t("doctorProfile.actions.createProfile")}
             </h2>
             <p>
-              {isEdit
+              {effectiveIsEdit
                 ? t("doctorProfile.subtitle.edit", "Update doctor information")
                 : t("doctorProfile.subtitle.create", "Fill in doctor details")}
             </p>
@@ -1426,7 +1299,7 @@ const DoctorProfileDetails = ({
           >
             {loading
               ? t("doctorProfile.actions.saving")
-              : isEdit
+              : effectiveIsEdit
                 ? t("doctorProfile.actions.updateProfile")
                 : t("doctorProfile.actions.createProfile")}
           </button>

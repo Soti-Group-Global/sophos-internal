@@ -412,14 +412,7 @@ function EmployeeCard({
           {/* Common View Details */}
           <button
             className="view-details-btn-modern"
-            onClick={() => {
-              if (type === "doctor" || type === "head_doctor") {
-                const doctorId = employee._id || employee.id;
-                navigate(`/doctors-profile/${doctorId}`);
-              } else {
-                onViewDetails(employee, type);
-              }
-            }}
+            onClick={() => onViewDetails(employee, type)}
           >
             {t("employee_card.buttons.view_details")}
           </button>

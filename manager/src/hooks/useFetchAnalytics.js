@@ -30,7 +30,9 @@ export const useFetchAnalytics = (
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const params = { startDate, endDate };
+      const params = {};
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
 
       if (selectedBranch && selectedBranch !== "All") {
         params.branch = selectedBranch;
@@ -41,123 +43,23 @@ export const useFetchAnalytics = (
       if (paymentStatuses?.length)
         params.paymentStatus = paymentStatuses.join(",");
 
-      if (type === "all") {
-        const [
-          appSummary,
-          earlySummary,
-          appRevenue,
-          earlyRevenue,
-          appDoctors,
-          earlyDoctors,
-          appVerification,
-          earlyVerification,
-          appSpecialties,
-          earlySpecialties,
-          appGrowth,
-          earlyGrowth,
-        ] = await Promise.all([
-          getAnalyticsSummary("applications", params),
-          getAnalyticsSummary("early-detection", params),
-          getRevenueTrend("applications", params),
-          getRevenueTrend("early-detection", params),
-          getDoctorPerformance("applications", params),
-          getDoctorPerformance("early-detection", params),
-          getVerificationStats("applications", params),
-          getVerificationStats("early-detection", params),
-          getSpecialtiesData("applications", params),
-          getSpecialtiesData("early-detection", params),
-          getServiceGrowth("applications", params),
-          getServiceGrowth("early-detection", params),
+      const ok = (r) => (r?.status === "fulfilled" ? r.value : null);
+
+      // Only early-detection analytics endpoints exist on the backend.
+      // Use early-detection for both "all" and "early-detection" types.
+      const fetchType = "early-detection";
+      {
+        const results = await Promise.allSettled([
+          getAnalyticsSummary(fetchType, params),
+          getRevenueTrend(fetchType, params),
+          getDoctorPerformance(fetchType, params),
+          getVerificationStats(fetchType, params),
+          getSpecialtiesData(fetchType, params),
+          getServiceGrowth(fetchType, params),
         ]);
-
-        const mergedSummary = {
-          totalApplications:
-            (appSummary?.totalApplications ||
-              appSummary?.totalRecords?.[0]?.total ||
-              0) +
-            (earlySummary?.totalApplications ||
-              earlySummary?.totalRecords?.[0]?.total ||
-              0),
-          revenueSummary: {
-            overallRevenue:
-              (appSummary?.revenueSummary?.overallRevenue ||
-                appSummary?.totalRevenue?.[0]?.revenue ||
-                0) +
-              (earlySummary?.revenueSummary?.overallRevenue ||
-                earlySummary?.totalRevenue?.[0]?.revenue ||
-                0),
-          },
-          byServiceType: [
-            ...(appSummary?.byServiceType || []),
-            ...(earlySummary?.byServiceType || []),
-          ],
-          followUpStats: {
-            totalNeeded:
-              (appSummary?.followUpStats?.totalNeeded || 0) +
-              (earlySummary?.followUpStats?.totalNeeded || 0),
-            totalBooked:
-              (appSummary?.followUpStats?.totalBooked || 0) +
-              (earlySummary?.followUpStats?.totalBooked || 0),
-          },
-        };
-
-        const mergedRevenue = [
-          ...(appRevenue || []),
-          ...(earlyRevenue || []),
-        ].sort((a, b) => {
-          const parse = (m) => {
-            if (!m) return 0;
-            const [month, year] = m.split("/").map(Number);
-            return new Date(year, month - 1).getTime();
-          };
-          return parse(a.month) - parse(b.month);
-        });
-
-        const mergedDoctors = [...(appDoctors || []), ...(earlyDoctors || [])];
-        const mergedVerification = {
-          prescriptionsVerified:
-            (appVerification?.prescriptionsVerified || 0) +
-            (earlyVerification?.prescriptionsVerified || 0),
-          prescriptionsPending:
-            (appVerification?.prescriptionsPending || 0) +
-            (earlyVerification?.prescriptionsPending || 0),
-          conclusionsVerified:
-            (appVerification?.conclusionsVerified || 0) +
-            (earlyVerification?.conclusionsVerified || 0),
-          conclusionsPending:
-            (appVerification?.conclusionsPending || 0) +
-            (earlyVerification?.conclusionsPending || 0),
-        };
-        const mergedSpecialties = [
-          ...(appSpecialties || []),
-          ...(earlySpecialties || []),
-        ];
-        const mergedGrowth = [...(appGrowth || []), ...(earlyGrowth || [])];
-
-        setData({
-          summary: mergedSummary,
-          revenue: mergedRevenue,
-          doctors: mergedDoctors,
-          verification: mergedVerification,
-          specialties: mergedSpecialties,
-          serviceGrowth: mergedGrowth,
-        });
-      } else {
         const [
-          summary,
-          revenue,
-          doctors,
-          verification,
-          specialties,
-          serviceGrowth,
-        ] = await Promise.all([
-          getAnalyticsSummary(type, params),
-          getRevenueTrend(type, params),
-          getDoctorPerformance(type, params),
-          getVerificationStats(type, params),
-          getSpecialtiesData(type, params),
-          getServiceGrowth(type, params),
-        ]);
+          summary, revenue, doctors, verification, specialties, serviceGrowth,
+        ] = results.map(ok);
 
         const normalizedSummary = {
           totalApplications:
