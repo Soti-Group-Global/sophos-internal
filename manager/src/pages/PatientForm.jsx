@@ -9,6 +9,7 @@ import { addPatient, getPatient, updatePatient, getDoctorsProfileData } from "..
 import { FaTimes, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { FiPlus, FiX } from "react-icons/fi";
 import "../styles/PatientForm.css";
+import DiseaseCodeSearch from "../components/DiseaseCodeSearch/DiseaseCodeSearch";
 
 /* ─────────────────────── helpers ─────────────────────── */
 const GENDER_OPTIONS = ["Male", "Female", "Other"];
@@ -921,7 +922,12 @@ function PatientForm() {
                   disabled={submitting}
                 />
                 <input className="pf-input" placeholder={tg("diseases.placeholder_diagnosis")} value={row.diagnosis || ""} onChange={(e) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, diagnosis: e.target.value } : r))} disabled={submitting} />
-                <input className="pf-input" placeholder={tg("diseases.placeholder_icd_code")} value={row.icdCode || ""} onChange={(e) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, icdCode: e.target.value } : r))} disabled={submitting} />
+                <DiseaseCodeSearch
+                  placeholder={tg("diseases.placeholder_icd_code")}
+                  value={row.icdCode || ""}
+                  onChange={(val) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, icdCode: val } : r))}
+                  disabled={submitting}
+                />
                 <DoctorDropdown
                   value={row.doctor || ""}
                   onChange={(val) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, doctor: val } : r))}
@@ -958,7 +964,12 @@ function PatientForm() {
                   disabled={submitting}
                 />
                 <input className="pf-input" placeholder={tg("final_diagnosis.placeholder_diagnosis")} value={row.diagnosis || ""} onChange={(e) => setFinalDiagnoses((p) => p.map((r, i) => i === idx ? { ...r, diagnosis: e.target.value } : r))} disabled={submitting} />
-                <input className="pf-input" placeholder={tg("final_diagnosis.placeholder_icd")} value={row.icdCode || ""} onChange={(e) => setFinalDiagnoses((p) => p.map((r, i) => i === idx ? { ...r, icdCode: e.target.value } : r))} disabled={submitting} />
+                <DiseaseCodeSearch
+                  placeholder={tg("final_diagnosis.placeholder_icd")}
+                  value={row.icdCode || ""}
+                  onChange={(val) => setFinalDiagnoses((p) => p.map((r, i) => i === idx ? { ...r, icdCode: val } : r))}
+                  disabled={submitting}
+                />
                 <select className="pf-input" value={row.primary || "1"} onChange={(e) => setFinalDiagnoses((p) => p.map((r, i) => i === idx ? { ...r, primary: e.target.value } : r))} disabled={submitting}><option value="1">1</option><option value="2">2</option></select>
                 <DoctorDropdown
                   value={row.doctorName || ""}
