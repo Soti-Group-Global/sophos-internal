@@ -1041,17 +1041,21 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                   </div>
                   {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).length > 0 ? (
                     <div className="ht-lab-analysis-grid">
-                      {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).map((test) => (
-                        <div key={test._id} className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}>
-                          <label>
-                            <input type="checkbox" checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]} onChange={(e) => { e.stopPropagation(); handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); }} onClick={(e) => e.stopPropagation()} />
-                          </label>
-                          <div className="ht-lab-analysis-item-label" onClick={() => handleSelectTest(test, activeNavItem)}>
-                            <span>{test.name?.en || ""}</span>
-                            <span>{test.name?.ru || ""}</span>
+                      {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).map((test) => {
+                        const isChecked = activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id];
+                        return (
+                          <div
+                            key={test._id}
+                            className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${isChecked ? " ht-lab-analysis-item--selected" : ""}`}
+                            onClick={() => { handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); handleSelectTest(test, activeNavItem); }}
+                          >
+                            <div className="ht-lab-analysis-item-label">
+                              <span className="lab-name-en">{test.name?.en || ""}</span>
+                              {test.name?.ru && <span className="lab-name-ru">{test.name.ru}</span>}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="ht-lab-analysis-empty">
@@ -1265,17 +1269,21 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 </div>
                 {withFiles.length > 0 ? (
                   <div className="ht-lab-analysis-grid">
-                    {allTests.map((test) => (
-                      <div key={test._id} className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${selectedTest?._id === test._id ? " ht-lab-analysis-item--selected" : ""}`}>
-                        <label>
-                          <input type="checkbox" checked={activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id]} onChange={(e) => { e.stopPropagation(); handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); }} onClick={(e) => e.stopPropagation()} />
-                        </label>
-                        <div className="ht-lab-analysis-item-label" onClick={() => handleSelectTest(test, activeNavItem)}>
-                          <span>{test.name?.en || ""}</span>
-                          <span>{test.name?.ru || ""}</span>
+                    {allTests.map((test) => {
+                      const isChecked = activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id];
+                      return (
+                        <div
+                          key={test._id}
+                          className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${isChecked ? " ht-lab-analysis-item--selected" : ""}`}
+                          onClick={() => { handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); handleSelectTest(test, activeNavItem); }}
+                        >
+                          <div className="ht-lab-analysis-item-label">
+                            <span className="lab-name-en">{test.name?.en || ""}</span>
+                            {test.name?.ru && <span className="lab-name-ru">{test.name.ru}</span>}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="ht-lab-empty-view">
