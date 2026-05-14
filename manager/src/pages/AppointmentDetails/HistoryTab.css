@@ -1915,6 +1915,97 @@
   background: #f5f8ff;
 }
 
+.ht-sp-common-report-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.ht-sp-common-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #0c3870;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ht-sp-common-report-btn:hover {
+  background: #0a2e5d;
+}
+
+.ht-spdf-meta-row {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+.ht-spdf-files-block {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.ht-spdf-files-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.ht-spdf-files-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ht-spdf-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #1e293b;
+}
+
+.ht-spdf-file-idx {
+  color: #94a3b8;
+  font-size: 11px;
+  min-width: 16px;
+}
+
+.ht-spdf-file-name {
+  flex: 1;
+}
+
+.ht-spdf-file-date {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.ht-spdf-comment-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
 .ht-spdf-overlay {
   position: fixed;
   inset: 0;

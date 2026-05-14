@@ -53,6 +53,8 @@ import {
   deleteEarlyDetectionTestEntryNote,
 } from "../utils/api";
 import { createPortal } from "react-dom";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import GeneralInformationTab from "./AppointmentDetails/GeneralInformationTab";
 import CustomCalendar from "../components/CustomCalendar/CustomCalendar";
 import CustomTimePicker from "../components/CustomTimePicker/CustomTimePicker";
@@ -61,6 +63,91 @@ import SpecialistHistoryForm from "../components/SpecialistHistoryForm/Specialis
 import EarlyDetectionReportTab from "./EarlyDetectionReport/EarlyDetectionReportTab";
 import "../styles/EarlyDetectionBookingDetails.css";
 import "./AppointmentDetailsPage.css";
+
+const CLINIC_INFO_ED = {
+  name: "Медицинский центр «СОФОС»",
+  phone: "+7-495-324-11-11",
+  website: "www.sophos-med.ru",
+  address: "ООО «ЭЙЧДИ КЛИНИК» · Бизнес-центр 'Квартал West' · Аминьевское Шоссе, 6, Москва, 119517",
+  email: "contact@sophos-med.ru",
+};
+
+function EDSectionPDFModal({ title, commentHtml, files, booking, onClose }) {
+  const reportRef = useRef(null);
+  const [generating, setGenerating] = useState(false);
+  const bookingNum = booking?.invoiceNumber || booking?.bookingNumber || booking?._id || "report";
+
+  const handleDownload = async () => {
+    if (!reportRef.current) return;
+    setGenerating(true);
+    try {
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      const A4_W_MM = 210, A4_H_MM = 297, SCALE = 2, PAGE_H_PX = 1123;
+      const pageEls = Array.from(reportRef.current.querySelectorAll(".ed-page"));
+      for (let i = 0; i < pageEls.length; i++) {
+        const el = pageEls[i];
+        const elH = Math.round(el.getBoundingClientRect().height);
+        const canvas = await html2canvas(el, { scale: SCALE, useCORS: true, allowTaint: true, backgroundColor: "#ffffff", width: 794, height: elH });
+        const canvasPageH = PAGE_H_PX * SCALE;
+        const totalSlices = Math.max(1, Math.ceil(canvas.height / canvasPageH));
+        for (let s = 0; s < totalSlices; s++) {
+          if (i > 0 || s > 0) pdf.addPage();
+          const srcY = s * canvasPageH;
+          const srcH = Math.min(canvasPageH, canvas.height - srcY);
+          if (srcH <= 0) break;
+          const sc = document.createElement("canvas");
+          sc.width = canvas.width; sc.height = srcH;
+          const ctx = sc.getContext("2d");
+          ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, sc.width, srcH);
+          ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+          pdf.addImage(sc.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, A4_W_MM, (srcH / canvasPageH) * A4_H_MM);
+        }
+      }
+      pdf.save(`section_${bookingNum}.pdf`);
+    } finally { setGenerating(false); }
+  };
+
+  return createPortal(
+    <div className="ht-spdf-overlay" onClick={onClose}>
+      <div className="ht-spdf-container" onClick={(e) => e.stopPropagation()}>
+        <div className="ht-spdf-toolbar">
+          <button className="ht-spdf-download-btn" onClick={handleDownload} disabled={generating}>
+            <Download size={14} />{generating ? "Генерация..." : "Скачать PDF"}
+          </button>
+          <button className="ht-spdf-close-btn" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="ht-spdf-preview">
+          <div ref={reportRef} className="ed-report-doc">
+            <div className="ed-page">
+              <div className="ed-page-header">
+                <img src="/logo_ru.png" alt="Logo" className="ed-header-logo" />
+                <div className="ed-header-clinic">
+                  <span className="ed-header-clinic-name">{CLINIC_INFO_ED.name}</span>
+                  <span className="ed-header-clinic-contact">{CLINIC_INFO_ED.phone} &nbsp; | &nbsp; {CLINIC_INFO_ED.website}</span>
+                </div>
+              </div>
+              <hr className="ed-header-line" />
+              <div className="ed-conclusions-body">
+                <div className="ed-field-title" style={{ marginBottom: 16 }}>{title}</div>
+                <div className="ed-section-content-text" dangerouslySetInnerHTML={{ __html: commentHtml || "<p>—</p>" }} />
+              </div>
+              <div className="ed-page-footer">
+                <span>{CLINIC_INFO_ED.address}</span>
+                <span>тел: <strong>{CLINIC_INFO_ED.phone}</strong> &nbsp;|&nbsp; {CLINIC_INFO_ED.website}</span>
+              </div>
+              <div className="ed-page-footer-bar">
+                ИНН 9727077651 &nbsp;·&nbsp; ОГРН 1247700412068 &nbsp;·&nbsp; Ежедневно с 09:00 до 21:00
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 const ED_PACKAGES = [{ id: "predict", name: "«ПРЕДИКТ»", price: 99500 }];
 
@@ -320,7 +407,8 @@ const EarlyDetectionBookingDetails = () => {
   const [uploadCustomName, setUploadCustomName] = useState("");
   const [uploadFile, setUploadFile] = useState(null);
   const [isUploadingSectionFile, setIsUploadingSectionFile] = useState(false);
-  const [uploadFiles, setUploadFiles] = useState([]); // For multiple file uploads with custom names
+  const [uploadFiles, setUploadFiles] = useState([]);
+  const [edSectionPdfModal, setEdSectionPdfModal] = useState(null);
   const [sectionEditors, setSectionEditors] = useState({
     morphologicalResearch: { value: "", isVerified: false, saving: false },
     proceduresAndManipulations: { value: "", isVerified: false, saving: false },
@@ -2764,6 +2852,18 @@ const EarlyDetectionBookingDetails = () => {
                                     ? t("earlyDiagnosis.saving", "Saving...")
                                     : t("earlyDiagnosis.save", "Save")}
                                 </button>
+                                <button
+                                  type="button"
+                                  className="ht-sp-pdf-btn"
+                                  title={t("history_tab.export_pdf", "Export PDF")}
+                                  onClick={() => setEdSectionPdfModal({
+                                    title: t("earlyDiagnosis.morphologicalResearch", "Morphological research"),
+                                    commentHtml: sectionEditors?.morphologicalResearch?.value || "",
+                                    files: booking?.schedule?.morphologicalResearch?.files || [],
+                                  })}
+                                >
+                                  <Download size={14} />
+                                </button>
                               </div>
                             </div>
                             <div className="ed-history-rich-editor">
@@ -2908,6 +3008,18 @@ const EarlyDetectionBookingDetails = () => {
                                     ?.saving
                                     ? t("earlyDiagnosis.saving", "Saving...")
                                     : t("earlyDiagnosis.save", "Save")}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="ht-sp-pdf-btn"
+                                  title={t("history_tab.export_pdf", "Export PDF")}
+                                  onClick={() => setEdSectionPdfModal({
+                                    title: t("earlyDiagnosis.proceduresAndManipulations", "Procedures and manipulations"),
+                                    commentHtml: sectionEditors?.proceduresAndManipulations?.value || "",
+                                    files: booking?.schedule?.proceduresAndManipulations?.files || [],
+                                  })}
+                                >
+                                  <Download size={14} />
                                 </button>
                               </div>
                             </div>
@@ -4244,6 +4356,16 @@ const EarlyDetectionBookingDetails = () => {
           </div>,
           document.body,
         )}
+
+      {edSectionPdfModal && (
+        <EDSectionPDFModal
+          title={edSectionPdfModal.title}
+          commentHtml={edSectionPdfModal.commentHtml}
+          files={edSectionPdfModal.files || []}
+          booking={booking}
+          onClose={() => setEdSectionPdfModal(null)}
+        />
+      )}
     </div>
   );
 };

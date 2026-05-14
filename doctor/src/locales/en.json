@@ -1917,6 +1917,7 @@
     "bookingCreateDescription": "Initial booking record created in system.",
     "testNameEn": "Test name (EN)",
     "testNameRu": "Test name (RU)",
+    "customName": "File name",
     "customNameOptional": "Optional",
     "filesToUpload": "Files to upload",
     "remove": "Remove",

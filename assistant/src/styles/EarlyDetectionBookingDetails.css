@@ -4166,17 +4166,6 @@ body.hide-global-sidebar .adp-app-sidebar {
 }
 
 .ed-schedule-empty {
-  padding: 24px 16px;
-  font-size: 14px;
-  color: #6b7280;
-  text-align: center;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  margin: 16px 0;
-}
-
-/* Enhanced empty state for morphological research & procedures tabs */
-.ed-schedule-section-list .ed-schedule-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4187,13 +4176,13 @@ body.hide-global-sidebar .adp-app-sidebar {
   border: 1.5px dashed #d0d5dd;
   border-radius: 12px;
   margin: 8px 0 16px;
-  color: #98a2b3;
   font-size: 14px;
+  color: #98a2b3;
   font-weight: 400;
   line-height: 1.5;
+  text-align: center;
 }
-
-.ed-schedule-section-list .ed-schedule-empty::before {
+.ed-schedule-empty::before {
   content: "📂";
   font-size: 36px;
   line-height: 1;
@@ -6522,4 +6511,149 @@ body.hide-global-sidebar .adp-app-sidebar {
   flex-shrink: 0;
   opacity: 0.6;
   transition: transform 0.2s;
+}
+
+/* ── ED Section PDF button & modal ─────────────────────────── */
+.ht-sp-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.ht-sp-pdf-btn:hover {
+  border-color: #0c3870;
+  color: #0c3870;
+  background: #f5f8ff;
+}
+
+.ht-spdf-meta-row {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+.ht-spdf-files-block {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.ht-spdf-files-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.ht-spdf-files-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ht-spdf-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #1e293b;
+}
+
+.ht-spdf-file-idx { color: #94a3b8; font-size: 11px; min-width: 16px; }
+.ht-spdf-file-name { flex: 1; }
+.ht-spdf-file-date { font-size: 11px; color: #94a3b8; }
+
+.ht-spdf-comment-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.ht-spdf-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 15, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+
+.ht-spdf-container {
+  background: #f3f4f6;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.ht-spdf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ht-spdf-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #0c3870;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ht-spdf-download-btn:hover:not(:disabled) { background: #0a2e5d; }
+.ht-spdf-download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.ht-spdf-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.ht-spdf-close-btn:hover { background: #f3f4f6; color: #111827; }
+
+.ht-spdf-preview {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
 }

@@ -432,7 +432,7 @@ export default function EarlyDetectionReportTab({ booking }) {
       </div>
       <div className="ed-page-footer">
         <span>{CLINIC_INFO.address}</span>
-        <span>тел: <strong>{CLINIC_INFO.phone}</strong> &nbsp; | &nbsp; email: {CLINIC_INFO.email} &nbsp; | &nbsp; <strong>{CLINIC_INFO.website}</strong></span>
+        <span>тел: <strong>{CLINIC_INFO.phone}</strong> &nbsp; | &nbsp; Почта: {CLINIC_INFO.email} &nbsp; | &nbsp; <strong>{CLINIC_INFO.website}</strong></span>
       </div>
       <div className="ed-page-footer-bar">
         ИНН 9727077651 &nbsp; · &nbsp; ОГРН 1247700412068 &nbsp; · &nbsp; Ежедневно с 09:00 до 21:00

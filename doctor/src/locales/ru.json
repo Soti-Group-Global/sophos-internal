@@ -1871,6 +1871,7 @@
     "bookingCreateDescription": "Первоначальная запись создана в системе.",
     "testNameEn": "Название теста (EN)",
     "testNameRu": "Название теста (RU)",
+    "customName": "Название файла",
     "customNameOptional": "Необязательно",
     "filesToUpload": "Файлы для загрузки",
     "remove": "Удалить",

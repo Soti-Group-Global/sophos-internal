@@ -58,13 +58,10 @@ const CLINIC_INFO = {
   email: "contact@sophos-med.ru",
 };
 
-function SectionPDFModal({ title, commentHtml, application, patient, onClose }) {
+function SectionPDFModal({ title, commentHtml, files, application, patient, onClose }) {
   const reportRef = useRef(null);
   const [generating, setGenerating] = useState(false);
 
-  const fullName = [patient?.firstName, patient?.middleName, patient?.lastName]
-    .filter(Boolean).join(" ").trim() || "—";
-  const patientId = patient?.patientId || patient?._id || "—";
   const bookingNum = application?.applicationId || application?._id || "report";
 
   const handleDownload = async () => {
@@ -128,13 +125,8 @@ function SectionPDFModal({ title, commentHtml, application, patient, onClose }) 
               </div>
               <hr className="ed-header-line" />
               <div className="ed-conclusions-body">
-                <div className="ed-field-title" style={{ marginBottom: 12 }}>{title}</div>
+                <div className="ed-field-title" style={{ marginBottom: 16 }}>{title}</div>
                 <div className="ed-section-content-text" dangerouslySetInnerHTML={{ __html: commentHtml || "<p>—</p>" }} />
-              </div>
-              <div className="ed-page-footer-patient">
-                <span>ID: {patientId}</span>
-                <span>{fullName}</span>
-                <span>Страница 1</span>
               </div>
               <div className="ed-page-footer">
                 <span>{CLINIC_INFO.address}</span>
@@ -1570,6 +1562,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
         <SectionPDFModal
           title={sectionPdfModal.title}
           commentHtml={sectionPdfModal.commentHtml}
+          files={sectionPdfModal.files || []}
           application={application}
           patient={patient}
           onClose={() => setSectionPdfModal(null)}
