@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Download, FileSpreadsheet, FolderOpen, Plus, Upload, X } from "lucide-react";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import {
@@ -375,16 +376,28 @@ const ServiceManager = () => {
     setImportErrors([]);
     setImportHeaders([]);
 
+    const isXlsx = /\.(xlsx|xls)$/i.test(file.name);
+
     try {
-      const text = await file.text();
-      const parsed = chooseImportParse(text);
-      const parsedRows = parsed.rows;
-      const delimiter = parsed.delimiter;
-      const parseErrors = (parsed.result.errors || []).map((e) => e.message);
-      if (parseErrors.length) {
-        setImportErrors(parseErrors);
-        toast.error(parseErrors[0]);
-        return;
+      let parsedRows;
+      let delimiter = ",";
+
+      if (isXlsx) {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        parsedRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      } else {
+        const text = await file.text();
+        const parsed = chooseImportParse(text);
+        parsedRows = parsed.rows;
+        delimiter = parsed.delimiter;
+        const parseErrors = (parsed.result.errors || []).map((e) => e.message);
+        if (parseErrors.length) {
+          setImportErrors(parseErrors);
+          toast.error(parseErrors[0]);
+          return;
+        }
       }
 
       const validation = validateImportRows(parsedRows, delimiter);
@@ -602,7 +615,7 @@ const ServiceManager = () => {
               <label className="sm-upload-box">
                 <Upload size={22} />
                 <span>{importFileName || t("import.chooseFile")}</span>
-                <input type="file" accept=".csv,text/csv" onChange={handleImportFile} />
+                <input type="file" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={handleImportFile} />
               </label>
               {importRows.length > 0 && (
                 <div className="sm-import-preview">
