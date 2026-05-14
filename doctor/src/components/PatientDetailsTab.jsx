@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useContext, createContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import DiseaseCodeSearch from "./DiseaseCodeSearch/DiseaseCodeSearch";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import {
@@ -1123,8 +1124,11 @@ function DiseasesSection({ patient, onRefresh }) {
                 </div>
                 <div className="adp-labeled-input">
                   <span className="adp-input-label">{t("pdtab.diseases.icdCode")}</span>
-                  <input className="adp-text-input" value={row.icdCode} placeholder={t("pdtab.diseases.icdCodePh")}
-                    onChange={(e) => updateRow(i, "icdCode", e.target.value)} />
+                  <DiseaseCodeSearch
+                    value={row.icdCode}
+                    placeholder={t("pdtab.diseases.icdCodePh")}
+                    onChange={(val) => updateRow(i, "icdCode", val)}
+                  />
                 </div>
               </div>
               <div className="adp-labeled-input adp-combobox-wrapper" style={{ position: "relative" }}>
@@ -1410,8 +1414,11 @@ function FinalDiagnosisSection({ patient, onRefresh }) {
                 </div>
                 <div className="adp-labeled-input">
                   <span className="adp-input-label">{t("pdtab.finalDiag.icdCode")}</span>
-                  <input className="adp-text-input" value={row.icdCode} placeholder={t("pdtab.finalDiag.icdPh")}
-                    onChange={(e) => updateRow(i, "icdCode", e.target.value)} />
+                  <DiseaseCodeSearch
+                    value={row.icdCode}
+                    placeholder={t("pdtab.finalDiag.icdPh")}
+                    onChange={(val) => updateRow(i, "icdCode", val)}
+                  />
                 </div>
               </div>
               <div className="adp-labeled-input">

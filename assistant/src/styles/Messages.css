@@ -1,12 +1,12 @@
 /* Modern Messages Container */
 .mm-modern-page {
-  max-height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .mm-modern-container {
   display: flex;
-  max-height: calc(100vh - 15vh);
-  min-height: calc(100vh - 15vh);
+  height: 100%;
   background: white;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);

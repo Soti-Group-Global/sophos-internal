@@ -7,6 +7,7 @@
   useEffect,
 } from "react";
 import { createPortal } from "react-dom";
+import DiseaseCodeSearch from "../../components/DiseaseCodeSearch/DiseaseCodeSearch";
 import { getApptStatusClass } from "../../utils/appointmentStatus";
 import {
   FiEdit2,
@@ -1545,13 +1546,11 @@ const DiseasesSection = forwardRef(({ patient }, ref) => {
                       updateRow(row.id, "diagnosis", e.target.value)
                     }
                   />
-                  <input
-                    className="adp-text-input adp-diag-input"
+                  <DiseaseCodeSearch
+                    className="adp-diag-input"
                     placeholder={t("diseases.placeholder_icd_code")}
                     value={row.icdCode}
-                    onChange={(e) =>
-                      updateRow(row.id, "icdCode", e.target.value)
-                    }
+                    onChange={(val) => updateRow(row.id, "icdCode", val)}
                   />
                   <DoctorAutocomplete
                     value={row.doctor}
@@ -1750,13 +1749,11 @@ const FinalDiagnosisSection = forwardRef(({ patient }, ref) => {
                       updateRow(row.id, "diagnosis", e.target.value)
                     }
                   />
-                  <input
-                    className="adp-text-input adp-diag-input"
+                  <DiseaseCodeSearch
+                    className="adp-diag-input"
                     placeholder={t("final_diagnosis.placeholder_icd")}
                     value={row.icdCode}
-                    onChange={(e) =>
-                      updateRow(row.id, "icdCode", e.target.value)
-                    }
+                    onChange={(val) => updateRow(row.id, "icdCode", val)}
                   />
                   <select
                     className="adp-text-input adp-diag-input adp-select"

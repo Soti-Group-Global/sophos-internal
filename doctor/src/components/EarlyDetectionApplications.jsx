@@ -726,7 +726,7 @@ const EarlyDetectionApplications = () => {
                           {(() => { const dob = getPatientDOB(appt); return dob ? (calculateAge(dob) ?? "—") : "—"; })()}
                         </span>
                       </td>
-                      <td><span className="appt-cell-id">#{appt.applicationId || appt._id}</span></td>
+                      <td><span className="appt-cell-id">#{appt.invoiceNumber || appt.applicationId || appt._id}</span></td>
                       <td>
                         {(() => {
                           const s = appt.appointmentStatus;

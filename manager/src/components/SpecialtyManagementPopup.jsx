@@ -245,8 +245,8 @@ const SpecialtyManagementPopup = ({ onClose }) => {
   };
 
   return (
-    <div className="specialty-management-overlay">
-      <div className="specialty-management-popup">
+    <div className="specialty-management-overlay" onClick={(e) => e.stopPropagation()}>
+      <div className="specialty-management-popup" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="specialty-management-header">
           <h2>{t('doctorProfile.specialtyManagement.title') || 'Manage Specialties'}</h2>

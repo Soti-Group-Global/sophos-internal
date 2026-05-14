@@ -41,6 +41,11 @@
   border-top: 1px solid #e8eef6;
 }
 
+/* Messages page — fill full height, no scroll on outer container */
+.layout-content:has(.mm-modern-page) {
+  overflow: hidden;
+}
+
 /* Remove layout padding when a full-bleed page (e.g. appointment details) is rendered */
 .layout-content:has(.adp-page) {
   padding: 0;

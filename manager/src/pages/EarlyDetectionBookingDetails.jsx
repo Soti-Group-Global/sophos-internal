@@ -95,6 +95,10 @@ const SPECIALTY_ALIASES = {
     "узи",
     "ультразв",
     "ультразву",
+    "ультразвуковая",
+    "ультразвуковой",
+    "функциональная диагностика",
+    "функцион",
   ],
   gynecologist: [
     "gynecologist",
@@ -190,17 +194,33 @@ const normalizeId = (value) => {
 };
 
 const getDoctorSpecialtyNames = (doctor) => {
-  const specialties = Array.isArray(doctor?.specialtyIds)
-    ? doctor.specialtyIds
-    : [];
-  const subSpecialties = Array.isArray(doctor?.subSpecialityIds)
-    ? doctor.subSpecialityIds
-    : [];
+  const specialties = Array.isArray(doctor?.specialtyIds) ? doctor.specialtyIds : [];
+  const subSpecialties = Array.isArray(doctor?.subSpecialityIds) ? doctor.subSpecialityIds : [];
 
-  return [...specialties, ...subSpecialties]
-    .flatMap((specialty) => [specialty?.name_en, specialty?.name_ru])
-    .filter(Boolean)
-    .map(normalizeMatchText);
+  const names = [...specialties, ...subSpecialties]
+    .flatMap((s) => {
+      if (!s) return [];
+      if (typeof s === "object") return [s.name_en, s.name_ru, s.name, s.title];
+      return [];
+    })
+    .filter(Boolean);
+
+  const pos = doctor?.position;
+  if (pos) {
+    if (typeof pos === "string") names.push(pos);
+    else if (typeof pos === "object") {
+      if (pos.en) names.push(pos.en);
+      if (pos.ru) names.push(pos.ru);
+    }
+  }
+
+  if (doctor?.specialty && typeof doctor.specialty === "string") {
+    names.push(doctor.specialty);
+  }
+
+  const result = names.map(normalizeMatchText).filter(Boolean);
+  console.log(`[getDoctorSpecialtyNames] ${doctor?.email} →`, result);
+  return result;
 };
 
 const doctorMatchesScheduleTitle = (doctor, title) => {
@@ -528,11 +548,13 @@ const EarlyDetectionBookingDetails = () => {
     setLoadingDoctors(true);
     try {
       const response = await getEarlyDetectionDoctors();
+      console.log("[loadDoctors] raw response:", response);
       const doctorsData = Array.isArray(response)
         ? response
         : Array.isArray(response?.data)
           ? response.data
           : [];
+      console.log("[loadDoctors] doctorsData count:", doctorsData.length, doctorsData);
       setDoctors(doctorsData);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load doctors");
@@ -1260,10 +1282,12 @@ const EarlyDetectionBookingDetails = () => {
     return fullName || doctor.email || "-";
   };
 
-  const getDoctorsForScheduleItem = (item) =>
-    doctors.filter((doctor) =>
-      doctorMatchesScheduleTitle(doctor, item?.title || ""),
-    );
+  const getDoctorsForScheduleItem = (item) => {
+    const title = item?.title || "";
+    const matched = doctors.filter((doctor) => doctorMatchesScheduleTitle(doctor, title));
+    console.log(`[getDoctorsForScheduleItem] title="${title}" → ${matched.length} match(es):`, matched.map((d) => d.email));
+    return matched;
+  };
 
   const SLOT_STEP_MINUTES = 30;
   const MIN_APPOINTMENT_MINUTES = 60;

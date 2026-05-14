@@ -246,9 +246,7 @@ const getEarlyDetectionDoctors = async (req, res) => {
   try {
     const { branch, status } = req.query;
 
-    const query = {
-      earlyDetection: true,
-    };
+    const query = {};
 
     if (status && status !== "all") {
       query.status = status;
@@ -270,7 +268,7 @@ const getEarlyDetectionDoctors = async (req, res) => {
       .populate('specialtyIds', 'name_en name_ru')
       .populate('subSpecialityIds', 'name_en name_ru')
       .sort({ "reviewStats.averageRating": -1, createdAt: -1 })
-      .select("firstName middleName lastName email specialtyIds subSpecialityIds earlyDetection status")
+      .select("firstName middleName lastName email specialtyIds subSpecialityIds earlyDetection status position")
       .lean();
 
     res.status(200).json({

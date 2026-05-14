@@ -701,7 +701,7 @@ const ContactSection = ({
 
 const MessageBubble = ({ message, isSender, formatTime, baseUrl }) => {
   const renderAttachment = () => {
-    if (!message.file) return null;
+    if (!message.file || !message.file.url) return null;
 
     const fileUrl = message.file.url.startsWith("http")
       ? message.file.url
