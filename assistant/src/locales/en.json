@@ -1,24 +1,23 @@
 {
-    "general": {
-      "assistant": "Assistant",
-      "doctor": "Doctor",
-      "office": "Health-Direct's Office",
-      "search": "Search",
-      "searchPlaceholder": "Search...",
-      "notifications": "Notifications",
-      "logout": "Logout"
-    },
-    "notifications": {
-      "newApplication": "New application from Amanda Chavez",
-      "appointmentUpdated": "Randy Elliot’s appointment updated",
-      "maintenance": "System maintenance scheduled",
-      "none": "No new notifications"
-    },
-    "search": {
-      "noResults": "No results found",
-      "placeholder": "Type to search patients, appointments, etc."
-    },
-
+  "general": {
+    "assistant": "Assistant",
+    "doctor": "Doctor",
+    "office": "Health-Direct's Office",
+    "search": "Search",
+    "searchPlaceholder": "Search...",
+    "notifications": "Notifications",
+    "logout": "Logout"
+  },
+  "notifications": {
+    "newApplication": "New application from Amanda Chavez",
+    "appointmentUpdated": "Randy Elliot’s appointment updated",
+    "maintenance": "System maintenance scheduled",
+    "none": "No new notifications"
+  },
+  "search": {
+    "noResults": "No results found",
+    "placeholder": "Type to search patients, appointments, etc."
+  },
   "sidebar": {
     "myAppointments": "My Appointments",
     "patients": "Patients",
@@ -33,12 +32,10 @@
     "stockRequest": "Stock Request",
     "tasks": "Tasks",
     "schedule": "Schedule Appointments",
-
     "clients": "Clients",
     "corporate": "Corporate",
     "feed": "Feed"
   },
-
   "appointments": {
     "title": "Appointments",
     "loading": "Loading appointments...",
@@ -61,7 +58,7 @@
     "previous": "Previous",
     "next": "Next",
     "resultsCount": "Showing {{from}}-{{to}} of {{total}} appointments",
-     "exportCSV": "Export as CSV",
+    "exportCSV": "Export as CSV",
     "exportSuccess": "Appointments exported successfully",
     "noDataToExport": "No data to export",
     "csv": {
@@ -90,256 +87,237 @@
     "age": "Age",
     "typeOfService": "Type of Service"
   },
-
   "appointment": {
-  "backToAppointments": "Back to Appointments",
-  "title": "Appointment Details",
-  "date": "Date",
-  "time": "Time",
-  "service": "Service",
-  "mode": "Mode",
-  "location": "Location",
-  "doctor": "Doctor",
-  "patient": "Patient",
-  "uploadDocument": "Upload Document",
-  "uploading": "Uploading...",
-  "noDocuments": "No documents uploaded yet",
-  "prescription": "Prescription",
-  "noConclusion": "No  Doctor's Conclusion",
-  "noPrescription": "No  Prescription",
-  "conclusion": "Doctor's Conclusion",
-  "yourThoughts": "Enter your thoughts",
-  "edit": "Edit",
-  "save": "Save",
-  "cancel": "Cancel",
-  "downloadPDF": "Download PDF",
-  "comments": "Conversation",
-  "noComments": "No comments yet",
-  "postComment": "Post Comment",
-  "shareThoughts": "Share your thoughts...",
-  "loading": "Loading appointment details...",
-  "error": "Failed to load appointment details.",
-  "noAppointment": "We couldn't find this appointment.",
-  "joinMeeting": "Join Meeting",
-  "documents": "Documents",
-  "file": "FILE",
-  "view": "View",
-  "download": "Download",
-  "doctorConclusion": "Enter doctor's conclusion...",
-  "prescriptionDetails":"Enter prescription details...",
-    "uploadedAt": "Uploaded At: ",
-
-
-  "noTests": "No tests ordered yet.",
-  "noResult": "Upload Result",
-  "testResults": "Tests & Results",
-  "addTest": "Add Test",
-  "selectTests": "Select Tests to Add",
-  "deSelectAll": "Deselect All",
-  "selectAll": "Select All",
-  "alreadySelected": "Already added",
-  "testSelected": "test(s) selected",
-  "addSelectedTests": "Add Selected Tests",
-  "otherAppointments": "Other related Appointments",
-
-  "comment": "Comment",
-  "booked": "Booked",
-  "followUpId": "Follow-up Appointment ID",
-  "followUp": "Follow-up Appointment"
-},
-
-"application": {
-  "loading": "Loading...",
-  "noApplications": "No Applications",
-  "noApplication": "No application found",
-  "tryAgain": "Try Again",
-  "backToApplications": "Back to Applications",
-  "date": "Date",
-  "time": "Time",
-  "service": "Service",
-  "mode": "Mode",
-  "patient": "Patient",
-  "doctor": "Doctor",
-  "specialty": "Specialty",
-  "documents": "Documents",
-  "uploading": "Uploading...",
-  "uploadDocument": "Upload Document",
-  "cancel": "Cancel",
-  "noDocuments": "No documents available",
-  "view": "View",
-  "download": "Download",
-  "testsAndResults": "Tests and Results",
-  "noTests": "No tests available",
-  "testName": "Test Name",
-  "actions": "Actions",
-  "noResults": "No results available",
-  "prescription": "Prescription",
-  "noPrescription": "No prescription available",
-  "edit": "Edit",
-  "save": "Save",
-  "conclusion": "Conclusion",
-  "noConclusion": "No conclusion available",
-  "downloadPDF": "Download PDF",
-  "selectTests": "Select Tests",
-  "selectAll": "Select All",
-  "deselectAll": "Deselect All",
-  "selectedTests": "Selected {count} test(s)",
-  "addTests": "Add Tests",
-  "alreadyAdded": "Already added",
-  "assignVendor": "Assign Vendor",
-  "assignVendors": "Assign Vendors",
-  "noOrdersSelected": "No orders selected",
-  "noCompatibleVendors": "No compatible vendors available",
-  "selectVendors": "Select Vendor",
-  "selectedOrders": "Selected {count} order(s)",
-  "orderNotFound": "Order not found",
-  "joinMeeting": "Join Meeting",
-  "uploadFile": "Upload File",
-  "addUrl": "Add URL",
-  "chooseFile": "Choose File",
-  "pasteUrlPlaceholder": "Paste URL",
-  "addDocument": "Add Document",
-  "addTest": "Add Test",
-  "title": "Application Details",
-  "noAppointmentId": "No appointment ID provided",
-  "applicationNotFound": "Application not found",
-  "fetchError": "Failed to load application details",
-  "documentFetchError": "Failed to load documents",
-  "testFetchError": "Failed to load test options",
-  "vendorFetchError": "Failed to load vendors",
-  "testOrderFetchError": "Failed to load test orders",
-  "invalidTestId": "Invalid test ID",
-  "noFileSelected": "Please select a file to upload",
-  "noUrlProvided": "Please enter a document URL",
-  "documentUploaded": "Document uploaded successfully",
-  "documentUploadError": "Failed to upload document",
-  "noTestsSelected": "Please select at least one test",
-  "testsAdded": "{{count}} test(s) added successfully",
-  "testAddError": "Failed to add tests",
-  "selectVendorAndOrders": "Please select vendors and orders",
-  "noVendorSelectedForTests": "No vendor selected for tests",
-  "vendorsAssigned": "Vendors assigned to {{count}} order(s)",
-  "vendorAssignError": "Failed to assign vendors",
-  "prescriptionUpdated": "Prescription updated successfully",
-  "prescriptionUpdateError": "Failed to update prescription",
-  "conclusionUpdated": "Conclusion updated successfully",
-  "conclusionUpdateError": "Failed to update conclusion",
-
-  "tabs": {
-    "details": "Application Details",
-    "history": "Medical History"
-  },
-
-  "sections": {
-    "appointment": "Appointment",
-    "documents": "Documents",
-    "tests": "Tests",
-    "prescription": "Prescription",
-    "conclusion": "Conclusion",
-    "meeting": "Meeting"
-  },
-
-  "labels": {
+    "backToAppointments": "Back to Appointments",
+    "title": "Appointment Details",
     "date": "Date",
     "time": "Time",
     "service": "Service",
     "mode": "Mode",
+    "location": "Location",
     "doctor": "Doctor",
-    "specialty": "Specialty",
-    "uploadFile": "Choose File",
-    "pasteUrl": "Paste document URL...",
-    "view": "View",
-    "download": "Download",
-    "addTest": "Add Test",
-    "assignVendor": "Assign Vendor",
-    "editPrescription": "Edit Prescription",
-    "editConclusion": "Edit Conclusion",
+    "patient": "Patient",
+    "uploadDocument": "Upload Document",
+    "uploading": "Uploading...",
+    "noDocuments": "No documents uploaded yet",
+    "prescription": "Prescription",
+    "noConclusion": "No  Doctor's Conclusion",
+    "noPrescription": "No  Prescription",
+    "conclusion": "Doctor's Conclusion",
+    "yourThoughts": "Enter your thoughts",
+    "edit": "Edit",
     "save": "Save",
     "cancel": "Cancel",
-    "add": "Add",
-    "uploading": "Uploading...",
-    "selected": "Selected",
-    "selectVendor": "Select Vendor",
-    "deselectAll": "Deselect All",
-    "selectAll": "Select All",
-    "alreadyAdded": "Already Added",
-    "noResults": "No results available",
+    "downloadPDF": "Download PDF",
+    "comments": "Conversation",
+    "noComments": "No comments yet",
+    "postComment": "Post Comment",
+    "shareThoughts": "Share your thoughts...",
+    "loading": "Loading appointment details...",
+    "error": "Failed to load appointment details.",
+    "noAppointment": "We couldn't find this appointment.",
     "joinMeeting": "Join Meeting",
-    "viewDetails": "View Details",
+    "documents": "Documents",
+    "file": "FILE",
+    "view": "View",
+    "download": "Download",
+    "doctorConclusion": "Enter doctor's conclusion...",
+    "prescriptionDetails": "Enter prescription details...",
+    "uploadedAt": "Uploaded At: ",
+    "noTests": "No tests ordered yet.",
+    "noResult": "Upload Result",
+    "testResults": "Tests & Results",
+    "addTest": "Add Test",
+    "selectTests": "Select Tests to Add",
+    "deSelectAll": "Deselect All",
+    "selectAll": "Select All",
+    "alreadySelected": "Already added",
+    "testSelected": "test(s) selected",
+    "addSelectedTests": "Add Selected Tests",
+    "otherAppointments": "Other related Appointments",
+    "comment": "Comment",
+    "booked": "Booked",
+    "followUpId": "Follow-up Appointment ID",
+    "followUp": "Follow-up Appointment"
+  },
+  "application": {
+    "loading": "Loading...",
+    "noApplications": "No Applications",
+    "noApplication": "No application found",
     "tryAgain": "Try Again",
-    "joinNow":"Join Now"
-  },
-
-  "status": {
-    "completed": "Completed",
-    "confirmed": "Confirmed",
-    "cancelled": "Cancelled",
-    "ordered": "Ordered",
-    "pending": "Pending",
-    "waiting_for_assign": "Waiting for Assign",
-    "paid": "Paid",
-    "unconfirmed": "Unconfirmed"
-  },
-
-  "service_type": {
-    "physical_consultation": "Physical consultation",
-    "telemedicine": "Telemedicine"
-  },
-
-  "personalInfo": {
-    "title": "Personal Information",
-    "fullName": "Full Name",
-    "email": "Email",
-    "phone": "Phone",
-    "dateOfBirth": "Date of Birth",
-    "gender": "Gender",
-    "age": "Age",
-    "address": "Address"
-  },
-
-  "emptyStates": {
-    "noDocuments": {
-      "title": "No Documents",
-      "description": "No documents have been uploaded for this application."
-    },
-
-    "noTests": {
-      "title": "No Tests Ordered",
-      "description": "No tests have been ordered for this application."
-    },
-
-    "noPrescription": {
-      "title": "No Prescription",
-      "description": "No prescription has been added for this application."
-    },
-
-    "noConclusion": {
-      "title": "No Conclusion",
-      "description": "No conclusion has been added for this application."
-    },
-
-    "noMedicalHistory": {
-      "title": "No Medical History",
-      "description": "No previous appointments found for this patient."
-    },
-
+    "backToApplications": "Back to Applications",
+    "date": "Date",
+    "time": "Time",
+    "service": "Service",
+    "mode": "Mode",
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "specialty": "Specialty",
+    "documents": "Documents",
+    "uploading": "Uploading...",
+    "uploadDocument": "Upload Document",
+    "cancel": "Cancel",
+    "noDocuments": "No documents available",
+    "view": "View",
+    "download": "Download",
+    "testsAndResults": "Tests and Results",
+    "noTests": "No tests available",
+    "testName": "Test Name",
+    "actions": "Actions",
+    "noResults": "No results available",
+    "prescription": "Prescription",
+    "noPrescription": "No prescription available",
+    "edit": "Edit",
+    "save": "Save",
+    "conclusion": "Conclusion",
+    "noConclusion": "No conclusion available",
+    "downloadPDF": "Download PDF",
+    "selectTests": "Select Tests",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "selectedTests": "Selected {count} test(s)",
+    "addTests": "Add Tests",
+    "alreadyAdded": "Already added",
+    "assignVendor": "Assign Vendor",
+    "assignVendors": "Assign Vendors",
     "noOrdersSelected": "No orders selected",
-    "noCompatibleVendors": "No compatible vendors"
+    "noCompatibleVendors": "No compatible vendors available",
+    "selectVendors": "Select Vendor",
+    "selectedOrders": "Selected {count} order(s)",
+    "orderNotFound": "Order not found",
+    "joinMeeting": "Join Meeting",
+    "uploadFile": "Upload File",
+    "addUrl": "Add URL",
+    "chooseFile": "Choose File",
+    "pasteUrlPlaceholder": "Paste URL",
+    "addDocument": "Add Document",
+    "addTest": "Add Test",
+    "title": "Application Details",
+    "noAppointmentId": "No appointment ID provided",
+    "applicationNotFound": "Application not found",
+    "fetchError": "Failed to load application details",
+    "documentFetchError": "Failed to load documents",
+    "testFetchError": "Failed to load test options",
+    "vendorFetchError": "Failed to load vendors",
+    "testOrderFetchError": "Failed to load test orders",
+    "invalidTestId": "Invalid test ID",
+    "noFileSelected": "Please select a file to upload",
+    "noUrlProvided": "Please enter a document URL",
+    "documentUploaded": "Document uploaded successfully",
+    "documentUploadError": "Failed to upload document",
+    "noTestsSelected": "Please select at least one test",
+    "testsAdded": "{{count}} test(s) added successfully",
+    "testAddError": "Failed to add tests",
+    "selectVendorAndOrders": "Please select vendors and orders",
+    "noVendorSelectedForTests": "No vendor selected for tests",
+    "vendorsAssigned": "Vendors assigned to {{count}} order(s)",
+    "vendorAssignError": "Failed to assign vendors",
+    "prescriptionUpdated": "Prescription updated successfully",
+    "prescriptionUpdateError": "Failed to update prescription",
+    "conclusionUpdated": "Conclusion updated successfully",
+    "conclusionUpdateError": "Failed to update conclusion",
+    "tabs": {
+      "details": "Application Details",
+      "history": "Medical History"
+    },
+    "sections": {
+      "appointment": "Appointment",
+      "documents": "Documents",
+      "tests": "Tests",
+      "prescription": "Prescription",
+      "conclusion": "Conclusion",
+      "meeting": "Meeting"
+    },
+    "labels": {
+      "date": "Date",
+      "time": "Time",
+      "service": "Service",
+      "mode": "Mode",
+      "doctor": "Doctor",
+      "specialty": "Specialty",
+      "uploadFile": "Choose File",
+      "pasteUrl": "Paste document URL...",
+      "view": "View",
+      "download": "Download",
+      "addTest": "Add Test",
+      "assignVendor": "Assign Vendor",
+      "editPrescription": "Edit Prescription",
+      "editConclusion": "Edit Conclusion",
+      "save": "Save",
+      "cancel": "Cancel",
+      "add": "Add",
+      "uploading": "Uploading...",
+      "selected": "Selected",
+      "selectVendor": "Select Vendor",
+      "deselectAll": "Deselect All",
+      "selectAll": "Select All",
+      "alreadyAdded": "Already Added",
+      "noResults": "No results available",
+      "joinMeeting": "Join Meeting",
+      "viewDetails": "View Details",
+      "tryAgain": "Try Again",
+      "joinNow": "Join Now"
+    },
+    "status": {
+      "completed": "Completed",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled",
+      "ordered": "Ordered",
+      "pending": "Pending",
+      "waiting_for_assign": "Waiting for Assign",
+      "paid": "Paid",
+      "unconfirmed": "Unconfirmed"
+    },
+    "service_type": {
+      "physical_consultation": "Physical consultation",
+      "telemedicine": "Telemedicine"
+    },
+    "personalInfo": {
+      "title": "Personal Information",
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone",
+      "dateOfBirth": "Date of Birth",
+      "gender": "Gender",
+      "age": "Age",
+      "address": "Address"
+    },
+    "emptyStates": {
+      "noDocuments": {
+        "title": "No Documents",
+        "description": "No documents have been uploaded for this application."
+      },
+      "noTests": {
+        "title": "No Tests Ordered",
+        "description": "No tests have been ordered for this application."
+      },
+      "noPrescription": {
+        "title": "No Prescription",
+        "description": "No prescription has been added for this application."
+      },
+      "noConclusion": {
+        "title": "No Conclusion",
+        "description": "No conclusion has been added for this application."
+      },
+      "noMedicalHistory": {
+        "title": "No Medical History",
+        "description": "No previous appointments found for this patient."
+      },
+      "noOrdersSelected": "No orders selected",
+      "noCompatibleVendors": "No compatible vendors"
+    },
+    "messages": {
+      "loading": "Loading application details...",
+      "loadingHistory": "Loading medical history...",
+      "applicationId": "Application ID",
+      "notAvailable": "Not available",
+      "notSpecified": "Not specified",
+      "years": "years",
+      "unknownPatient": "Unknown Patient",
+      "unknownDoctor": "Unknown Doctor"
+    }
   },
-
-  "messages": {
-    "loading": "Loading application details...",
-    "loadingHistory": "Loading medical history...",
-    "applicationId": "Application ID",
-    "notAvailable": "Not available",
-    "notSpecified": "Not specified",
-    "years": "years",
-    "unknownPatient": "Unknown Patient",
-    "unknownDoctor": "Unknown Doctor"
-  }
-},
-
-"patients": {
+  "patients": {
     "title": "Patients",
     "searchPlaceholder": "Search by name, email, service...",
     "loading": "Loading patients...",
@@ -382,7 +360,6 @@
       "endTime": "End Time"
     }
   },
-  
   "patient": {
     "unnamed": "Unnamed Patient",
     "ageWithUnit": "{{age}} years old",
@@ -423,12 +400,11 @@
     "appointment": "Appointment",
     "patientDetails": "Patient Details",
     "medicalHistory": "Medical History",
-    "diagnosis": "Diagnosis"
+    "diagnosis": "Diagnosis",
+    "service": "Services"
   },
-
-  "appointmentHistory":{
-
-  "history": {
+  "appointmentHistory": {
+    "history": {
       "title": "Appointment History",
       "total": "Total",
       "upcoming": "Upcoming",
@@ -442,7 +418,7 @@
     },
     "viewDetails": "View Details"
   },
- "calendar": {
+  "calendar": {
     "title": "Appointment Schedule",
     "subtitle": "Manage your appointments",
     "loading": "Loading appointments...",
@@ -479,10 +455,52 @@
       "defaultMessage": "Hi,\n\nI am unavailable during the scheduled time for this appointment:\n\n- Appointment Number: {{appointmentId}}\n- Patient: {{patient}}\n- Service: {{serviceType}}\n- Original Date: {{date}}\n- Time Slot: {{startTime}} - {{endTime}}\n\nPlease suggest an alternative time that would work for you.\n\nBest regards,\nDr. {{doctorName}}"
     },
     "allDoctors": "All Doctors",
-    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    "monthsShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-    "weekdays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-    "weekdays_short": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "monthsShort": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ],
+    "weekdays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "weekdays_short": [
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa",
+      "Su"
+    ],
     "selectDate": "Select date",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
@@ -499,7 +517,6 @@
     },
     "today": "This month"
   },
-
   "schedule": {
     "title": "Availability Schedule",
     "subtitle": "Set your availability for the next 30 days",
@@ -544,7 +561,6 @@
       "customDays": "Custom days"
     }
   },
-
   "scheduleManagement": {
     "title": "All Assistants",
     "description": "Manage and monitor your practice assistants' access permissions",
@@ -566,9 +582,7 @@
       "recent_access_end": "Recent Access End",
       "status": "Status"
     }
-
   },
-
   "messages": {
     "title": "Manager Chat",
     "noMessages": "No messages yet",
@@ -596,7 +610,6 @@
     "grant_access_successfully": "Access granted successfully",
     "grant_access_failed": "Access granted failed"
   },
-
   "profile": {
     "title": "Assistant's Profile",
     "sidenavSub": "Manage your account settings and preferences.",
@@ -640,7 +653,6 @@
       "request_not_accepted": "Access request was not accepted."
     }
   },
-
   "patientDetails": {
     "backToPatients": "Back to Patients",
     "age": "Age",
@@ -653,7 +665,6 @@
       "medicalHistory": "Medical History"
     }
   },
-
   "signup": {
     "errors": {
       "passwordLength": "Password must be at least 8 characters",
@@ -664,7 +675,6 @@
       "passwordMismatch": "Passwords do not match"
     }
   },
-
   "assistantLogin": {
     "title": "Assistant Login",
     "emailLabel": "Email",
@@ -680,8 +690,7 @@
     "forgotPassword": "Forgot Password?",
     "loggingIn": "Signing in..."
   },
-
-    "forgotPassword": {
+  "forgotPassword": {
     "title": "Reset Password",
     "instructions": "Enter your email address and we'll send you a password reset link",
     "back": "Back to Login",
@@ -699,7 +708,6 @@
       "general": "Failed to send reset email"
     }
   },
-
   "resetPassword": {
     "title": "Set New Password",
     "instructions": "Enter a new password for",
@@ -719,19 +727,16 @@
       "general": "Failed to reset password. Please try again."
     }
   },
-
-    "EarlyDetectionApplications": {
+  "EarlyDetectionApplications": {
     "header": "Early Diagnosis Applications",
     "loading": "Loading applications...",
     "noApplications": "No applications found.",
     "searchPlaceholder": "Search by patient, service, or ID...",
-
     "appointmentHistory": "Appointment History",
     "patientDetails": "Patient Details",
     "applications": "Applications",
     "application": "Application",
     "earlyDetection": "← Back to Early Diagnosis",
-
     "exportCSV": "Export as CSV",
     "exportSuccess": "Early diagnosis applications exported successfully",
     "noDataToExport": "No data to export",
@@ -747,10 +752,7 @@
       "createdAt": "Created At"
     }
   },
-
-
-
-   "myspace": {
+  "myspace": {
     "title": "MySpace",
     "request_access": "Request access",
     "no_assignments": "No assignments yet",
@@ -851,7 +853,6 @@
     "end_datetime": "End Date & Time",
     "grant_access_title": "Grant access to a assistant"
   },
- 
   "status": {
     "access_granted": "Access Granted",
     "active": "Active",
@@ -863,13 +864,11 @@
     "request_sent": "Request Sent",
     "unknown": "Unknown"
   },
-
   "errors": {
     "failed_to_load_doctors": "Failed to load doctors.",
     "failed_to_send_request": "Failed to send request."
   },
-
-    "notif_box": {
+  "notif_box": {
     "common": "Common",
     "personal_disabled": "Personal notifications are currently disabled",
     "loading": "Loading notifications...",
@@ -877,7 +876,6 @@
     "title": "Notifications",
     "personal": "Personal"
   },
-
   "rescheduleForm": {
     "title": "Request Reschedule",
     "patient": "Patient",
@@ -890,7 +888,6 @@
     "processing": "Processing...",
     "error": "Failed to send reschedule request. Please try again."
   },
-
   "appointmentDetails": {
     "title": "Appointment Details",
     "patient": "Patient",
@@ -905,9 +902,6 @@
     "cancel": "Cancel",
     "reasonRequired": "Please enter a reason."
   },
-
-
-  
   "patientSelection": {
     "title": "Select Patient",
     "selectedPatient": "Selected Patient",
@@ -964,7 +958,7 @@
       "processing": "Processing..."
     }
   },
-    "meeting_room": {
+  "meeting_room": {
     "title": "Meeting Room",
     "back": "Back",
     "refresh": "Refresh",
@@ -975,7 +969,7 @@
     "missing_title": "Meeting link is missing",
     "missing_desc": "Please return and generate a meeting link first."
   },
-    "appointment_details_general": {
+  "appointment_details_general": {
     "common": {
       "edit": "Edit",
       "confirm": "Confirm",
@@ -1537,7 +1531,8 @@
       "statistics": "Statistics",
       "contact": "Contact history",
       "payments": "Payments",
-      "telemedicine": "Telemedicine"
+      "telemedicine": "Telemedicine",
+      "service": "Services"
     },
     "documents_tab": {
       "choose_file": "Choose file",
@@ -1606,7 +1601,7 @@
     "copy_link": "Copy link",
     "url_copied": "Link copied to clipboard"
   },
-    "earlyDiagnosis": {
+  "earlyDiagnosis": {
     "earlyDiagnosis": "Early Diagnosis",
     "createNewBooking": "Create New Booking",
     "customerInformation": "Customer Information",
@@ -1816,9 +1811,30 @@
     "specialist_Ophthalmologist": "Ophthalmologist",
     "specialist_Surgeon": "Surgeon",
     "specialist_ENT": "ENT",
-    "specialist_Ultrasound": "Ultrasound"
+    "specialist_Ultrasound": "Ultrasound",
+    "add": "Add",
+    "clickToUpload": "Click to upload files",
+    "selectTest": "Select test",
+    "files": "Files",
+    "addText": "Add text",
+    "noTests": "No tests configured"
+  },
+  "service": {
+    "label": "Services",
+    "addedServices": "Added Services",
+    "addServices": "Add Service",
+    "noAddedPositions": "No services added yet.",
+    "code": "Code",
+    "name": "Name",
+    "price": "Price",
+    "action": "Action",
+    "unnamedPosition": "Unnamed position",
+    "rootFolder": "All Services",
+    "emptyFolder": "This folder is empty.",
+    "loadFailed": "Failed to load services",
+    "remove": "Removed",
+    "removeFailed": "Failed to remove",
+    "positionAdded": "Added",
+    "saveFailed": "Failed to save"
   }
-
-
-  }
-  
+}

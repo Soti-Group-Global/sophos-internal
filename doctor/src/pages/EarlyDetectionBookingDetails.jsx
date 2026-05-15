@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -10,6 +11,9 @@ import {
   Plus,
   Eye,
   Download,
+  X as XIcon,
+  Upload,
+  Pencil,
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import {
@@ -371,6 +375,15 @@ const EarlyDetectionBookingDetails = () => {
   const [uploadFile, setUploadFile] = useState(null);
   const [isUploadingSectionFile, setIsUploadingSectionFile] = useState(false);
   const [uploadFiles, setUploadFiles] = useState([]); // For multiple file uploads with custom names
+  const edAddFileInputRef = useRef(null);
+  const [edAddModalOpen, setEdAddModalOpen] = useState(false);
+  const [edAddSection, setEdAddSection] = useState("");
+  const [edAddItemId, setEdAddItemId] = useState("");
+  const [edAddFiles, setEdAddFiles] = useState([]);
+  const [edAddText, setEdAddText] = useState("");
+  const [edAddSubmitting, setEdAddSubmitting] = useState(false);
+  const [edAddSearchQ, setEdAddSearchQ] = useState("");
+  const [edAddDropOpen, setEdAddDropOpen] = useState(false);
   const [sectionEditors, setSectionEditors] = useState({
     morphologicalResearch: { value: "", isVerified: false, saving: false },
     proceduresAndManipulations: { value: "", isVerified: false, saving: false },
@@ -2001,6 +2014,71 @@ const EarlyDetectionBookingDetails = () => {
 
   const managedSectionTabs = ["laboratoryTests", "instrumentalAnalysis"];
 
+  const handleEdAddModalSubmit = async () => {
+    if (!edAddSection || !edAddItemId) return;
+    const hasFiles = edAddFiles.length > 0;
+    const textContent = String(edAddText || "").replace(/<[^>]*>/g, "").trim();
+    if (!hasFiles && !textContent) return;
+    setEdAddSubmitting(true);
+    try {
+      for (const file of edAddFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("section", edAddSection);
+        formData.append("itemId", edAddItemId);
+        const res = await uploadEarlyDetectionScheduleFile(booking._id || id, edAddSection, formData);
+        refreshBookingFromResponse(res);
+      }
+      if (textContent) {
+        const res = await addEarlyDetectionTestEntryNote(booking._id || id, edAddSection, edAddItemId, edAddText);
+        refreshBookingFromResponse(res);
+      }
+      await loadBookingDetails();
+      setEdAddModalOpen(false);
+      setEdAddFiles([]);
+      setEdAddText("");
+      toast.success(t("earlyDiagnosis.saved", "Saved"));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to upload");
+    } finally {
+      setEdAddSubmitting(false);
+    }
+  };
+
+  const groupEdItems = (entries) => {
+    const allItems = [
+      ...entries.flatMap((e) => (e.files || []).map((f) => ({ ...f, _type: "file", entryId: e._id, _ts: new Date(f.uploadedAt || f.createdAt || 0).getTime() }))),
+      ...entries.flatMap((e) => (e.notes || []).map((n) => ({ ...n, _type: "note", entryId: e._id, _ts: new Date(n.createdAt || 0).getTime() }))),
+    ];
+    allItems.sort((a, b) => a._ts - b._ts);
+    const groups = [];
+    for (const item of allItems) {
+      const last = groups[groups.length - 1];
+      if (!last || item._ts - last[last.length - 1]._ts > 10000) groups.push([item]);
+      else last.push(item);
+    }
+    return groups;
+  };
+
+  const handleDeleteEdGroup = async (section, group) => {
+    try {
+      let lastResponse = null;
+      for (const item of group) {
+        if (item._type === "file") {
+          const nextSchedule = buildScheduleWithoutFile(section, item.entryId, item?.fileId || item?._id);
+          lastResponse = await updateEarlyDetectionBooking(id, { schedule: nextSchedule });
+        } else {
+          lastResponse = await deleteEarlyDetectionTestEntryNote(booking._id || id, section, item.entryId, item._id);
+        }
+      }
+      if (lastResponse) refreshBookingFromResponse(lastResponse);
+      else await loadBookingDetails();
+      toast.success(t("earlyDiagnosis.deleted", "Deleted"));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to delete group");
+    }
+  };
+
   const getManagedTestEntries = (section, testId) => {
     const sectionEntries = Array.isArray(booking?.schedule?.[section]) ? booking.schedule[section] : [];
     return sectionEntries.filter((entry) => normalizeId(entry?.item?._id) === testId);
@@ -2020,135 +2098,147 @@ const EarlyDetectionBookingDetails = () => {
 
         return (
           <div className="ed-test-detail-page">
-            <div className="ed-test-detail-header">
-              <h2 className="ed-test-detail-title">{readLocalizedName(selectedTest?.name)}</h2>
-            </div>
+            {(() => {
+              const edGroups = groupEdItems(selectedEntries);
+              if (edGroups.length === 0) return (
+                <div className="ed-section-add-only">
+                  <button type="button" className="ed-td-btn" onClick={() => { setEdAddSection(section); setEdAddItemId(activeTestId); setEdAddFiles([]); setEdAddText(""); setEdAddSearchQ(""); setEdAddDropOpen(false); setEdAddModalOpen(true); }}>
+                    <Plus size={14} />{t("earlyDiagnosis.add", "Add")}
+                  </button>
+                </div>
+              );
+              return (
+                <>
+                  <div className="ed-test-detail-header">
+                    <h2 className="ed-test-detail-title">{readLocalizedName(selectedTest?.name)}</h2>
+                  </div>
+                  <div className="ed-test-detail-actions">
+                    <button type="button" className="ed-td-btn" onClick={() => { setEdAddSection(section); setEdAddItemId(activeTestId); setEdAddFiles([]); setEdAddText(""); setEdAddModalOpen(true); }}>
+                      <Plus size={14} />{t("earlyDiagnosis.add", "Add")}
+                    </button>
+                  </div>
+                  <div className="ed-td-list">
+                    {edGroups.map((group, gIdx) => {
+                      const dt = group[0]._ts ? new Date(group[0]._ts) : null;
+                      const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                      const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                      return (
+                        <div key={gIdx} className="ht-td-group">
+                          <div className="ht-td-group-items">
+                            <div className="ht-td-group-card-header">
+                              <div className="ht-td-group-date"><Clock size={11} /><span>{dateStr} · {timeStr}</span></div>
+                              <button type="button" className="ht-td-group-delete-btn" onClick={() => handleDeleteEdGroup(section, group)} aria-label="Delete group"><Trash2 size={13} /></button>
+                            </div>
+                            <div className="ht-td-group-grid">
+                              {group.map((item, iIdx) => item._type === "file" ? (
+                                <div key={normalizeId(item?.fileId) || iIdx} className="ht-td-item">
+                                  <span className={`ht-td-badge ht-td-badge--${getFileExtension(item)}`}>{getFileExtension(item).toUpperCase()}</span>
+                                  <div className="ht-td-item-info"><span className="ht-td-item-name">{getFileLabel(item)}</span></div>
+                                  <div className="ht-td-item-actions">
+                                    {renderFileActionButtons(item)}
+                                    <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteSelectedTestFile(section, item.entryId, item)}><Trash2 size={14} /></button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div key={String(item._id)} className="ht-td-item">
+                                  <span className="ht-td-note-icon"><FileText size={16} /></span>
+                                  <div className="ht-td-item-info"><div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: item.content }} /></div>
+                                  <div className="ht-td-item-actions">
+                                    <button type="button" className="ht-td-icon-btn" onClick={() => { setEditingTestNoteId(item._id); setTestNoteDraft(item.content || ""); setShowTestNoteEditor(true); }}><Pencil size={14} /></button>
+                                    <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote(section, item.entryId, item._id)}><Trash2 size={14} /></button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
 
-            <div className="ed-test-detail-actions">
-              <button
-                type="button"
-                className="ed-td-btn"
-                onClick={() => {
-                  setUploadSection(section);
-                  setUploadItemId(activeTestId);
-                  setUploadFiles([]);
-                  setShowUploadModal(true);
-                }}
-              >
-                <Plus size={14} />
-                {t("earlyDiagnosis.uploadFile", "Upload file")}
-              </button>
-              <button
-                type="button"
-                className="ed-td-btn"
-                onClick={() => {
-                  setShowTestNoteEditor(true);
-                  setEditingTestNoteId(null);
-                  setTestNoteDraft("");
-                }}
-              >
-                <FileText size={14} />
-                {t("earlyDiagnosis.addText", "Add text")}
-              </button>
-            </div>
-
-            <div className="ed-td-list">
-              {selectedFiles.length === 0 ? (
-                <div className="ed-td-empty">{t("earlyDiagnosis.noFiles", "No files")}</div>
-              ) : (
-                selectedFiles.map((file, fileIndex) => {
-                  const entry = selectedEntries.find((item) => (item?.files || []).some((entryFile) => normalizeId(entryFile?.fileId) === normalizeId(file?.fileId) || normalizeId(entryFile?._id) === normalizeId(file?._id)));
-                  const entryId = entry?._id || selectedEntries[0]?._id;
-                  return (
-                    <div key={normalizeId(file?.fileId) || file?._id || fileIndex} className="ed-td-item">
-                      <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
-                      <div className="ed-td-item-info">
-                        <span className="ed-td-item-name">{getFileLabel(file)}</span>
-                        <span className="ed-td-item-meta">
-                          <Clock size={11} />
-                          {formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)}
-                        </span>
-                      </div>
-                      <div className="ed-td-item-actions">
-                        {renderFileActionButtons(file)}
-                        <button
-                          type="button"
-                          className="ed-td-icon-btn ed-td-icon-btn--delete"
-                          title={t("earlyDiagnosis.delete", "Delete")}
-                          onClick={() => handleDeleteSelectedTestFile(section, entryId, file)}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
+            {/* Note edit popup */}
+            {showTestNoteEditor && createPortal(
+              <>
+                <div className="ht-add-overlay" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }} />
+                <div className="ht-add-modal">
+                  <div className="ht-add-modal-header">
+                    <span className="ht-add-modal-title">{editingTestNoteId ? t("earlyDiagnosis.editNote", "Edit Note") : t("earlyDiagnosis.addNote", "Add Note")}</span>
+                    <button type="button" className="ht-add-modal-close" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}><XIcon size={16} /></button>
+                  </div>
+                  <div className="ht-add-step">
+                    <div className="ht-add-rte-wrap">
+                      <RichTextEditor value={testNoteDraft} onChange={setTestNoteDraft} placeholder={t("history_tab.enter_text", "Enter text…")} />
                     </div>
-                  );
-                })
-              )}
-
-              {!selectedNotes.length && !showTestNoteEditor ? (
-                <div className="ed-td-empty">{t("earlyDiagnosis.noEntries", "No entries yet")}</div>
-              ) : null}
-
-              {selectedNotes.map((note) => (
-                <div key={String(note._id)} className="ed-td-item ed-td-item--note">
-                  <span className="ed-td-note-icon"><FileText size={18} /></span>
-                  <div className="ed-td-item-info">
-                    <div className="ed-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
-                    <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(note?.createdAt)}</span>
-                  </div>
-                  <div className="ed-td-item-actions">
-                    <button
-                      type="button"
-                      className="ed-td-icon-btn"
-                      onClick={() => {
-                        setEditingTestNoteId(note._id);
-                        setTestNoteDraft(note.content || "");
-                        setShowTestNoteEditor(true);
-                      }}
-                    >
-                      <Edit2 size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className="ed-td-icon-btn ed-td-icon-btn--delete"
-                      onClick={() => handleDeleteTestNote(section, note.entryId || selectedEntries[0]?._id, note._id)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    <div className="ht-add-modal-footer">
+                      <button type="button" className="ht-add-btn-secondary" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                      <button type="button" className="ht-add-btn-primary" disabled={isSavingTestNote || !String(testNoteDraft || "").replace(/<[^>]*>/g,"").trim()} onClick={() => handleSaveTestNote(section, activeTestId)}>
+                        {isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </>,
+              document.body
+            )}
 
-            {noteEditorVisible && (
-              <div className="ed-td-note-editor">
-                <RichTextEditor
-                  value={testNoteDraft}
-                  onChange={setTestNoteDraft}
-                  placeholder={t("history_tab.enter_text", "Enter text…")}
-                />
-                <div className="ed-td-note-editor-actions">
-                  <button
-                    type="button"
-                    className="ed-td-save-btn"
-                    disabled={isSavingTestNote || !String(testNoteDraft || "").trim()}
-                    onClick={() => handleSaveTestNote(section, activeTestId)}
-                  >
-                    {isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
-                  </button>
-                  <button
-                    type="button"
-                    className="ed-td-cancel-btn"
-                    onClick={() => {
-                      setShowTestNoteEditor(false);
-                      setTestNoteDraft("");
-                      setEditingTestNoteId(null);
-                    }}
-                  >
-                    {t("earlyDiagnosis.cancel", "Cancel")}
-                  </button>
+            {/* Add modal */}
+            {edAddModalOpen && edAddSection === section && createPortal(
+              <>
+                <div className="ht-add-overlay" onClick={() => setEdAddModalOpen(false)} />
+                <div className="ht-add-modal ht-add-modal--wide">
+                  <div className="ht-add-modal-header">
+                    <span className="ht-add-modal-title">{t("earlyDiagnosis.add", "Add")}</span>
+                    <button type="button" className="ht-add-modal-close" onClick={() => setEdAddModalOpen(false)}><XIcon size={16} /></button>
+                  </div>
+                  <div className="ht-add-step" style={edAddDropOpen ? { overflowY: "visible" } : {}}>
+                    <span className="ht-add-section-label">{t("earlyDiagnosis.selectTest", "SELECT TEST")}</span>
+                    <div className="ht-test-dropdown" style={{ position: "relative" }}>
+                      <button type="button" className="ht-test-dropdown-trigger" onClick={() => setEdAddDropOpen((o) => !o)}>
+                        {edAddItemId ? (<span className="ht-test-dropdown-value">{readLocalizedName((managedTests[section] || []).find((it) => normalizeId(it?._id) === edAddItemId)?.name)}</span>) : (<span className="ht-test-dropdown-placeholder">{t("earlyDiagnosis.selectTest", "— select a test —")}</span>)}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                      </button>
+                      {edAddDropOpen && (
+                        <div className="ht-test-dropdown-menu">
+                          <div className="ht-test-dropdown-search-wrap">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                            <input autoFocus className="ht-test-dropdown-search" placeholder={t("common.search", "Search…")} value={edAddSearchQ} onChange={(e) => setEdAddSearchQ(e.target.value)} />
+                          </div>
+                          {(managedTests[section] || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).map((item) => { const id = normalizeId(item?._id); return (<div key={id} className={`ht-test-dropdown-item${edAddItemId === id ? " selected" : ""}`} onClick={() => { setEdAddItemId(id); setEdAddDropOpen(false); setEdAddSearchQ(""); }}><span className="ht-test-dropdown-item-name">{readLocalizedName(item?.name)}</span></div>); })}
+                          {(managedTests[section] || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).length === 0 && (<div className="ht-test-dropdown-empty">{t("common.noResults", "No results")}</div>)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="ht-add-section-label">{t("earlyDiagnosis.files", "FILES")}</span>
+                    <div className="ht-add-file-zone" style={{ cursor: "pointer" }} onClick={() => edAddFileInputRef.current?.click()}>
+                      <Upload size={20} /><span>{t("earlyDiagnosis.clickToUpload", "Click to upload files")}</span>
+                    </div>
+                    {edAddFiles.length > 0 && (
+                      <div className="ht-add-file-list">
+                        {edAddFiles.map((f, i) => (
+                          <div key={i} className="ht-add-file-item">
+                            <span className="ht-add-file-name">{f.name}</span>
+                            <button type="button" className="ht-add-file-remove" onClick={() => setEdAddFiles((prev) => prev.filter((_, idx) => idx !== i))}><XIcon size={12} /></button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <span className="ht-add-section-label">{t("earlyDiagnosis.addText", "ADD TEXT")}</span>
+                    <div className="ht-add-rte-wrap">
+                      <RichTextEditor value={edAddText} onChange={setEdAddText} placeholder={t("history_tab.enter_text", "Enter text…")} />
+                    </div>
+                    <div className="ht-add-modal-footer">
+                      <button type="button" className="ht-add-btn-secondary" onClick={() => setEdAddModalOpen(false)}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                      <button type="button" className="ht-add-btn-primary" disabled={edAddSubmitting || !edAddItemId || (edAddFiles.length === 0 && !String(edAddText || "").replace(/<[^>]*>/g,"").trim())} onClick={handleEdAddModalSubmit}>
+                        {edAddSubmitting ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </>,
+              document.body
             )}
           </div>
         );
@@ -2439,6 +2529,19 @@ const EarlyDetectionBookingDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Hidden file input for ED add modal — lives outside the portal so React onChange fires reliably */}
+      <input
+        ref={edAddFileInputRef}
+        type="file"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          e.target.value = "";
+          setEdAddFiles((prev) => [...prev, ...files]);
+        }}
+      />
 
       <EDModals
         showTestSettingsModal={showTestSettingsModal}

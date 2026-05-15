@@ -626,20 +626,21 @@ exports.getScheduleFile = async (req, res) => {
 // @access  Admin
 exports.saveSpecialistHistoryForm = async (req, res) => {
   try {
-    const { id, idx } = req.params;
-    const index = parseInt(idx, 10);
+    const { id, idx, bookingId, specialistIndex } = req.params;
+    const bookingRef = id || bookingId;
+    const index = parseInt(idx ?? specialistIndex, 10);
     const { historyForm } = req.body;
 
     if (isNaN(index)) return res.status(400).json({ error: "Invalid specialist index" });
 
-    const booking = await EarlyDetectionBooking.findById(id);
+    const booking = await EarlyDetectionBooking.findById(bookingRef);
     if (!booking) return res.status(404).json({ error: "Booking not found" });
 
     const specialist = booking.schedule.specialistConsultations[index];
     if (!specialist) return res.status(404).json({ error: "Specialist not found" });
 
     if (historyForm && typeof historyForm === "object") {
-      Object.assign(specialist.historyForm, historyForm);
+      specialist.historyForm = { ...(specialist.historyForm || {}), ...historyForm };
     }
 
     booking.markModified("schedule.specialistConsultations");

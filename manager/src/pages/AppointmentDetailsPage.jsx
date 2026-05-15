@@ -148,12 +148,12 @@ const AppointmentDetailsPage = () => {
   const TABS = [
     { key: "general",   label: t("tabs.general"),   icon: <MdOutlinePerson size={18} /> },
     { key: "history",   label: t("tabs.history"),   icon: <FiClock size={17} /> },
+    { key: "service",   label: t("tabs.service", "Service"), icon: <FiSettings size={17} /> },
     { key: "medical",   label: t("tabs.medical"),   icon: <LuClipboardList size={17} /> },
     { key: "payments",  label: t("tabs.payments"),  icon: <FiCreditCard size={17} /> },
     { key: "documents", label: t("tabs.documents", "Documents"), icon: <FiFolder size={17} /> },
     // { key: "telemedicine", label: t("tabs.telemedicine", "Telemedicine"), icon: <FiVideo size={17} /> },
     { key: "followups", label: t("tabs.followups", "Follow-ups"), icon: <FiRepeat size={17} /> },
-    { key:"service", label: t("tabs.service", "Service"), icon: <FiSettings size={17} /> }
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -368,7 +368,7 @@ const AppointmentDetailsPage = () => {
         );
       case "report":
       case "conclusion":
-        return <AppointmentReport booking={application} />;
+        return <AppointmentReport booking={application} patient={patient} />;
       case "service":
         return <Service applicationId={application?.applicationId} />;
       default: {

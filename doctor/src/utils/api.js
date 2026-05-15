@@ -2213,6 +2213,25 @@ export const updateApplicationSectionComment = async (applicationId, section, va
   return response.data;
 };
 
+// ========== Doctor Availability / Schedule APIs ========== //
+export const getDoctorWeeklySchedule = async (doctorEmail) => {
+  try {
+    const response = await api.get(`/doctor-availability/weekly-schedule/${doctorEmail}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getDoctorDateOverride = async (doctorEmail, date) => {
+  try {
+    const response = await api.get(`/doctor-availability/date-override/${doctorEmail}/${date}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // ========== Doctor Break APIs ========== //
 export const getDoctorBreaks = async (date) => {
   try {
@@ -2477,8 +2496,8 @@ export const deleteEarlyDetectionTestEntryNote = async (bookingId, section, entr
 
 export const saveEarlyDetectionSpecialistHistoryForm = async (bookingId, specialistIndex, payload) => {
   return api.put(
-    `/early-detection/bookings/${encodeURIComponent(bookingId)}/specialist-consultations/${specialistIndex}/history-form`,
-    payload,
+    `/early-detection/bookings/${encodeURIComponent(bookingId)}/specialist/${specialistIndex}`,
+    { historyForm: payload },
   );
 };
 
@@ -2613,6 +2632,16 @@ export const removeApplicationServicePosition = async (applicationId, positionId
     const response = await api.delete(
       `/service-manager/positions/application/${encodeURIComponent(applicationId)}/positions/${encodeURIComponent(positionId)}`
     );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get folder contents (categories + positions) for folder browser
+export const getServiceCategoryFolderContents = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/folder", { params });
     return response.data;
   } catch (error) {
     throw error;

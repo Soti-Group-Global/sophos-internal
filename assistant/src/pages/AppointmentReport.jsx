@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -190,35 +190,37 @@ function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4, doctorN
   );
 }
 
-export default function AppointmentReport({ booking, className = "" }) {
+export default function AppointmentReport({ booking, patient: patientProp = null, className = "" }) {
   const reportRef = useRef(null);
   const [generating, setGenerating] = useState(false);
 
-  const patient = booking?.patient || {};
-  const fullName = [patient.firstName, patient.middleName, patient.lastName]
-    .filter(Boolean).join(" ").trim() || "—";
+  const coverFields = useMemo(() => {
+    const embeddedPatient = booking?.patient || {};
+    const p = patientProp || embeddedPatient;
+    const fullName = [p.firstName, p.middleName, p.lastName]
+      .filter(Boolean).join(" ").trim() || booking?.patientName || "—";
+    const dob = p.dateOfBirth ? formatDate(p.dateOfBirth) : "—";
+    const phone = p.phone || "—";
+    const email = p.email || booking?.patientEmail || "—";
+    const patientId = p.patientId || p._id || "—";
+    const programName = booking?.package?.name || "Ранняя диагностика «ПРЕДИКТ»";
+    const examDate = booking?.scheduledDate
+      ? formatDate(booking.scheduledDate)
+      : booking?.createdAt ? formatDate(booking.createdAt) : "—";
+    return {
+      fullName, dob,
+      gender: p.gender === "female" ? "Женский" : p.gender === "male" ? "Мужской" : "—",
+      phone, email, patientId, programName, examDate,
+    };
+  }, [booking, patientProp]);
 
-  const doctorName = (() => {
+  const doctorName = useMemo(() => {
     const d = booking?.doctor;
     if (d) return [d.lastName, d.firstName, d.middleName].filter(Boolean).join(" ") || null;
     const entry = booking?.doctors?.[0];
     return entry?.doctorName || null;
-  })();
+  }, [booking]);
   const doctorRole = booking?.doctor?.specialization || booking?.doctors?.[0]?.specialization || null;
-
-  const dob = patient.dateOfBirth ? formatDate(patient.dateOfBirth) : "—";
-  const phone = patient.phone || "—";
-  const email = patient.email || "—";
-  const patientId = patient.patientId || patient._id || "—";
-  const programName = booking?.package?.name || "Ранняя диагностика «ПРЕДИКТ»";
-  const examDate = booking?.scheduledDate
-    ? formatDate(booking.scheduledDate)
-    : booking?.createdAt ? formatDate(booking.createdAt) : "—";
-
-  const [coverFields] = useState({
-    fullName, dob, gender: patient.gender === "female" ? "Женский" : patient.gender === "male" ? "Мужской" : "—",
-    phone, email, patientId, programName, examDate,
-  });
 
   const [page4Entries] = useState([]);
   const [diagnosisText] = useState("");
@@ -327,26 +329,7 @@ export default function AppointmentReport({ booking, className = "" }) {
       <div className="ed-report-preview-wrapper">
         <div ref={reportRef} className="ed-report-doc">
 
-          {/* ─── PAGE 1: Cover ─── */}
-          <div className="ed-page">
-            <PageHeader />
-            <div className="ed-cover-body">
-              <div className="ed-cover-program-title">Индивидуальная ранняя диагностика заболеваний «ПРЕДИКТ»</div>
-              <hr className="ed-header-line" style={{ marginTop: 10 }} />
-              <div className="ed-cover-info">
-                <div className="ed-cover-info-row"><strong>ФИО:</strong> {coverFields.fullName}</div>
-                <div className="ed-cover-info-row"><strong>Дата рождения:</strong> {coverFields.dob} год</div>
-                <div className="ed-cover-info-row"><strong>Телефон:</strong> {coverFields.phone !== "—" ? coverFields.phone : "—"}</div>
-                <div className="ed-cover-info-row"><strong>Электронная почта:</strong> {coverFields.email !== "—" ? coverFields.email : "—"}</div>
-                <div className="ed-cover-info-row"><strong>ID пациента:</strong> {coverFields.patientId}</div>
-                <div className="ed-cover-info-row"><strong>Название программы:</strong> {coverFields.programName}</div>
-                <div className="ed-cover-info-row"><strong>Дата обследования:</strong> {coverFields.examDate} год</div>
-              </div>
-            </div>
-            <PageFooter pageNum={1} />
-          </div>
-
-          {/* ─── PAGE 2+: Conclusions ─── */}
+          {/* ─── PAGE 1+: Patient info + Conclusions ─── */}
           {(() => {
             const stripHtml = (html) => html?.replace(/<[^>]*>/g, "").trim() || "";
 
@@ -377,6 +360,36 @@ export default function AppointmentReport({ booking, className = "" }) {
               : (booking?.historyForm ? [{ historyForm: booking.historyForm }] : []);
 
             const items = [];
+
+            // Patient info block as first item
+            const hasPatientInfo = (coverFields.fullName && coverFields.fullName !== "—")
+              || (coverFields.dob && coverFields.dob !== "—")
+              || (coverFields.phone && coverFields.phone !== "—");
+            if (hasPatientInfo) {
+              items.push({
+                key: "patient-info",
+                keepWithNext: true,
+                el: (
+                  <div className="ed-cover-patient-plain" style={{ marginBottom: 16 }}>
+                    {coverFields.fullName && coverFields.fullName !== "—" && (
+                      <div className="ed-cover-patient-name">
+                        <span className="ed-cover-patient-label">ФИО:&nbsp;</span>{coverFields.fullName}
+                      </div>
+                    )}
+                    {coverFields.dob && coverFields.dob !== "—" && (
+                      <div className="ed-cover-patient-line">
+                        <span className="ed-cover-patient-label">Дата:&nbsp;</span>{coverFields.dob}
+                      </div>
+                    )}
+                    {coverFields.phone && coverFields.phone !== "—" && (
+                      <div className="ed-cover-patient-line">
+                        <span className="ed-cover-patient-label">Телефон:&nbsp;</span>{coverFields.phone}
+                      </div>
+                    )}
+                  </div>
+                ),
+              });
+            }
 
             consultations.forEach((c, ci) => {
               const hf = c.historyForm || {};
@@ -416,7 +429,7 @@ export default function AppointmentReport({ booking, className = "" }) {
               + "|" + page4Entries.map(e => e.name + e.text).join(",")
               + "|" + diagnosisText + "|" + followUpText + "|" + recommendationsText;
 
-            return <ConclusionPages key={contentKey} items={items} PageHeader={PageHeader} PageFooter={PageFooter} startPage={2} doctorName={doctorName} doctorRole={doctorRole} />;
+            return <ConclusionPages key={contentKey} items={items} PageHeader={PageHeader} PageFooter={PageFooter} startPage={1} doctorName={doctorName} doctorRole={doctorRole} />;
           })()}
 
         </div>

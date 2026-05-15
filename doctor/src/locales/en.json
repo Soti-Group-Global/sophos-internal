@@ -17,7 +17,6 @@
     "noResults": "No results found",
     "placeholder": "Type to search patients, appointments, etc."
   },
-
   "notif_box": {
     "common": "Common",
     "personal_disabled": "Personal notifications are currently disabled",
@@ -26,7 +25,6 @@
     "title": "Notifications",
     "personal": "Personal"
   },
-
   "patients": {
     "title": "Patients",
     "searchPlaceholder": "Search by name, email, service...",
@@ -69,7 +67,6 @@
       "service": "Service"
     },
     "years": "{{count}} yrs",
-
     "noDocUploadYet": "No documents uploaded yet",
     "noTestOrdersYet": "No tests ordered yet.",
     "noPrescription": "No Prescription",
@@ -84,10 +81,10 @@
     "scheduleAppointments": "Schedule Appointments",
     "messages": "Messages",
     "profile": "Profile",
-    "backToEarlyDetection":"← Back to Early Detection",
-    "application":"Application",
-    "personalDetails":"Patient Details",
-    "allicationHistory":"Appointment Histor",
+    "backToEarlyDetection": "← Back to Early Detection",
+    "application": "Application",
+    "personalDetails": "Patient Details",
+    "allicationHistory": "Appointment Histor",
     "earlyDetection": "Early Diagnosis",
     "assistants": "Assistants",
     "client": "Client",
@@ -96,19 +93,18 @@
     "maxMessenger": "Max Messenger",
     "tasks": "Tasks"
   },
-
-  "tasks":{
-    "welcome":"Welcome to your workspace!",
-    "selectaProject":"Select a project from the sidebar to get started.",
-    "noProjectFound":"Project not found",
-    "noCompanyYet":"No company projects yet",
-    "manageWorkspace":"Manage your workspace",
-    "searchProjects":"Search projects...",
-    "projects":"Projects",
-    "company":"Company",
-    "personal":"Personal"
-},
-"appointmentStatus": {
+  "tasks": {
+    "welcome": "Welcome to your workspace!",
+    "selectaProject": "Select a project from the sidebar to get started.",
+    "noProjectFound": "Project not found",
+    "noCompanyYet": "No company projects yet",
+    "manageWorkspace": "Manage your workspace",
+    "searchProjects": "Search projects...",
+    "projects": "Projects",
+    "company": "Company",
+    "personal": "Personal"
+  },
+  "appointmentStatus": {
     "confirmed": "Confirmed",
     "completed": "Completed",
     "upcoming": "Upcoming",
@@ -120,8 +116,8 @@
     "pending payment": "Pending Payment",
     "awaiting for payment": "Awaiting for Payment"
   },
-  "timeZone":{
-    "MSK":"МСК"
+  "timeZone": {
+    "MSK": "МСК"
   },
   "appointments": {
     "appointment": "Appointment",
@@ -176,11 +172,11 @@
       "application": "Application",
       "earlyDetection": "Early Detection"
     },
-    "telemedicine":"Telemedicine",
-    "telemedicineSession":"Telemedicine Session",
-    "active":"Active",
-    "ended":"Ended",
-    "scheduled":"Scheduled",
+    "telemedicine": "Telemedicine",
+    "telemedicineSession": "Telemedicine Session",
+    "active": "Active",
+    "ended": "Ended",
+    "scheduled": "Scheduled",
     "participants": "Participants",
     "roomId": "Room ID",
     "startedAt": "Started At",
@@ -209,13 +205,12 @@
     "workingDayCancelled": "Working day cancelled",
     "breakComment": "COMMENT",
     "breakLabel": "Break",
-    "savingBreak": "Saving\u2026",
+    "savingBreak": "Saving…",
     "saveBreak": "Save",
-    "loadingBreaks": "Loading\u2026",
-     "starting": "Starting...",
+    "loadingBreaks": "Loading…",
+    "starting": "Starting...",
     "startSession": "Start Session"
   },
-
   "appointment": {
     "backToAppointments": "Back to Appointments",
     "backToSchedule": "Back to Schedule",
@@ -343,7 +338,7 @@
       "error": "Error!",
       "failedDeleteComment": "Failed to delete comment."
     },
-    "noFollowUp": "No " ,
+    "noFollowUp": "No ",
     "added": " added",
     "loadingDetails": "Loading appointment details...",
     "tryAgain": "Try Again",
@@ -362,27 +357,25 @@
     "noFieldAdded": "No {{field}} added",
     "changePhoto": "Change photo"
   },
-  "days":{
-    "mon":"Mon",
-    "tue":"Tue",
-    "wed":"Wed",
-    "thur":"Thur",
-    "fri":"Fri",
-    "sat":"Sat",
-    "sun":"Sun"
+  "days": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thur": "Thur",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
   },
-  
-  "task":{
+  "task": {
     "welcome": "Welcome to Your Workspace",
-    "selectaProject":"Select a project from the sidebar to get started",
+    "selectaProject": "Select a project from the sidebar to get started",
     "noProjectFound": "No project found",
-    "noCompanyYet":"No company projects yet",
-    "manageWorkspace":"Manage your workspace",
-    "searchProjects":"Search Projects...",
-    "projects":"Projects",
-    "company":"Company"
+    "noCompanyYet": "No company projects yet",
+    "manageWorkspace": "Manage your workspace",
+    "searchProjects": "Search Projects...",
+    "projects": "Projects",
+    "company": "Company"
   },
-
   "medicalHistory": {
     "title": "Medical History",
     "prescription": "Prescription",
@@ -399,7 +392,27 @@
   "error": "Failed to load patients.",
   "noResults": "No patients found.",
   "applicationId": "Application ID",
-  "service": "Service",
+  "service": {
+    "label": "Services",
+    "addedServices": "Added Services",
+    "addServices": "Add Service",
+    "noAddedPositions": "No services added yet.",
+    "code": "Code",
+    "name": "Name",
+    "price": "Price",
+    "action": "Action",
+    "unnamedPosition": "Unnamed position",
+    "rootFolder": "All Services",
+    "emptyFolder": "This folder is empty.",
+    "tabAll": "All",
+    "tabMy": "My Services",
+    "tabOther": "Other Services",
+    "loadFailed": "Failed to load services",
+    "remove": "Removed",
+    "removeFailed": "Failed to remove",
+    "positionAdded": "Added",
+    "saveFailed": "Failed to save"
+  },
   "appointmentDate": "Appointment Date",
   "time": "Time",
   "noAppointments": "No appointments found",
@@ -502,14 +515,11 @@
     "medicalHistory": "Medical History",
     "diagnosis": "Diagnosis"
   },
-
   "serviceType": {
     "Physical consultation": "Physical consultation",
     "Telemedicine": "Telemedicine",
     "Consultation": "Consultation"
   },
-
-
   "appointmentHistory": {
     "history": {
       "title": "Appointment History",
@@ -525,15 +535,15 @@
     },
     "viewDetails": "View Details"
   },
-  "pending":"Pending",
-  "font_default":"Default",
-  "font_Arial":"Arial",
-  "font_TimesNewRoman":"Times New Roman",
-  "font_CourierNew":"Courier New",
-  "font_Georgia":"Georgia",
-  "font_Verdana":"Verdana",
-  "font_Tahoma":"Tahoma",
-  "font_TrebuchetMS":"Trebuchet MS",
+  "pending": "Pending",
+  "font_default": "Default",
+  "font_Arial": "Arial",
+  "font_TimesNewRoman": "Times New Roman",
+  "font_CourierNew": "Courier New",
+  "font_Georgia": "Georgia",
+  "font_Verdana": "Verdana",
+  "font_Tahoma": "Tahoma",
+  "font_TrebuchetMS": "Trebuchet MS",
   "addedToSystemOn": "Added to system on",
   "months": {
     "0": "January",
@@ -550,7 +560,7 @@
     "11": "December"
   },
   "calendar": {
-    "today":"Today",
+    "today": "Today",
     "close": "Close",
     "selectDate": "Select date",
     "previousMonth": "Previous month",
@@ -571,7 +581,15 @@
       "November",
       "December"
     ],
-    "weekdays_short": ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+    "weekdays_short": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+    ],
     "title": "Appointment Schedule",
     "subtitle": "Manage your appointments",
     "loading": "Loading appointments...",
@@ -616,7 +634,6 @@
     },
     "today": "This month"
   },
-
   "schedule": {
     "title": "Availability Schedule",
     "subtitle": "Set your availability for the next 30 days",
@@ -661,7 +678,6 @@
       "customDays": "Custom days"
     }
   },
-
   "template_picker": {
     "trigger_label": "Templates",
     "restore_label": "Restore",
@@ -670,18 +686,15 @@
     "update_label": "Update",
     "save_placeholder": "Template name",
     "cancel": "Cancel",
-    "empty":"Empty",
-    "heading_normal":"heading normal",
-    "heading_1":"heading_1",
-    "heading_2":"heading_2",
-    "heading_3":"heading_3",
-    "heading_4":"heading_4"
+    "empty": "Empty",
+    "heading_normal": "heading normal",
+    "heading_1": "heading_1",
+    "heading_2": "heading_2",
+    "heading_3": "heading_3",
+    "heading_4": "heading_4"
   },
-
-
-  "current":"Current",
-  "notDefined":"Not Defined",
-
+  "current": "Current",
+  "notDefined": "Not Defined",
   "messages": {
     "title": "Manager Chat",
     "noMessages": "No messages yet",
@@ -730,7 +743,6 @@
       "fileSize": "File size exceeds 10MB limit"
     }
   },
-
   "profile": {
     "title": "Doctor's Profile",
     "imageUpload": "Upload Image",
@@ -788,7 +800,6 @@
       "noProfile": "Doctor profile not found"
     }
   },
-
   "patientDetails": {
     "backToPatients": "Back to Patients",
     "age": "Age",
@@ -801,7 +812,6 @@
       "medicalHistory": "Medical History"
     }
   },
-
   "doctorLogin": {
     "title": "Doctor Login",
     "emailLabel": "Email",
@@ -818,7 +828,6 @@
     "loggingIn": "Signing in...",
     "invalidCredentials": "Invalid Credentials"
   },
-
   "resetPassword": {
     "title": "Reset Password",
     "instructions": "Please enter a new password for",
@@ -838,7 +847,6 @@
       "general": "Unable to reset password. Please try again."
     }
   },
-
   "forgotPassword": {
     "title": "Reset Password",
     "instructions": "Enter your email address and we'll send you a password reset link",
@@ -857,12 +865,10 @@
       "invalidCredentials": "Invalid Credentials"
     }
   },
-
   "EarlyDetectionApplications": {
     "header": "Early Detection Applications",
     "loading": "Loading applications...",
     "noApplications": "No applications found.",
-
     "appointmentHistory": "Appointment History",
     "patientDetails": "Patient Details",
     "applications": "Applications",
@@ -900,7 +906,6 @@
       "createdAt": "Created At"
     }
   },
-
   "earlyDetection": {
     "editReport": "Edit Report",
     "generating": "Generating...",
@@ -926,7 +931,6 @@
     "recommendations": "Recommendations",
     "enterRecommendationsText": "Enter recommendations text"
   },
-
   "assistants": {
     "title": "My Assistants",
     "description": "Manage and monitor your practice assistants' access permissions",
@@ -964,7 +968,6 @@
       "status": "Status"
     }
   },
-
   "status": {
     "access_granted": "Access Granted",
     "request_sent": "Request Sent",
@@ -979,7 +982,6 @@
   "modal": {
     "access_history": "Access History"
   },
-
   "showAppointment": {
     "title": "Appointment Details",
     "patient": "Patient",
@@ -994,7 +996,6 @@
     "cancel": "Cancel",
     "alertPleaseEnterReason": "Please enter a reason."
   },
-
   "patientSelection": {
     "title": "Select Patient",
     "selectedPatient": "Selected Patient",
@@ -1062,7 +1063,6 @@
     "missing_title": "Meeting link is missing",
     "missing_desc": "Please return and generate a meeting link first."
   },
-
   "pdtab": {
     "common": {
       "save": "Save",
@@ -1419,7 +1419,6 @@
       "saveFail": "Failed to save legal representative"
     }
   },
-
   "history_tab": {
     "sidebar": {
       "specialistConsultation": "Specialist consultation",
@@ -1562,7 +1561,6 @@
     "tomorrow": "Tomorrow",
     "yesterday": "Yesterday"
   },
-
   "maxMessenger": {
     "chats": "Chats",
     "noMessages": "No messages...",
@@ -1584,7 +1582,6 @@
     "video": "Video",
     "file": "File"
   },
-
   "appointmentPdf": {
     "title": "Appointment Summary",
     "patientInfo": "Patient Information",
@@ -1603,7 +1600,6 @@
     "conclusion": "Conclusion",
     "noConclusion": "No conclusion added"
   },
-
   "fillBlanks": {
     "close": "Close",
     "hint": "Click each blank field and type to fill it in. Press Enter or Tab to jump to the next.",
@@ -1611,7 +1607,6 @@
     "cancel": "Cancel",
     "insert": "Insert"
   },
-
   "projectSidebar": {
     "newProject": "New Project",
     "noDescription": "No description",
@@ -1625,7 +1620,6 @@
     "descriptionPlaceholder": "Describe the project goals...",
     "cancel": "Cancel"
   },
-
   "projectWorkspace": {
     "membersAddedSuccess": "Members added successfully!",
     "failedAddMembers": "Failed to add members.",
@@ -1639,7 +1633,6 @@
     "allEmployeesAssigned": "All employees are already part of this project",
     "addSelectedMembers": "Add Selected Members"
   },
-
   "medicalHistoryDetail": {
     "title": "Appointment Details",
     "appointmentInfo": "Appointment Information",
@@ -1668,7 +1661,6 @@
     "backToPatient": "← Back to Patient",
     "backToHistory": "← Back to Medical history"
   },
-
   "medicalHistoryTab": {
     "noPatientEmail": "No patient email provided",
     "failedLoadHistory": "Failed to load appointment history",
@@ -1677,18 +1669,17 @@
     "noRecordsYet": "You don't have any medical history records yet",
     "noMatch": "No appointments match your filter criteria"
   },
-
   "resetPasswordPage": {
     "loading": "Loading..."
   },
   "earlyDiagnosis": {
     "conclusion": "Conclusion",
-    "selectTest":"SELECT TEST",
-    "file":"FILE",
-    "upload":"Upload",
-    "appointments":"Appointments",
+    "selectTest": "SELECT TEST",
+    "file": "FILE",
+    "upload": "Upload",
+    "appointments": "Appointments",
     "patients": "Patients",
-    "addedToSystemOn":"Added to system on",
+    "addedToSystemOn": "Added to system on",
     "backToSchedule": "Back to Schedule",
     "earlyDiagnosis": "Early Diagnosis",
     "createNewBooking": "Create New Booking",
@@ -1817,7 +1808,6 @@
     "failedToLoadBookings": "Failed to load bookings",
     "newLink": "New Payment",
     "generating": "Generating...",
-    "status": "Status",
     "paymentLinkCopied": "Payment link copied!",
     "failedToCopy": "Failed to copy payment link",
     "cannotGenerateForPaid": "Cannot generate payment link for paid booking",
@@ -1903,7 +1893,6 @@
     "specialist_ENT": "ENT",
     "specialist_Ultrasound": "Ultrasound",
     "dob": "Date of Birth",
-    "consultation": "Consultation",
     "dateNotSet": "Date not set",
     "markAsCompleted": "Mark as completed",
     "selectTime": "Select time",
@@ -1912,7 +1901,6 @@
     "transaction": "Transaction",
     "paymentProcessed": "successfully processed for this booking.",
     "nextMilestone": "Next milestone",
-    "service": "Service",
     "systemEvent": "System event",
     "bookingCreateDescription": "Initial booking record created in system.",
     "testNameEn": "Test name (EN)",
@@ -1923,9 +1911,13 @@
     "remove": "Remove",
     "deleting": "Deleting...",
     "statusVerified": "Verified",
-    "specialist": "Specialist",
     "unknown": "Unknown",
-    "doctor": "Doctor"
+    "doctor": "Doctor",
+    "add": "Add",
+    "clickToUpload": "Click to upload files",
+    "addText": "Add text",
+    "files": "Files",
+    "noTests": "No tests configured"
   },
   "appointment_details_general": {
     "common": {
@@ -2230,5 +2222,23 @@
       "paid": "Paid",
       "pending": "Pending"
     }
+  },
+  "followups_tab": {
+    "toast_saved": "Follow-up saved",
+    "toast_error": "Failed to save follow-up",
+    "recorded_title": "Follow-up Recorded",
+    "label_comment": "Comment",
+    "label_booked": "Booked",
+    "booked_yes": "Yes",
+    "booked_no": "Not yet",
+    "label_appointment": "Appointment",
+    "empty_title": "No follow-up recorded",
+    "empty_text": "Record a follow-up appointment requirement for this patient.",
+    "btn_require": "Require Follow-Up",
+    "card_heading": "Record follow-up details",
+    "textarea_placeholder": "Enter follow-up notes or instructions…",
+    "btn_cancel": "Cancel",
+    "btn_saving": "Saving…",
+    "btn_save": "Save"
   }
 }

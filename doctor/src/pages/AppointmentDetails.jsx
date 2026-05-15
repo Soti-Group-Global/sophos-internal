@@ -96,6 +96,7 @@ const AppointmentDetails = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("appointment");
   const [activeSubTab, setActiveSubTab] = useState("patient");
+  const [navOpen, setNavOpen] = useState(false);
   const [editing, setEditing] = useState({
     prescription: false,
     conclusion: false,
@@ -1018,7 +1019,7 @@ const AppointmentDetails = () => {
   const age = calculateAge(patientDetails?.dateOfBirth);
 
   return (
-    <div className="app-detail-modern-container">
+    <div className={`app-detail-modern-container${navOpen ? " nav-open" : ""}`}>
       <ToastContainer position="top-right" autoClose={3000} />
 
       {/* === Full-width patient header bar === */}
@@ -1081,13 +1082,21 @@ const AppointmentDetails = () => {
 
       {/* === Page Layout: Left vertical tabs + Right Column === */}
       <div className="app-detail-page-layout">
-        <nav className="sub-sidebar" aria-label="Appointment sections">
+        <nav className={`sub-sidebar${navOpen ? " sub-sidebar--open" : ""}`} aria-label="Appointment sections">
+          <button
+            className="sub-sidebar-toggle"
+            onClick={() => setNavOpen((o) => !o)}
+            title={navOpen ? "Collapse" : "Expand"}
+          >
+            <span className="sub-sidebar-toggle-icon">{navOpen ? "‹" : "›"}</span>
+          </button>
           <button
             title={t("appointment.patient")}
             className={`sidebar-tab${activeSubTab === "patient" ? " active" : ""}`}
             onClick={() => setActiveSubTab("patient")}
           >
             <FiUser size={18} />
+            {navOpen && <span className="sidebar-tab-label">{t("appointment.patient")}</span>}
           </button>
           <button
             title={t("appointment.medicalHistory")}
@@ -1095,6 +1104,15 @@ const AppointmentDetails = () => {
             onClick={() => setActiveSubTab("history")}
           >
             <FiClock size={18} />
+            {navOpen && <span className="sidebar-tab-label">{t("appointment.medicalHistory")}</span>}
+          </button>
+          <button
+            title={t("appointment.service")}
+            className={`sidebar-tab${activeSubTab === "service" ? " active" : ""}`}
+            onClick={() => setActiveSubTab("service")}
+          >
+            <FiSettings size={18} />
+            {navOpen && <span className="sidebar-tab-label">{t("appointment.service")}</span>}
           </button>
           <button
             title={t("appointment.documents")}
@@ -1102,6 +1120,7 @@ const AppointmentDetails = () => {
             onClick={() => setActiveSubTab("documents")}
           >
             <FiFolder size={18} />
+            {navOpen && <span className="sidebar-tab-label">{t("appointment.documents")}</span>}
           </button>
           <button
             title={t("appointment.followUp")}
@@ -1109,13 +1128,7 @@ const AppointmentDetails = () => {
             onClick={() => setActiveSubTab("followup")}
           >
             <FiRepeat size={18} />
-          </button>
-          <button
-            title={t("appointment.service") || "Service"}
-            className={`sidebar-tab${activeSubTab === "service" ? " active" : ""}`}
-            onClick={() => setActiveSubTab("service")}
-          >
-            <FiSettings size={18} />
+            {navOpen && <span className="sidebar-tab-label">{t("appointment.followUp")}</span>}
           </button>
         </nav>
         <div className="app-detail-right-column">
@@ -1696,7 +1709,7 @@ const AppointmentDetails = () => {
                 {
                   activeSubTab === "report" && (
                     <div className="doctor-report-wrap">
-                      <AppointmentReport booking={appointment} />
+                      <AppointmentReport booking={appointment} patient={patientDetails} />
                     </div>
                   )
                 }

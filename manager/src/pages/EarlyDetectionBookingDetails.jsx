@@ -26,6 +26,7 @@ import {
   X,
   ChevronsRight,
   ChevronsLeft,
+  Upload,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import {
@@ -387,6 +388,15 @@ const EarlyDetectionBookingDetails = () => {
   const [testNoteDraft, setTestNoteDraft] = useState("");
   const [editingTestNoteId, setEditingTestNoteId] = useState(null);
   const [isSavingTestNote, setIsSavingTestNote] = useState(false);
+  const edAddFileInputRef = useRef(null);
+  const [edAddModalOpen, setEdAddModalOpen] = useState(false);
+  const [edAddSection, setEdAddSection] = useState("");
+  const [edAddItemId, setEdAddItemId] = useState("");
+  const [edAddFiles, setEdAddFiles] = useState([]);
+  const [edAddText, setEdAddText] = useState("");
+  const [edAddSearchQ, setEdAddSearchQ] = useState("");
+  const [edAddDropOpen, setEdAddDropOpen] = useState(false);
+  const [edAddSubmitting, setEdAddSubmitting] = useState(false);
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
   const [specialistAccordionOpen, setSpecialistAccordionOpen] = useState(true);
   const [editedScheduleItems, setEditedScheduleItems] = useState([]);
@@ -404,6 +414,8 @@ const EarlyDetectionBookingDetails = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadSection, setUploadSection] = useState("laboratoryTests");
   const [uploadItemId, setUploadItemId] = useState("");
+  const [edUploadSearchQ, setEdUploadSearchQ] = useState("");
+  const [edUploadDropOpen, setEdUploadDropOpen] = useState(false);
   const [uploadCustomName, setUploadCustomName] = useState("");
   const [uploadFile, setUploadFile] = useState(null);
   const [isUploadingSectionFile, setIsUploadingSectionFile] = useState(false);
@@ -700,6 +712,73 @@ const EarlyDetectionBookingDetails = () => {
     }
   };
 
+  const handleEdAddModalSubmit = async () => {
+    if (!edAddSection || !edAddItemId) return;
+    const hasFiles = edAddFiles.length > 0;
+    const textContent = String(edAddText || "").replace(/<[^>]*>/g, "").trim();
+    if (!hasFiles && !textContent) return;
+    setEdAddSubmitting(true);
+    try {
+      let result;
+      for (const file of edAddFiles) {
+        result = await uploadEarlyDetectionScheduleFile(booking._id, { section: edAddSection, itemId: edAddItemId, file });
+        if (result?.data) setBooking(result.data);
+      }
+      if (textContent) {
+        result = await addEarlyDetectionTestEntryNote(booking._id, edAddSection, edAddItemId, edAddText);
+        if (result?.data) setBooking(result.data);
+      }
+      await loadBookingDetails();
+      setEdAddModalOpen(false);
+      setEdAddFiles([]);
+      setEdAddText("");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to add");
+    } finally {
+      setEdAddSubmitting(false);
+    }
+  };
+
+  const groupEdItems = (entries) => {
+    const allItems = [
+      ...entries.flatMap((e) => (e.files || []).map((f) => ({ ...f, _type: "file", entryId: e._id, _ts: new Date(f.uploadedAt || f.createdAt || 0).getTime() }))),
+      ...entries.flatMap((e) => (e.notes || []).map((n) => ({ ...n, _type: "note", entryId: e._id, _ts: new Date(n.createdAt || 0).getTime() }))),
+    ];
+    allItems.sort((a, b) => a._ts - b._ts);
+    const groups = [];
+    for (const item of allItems) {
+      const last = groups[groups.length - 1];
+      if (!last || item._ts - last[last.length - 1]._ts > 10000) groups.push([item]);
+      else last.push(item);
+    }
+    return groups;
+  };
+
+  const handleDeleteEdGroup = async (section, group) => {
+    if (!window.confirm("Delete this entire group?")) return;
+    try {
+      let result;
+      for (const item of group) {
+        if (item._type === "file") {
+          const fileId = item?.fileId || item?._id;
+          const schedule = booking?.schedule?.[section] || [];
+          const updatedSection = schedule.map((e) => {
+            if (String(e._id) !== String(item.entryId)) return e;
+            return { ...e, files: (e.files || []).filter((f) => String(f?.fileId || f?._id) !== String(fileId)) };
+          });
+          result = await updateEarlyDetectionBooking(booking._id, { schedule: { ...booking.schedule, [section]: updatedSection } });
+          if (result?.data) setBooking(result.data);
+        } else {
+          result = await deleteEarlyDetectionTestEntryNote(booking._id, section, item.entryId, item._id);
+          if (result?.data) setBooking(result.data);
+        }
+      }
+      await loadBookingDetails();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete group");
+    }
+  };
+
   const openTestSettingsModal = (section) => {
     setSettingsSection(section);
     setEditingManagedTestId("");
@@ -769,6 +848,8 @@ const EarlyDetectionBookingDetails = () => {
   const openUploadSectionModal = (section) => {
     setUploadSection(section);
     setUploadItemId("");
+    setEdUploadSearchQ("");
+    setEdUploadDropOpen(false);
     setUploadCustomName("");
     setUploadFile(null);
     if (multiUploadSections.includes(section)) {
@@ -1940,9 +2021,17 @@ const EarlyDetectionBookingDetails = () => {
                           }
                           setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
                         } else if (managedSectionTabs.includes(key)) {
-                          setActiveScheduleTab(key);
-                          const firstTest = (managedTests?.[key] || [])[0];
-                          setActiveTestId(firstTest ? normalizeId(firstTest._id) : null);
+                          if (activeScheduleTab === key && activeTestId !== null) {
+                            setActiveTestId(null);
+                          } else {
+                            setActiveScheduleTab(key);
+                            const sectionEntries = booking?.schedule?.[key] || [];
+                            const firstWithContent = (managedTests?.[key] || []).find((t) => {
+                              const tid = normalizeId(t?._id);
+                              return sectionEntries.some((e) => normalizeId(e?.item?._id) === tid);
+                            });
+                            setActiveTestId(firstWithContent ? normalizeId(firstWithContent._id) : null);
+                          }
                           setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
                         } else {
                           setActiveScheduleTab(key); setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
@@ -1994,8 +2083,8 @@ const EarlyDetectionBookingDetails = () => {
                         </div>
                       )}
 
-                    {/* Lab / test sub-items — only filled tests, only for the active section */}
-                    {managedSectionTabs.includes(key) && activeScheduleTab === key && (() => {
+                    {/* Lab / test sub-items — only filled tests, only for the active section when expanded */}
+                    {managedSectionTabs.includes(key) && activeScheduleTab === key && activeTestId !== null && (() => {
                       const filledTests = (managedTests?.[key] || []).filter((test) => {
                         const testId = normalizeId(test?._id);
                         const entries = (booking?.schedule?.[key] || []).filter(
@@ -2563,86 +2652,201 @@ const EarlyDetectionBookingDetails = () => {
                         activeTestId ? (() => {
                           const selTest = (managedTests?.laboratoryTests || []).find((t) => normalizeId(t?._id) === activeTestId);
                           const selEntries = (booking?.schedule?.laboratoryTests || []).filter((e) => normalizeId(e?.item?._id) === activeTestId);
-                          const selFiles = selEntries.flatMap((e) => e?.files || []);
-                          const selNotes = selEntries.flatMap((e) => e?.notes || []);
-                          const hasItems = selFiles.length > 0 || selNotes.length > 0;
                           return (
                             <div className="ed-test-detail-page">
-                              <div className="ed-test-detail-header">
-                                <h2 className="ed-test-detail-title">{readLocalizedName(selTest?.name)}</h2>
-                              </div>
-                              <div className="ed-test-detail-actions">
-                                <button type="button" className="ed-td-btn" onClick={() => { setUploadSection("laboratoryTests"); setUploadItemId(activeTestId); setUploadFiles([]); setShowUploadModal(true); }}>
-                                  <Plus size={14} />{t("earlyDiagnosis.uploadFile", "Upload file")}
-                                </button>
-                                <button type="button" className="ed-td-btn" onClick={() => { setShowTestNoteEditor(true); setEditingTestNoteId(null); setTestNoteDraft(""); }}>
-                                  <FileText size={14} />{t("earlyDiagnosis.addText", "Add text")}
-                                </button>
-                              </div>
-                              <div className="ed-td-list">
-                                {!hasItems && !showTestNoteEditor && (
-                                  <div className="ed-td-empty">{t("earlyDiagnosis.noEntries", "No entries yet")}</div>
-                                )}
-                                {selFiles.map((file, fi) => (
-                                  <div key={normalizeId(file?.fileId) || file?._id || fi} className="ed-td-item">
-                                    <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
-                                    <div className="ed-td-item-info">
-                                      <span className="ed-td-item-name">{getFileLabel(file)}</span>
-                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(file?.uploadedAt)}</span>
+                              {(() => {
+                                const edGroups = groupEdItems(selEntries);
+                                const addBtn = (
+                                  <button type="button" className="ed-td-btn" onClick={() => { setEdAddSection("laboratoryTests"); setEdAddItemId(activeTestId); setEdAddFiles([]); setEdAddText(""); setEdAddModalOpen(true); }}>
+                                    <Plus size={14} />{t("earlyDiagnosis.add", "Add")}
+                                  </button>
+                                );
+                                return (
+                                  <>
+                                    <div className="ed-test-detail-header">
+                                      <h2 className="ed-test-detail-title">{readLocalizedName(selTest?.name)}</h2>
+                                      {addBtn}
                                     </div>
-                                    <div className="ed-td-item-actions">
-                                      {getSectionFileUrl(file) && (<a href={getSectionFileUrl(file, false)} target="_blank" rel="noopener noreferrer" className="ed-td-icon-btn"><Eye size={15} /></a>)}
-                                      {getSectionFileUrl(file, true) && (<a href={getSectionFileUrl(file, true)} download className="ed-td-icon-btn"><Download size={15} /></a>)}
-                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete"><Trash2 size={15} /></button>
+                                    {edGroups.length > 0 && <div className="ed-td-list">
+                                      {edGroups.map((group, gIdx) => {
+                                        const dt = group[0]._ts ? new Date(group[0]._ts) : null;
+                                        const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                                        const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                                        return (
+                                          <div key={gIdx} className="ht-td-group">
+                                            <div className="ht-td-group-items">
+                                              <div className="ht-td-group-card-header">
+                                                <div className="ht-td-group-date"><Clock size={11} /><span>{dateStr} · {timeStr}</span></div>
+                                                <button type="button" className="ht-td-group-delete-btn" onClick={() => handleDeleteEdGroup("laboratoryTests", group)} aria-label="Delete group"><Trash2 size={13} /></button>
+                                              </div>
+                                              <div className="ht-td-group-grid">
+                                                {group.map((item, iIdx) => item._type === "file" ? (
+                                                  <div key={normalizeId(item?.fileId) || iIdx} className="ht-td-item">
+                                                    <span className={`ht-td-badge ht-td-badge--${getFileExtension(item)}`}>{getFileExtension(item).toUpperCase()}</span>
+                                                    <div className="ht-td-item-info"><span className="ht-td-item-name">{getFileLabel(item)}</span></div>
+                                                    <div className="ht-td-item-actions">
+                                                      {getSectionFileUrl(item) && (<a href={getSectionFileUrl(item, false)} target="_blank" rel="noopener noreferrer" className="ht-td-icon-btn"><Eye size={15} /></a>)}
+                                                      {getSectionFileUrl(item, true) && (<a href={getSectionFileUrl(item, true)} download className="ht-td-icon-btn"><Download size={15} /></a>)}
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <div key={String(item._id)} className="ht-td-item">
+                                                    <span className="ht-td-note-icon"><FileText size={16} /></span>
+                                                    <div className="ht-td-item-info"><div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: item.content }} /></div>
+                                                    <div className="ht-td-item-actions">
+                                                      <button type="button" className="ht-td-icon-btn" onClick={() => { setEditingTestNoteId(item._id); setTestNoteDraft(item.content || ""); setShowTestNoteEditor(true); }}><Pencil size={14} /></button>
+                                                      <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote("laboratoryTests", item.entryId, item._id)}><Trash2 size={14} /></button>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>}
+                                  </>
+                                );
+                              })()}
+                              {showTestNoteEditor && createPortal(
+                                <>
+                                  <div className="ht-add-overlay" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }} />
+                                  <div className="ht-add-modal">
+                                    <div className="ht-add-modal-header">
+                                      <span className="ht-add-modal-title">{editingTestNoteId ? t("earlyDiagnosis.editNote", "Edit Note") : t("earlyDiagnosis.addNote", "Add Note")}</span>
+                                      <button type="button" className="ht-add-modal-close" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}><X size={16} /></button>
+                                    </div>
+                                    <div className="ht-add-step">
+                                      <div className="ht-add-rte-wrap"><RichTextEditor value={testNoteDraft} onChange={setTestNoteDraft} placeholder={t("history_tab.enter_text", "Enter text…")} /></div>
+                                      <div className="ht-add-modal-footer">
+                                        <button type="button" className="ht-add-btn-secondary" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                        <button type="button" className="ht-add-btn-primary" disabled={isSavingTestNote || !String(testNoteDraft || "").replace(/<[^>]*>/g,"").trim()} onClick={() => handleSaveTestNote("laboratoryTests")}>
+                                          {isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
-                                ))}
-                                {selNotes.map((note) => (
-                                  <div key={String(note._id)} className="ed-td-item ed-td-item--note">
-                                    <span className="ed-td-note-icon"><FileText size={18} /></span>
-                                    <div className="ed-td-item-info">
-                                      <div className="ed-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
-                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(note?.createdAt)}</span>
+                                </>,
+                                document.body
+                              )}
+                              {edAddModalOpen && edAddSection === "laboratoryTests" && createPortal(
+                                <>
+                                  <div className="ht-add-overlay" onClick={() => setEdAddModalOpen(false)} />
+                                  <div className="ht-add-modal ht-add-modal--wide">
+                                    <div className="ht-add-modal-header">
+                                      <span className="ht-add-modal-title">{t("earlyDiagnosis.add", "Add")}</span>
+                                      <button type="button" className="ht-add-modal-close" onClick={() => setEdAddModalOpen(false)}><X size={16} /></button>
                                     </div>
-                                    <div className="ed-td-item-actions">
-                                      <button type="button" className="ed-td-icon-btn" onClick={() => { setEditingTestNoteId(note._id); setTestNoteDraft(note.content || ""); setShowTestNoteEditor(true); }}><Edit2 size={15} /></button>
-                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete" onClick={() => { const entry = selEntries.find((e) => (e.notes || []).some((n) => String(n._id) === String(note._id))); if (entry) handleDeleteTestNote("laboratoryTests", entry._id, note._id); }}><Trash2 size={15} /></button>
+                                    <div className="ht-add-step" style={edAddDropOpen ? { overflowY: "visible" } : {}}>
+                                      <span className="ht-add-section-label">{t("earlyDiagnosis.selectTest", "SELECT TEST")}</span>
+                                      <div className="ht-test-dropdown" style={{ position: "relative" }}>
+                                        <button type="button" className="ht-test-dropdown-trigger" onClick={() => setEdAddDropOpen((o) => !o)}>
+                                          {edAddItemId ? (
+                                            <span className="ht-test-dropdown-value">{readLocalizedName((managedTests?.laboratoryTests || []).find((it) => normalizeId(it?._id) === edAddItemId)?.name)}</span>
+                                          ) : (
+                                            <span className="ht-test-dropdown-placeholder">{t("earlyDiagnosis.selectTest", "— select a test —")}</span>
+                                          )}
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                                        </button>
+                                        {edAddDropOpen && (
+                                          <div className="ht-test-dropdown-menu">
+                                            <div className="ht-test-dropdown-search-wrap">
+                                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                                              <input autoFocus className="ht-test-dropdown-search" placeholder={t("common.search", "Search…")} value={edAddSearchQ} onChange={(e) => setEdAddSearchQ(e.target.value)} />
+                                            </div>
+                                            {(managedTests?.laboratoryTests || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).map((item) => {
+                                              const id = normalizeId(item?._id);
+                                              return (
+                                                <div key={id} className={`ht-test-dropdown-item${edAddItemId === id ? " selected" : ""}`} onClick={() => { setEdAddItemId(id); setEdAddDropOpen(false); setEdAddSearchQ(""); }}>
+                                                  <span className="ht-test-dropdown-item-name">{readLocalizedName(item?.name)}</span>
+                                                </div>
+                                              );
+                                            })}
+                                            {(managedTests?.laboratoryTests || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).length === 0 && (
+                                              <div className="ht-test-dropdown-empty">{t("common.noResults", "No results")}</div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <span className="ht-add-section-label">{t("earlyDiagnosis.files", "FILES")}</span>
+                                      <div className="ht-add-file-zone" style={{ cursor: "pointer" }} onClick={() => edAddFileInputRef.current?.click()}>
+                                        <Upload size={20} /><span>{t("earlyDiagnosis.clickToUpload", "Click to upload files")}</span>
+                                      </div>
+                                      {edAddFiles.length > 0 && (
+                                        <div className="ht-add-file-list">
+                                          {edAddFiles.map((f, i) => (
+                                            <div key={i} className="ht-add-file-item">
+                                              <span className="ht-add-file-name">{f.name}</span>
+                                              <button type="button" className="ht-add-file-remove" onClick={() => setEdAddFiles((prev) => prev.filter((_, idx) => idx !== i))}><X size={12} /></button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      <span className="ht-add-section-label">{t("earlyDiagnosis.addText", "ADD TEXT")}</span>
+                                      <div className="ht-add-rte-wrap"><RichTextEditor value={edAddText} onChange={setEdAddText} placeholder={t("history_tab.enter_text", "Enter text…")} /></div>
+                                      <div className="ht-add-modal-footer">
+                                        <button type="button" className="ht-add-btn-secondary" onClick={() => setEdAddModalOpen(false)}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                        <button type="button" className="ht-add-btn-primary" disabled={edAddSubmitting || !edAddItemId || (edAddFiles.length === 0 && !String(edAddText || "").replace(/<[^>]*>/g,"").trim())} onClick={handleEdAddModalSubmit}>
+                                          {edAddSubmitting ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                              {showTestNoteEditor && (
-                                <div className="ed-td-note-editor">
-                                  <RichTextEditor value={testNoteDraft} onChange={setTestNoteDraft} placeholder={t("history_tab.enter_text", "Enter text…")} />
-                                  <div className="ed-td-note-editor-actions">
-                                    <button type="button" className="ed-td-save-btn" disabled={isSavingTestNote} onClick={() => handleSaveTestNote("laboratoryTests")}>{isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}</button>
-                                    <button type="button" className="ed-td-cancel-btn" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
-                                  </div>
-                                </div>
+                                </>,
+                                document.body
                               )}
                             </div>
                           );
                         })() : (
-                          <div className="ed-schedule-section-list">
-                            {(managedTests?.laboratoryTests || []).length === 0 ? (
-                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noTests", "No tests configured")}</div>
-                            ) : (
-                              (managedTests?.laboratoryTests || []).map((test) => {
-                                const testId = normalizeId(test?._id);
-                                const isDone = (booking?.schedule?.laboratoryTests || []).filter((e) => normalizeId(e?.item?._id) === testId).flatMap((e) => e?.files || []).length > 0;
-                                return (
-                                  <div className="ed-test-list-item" key={testId}>
-                                    <div className="ed-test-list-item-header">
-                                      <span className={`ed-test-list-status${isDone ? " ed-test-list-status--done" : ""}`}>
-                                        {isDone ? <CheckCircle size={15} /> : <span className="ed-test-status-circle" />}
-                                      </span>
-                                      <span className="ed-test-list-name">{readLocalizedName(test?.name)}</span>
+                          <>
+                            <div className="ed-section-add-only">
+                              <button type="button" className="ed-td-btn" onClick={() => { setEdAddSection("laboratoryTests"); setEdAddItemId(""); setEdAddFiles([]); setEdAddText(""); setEdAddSearchQ(""); setEdAddDropOpen(false); setEdAddModalOpen(true); }}>
+                                <Plus size={14} />{t("earlyDiagnosis.add", "Add")}
+                              </button>
+                            </div>
+                            {edAddModalOpen && edAddSection === "laboratoryTests" && createPortal(
+                              <>
+                                <div className="ht-add-overlay" onClick={() => setEdAddModalOpen(false)} />
+                                <div className="ht-add-modal ht-add-modal--wide">
+                                  <div className="ht-add-modal-header">
+                                    <span className="ht-add-modal-title">{t("earlyDiagnosis.add", "Add")}</span>
+                                    <button type="button" className="ht-add-modal-close" onClick={() => setEdAddModalOpen(false)}><X size={16} /></button>
+                                  </div>
+                                  <div className="ht-add-step" style={edAddDropOpen ? { overflowY: "visible" } : {}}>
+                                    <span className="ht-add-section-label">{t("earlyDiagnosis.selectTest", "SELECT TEST")}</span>
+                                    <div className="ht-test-dropdown" style={{ position: "relative" }}>
+                                      <button type="button" className="ht-test-dropdown-trigger" onClick={() => setEdAddDropOpen((o) => !o)}>
+                                        {edAddItemId ? (<span className="ht-test-dropdown-value">{readLocalizedName((managedTests?.laboratoryTests || []).find((it) => normalizeId(it?._id) === edAddItemId)?.name)}</span>) : (<span className="ht-test-dropdown-placeholder">{t("earlyDiagnosis.selectTest", "— select a test —")}</span>)}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                                      </button>
+                                      {edAddDropOpen && (
+                                        <div className="ht-test-dropdown-menu">
+                                          <div className="ht-test-dropdown-search-wrap">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                                            <input autoFocus className="ht-test-dropdown-search" placeholder={t("common.search", "Search…")} value={edAddSearchQ} onChange={(e) => setEdAddSearchQ(e.target.value)} />
+                                          </div>
+                                          {(managedTests?.laboratoryTests || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).map((item) => { const id = normalizeId(item?._id); return (<div key={id} className={`ht-test-dropdown-item${edAddItemId === id ? " selected" : ""}`} onClick={() => { setEdAddItemId(id); setEdAddDropOpen(false); setEdAddSearchQ(""); }}><span className="ht-test-dropdown-item-name">{readLocalizedName(item?.name)}</span></div>); })}
+                                          {(managedTests?.laboratoryTests || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).length === 0 && (<div className="ht-test-dropdown-empty">{t("common.noResults", "No results")}</div>)}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <span className="ht-add-section-label">{t("earlyDiagnosis.files", "FILES")}</span>
+                                    <div className="ht-add-file-zone" style={{ cursor: "pointer" }} onClick={() => edAddFileInputRef.current?.click()}>
+                                      <Upload size={20} /><span>{t("earlyDiagnosis.clickToUpload", "Click to upload files")}</span>
+                                    </div>
+                                    {edAddFiles.length > 0 && (<div className="ht-add-file-list">{edAddFiles.map((f, i) => (<div key={i} className="ht-add-file-item"><span className="ht-add-file-name">{f.name}</span><button type="button" className="ht-add-file-remove" onClick={() => setEdAddFiles((prev) => prev.filter((_, idx) => idx !== i))}><X size={12} /></button></div>))}</div>)}
+                                    <span className="ht-add-section-label">{t("earlyDiagnosis.addText", "ADD TEXT")}</span>
+                                    <div className="ht-add-rte-wrap"><RichTextEditor value={edAddText} onChange={setEdAddText} placeholder={t("history_tab.enter_text", "Enter text…")} /></div>
+                                    <div className="ht-add-modal-footer">
+                                      <button type="button" className="ht-add-btn-secondary" onClick={() => setEdAddModalOpen(false)}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                      <button type="button" className="ht-add-btn-primary" disabled={edAddSubmitting || !edAddItemId || (edAddFiles.length === 0 && !String(edAddText || "").replace(/<[^>]*>/g,"").trim())} onClick={handleEdAddModalSubmit}>{edAddSubmitting ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}</button>
                                     </div>
                                   </div>
-                                );
-                              })
+                                </div>
+                              </>,
+                              document.body
                             )}
-                          </div>
+                          </>
                         )
                       )}
 
@@ -2650,86 +2854,201 @@ const EarlyDetectionBookingDetails = () => {
                         activeTestId ? (() => {
                           const selTest = (managedTests?.instrumentalAnalysis || []).find((t) => normalizeId(t?._id) === activeTestId);
                           const selEntries = (booking?.schedule?.instrumentalAnalysis || []).filter((e) => normalizeId(e?.item?._id) === activeTestId);
-                          const selFiles = selEntries.flatMap((e) => e?.files || []);
-                          const selNotes = selEntries.flatMap((e) => e?.notes || []);
-                          const hasItems = selFiles.length > 0 || selNotes.length > 0;
                           return (
                             <div className="ed-test-detail-page">
-                              <div className="ed-test-detail-header">
-                                <h2 className="ed-test-detail-title">{readLocalizedName(selTest?.name)}</h2>
-                              </div>
-                              <div className="ed-test-detail-actions">
-                                <button type="button" className="ed-td-btn" onClick={() => { setUploadSection("instrumentalAnalysis"); setUploadItemId(activeTestId); setUploadFiles([]); setShowUploadModal(true); }}>
-                                  <Plus size={14} />{t("earlyDiagnosis.uploadFile", "Upload file")}
-                                </button>
-                                <button type="button" className="ed-td-btn" onClick={() => { setShowTestNoteEditor(true); setEditingTestNoteId(null); setTestNoteDraft(""); }}>
-                                  <FileText size={14} />{t("earlyDiagnosis.addText", "Add text")}
-                                </button>
-                              </div>
-                              <div className="ed-td-list">
-                                {!hasItems && !showTestNoteEditor && (
-                                  <div className="ed-td-empty">{t("earlyDiagnosis.noEntries", "No entries yet")}</div>
-                                )}
-                                {selFiles.map((file, fi) => (
-                                  <div key={normalizeId(file?.fileId) || file?._id || fi} className="ed-td-item">
-                                    <span className={`ed-td-badge ed-td-badge--${getFileExtension(file)}`}>{getFileExtension(file).toUpperCase()}</span>
-                                    <div className="ed-td-item-info">
-                                      <span className="ed-td-item-name">{getFileLabel(file)}</span>
-                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(file?.uploadedAt)}</span>
+                              {(() => {
+                                const edGroups = groupEdItems(selEntries);
+                                const addBtn = (
+                                  <button type="button" className="ed-td-btn" onClick={() => { setEdAddSection("instrumentalAnalysis"); setEdAddItemId(activeTestId); setEdAddFiles([]); setEdAddText(""); setEdAddModalOpen(true); }}>
+                                    <Plus size={14} />{t("earlyDiagnosis.add", "Add")}
+                                  </button>
+                                );
+                                return (
+                                  <>
+                                    <div className="ed-test-detail-header">
+                                      <h2 className="ed-test-detail-title">{readLocalizedName(selTest?.name)}</h2>
+                                      {addBtn}
                                     </div>
-                                    <div className="ed-td-item-actions">
-                                      {getSectionFileUrl(file) && (<a href={getSectionFileUrl(file, false)} target="_blank" rel="noopener noreferrer" className="ed-td-icon-btn"><Eye size={15} /></a>)}
-                                      {getSectionFileUrl(file, true) && (<a href={getSectionFileUrl(file, true)} download className="ed-td-icon-btn"><Download size={15} /></a>)}
-                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete"><Trash2 size={15} /></button>
+                                    {edGroups.length > 0 && <div className="ed-td-list">
+                                      {edGroups.map((group, gIdx) => {
+                                        const dt = group[0]._ts ? new Date(group[0]._ts) : null;
+                                        const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                                        const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                                        return (
+                                          <div key={gIdx} className="ht-td-group">
+                                            <div className="ht-td-group-items">
+                                              <div className="ht-td-group-card-header">
+                                                <div className="ht-td-group-date"><Clock size={11} /><span>{dateStr} · {timeStr}</span></div>
+                                                <button type="button" className="ht-td-group-delete-btn" onClick={() => handleDeleteEdGroup("instrumentalAnalysis", group)} aria-label="Delete group"><Trash2 size={13} /></button>
+                                              </div>
+                                              <div className="ht-td-group-grid">
+                                                {group.map((item, iIdx) => item._type === "file" ? (
+                                                  <div key={normalizeId(item?.fileId) || iIdx} className="ht-td-item">
+                                                    <span className={`ht-td-badge ht-td-badge--${getFileExtension(item)}`}>{getFileExtension(item).toUpperCase()}</span>
+                                                    <div className="ht-td-item-info"><span className="ht-td-item-name">{getFileLabel(item)}</span></div>
+                                                    <div className="ht-td-item-actions">
+                                                      {getSectionFileUrl(item) && (<a href={getSectionFileUrl(item, false)} target="_blank" rel="noopener noreferrer" className="ht-td-icon-btn"><Eye size={15} /></a>)}
+                                                      {getSectionFileUrl(item, true) && (<a href={getSectionFileUrl(item, true)} download className="ht-td-icon-btn"><Download size={15} /></a>)}
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <div key={String(item._id)} className="ht-td-item">
+                                                    <span className="ht-td-note-icon"><FileText size={16} /></span>
+                                                    <div className="ht-td-item-info"><div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: item.content }} /></div>
+                                                    <div className="ht-td-item-actions">
+                                                      <button type="button" className="ht-td-icon-btn" onClick={() => { setEditingTestNoteId(item._id); setTestNoteDraft(item.content || ""); setShowTestNoteEditor(true); }}><Pencil size={14} /></button>
+                                                      <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote("instrumentalAnalysis", item.entryId, item._id)}><Trash2 size={14} /></button>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>}
+                                  </>
+                                );
+                              })()}
+                              {showTestNoteEditor && createPortal(
+                                <>
+                                  <div className="ht-add-overlay" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }} />
+                                  <div className="ht-add-modal">
+                                    <div className="ht-add-modal-header">
+                                      <span className="ht-add-modal-title">{editingTestNoteId ? t("earlyDiagnosis.editNote", "Edit Note") : t("earlyDiagnosis.addNote", "Add Note")}</span>
+                                      <button type="button" className="ht-add-modal-close" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}><X size={16} /></button>
+                                    </div>
+                                    <div className="ht-add-step">
+                                      <div className="ht-add-rte-wrap"><RichTextEditor value={testNoteDraft} onChange={setTestNoteDraft} placeholder={t("history_tab.enter_text", "Enter text…")} /></div>
+                                      <div className="ht-add-modal-footer">
+                                        <button type="button" className="ht-add-btn-secondary" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                        <button type="button" className="ht-add-btn-primary" disabled={isSavingTestNote || !String(testNoteDraft || "").replace(/<[^>]*>/g,"").trim()} onClick={() => handleSaveTestNote("instrumentalAnalysis")}>
+                                          {isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
-                                ))}
-                                {selNotes.map((note) => (
-                                  <div key={String(note._id)} className="ed-td-item ed-td-item--note">
-                                    <span className="ed-td-note-icon"><FileText size={18} /></span>
-                                    <div className="ed-td-item-info">
-                                      <div className="ed-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
-                                      <span className="ed-td-item-meta"><Clock size={11} />{formatDateTime(note?.createdAt)}</span>
+                                </>,
+                                document.body
+                              )}
+                              {edAddModalOpen && edAddSection === "instrumentalAnalysis" && createPortal(
+                                <>
+                                  <div className="ht-add-overlay" onClick={() => setEdAddModalOpen(false)} />
+                                  <div className="ht-add-modal ht-add-modal--wide">
+                                    <div className="ht-add-modal-header">
+                                      <span className="ht-add-modal-title">{t("earlyDiagnosis.add", "Add")}</span>
+                                      <button type="button" className="ht-add-modal-close" onClick={() => setEdAddModalOpen(false)}><X size={16} /></button>
                                     </div>
-                                    <div className="ed-td-item-actions">
-                                      <button type="button" className="ed-td-icon-btn" onClick={() => { setEditingTestNoteId(note._id); setTestNoteDraft(note.content || ""); setShowTestNoteEditor(true); }}><Edit2 size={15} /></button>
-                                      <button type="button" className="ed-td-icon-btn ed-td-icon-btn--delete" onClick={() => { const entry = selEntries.find((e) => (e.notes || []).some((n) => String(n._id) === String(note._id))); if (entry) handleDeleteTestNote("instrumentalAnalysis", entry._id, note._id); }}><Trash2 size={15} /></button>
+                                    <div className="ht-add-step" style={edAddDropOpen ? { overflowY: "visible" } : {}}>
+                                      <span className="ht-add-section-label">{t("earlyDiagnosis.selectTest", "SELECT TEST")}</span>
+                                      <div className="ht-test-dropdown" style={{ position: "relative" }}>
+                                        <button type="button" className="ht-test-dropdown-trigger" onClick={() => setEdAddDropOpen((o) => !o)}>
+                                          {edAddItemId ? (
+                                            <span className="ht-test-dropdown-value">{readLocalizedName((managedTests?.instrumentalAnalysis || []).find((it) => normalizeId(it?._id) === edAddItemId)?.name)}</span>
+                                          ) : (
+                                            <span className="ht-test-dropdown-placeholder">{t("earlyDiagnosis.selectTest", "— select a test —")}</span>
+                                          )}
+                                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                                        </button>
+                                        {edAddDropOpen && (
+                                          <div className="ht-test-dropdown-menu">
+                                            <div className="ht-test-dropdown-search-wrap">
+                                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                                              <input autoFocus className="ht-test-dropdown-search" placeholder={t("common.search", "Search…")} value={edAddSearchQ} onChange={(e) => setEdAddSearchQ(e.target.value)} />
+                                            </div>
+                                            {(managedTests?.instrumentalAnalysis || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).map((item) => {
+                                              const id = normalizeId(item?._id);
+                                              return (
+                                                <div key={id} className={`ht-test-dropdown-item${edAddItemId === id ? " selected" : ""}`} onClick={() => { setEdAddItemId(id); setEdAddDropOpen(false); setEdAddSearchQ(""); }}>
+                                                  <span className="ht-test-dropdown-item-name">{readLocalizedName(item?.name)}</span>
+                                                </div>
+                                              );
+                                            })}
+                                            {(managedTests?.instrumentalAnalysis || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).length === 0 && (
+                                              <div className="ht-test-dropdown-empty">{t("common.noResults", "No results")}</div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <span className="ht-add-section-label">{t("earlyDiagnosis.files", "FILES")}</span>
+                                      <div className="ht-add-file-zone" style={{ cursor: "pointer" }} onClick={() => edAddFileInputRef.current?.click()}>
+                                        <Upload size={20} /><span>{t("earlyDiagnosis.clickToUpload", "Click to upload files")}</span>
+                                      </div>
+                                      {edAddFiles.length > 0 && (
+                                        <div className="ht-add-file-list">
+                                          {edAddFiles.map((f, i) => (
+                                            <div key={i} className="ht-add-file-item">
+                                              <span className="ht-add-file-name">{f.name}</span>
+                                              <button type="button" className="ht-add-file-remove" onClick={() => setEdAddFiles((prev) => prev.filter((_, idx) => idx !== i))}><X size={12} /></button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      <span className="ht-add-section-label">{t("earlyDiagnosis.addText", "ADD TEXT")}</span>
+                                      <div className="ht-add-rte-wrap"><RichTextEditor value={edAddText} onChange={setEdAddText} placeholder={t("history_tab.enter_text", "Enter text…")} /></div>
+                                      <div className="ht-add-modal-footer">
+                                        <button type="button" className="ht-add-btn-secondary" onClick={() => setEdAddModalOpen(false)}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                        <button type="button" className="ht-add-btn-primary" disabled={edAddSubmitting || !edAddItemId || (edAddFiles.length === 0 && !String(edAddText || "").replace(/<[^>]*>/g,"").trim())} onClick={handleEdAddModalSubmit}>
+                                          {edAddSubmitting ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                              {showTestNoteEditor && (
-                                <div className="ed-td-note-editor">
-                                  <RichTextEditor value={testNoteDraft} onChange={setTestNoteDraft} placeholder={t("history_tab.enter_text", "Enter text…")} />
-                                  <div className="ed-td-note-editor-actions">
-                                    <button type="button" className="ed-td-save-btn" disabled={isSavingTestNote} onClick={() => handleSaveTestNote("instrumentalAnalysis")}>{isSavingTestNote ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}</button>
-                                    <button type="button" className="ed-td-cancel-btn" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
-                                  </div>
-                                </div>
+                                </>,
+                                document.body
                               )}
                             </div>
                           );
                         })() : (
-                          <div className="ed-schedule-section-list">
-                            {(managedTests?.instrumentalAnalysis || []).length === 0 ? (
-                              <div className="ed-schedule-empty">{t("earlyDiagnosis.noTests", "No tests configured")}</div>
-                            ) : (
-                              (managedTests?.instrumentalAnalysis || []).map((test) => {
-                                const testId = normalizeId(test?._id);
-                                const isDone = (booking?.schedule?.instrumentalAnalysis || []).filter((e) => normalizeId(e?.item?._id) === testId).flatMap((e) => e?.files || []).length > 0;
-                                return (
-                                  <div className="ed-test-list-item" key={testId}>
-                                    <div className="ed-test-list-item-header">
-                                      <span className={`ed-test-list-status${isDone ? " ed-test-list-status--done" : ""}`}>
-                                        {isDone ? <CheckCircle size={15} /> : <span className="ed-test-status-circle" />}
-                                      </span>
-                                      <span className="ed-test-list-name">{readLocalizedName(test?.name)}</span>
+                          <>
+                            <div className="ed-section-add-only">
+                              <button type="button" className="ed-td-btn" onClick={() => { setEdAddSection("instrumentalAnalysis"); setEdAddItemId(""); setEdAddFiles([]); setEdAddText(""); setEdAddSearchQ(""); setEdAddDropOpen(false); setEdAddModalOpen(true); }}>
+                                <Plus size={14} />{t("earlyDiagnosis.add", "Add")}
+                              </button>
+                            </div>
+                            {edAddModalOpen && edAddSection === "instrumentalAnalysis" && createPortal(
+                              <>
+                                <div className="ht-add-overlay" onClick={() => setEdAddModalOpen(false)} />
+                                <div className="ht-add-modal ht-add-modal--wide">
+                                  <div className="ht-add-modal-header">
+                                    <span className="ht-add-modal-title">{t("earlyDiagnosis.add", "Add")}</span>
+                                    <button type="button" className="ht-add-modal-close" onClick={() => setEdAddModalOpen(false)}><X size={16} /></button>
+                                  </div>
+                                  <div className="ht-add-step" style={edAddDropOpen ? { overflowY: "visible" } : {}}>
+                                    <span className="ht-add-section-label">{t("earlyDiagnosis.selectTest", "SELECT TEST")}</span>
+                                    <div className="ht-test-dropdown" style={{ position: "relative" }}>
+                                      <button type="button" className="ht-test-dropdown-trigger" onClick={() => setEdAddDropOpen((o) => !o)}>
+                                        {edAddItemId ? (<span className="ht-test-dropdown-value">{readLocalizedName((managedTests?.instrumentalAnalysis || []).find((it) => normalizeId(it?._id) === edAddItemId)?.name)}</span>) : (<span className="ht-test-dropdown-placeholder">{t("earlyDiagnosis.selectTest", "— select a test —")}</span>)}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                                      </button>
+                                      {edAddDropOpen && (
+                                        <div className="ht-test-dropdown-menu">
+                                          <div className="ht-test-dropdown-search-wrap">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                                            <input autoFocus className="ht-test-dropdown-search" placeholder={t("common.search", "Search…")} value={edAddSearchQ} onChange={(e) => setEdAddSearchQ(e.target.value)} />
+                                          </div>
+                                          {(managedTests?.instrumentalAnalysis || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).map((item) => { const id = normalizeId(item?._id); return (<div key={id} className={`ht-test-dropdown-item${edAddItemId === id ? " selected" : ""}`} onClick={() => { setEdAddItemId(id); setEdAddDropOpen(false); setEdAddSearchQ(""); }}><span className="ht-test-dropdown-item-name">{readLocalizedName(item?.name)}</span></div>); })}
+                                          {(managedTests?.instrumentalAnalysis || []).filter((it) => readLocalizedName(it?.name)?.toLowerCase().includes(edAddSearchQ.toLowerCase())).length === 0 && (<div className="ht-test-dropdown-empty">{t("common.noResults", "No results")}</div>)}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <span className="ht-add-section-label">{t("earlyDiagnosis.files", "FILES")}</span>
+                                    <div className="ht-add-file-zone" style={{ cursor: "pointer" }} onClick={() => edAddFileInputRef.current?.click()}>
+                                      <Upload size={20} /><span>{t("earlyDiagnosis.clickToUpload", "Click to upload files")}</span>
+                                    </div>
+                                    {edAddFiles.length > 0 && (<div className="ht-add-file-list">{edAddFiles.map((f, i) => (<div key={i} className="ht-add-file-item"><span className="ht-add-file-name">{f.name}</span><button type="button" className="ht-add-file-remove" onClick={() => setEdAddFiles((prev) => prev.filter((_, idx) => idx !== i))}><X size={12} /></button></div>))}</div>)}
+                                    <span className="ht-add-section-label">{t("earlyDiagnosis.addText", "ADD TEXT")}</span>
+                                    <div className="ht-add-rte-wrap"><RichTextEditor value={edAddText} onChange={setEdAddText} placeholder={t("history_tab.enter_text", "Enter text…")} /></div>
+                                    <div className="ht-add-modal-footer">
+                                      <button type="button" className="ht-add-btn-secondary" onClick={() => setEdAddModalOpen(false)}>{t("earlyDiagnosis.cancel", "Cancel")}</button>
+                                      <button type="button" className="ht-add-btn-primary" disabled={edAddSubmitting || !edAddItemId || (edAddFiles.length === 0 && !String(edAddText || "").replace(/<[^>]*>/g,"").trim())} onClick={handleEdAddModalSubmit}>{edAddSubmitting ? t("earlyDiagnosis.saving", "Saving…") : t("earlyDiagnosis.save", "Save")}</button>
                                     </div>
                                   </div>
-                                );
-                              })
+                                </div>
+                              </>,
+                              document.body
                             )}
-                          </div>
+                          </>
                         )
                       )}
 
@@ -3851,7 +4170,7 @@ const EarlyDetectionBookingDetails = () => {
             className="mp-modal-overlay"
             onClick={() => setShowUploadModal(false)}
           >
-            <div className="mp-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="mp-modal mp-modal--wide" onClick={(e) => e.stopPropagation()}>
               <div className="mp-modal-header">
                 <h3>{t("earlyDiagnosis.uploadFile", "Upload file")}</h3>
                 <button
@@ -3868,23 +4187,79 @@ const EarlyDetectionBookingDetails = () => {
                     <label className="mp-field-label">
                       {t("earlyDiagnosis.selectTest", "Select test")}
                     </label>
-                    <select
-                      className="mp-select"
-                      value={uploadItemId}
-                      onChange={(e) => setUploadItemId(e.target.value)}
-                    >
-                      <option value="">
-                        {t("earlyDiagnosis.selectTest", "Select test")}
-                      </option>
-                      {managedTestOptions.map((item) => (
-                        <option
-                          key={normalizeId(item?._id)}
-                          value={normalizeId(item?._id)}
-                        >
-                          {readLocalizedName(item?.name)}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="ht-test-dropdown" style={{ position: "relative" }}>
+                      <button
+                        type="button"
+                        className="ht-test-dropdown-trigger"
+                        onClick={() => setEdUploadDropOpen((o) => !o)}
+                      >
+                        {uploadItemId ? (
+                          <span className="ht-test-dropdown-value">
+                            {readLocalizedName(
+                              managedTestOptions.find(
+                                (it) => normalizeId(it?._id) === uploadItemId
+                              )?.name
+                            )}
+                          </span>
+                        ) : (
+                          <span className="ht-test-dropdown-placeholder">
+                            {t("earlyDiagnosis.selectTest", "Select test")}
+                          </span>
+                        )}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                      {edUploadDropOpen && (
+                        <div className="ht-test-dropdown-menu">
+                          <div className="ht-test-dropdown-search-wrap">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input
+                              autoFocus
+                              className="ht-test-dropdown-search"
+                              placeholder={t("common.search", "Search…")}
+                              value={edUploadSearchQ}
+                              onChange={(e) => setEdUploadSearchQ(e.target.value)}
+                            />
+                          </div>
+                          {managedTestOptions
+                            .filter((it) =>
+                              readLocalizedName(it?.name)
+                                ?.toLowerCase()
+                                .includes(edUploadSearchQ.toLowerCase())
+                            )
+                            .map((item) => {
+                              const id = normalizeId(item?._id);
+                              return (
+                                <div
+                                  key={id}
+                                  className={`ht-test-dropdown-item${uploadItemId === id ? " selected" : ""}`}
+                                  onClick={() => {
+                                    setUploadItemId(id);
+                                    setEdUploadDropOpen(false);
+                                    setEdUploadSearchQ("");
+                                  }}
+                                >
+                                  <span className="ht-test-dropdown-item-name">
+                                    {readLocalizedName(item?.name)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          {managedTestOptions.filter((it) =>
+                            readLocalizedName(it?.name)
+                              ?.toLowerCase()
+                              .includes(edUploadSearchQ.toLowerCase())
+                          ).length === 0 && (
+                            <div className="ht-test-dropdown-empty">
+                              {t("common.noResults", "No results")}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -4356,6 +4731,19 @@ const EarlyDetectionBookingDetails = () => {
           </div>,
           document.body,
         )}
+
+      {/* Hidden file input for ED add modal — lives outside the portal so React onChange fires reliably */}
+      <input
+        ref={edAddFileInputRef}
+        type="file"
+        multiple
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          e.target.value = "";
+          setEdAddFiles((prev) => [...prev, ...files]);
+        }}
+      />
 
       {edSectionPdfModal && (
         <EDSectionPDFModal

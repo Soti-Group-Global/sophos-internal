@@ -37,6 +37,8 @@ const collectKeys = (sections) => {
 };
 const ALL_KEYS = collectKeys(HISTORY_SECTIONS);
 
+const stripHtml = (html) => html?.replace(/<[^>]*>/g, "").trim() || "";
+
 /* ────────────────────────────────────────────────────────────
    SpecialistHistoryForm
    Props:
@@ -69,6 +71,7 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
 
   const [form, setForm] = useState(() => buildForm(initialHistoryForm));
   const [editingFields, setEditingFields] = useState({});
+  const [isEditMode, setIsEditMode] = useState(false);
 
   /* Re-sync when parent data changes (e.g. booking reloads) */
   useEffect(() => {
@@ -122,6 +125,7 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
   const handleSave = useCallback(() => {
     if (!canEdit) return;
     onSave?.({ ...form });
+    setIsEditMode(false);
   }, [form, onSave, canEdit]);
 
   /* ── Verify toggle (local only — parent save persists it) ── */
@@ -151,11 +155,39 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
     );
   };
 
-  /* ── Render one section (with optional subsections) ── */
+  const hasAnyContent = ALL_KEYS.some((k) => stripHtml(form[k]?.value));
+
+  /* ── Read-only text view: only filled sections ── */
+  const renderReadOnlySection = (section, level = 0) => {
+    const filledFields = (section.fields || []).filter((f) => stripHtml(form[f.key]?.value));
+    const filledSubs = (section.subsections || [])
+      .map((sub) => renderReadOnlySection(sub, level + 1))
+      .filter(Boolean);
+
+    if (!filledFields.length && !filledSubs.length) return null;
+
+    return (
+      <div key={section.id} className={`shf-ro-section${level > 0 ? " shf-ro-subsection" : ""}`}>
+        <div className={`shf-ro-heading${level > 0 ? " shf-ro-subheading" : ""}`}>
+          {t(section.titleKey)}
+        </div>
+        {filledFields.map((f) => (
+          <div
+            key={f.key}
+            className="shf-ro-content"
+            dangerouslySetInnerHTML={{ __html: form[f.key]?.value }}
+          />
+        ))}
+        {filledSubs}
+      </div>
+    );
+  };
+
+  /* ── Edit mode: render one section (with optional subsections) ── */
   const renderSection = (section, level = 0) => {
     const isSingleField = section.fields?.length === 1 && !section.fields[0].labelKey && !section.subsections?.length;
     const singleKey = isSingleField ? section.fields[0].key : null;
-    const singleEditing = singleKey ? !!editingFields[singleKey] : false;
+    const singleEditing = isEditMode || (singleKey ? !!editingFields[singleKey] : false);
 
     return (
       <div
@@ -164,7 +196,7 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
       >
         <div
           className={`ht-section-header${level > 0 ? " ht-subsection-header" : ""}${isSingleField ? " ht-section-header--clickable" : ""}`}
-          onClick={isSingleField ? () => setFieldEditing(singleKey, !singleEditing) : undefined}
+          onClick={isSingleField && !isEditMode ? () => setFieldEditing(singleKey, !singleEditing) : undefined}
         >
           <span className={level > 0 ? "ht-subsection-title" : "ht-section-title"}>
             {t(section.titleKey)}
@@ -180,7 +212,6 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
             </div>
           )}
         </div>
-
         <div className="ht-section-body">
           {isSingleField ? (
             singleEditing ? (
@@ -208,10 +239,10 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
               {section.fields?.map((f) => (
                 <div
                   key={f.key}
-                  className={`ht-field${editingFields[f.key] ? " ht-field--editing" : ""}`}
+                  className={`ht-field${(isEditMode || editingFields[f.key]) ? " ht-field--editing" : ""}`}
                   data-ht-field
                 >
-                  {editingFields[f.key] ? (
+                  {(isEditMode || editingFields[f.key]) ? (
                     <RichTextEditor
                       value={form[f.key]?.value || ""}
                       onChange={(html) => handleEditorChange(f.key, html)}
@@ -241,34 +272,45 @@ const SpecialistHistoryForm = ({ historyForm: initialHistoryForm, onSave, isSavi
 
   return (
     <div className={`shf-wrap${!canEdit ? " shf-wrap--readonly" : ""}`}>
-      {/* ── Save row ── */}
+      {/* ── Header row ── */}
       <div className="shf-header-row">
-        {specialistTitle && (
-          <h2 className="shf-specialist-title">{specialistTitle}</h2>
-        )}
-        {canEdit && (
-          <div className="shf-header-actions">
-            <button
-              type="button"
-              className="save-btn"
-              onClick={handleSave}
-              disabled={!!isSaving}
-            >
-              {isSaving ? t("footer.saving") : t("earlyDiagnosis.save", { ns: "translation" })}
+        {specialistTitle && <h2 className="shf-specialist-title">{specialistTitle}</h2>}
+        <div className="shf-header-actions">
+          {canEdit && hasAnyContent && !isEditMode && (
+            <button type="button" className="shf-edit-btn" onClick={() => setIsEditMode(true)}>
+              Edit
             </button>
-          </div>
-        )}
-        {!canEdit && (
-          <div className="shf-readonly-banner">
-            🔒 {t("history_tab.read_only_specialist", "You can view this specialist history but cannot edit it")}
-          </div>
-        )}
+          )}
+          {canEdit && (isEditMode || !hasAnyContent) && (
+            <>
+              {hasAnyContent && (
+                <button type="button" className="shf-cancel-btn" onClick={() => setIsEditMode(false)}>
+                  Cancel
+                </button>
+              )}
+              <button type="button" className="save-btn" onClick={handleSave} disabled={!!isSaving}>
+                {isSaving ? t("footer.saving") : t("earlyDiagnosis.save", { ns: "translation" })}
+              </button>
+            </>
+          )}
+          {!canEdit && (
+            <div className="shf-readonly-banner">
+              🔒 {t("read_only_specialist", "You can view this specialist history but cannot edit it")}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── History sections ── */}
-      <div className="ht-container" style={{ paddingBottom: 24 }}>
-        {HISTORY_SECTIONS.map((s) => renderSection(s))}
-      </div>
+      {/* ── Body: read-only text when content exists (and not editing), full edit mode otherwise ── */}
+      {hasAnyContent && !isEditMode ? (
+        <div className="shf-ro-wrap">
+          {HISTORY_SECTIONS.map((s) => renderReadOnlySection(s)).filter(Boolean)}
+        </div>
+      ) : (
+        <div className="ht-container" style={{ paddingBottom: 24 }}>
+          {HISTORY_SECTIONS.map((s) => renderSection(s))}
+        </div>
+      )}
     </div>
   );
 };

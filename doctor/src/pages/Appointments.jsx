@@ -15,6 +15,8 @@ import {
   getDoctorBreaks,
   deleteDoctorBreak,
   updateDoctorBreak,
+  getDoctorWeeklySchedule,
+  getDoctorDateOverride,
 } from "../utils/api";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -93,6 +95,10 @@ const Appointments = () => {
   // Doctor profile info for the break modal
   const [doctorInfo, setDoctorInfo] = useState({ name: "", email: "" });
 
+  // Weekly schedule & date override caches for calendar slot coloring
+  const [weeklyScheduleCache, setWeeklyScheduleCache] = useState(null); // { dayName: {isDayOff, slots} }
+  const [dateOverrideCache, setDateOverrideCache] = useState({});       // { "YYYY-MM-DD": {isDayOff, slots} }
+
   // Break form state
   const [breakEntries, setBreakEntries] = useState([
     { startTime: "12:00", endTime: "12:30" },
@@ -153,6 +159,44 @@ const Appointments = () => {
     };
     loadDoctor();
   }, []);
+
+  // Fetch weekly schedule once doctor email is known
+  useEffect(() => {
+    const email = doctorInfo.email || getEmailFromToken();
+    if (!email) return;
+    getDoctorWeeklySchedule(email)
+      .then((res) => {
+        const schedule = res?.schedule || res?.data?.schedule;
+        if (Array.isArray(schedule)) {
+          const map = {};
+          schedule.forEach((d) => { map[d.day] = d; });
+          setWeeklyScheduleCache(map);
+        }
+      })
+      .catch(() => {});
+  }, [doctorInfo.email]);
+
+  // Fetch date overrides for all days in the current visible week
+  useEffect(() => {
+    const email = doctorInfo.email || getEmailFromToken();
+    if (!email || !selectedWeekStart) return;
+    const weekDayStrs = Array.from({ length: 7 }, (_, i) =>
+      selectedWeekStart.clone().add(i, "days").format("YYYY-MM-DD")
+    );
+    weekDayStrs.forEach((ds) => {
+      getDoctorDateOverride(email, ds)
+        .then((res) => {
+          const override = res?.override || res?.data?.override;
+          setDateOverrideCache((prev) => {
+            if (override) return { ...prev, [ds]: override };
+            const n = { ...prev };
+            delete n[ds];
+            return n;
+          });
+        })
+        .catch(() => {});
+    });
+  }, [doctorInfo.email, selectedWeekStart]);
 
   // close day menu when clicking outside
   useEffect(() => {
@@ -316,20 +360,37 @@ const Appointments = () => {
           ? appResponse.value.data?.applications || []
           : [];
       const mapped = apps
-        .map((app) => ({
-          id: app.applicationId || app._id,
-          title:
-            app.patientName ||
-            app.patient?.email ||
-            t("appointment.unknownPatient"),
-          start: app.startTime ? moment(app.startTime) : null,
-          end: app.endTime ? moment(app.endTime) : null,
-          status: app.appointmentStatus || "unconfirmed",
-          applicationId: app.applicationId,
-          type: "application",
-          isBreak: false,
-        }))
-        .filter((ev) => ev.start && ev.end);
+        .map((app) => {
+          const datePart = formatDateISO(app?.date);
+          const startPart = formatTimeHHMM(app?.startTime);
+          const endPart = formatTimeHHMM(app?.endTime);
+          const start =
+            datePart && startPart
+              ? moment(`${datePart} ${startPart}`, "YYYY-MM-DD HH:mm")
+              : app?.startTime
+                ? moment(app.startTime)
+                : null;
+          const end =
+            datePart && endPart
+              ? moment(`${datePart} ${endPart}`, "YYYY-MM-DD HH:mm")
+              : app?.endTime
+                ? moment(app.endTime)
+                : null;
+          return {
+            id: app.applicationId || app._id,
+            title:
+              app.patientName ||
+              app.patient?.email ||
+              t("appointment.unknownPatient"),
+            start,
+            end,
+            status: app.appointmentStatus || "unconfirmed",
+            applicationId: app.applicationId,
+            type: "application",
+            isBreak: false,
+          };
+        })
+        .filter((ev) => ev.start && ev.end && ev.start.isValid() && ev.end.isValid());
 
       const earlyDetectionApps =
         earlyDetectionResponse.status === "fulfilled" &&
@@ -459,6 +520,40 @@ const Appointments = () => {
     return true;
   };
 
+  // ── Schedule helpers ────────────────────────────────────────────────────────
+  const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const getEffectiveDay = (dateStr) => {
+    const override = dateOverrideCache[dateStr];
+    if (override) return override;
+    if (!weeklyScheduleCache) return null;
+    const dayName = DAY_NAMES[new Date(dateStr + "T00:00:00").getDay()];
+    return weeklyScheduleCache[dayName] || null;
+  };
+  const isScheduleDayOff = (dateStr) => {
+    const d = getEffectiveDay(dateStr);
+    return d ? d.isDayOff : false;
+  };
+  const isScheduleBreakSlot = (dateStr, hour, minute) => {
+    const d = getEffectiveDay(dateStr);
+    if (!d || d.isDayOff) return false;
+    const slotMins = hour * 60 + minute;
+    return (d.slots || []).some((s) => {
+      if (s.type !== "break") return false;
+      const [sh, sm] = s.startTime.split(":").map(Number);
+      const [eh, em] = s.endTime.split(":").map(Number);
+      return slotMins >= sh * 60 + sm && slotMins < eh * 60 + em;
+    });
+  };
+  const isOutsideWorkingHours = (dateStr, hour, minute) => {
+    const d = getEffectiveDay(dateStr);
+    if (!d || d.isDayOff || !d.slots || d.slots.length === 0) return false;
+    const slotMins = hour * 60 + minute;
+    return !d.slots.some((s) => {
+      const [sh, sm] = s.startTime.split(":").map(Number);
+      const [eh, em] = s.endTime.split(":").map(Number);
+      return slotMins >= sh * 60 + sm && slotMins < eh * 60 + em;
+    });
+  };
   // Position helpers for week grid events
   // make a light version of a hex colour by increasing each channel
   const lightenColor = (hex, amount = 40) => {
@@ -482,7 +577,7 @@ const Appointments = () => {
     const top = (startHour - gridStartHour) * slotHeight * 2;
     const height = (endHour - startHour) * slotHeight * 2;
     const statusColors = {
-      confirmed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
+      confirmed: { border: "#4ade80", text: "#14532d", bg: "#86efac" },
       completed: { border: "#86efac", text: "#166534", bg: "#dcfce7" },
       paid: { border: "#6ee7b7", text: "#065f46", bg: "#d1fae5" },
       upcoming: { border: "#fde68a", text: "#854d0e", bg: "#fef9c3" },
@@ -494,12 +589,14 @@ const Appointments = () => {
     };
     const key = (event.status || "").toLowerCase();
     const colors = statusColors[key] || statusColors.unconfirmed;
+    const isConfirmed = key === "confirmed";
     return {
       top: `${top}px`,
-      // Keep enough room for type badge + title + time + status lines.
       height: `${Math.max(height, 72)}px`,
       backgroundColor: colors.bg,
-      borderLeft: `3px solid ${colors.border}`,
+      ...(isConfirmed
+        ? { border: `2px solid ${colors.border}` }
+        : { borderLeft: `3px solid ${colors.border}` }),
       color: colors.text,
     };
   };
@@ -1593,19 +1690,42 @@ const Appointments = () => {
                       ))}
                     </div>
 
-                    {weekDays.map((day, dayIdx) => (
+                    {weekDays.map((day, dayIdx) => {
+                      const ds = day.format("YYYY-MM-DD");
+                      const dayOff = isScheduleDayOff(ds);
+                      return (
                       <div
                         key={dayIdx}
-                        className={`week-day-column ${day.isSame(moment(), "day") ? "today" : ""}${day.isSame(selectedDay, "day") ? " selected-day" : ""}`}
+                        className={`week-day-column ${day.isSame(moment(), "day") ? "today" : ""}${day.isSame(selectedDay, "day") ? " selected-day" : ""}${dayOff ? " week-day-off-col" : ""}`}
                       >
-                        {/* Grid lines */}
-                        {timeSlots.map((slot) => (
+                        {/* Day-off banner */}
+                        {dayOff && (
+                          <div className="week-day-off-banner">
+                            {t("calendar.weeklyDayOff", "WEEKLY DAY OFF")}
+                          </div>
+                        )}
+
+                        {/* Grid lines with schedule coloring */}
+                        {timeSlots.map((slot) => {
+                          const [h, m] = slot.split(":").map(Number);
+                          const inScheduleBreak = !dayOff && isScheduleBreakSlot(ds, h, m);
+                          const outsideHours = !dayOff && !inScheduleBreak && isOutsideWorkingHours(ds, h, m);
+                          const cellClass = dayOff
+                            ? "dac-leave-cell"
+                            : inScheduleBreak
+                              ? "dac-break-cell"
+                              : outsideHours
+                                ? "dac-outside-hours"
+                                : weeklyScheduleCache
+                                  ? "dac-working-hours"
+                                  : "";
+                          return (
                           <div
                             key={slot}
-                            className={`week-time-cell ${slot.endsWith(":30") ? "half" : ""
-                              }`}
-                          ></div>
-                        ))}
+                            className={`week-time-cell ${slot.endsWith(":30") ? "half" : ""} ${cellClass}`}
+                          />
+                          );
+                        })}
 
                         {/* Appointment events for this day */}
                         {weekEvents
@@ -1691,7 +1811,8 @@ const Appointments = () => {
                             );
                           })}
                       </div>
-                    ))}
+                    );
+                  })}
                   </div>
                 </div>
               </div>

@@ -86,7 +86,6 @@ exports.createCategory = async (req, res) =>{
     try {
     const body = { ...req.body };
     if (!body.parent || body.parent === "root") body.parent = null;
-    if (!body.speciality || body.speciality === "") body.speciality = null;
     if (!Array.isArray(body.specialities)) body.specialities = [];
     const category = new ServiceCategory(body);
     await category.save();
@@ -101,7 +100,6 @@ exports.updateCategory = async (req, res) => {
     try {
         const body = { ...req.body };
         if (!body.parent || body.parent === "root") body.parent = null;
-        if (!body.speciality || body.speciality === "") body.speciality = null;
         if (!Array.isArray(body.specialities)) body.specialities = [];
     
         // Prevent a category from becoming its own ancestor
@@ -154,13 +152,51 @@ exports.moveCategory = async (req, res) => {
 };
 
 // GET /api/service-manager/folder
-// ?parent=<id|root>  &branch=  — returns { categories, positions }
+// Build a Set of category IDs that match specialities or have a matching descendant.
+// Uses a single bulk query — no N+1.
+async function buildMatchingCategoryIds(specIdSet) {
+  const allCats = await ServiceCategory.find({}).select("_id parent specialities").lean();
+
+  // Map: parentId -> [childId, ...]
+  const childrenMap = {};
+  const matchesDirectly = new Set();
+  for (const cat of allCats) {
+    const parentKey = cat.parent ? cat.parent.toString() : "__root__";
+    if (!childrenMap[parentKey]) childrenMap[parentKey] = [];
+    childrenMap[parentKey].push(cat._id.toString());
+
+    const specs = (cat.specialities || []).map((s) => s.toString());
+    if (specs.some((s) => specIdSet.has(s))) matchesDirectly.add(cat._id.toString());
+  }
+
+  // Expand: any category whose descendant matches also matches
+  const result = new Set(matchesDirectly);
+  const propagate = (id) => {
+    const children = childrenMap[id] || [];
+    for (const childId of children) {
+      if (result.has(childId)) {
+        result.add(id);
+        return true;
+      }
+      if (propagate(childId)) {
+        result.add(id);
+        return true;
+      }
+    }
+    return false;
+  };
+  for (const cat of allCats) {
+    if (!result.has(cat._id.toString())) propagate(cat._id.toString());
+  }
+  return result;
+}
+
+// ?parent=<id|root>  &branch=  &specialities=id1,id2  — returns { categories, positions }
 // Used for rendering a single folder view (like a file browser).
 exports.getFolderContents = async (req, res) => {
   try {
-    const { parent, branch } = req.query;
-    const parentVal =
-      !parent || parent === "root" ? null : parent;
+    const { parent, branch, specialities } = req.query;
+    const parentVal = !parent || parent === "root" ? null : parent;
 
     const catFilter = { parent: parentVal };
     const posFilter = { category: parentVal };
@@ -173,6 +209,14 @@ exports.getFolderContents = async (req, res) => {
       ServiceCategory.find(catFilter).sort({ sortOrder: 1, name: 1 }).lean(),
       ServicePosition.find(posFilter).sort({ sortOrder: 1, name: 1 }).lean(),
     ]);
+
+    if (specialities) {
+      const specIdSet = new Set(specialities.split(",").map((s) => s.trim()).filter(Boolean));
+      const matchingIds = await buildMatchingCategoryIds(specIdSet);
+      const filtered = categories.filter((cat) => matchingIds.has(cat._id.toString()));
+      console.log("[getFolderContents] speciality filter matched:", filtered.map((c) => c.name));
+      return res.json({ categories: filtered, positions });
+    }
 
     res.json({ categories, positions });
   } catch (err) {

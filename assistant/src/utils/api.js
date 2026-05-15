@@ -2532,4 +2532,13 @@ export const removeApplicationServicePosition = async (applicationId, positionId
   }
 };
 
+export const getServiceCategoryFolderContents = async (params = {}) => {
+  try {
+    const response = await api.get("/service-manager/folder", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default api;

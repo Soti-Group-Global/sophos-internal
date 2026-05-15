@@ -857,8 +857,10 @@ const getMe = async (req, res) => {
       }
     }
 
+    const doctorObj = doctor.toObject();
+   
     res.json({
-      doctor: { ...doctor.toObject(), profilePicture }
+      doctor: { ...doctorObj, profilePicture }
     });
   } catch (error) {
     console.error('Error fetching doctor profile:', error);
@@ -971,10 +973,8 @@ const uploadMessageFile = async (req, res) => {
 // GET /api/doctors/lite
 const getDoctorsLite = async (req, res) => {
   try {
-    console.log("[getDoctorsLite] starting...");
     const doctors = await Doctor.find({}, { _id: 1, firstName: 1, middleName: 1, lastName: 1, email: 1 })
       .lean();
-    console.log("[getDoctorsLite] found doctors count:", doctors.length);
     
     const formatted = doctors.map((d) => {
       const pickLang = (field, lang) => {
@@ -995,7 +995,6 @@ const getDoctorsLite = async (req, res) => {
         email: d.email,
       };
     });
-    console.log("[getDoctorsLite] formatted count:", formatted.length, "first:", formatted[0]);
     res.json(formatted);
   } catch (err) {
     console.error('Error fetching doctors (lite):', err.message, err.stack);

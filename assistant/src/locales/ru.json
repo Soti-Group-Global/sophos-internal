@@ -18,7 +18,6 @@
     "noResults": "Ничего не найдено",
     "placeholder": "Введите имя пациента, запись и т.д."
   },
-
   "sidebar": {
     "myAppointments": "Мои приёмы",
     "patients": "Пациенты",
@@ -33,12 +32,10 @@
     "stockRequest": "Запрос инвентаризации",
     "tasks": "Задачи",
     "schedule": "Записать приём",
-
     "clients": "Клиенты",
     "corporate": "Корпоративный",
     "feed": "Лента"
   },
-
   "appointments": {
     "title": "Мои записи",
     "loading": "Загрузка записей...",
@@ -90,7 +87,6 @@
     "age": "Возраст",
     "typeOfService": "Тип услуги"
   },
-
   "appointment": {
     "backToAppointments": "Назад к записям",
     "title": "Детали приема",
@@ -124,9 +120,7 @@
     "download": "Скачать",
     "doctorConclusion": "Введите заключение врача...",
     "prescriptionDetails": "Введите детали рецепта...",
-      "uploadedAt": "Загружено по адресу: ",
-
-
+    "uploadedAt": "Загружено по адресу: ",
     "noTests": "Анализы еще не назначены.",
     "noResult": "Загрузить результат",
     "testResults": "Анализы и результаты",
@@ -138,218 +132,189 @@
     "testSelected": "анализ(а) выбрано",
     "addSelectedTests": "Добавить выбранные анализы",
     "otherAppointments": "Другие связанные приёмы",
-
     "comment": "Комментарий",
     "booked": "Забронировано",
     "followUpId": "ID последующего приёма",
     "followUp": "Последующая встреча"
   },
-
-"application": {
-  
-  "loading": "Загрузка...",
-  "noApplications": "Заявки отсутствуют",
-  "noApplication": "Заявка не найдена",
-  "tryAgain": "Попробовать снова",
-  "backToApplications": "Вернуться к заявкам",
-  "date": "Дата",
-  "time": "Время",
-  "service": "Услуга",
-  "mode": "Режим",
-  "patient": "Пациент",
-  "doctor": "Врач",
-  "specialty": "Специальность",
-  "documents": "Документы",
-
-  "uploading": "Загрузка...",
-  "uploadDocument": "Загрузить документ",
-  "cancel": "Отменить",
-  "noDocuments": "Документы отсутствуют",
-  "view": "Просмотреть",
-  "download": "Скачать",
-  "testsAndResults": "Тесты и результаты",
-  "noTests": "Тесты отсутствуют",
-  "testName": "Название теста",
-  "status": "Статус",
-  "actions": "Действия",
-  "noResults": "Результаты отсутствуют",
-  "prescription": "Рецепт",
-  "noPrescription": "Рецепт отсутствует",
-  "edit": "Редактировать",
-  "save": "Сохранить",
-  "conclusion": "Заключение",
-  "noConclusion": "Заключение отсутствует",
-  "downloadPDF": "Скачать PDF",
-  "selectTests": "Выбрать тесты",
-  "selectAll": "Выбрать все",
-  "deselectAll": "Снять все",
-  "selectedTests": "Выбрано {count} тест(ов)",
-  "addTests": "Добавить тесты",
-  "alreadyAdded": "Уже добавлено",
-  "assignVendor": "Назначить поставщика",
-  "assignVendors": "Назначить поставщика",
-
-
-  "noOrdersSelected": "Заказы не выбраны",
-  "noCompatibleVendors": "Нет совместимых поставщиков",
-  "selectVendor": "Выбрать поставщика",
-  "selectedOrders": "Выбрано {count} заказа(ов)",
-  "orderNotFound": "Заказ не найден",
-  "joinMeeting": "Присоединиться к встрече",
-
-
-  "uploadFile": "Загрузить файл",
-  "addUrl": "Добавить URL",
-  "chooseFile": "Выбрать файл",
-  "pasteUrlPlaceholder": "Вставьте URL",
-  "addDocument": "Добавить документ",
-  "addTest": "Добавить тест",
-
-
-  "title": "Детали заявления",
-  "noAppointmentId": "ID приема не указан",
-  "applicationNotFound": "Заявление не найдено",
-  "fetchError": "Не удалось загрузить детали заявления",
-  "documentFetchError": "Не удалось загрузить документы",
-  "testFetchError": "Не удалось загрузить варианты анализов",
-  "vendorFetchError": "Не удалось загрузить поставщиков",
-  "testOrderFetchError": "Не удалось загрузить заказы анализов",
-  "invalidTestId": "Неверный ID анализа",
-  "noFileSelected": "Пожалуйста, выберите файл для загрузки",
-  "noUrlProvided": "Пожалуйста, введите URL документа",
-  "documentUploaded": "Документ успешно загружен",
-  "documentUploadError": "Не удалось загрузить документ",
-  "noTestsSelected": "Пожалуйста, выберите хотя бы один анализ",
-  "testsAdded": "{{count}} анализ(ов) успешно добавлено",
-  "testAddError": "Не удалось добавить анализы",
-  "selectVendorAndOrders": "Пожалуйста, выберите поставщиков и заказы",
-  "noVendorSelectedForTests": "Для анализов не выбран поставщик",
-  "vendorsAssigned": "Поставщики назначены для {{count}} заказа(ов)",
-  "vendorAssignError": "Не удалось назначить поставщиков",
-  "prescriptionUpdated": "Назначения успешно обновлены",
-  "prescriptionUpdateError": "Не удалось обновить назначения",
-  "conclusionUpdated": "Заключение успешно обновлено",
-  "conclusionUpdateError": "Не удалось обновить заключение",
-
-  "tabs": {
-    "details": "Детали заявления",
-    "history": "История болезней"
-  },
-
-  "sections": {
-    "appointment": "Прием",
-    "documents": "Документы",
-    "tests": "Анализы",
-    "prescription": "Назначения",
-    "conclusion": "Заключение",
-    "meeting": "Встреча"
-  },
-  
-  "labels": {
+  "application": {
+    "loading": "Загрузка...",
+    "noApplications": "Заявки отсутствуют",
+    "noApplication": "Заявка не найдена",
+    "tryAgain": "Попробовать снова",
+    "backToApplications": "Вернуться к заявкам",
     "date": "Дата",
     "time": "Время",
     "service": "Услуга",
-    "mode": "Формат",
+    "mode": "Режим",
+    "patient": "Пациент",
     "doctor": "Врач",
     "specialty": "Специальность",
-    "uploadFile": "Выбрать файл",
-    "pasteUrl": "Вставьте URL документа...",
-    "view": "Просмотр",
-    "download": "Скачать",
-    "addTest": "Добавить анализ",
-    "assignVendor": "Назначить поставщика",
-    "editPrescription": "Редактировать назначения",
-    "editConclusion": "Редактировать заключение",
-    "save": "Сохранить",
-    "cancel": "Отмена",
-    "add": "Добавить",
+    "documents": "Документы",
     "uploading": "Загрузка...",
-    "selected": "Выбрано",
-    "selectVendor": "Выбрать поставщика",
-    "deselectAll": "Отменить все",
-    "selectAll": "Выбрать все",
-    "alreadyAdded": "Уже добавлен",
+    "uploadDocument": "Загрузить документ",
+    "cancel": "Отменить",
+    "noDocuments": "Документы отсутствуют",
+    "view": "Просмотреть",
+    "download": "Скачать",
+    "testsAndResults": "Тесты и результаты",
+    "noTests": "Тесты отсутствуют",
+    "testName": "Название теста",
+    "status": {
+      "completed": "Завершено",
+      "confirmed": "Подтвержденные",
+      "cancelled": "Отмененные",
+      "ordered": "Заказано",
+      "pending": "В ожидании",
+      "waiting_for_assign": "Ожидает назначения",
+      "paid": "Оплачено",
+      "unconfirmed": "Неподтвержденные",
+      "upcoming": "Предстоящие"
+    },
+    "actions": "Действия",
     "noResults": "Результаты отсутствуют",
-    "joinMeeting": "Присоединиться",
-    "joinNow": "Присоединиться сейчас",
-    "viewDetails": "Посмотреть детали",
-    "tryAgain": "Попробовать снова"
-
-  },
-
-  "status": {
-    "completed": "Завершено",
-    "confirmed": "Подтвержденные",
-    "cancelled": "Отмененные",
-    "ordered": "Заказано",
-    "pending": "В ожидании",
-    "waiting_for_assign": "Ожидает назначения",
-    "paid": "Оплачено",
-    "unconfirmed": "Неподтвержденные",
-    "upcoming": "Предстоящие"
-  },
-
-  "service_type": {
-    "physical_consultation": "Очная консультация",
-    "telemedicine": "Телемедицина"
-  },
-
-  "personalInfo": {
-
-    "title": "Личная информация",
-    "fullName": "Полное имя",
-    "email": "Email",
-    "phone": "Телефон",
-    "dateOfBirth": "Дата рождения",
-    "gender": "Пол",
-    "age": "Возраст",
-    "address": "Адрес"
-
-  },
-
-  "emptyStates": {
-
-    "noDocuments": {
-      "title": "Нет документов",
-      "description": "Для этого заявления не загружено документов."
-    },
-
-    "noTests": {
-      "title": "Анализы не заказаны",
-      "description": "Для этого заявления не заказано анализов."
-    },
-
-    "noPrescription": {
-      "title": "Нет назначений",
-      "description": "Для этого заявления не добавлено назначений."
-    },
-
-    "noConclusion": {
-      "title": "Нет заключения",
-      "description": "Для этого заявления не добавлено заключения."
-    },
-
-    "noMedicalHistory": {
-      "title": "Нет истории болезней",
-      "description": "Для этого пациента не найдено предыдущих приемов."
-    },
-
+    "prescription": "Рецепт",
+    "noPrescription": "Рецепт отсутствует",
+    "edit": "Редактировать",
+    "save": "Сохранить",
+    "conclusion": "Заключение",
+    "noConclusion": "Заключение отсутствует",
+    "downloadPDF": "Скачать PDF",
+    "selectTests": "Выбрать тесты",
+    "selectAll": "Выбрать все",
+    "deselectAll": "Снять все",
+    "selectedTests": "Выбрано {count} тест(ов)",
+    "addTests": "Добавить тесты",
+    "alreadyAdded": "Уже добавлено",
+    "assignVendor": "Назначить поставщика",
+    "assignVendors": "Назначить поставщика",
     "noOrdersSelected": "Заказы не выбраны",
-    "noCompatibleVendors": "Нет совместимых поставщиков"
+    "noCompatibleVendors": "Нет совместимых поставщиков",
+    "selectVendor": "Выбрать поставщика",
+    "selectedOrders": "Выбрано {count} заказа(ов)",
+    "orderNotFound": "Заказ не найден",
+    "joinMeeting": "Присоединиться к встрече",
+    "uploadFile": "Загрузить файл",
+    "addUrl": "Добавить URL",
+    "chooseFile": "Выбрать файл",
+    "pasteUrlPlaceholder": "Вставьте URL",
+    "addDocument": "Добавить документ",
+    "addTest": "Добавить тест",
+    "title": "Детали заявления",
+    "noAppointmentId": "ID приема не указан",
+    "applicationNotFound": "Заявление не найдено",
+    "fetchError": "Не удалось загрузить детали заявления",
+    "documentFetchError": "Не удалось загрузить документы",
+    "testFetchError": "Не удалось загрузить варианты анализов",
+    "vendorFetchError": "Не удалось загрузить поставщиков",
+    "testOrderFetchError": "Не удалось загрузить заказы анализов",
+    "invalidTestId": "Неверный ID анализа",
+    "noFileSelected": "Пожалуйста, выберите файл для загрузки",
+    "noUrlProvided": "Пожалуйста, введите URL документа",
+    "documentUploaded": "Документ успешно загружен",
+    "documentUploadError": "Не удалось загрузить документ",
+    "noTestsSelected": "Пожалуйста, выберите хотя бы один анализ",
+    "testsAdded": "{{count}} анализ(ов) успешно добавлено",
+    "testAddError": "Не удалось добавить анализы",
+    "selectVendorAndOrders": "Пожалуйста, выберите поставщиков и заказы",
+    "noVendorSelectedForTests": "Для анализов не выбран поставщик",
+    "vendorsAssigned": "Поставщики назначены для {{count}} заказа(ов)",
+    "vendorAssignError": "Не удалось назначить поставщиков",
+    "prescriptionUpdated": "Назначения успешно обновлены",
+    "prescriptionUpdateError": "Не удалось обновить назначения",
+    "conclusionUpdated": "Заключение успешно обновлено",
+    "conclusionUpdateError": "Не удалось обновить заключение",
+    "tabs": {
+      "details": "Детали заявления",
+      "history": "История болезней"
+    },
+    "sections": {
+      "appointment": "Прием",
+      "documents": "Документы",
+      "tests": "Анализы",
+      "prescription": "Назначения",
+      "conclusion": "Заключение",
+      "meeting": "Встреча"
+    },
+    "labels": {
+      "date": "Дата",
+      "time": "Время",
+      "service": "Услуга",
+      "mode": "Формат",
+      "doctor": "Врач",
+      "specialty": "Специальность",
+      "uploadFile": "Выбрать файл",
+      "pasteUrl": "Вставьте URL документа...",
+      "view": "Просмотр",
+      "download": "Скачать",
+      "addTest": "Добавить анализ",
+      "assignVendor": "Назначить поставщика",
+      "editPrescription": "Редактировать назначения",
+      "editConclusion": "Редактировать заключение",
+      "save": "Сохранить",
+      "cancel": "Отмена",
+      "add": "Добавить",
+      "uploading": "Загрузка...",
+      "selected": "Выбрано",
+      "selectVendor": "Выбрать поставщика",
+      "deselectAll": "Отменить все",
+      "selectAll": "Выбрать все",
+      "alreadyAdded": "Уже добавлен",
+      "noResults": "Результаты отсутствуют",
+      "joinMeeting": "Присоединиться",
+      "joinNow": "Присоединиться сейчас",
+      "viewDetails": "Посмотреть детали",
+      "tryAgain": "Попробовать снова"
+    },
+    "service_type": {
+      "physical_consultation": "Очная консультация",
+      "telemedicine": "Телемедицина"
+    },
+    "personalInfo": {
+      "title": "Личная информация",
+      "fullName": "Полное имя",
+      "email": "Email",
+      "phone": "Телефон",
+      "dateOfBirth": "Дата рождения",
+      "gender": "Пол",
+      "age": "Возраст",
+      "address": "Адрес"
+    },
+    "emptyStates": {
+      "noDocuments": {
+        "title": "Нет документов",
+        "description": "Для этого заявления не загружено документов."
+      },
+      "noTests": {
+        "title": "Анализы не заказаны",
+        "description": "Для этого заявления не заказано анализов."
+      },
+      "noPrescription": {
+        "title": "Нет назначений",
+        "description": "Для этого заявления не добавлено назначений."
+      },
+      "noConclusion": {
+        "title": "Нет заключения",
+        "description": "Для этого заявления не добавлено заключения."
+      },
+      "noMedicalHistory": {
+        "title": "Нет истории болезней",
+        "description": "Для этого пациента не найдено предыдущих приемов."
+      },
+      "noOrdersSelected": "Заказы не выбраны",
+      "noCompatibleVendors": "Нет совместимых поставщиков"
+    },
+    "messages": {
+      "loading": "Загрузка деталей заявления...",
+      "loadingHistory": "Загрузка истории болезней...",
+      "applicationId": "ID заявления",
+      "notAvailable": "Недоступно",
+      "notSpecified": "Не указано",
+      "years": "лет",
+      "unknownPatient": "Неизвестный пациент",
+      "unknownDoctor": "Неизвестный врач"
+    }
   },
-
-  "messages": {
-    "loading": "Загрузка деталей заявления...",
-    "loadingHistory": "Загрузка истории болезней...",
-    "applicationId": "ID заявления",
-    "notAvailable": "Недоступно",
-    "notSpecified": "Не указано",
-    "years": "лет",
-    "unknownPatient": "Неизвестный пациент",
-    "unknownDoctor": "Неизвестный врач"
-  } 
-},
-
   "patients": {
     "title": "Пациенты",
     "searchPlaceholder": "Поиск по имени, почте, услуге...",
@@ -366,7 +331,6 @@
       "next": "Вперед"
     },
     "resultsCount": "Показано {{from}}–{{to}} из {{total}} пациентов",
-
     "exportCSV": "Экспорт в CSV",
     "exportSuccess": "Данные пациентов успешно экспортированы",
     "noDataToExport": "Нет данных для экспорта",
@@ -394,7 +358,6 @@
       "endTime": "Время окончания"
     }
   },
-
   "patient": {
     "unnamed": "Пациент без имени",
     "ageWithUnit": "{{age}} лет",
@@ -435,9 +398,9 @@
     "appointment": "Приём",
     "patientDetails": "Информация о пациенте",
     "medicalHistory": "Медицинская история",
-    "diagnosis": "Диагноз"
+    "diagnosis": "Диагноз",
+    "service": "Услуги"
   },
-
   "appointmentHistory": {
     "history": {
       "title": "История приёмов",
@@ -453,7 +416,6 @@
     },
     "viewDetails": "Посмотреть детали"
   },
-
   "calendar": {
     "title": "Расписание приемов",
     "subtitle": "Управляйте своими назначениями",
@@ -490,10 +452,52 @@
       "success": "Запрос на перенос успешно отправлен!",
       "defaultMessage": "Здравствуйте,\n\nЯ не смогу принять в запланированное время для этого назначения:\n\n- Номер назначения: {{appointmentId}}\n- Пациент: {{patient}}\n- Услуга: {{serviceType}}\n- Изначальная дата: {{date}}\n- Временной интервал: {{startTime}} - {{endTime}}\n\nПожалуйста, предложите альтернативное время, которое вам подходит.\n\nС уважением,\nДоктор {{doctorName}}"
     },
-    "months": ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
-    "monthsShort": ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
-    "weekdays": ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"],
-    "weekdays_short": ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+    "months": [
+      "Январь",
+      "Февраль",
+      "Март",
+      "Апрель",
+      "Май",
+      "Июнь",
+      "Июль",
+      "Август",
+      "Сентябрь",
+      "Октябрь",
+      "Ноябрь",
+      "Декабрь"
+    ],
+    "monthsShort": [
+      "Янв",
+      "Фев",
+      "Мар",
+      "Апр",
+      "Май",
+      "Июн",
+      "Июл",
+      "Авг",
+      "Сен",
+      "Окт",
+      "Ноя",
+      "Дек"
+    ],
+    "weekdays": [
+      "Понедельник",
+      "Вторник",
+      "Среда",
+      "Четверг",
+      "Пятница",
+      "Суббота",
+      "Воскресенье"
+    ],
+    "weekdays_short": [
+      "Пн",
+      "Вт",
+      "Ср",
+      "Чт",
+      "Пт",
+      "Сб",
+      "Вс"
+    ],
     "selectDate": "Выберите дату",
     "previousMonth": "Предыдущий месяц",
     "nextMonth": "Следующий месяц",
@@ -502,7 +506,6 @@
     "today": "Сегодня",
     "close": "Закрыть"
   },
-
   "calendarHeader": {
     "views": {
       "month": "Месяц",
@@ -511,7 +514,6 @@
     },
     "today": "Текущий месяц"
   },
-
   "schedule": {
     "title": "График доступности",
     "subtitle": "Установите свою доступность на следующие 30 дней",
@@ -556,7 +558,6 @@
       "customDays": "Выбранные дни"
     }
   },
-
   "scheduleManagement": {
     "title": "Все ассистенты",
     "description": "Управляйте и отслеживайте права доступа ассистентов вашей практики",
@@ -579,7 +580,6 @@
       "status": "Статус"
     }
   },
-
   "messages": {
     "title": "Чат менеджера",
     "noMessages": "Пока нет сообщений",
@@ -609,7 +609,6 @@
     "grant_access_successfully": "Доступ успешно предоставлен",
     "grant_access_failed": "Доступ успешно предоставлен"
   },
-
   "profile": {
     "title": "Профиль Ассистента",
     "sidenavSub": "Управляйте настройками и параметрами вашего аккаунта.",
@@ -651,7 +650,6 @@
       "fetchError": "Не удалось загрузить профиль"
     }
   },
-
   "patientDetails": {
     "backToPatients": "Назад к пациентам",
     "age": "Возраст",
@@ -664,7 +662,6 @@
       "medicalHistory": "Медицинская история"
     }
   },
-
   "signup": {
     "errors": {
       "passwordLength": "Пароль должен содержать не менее 8 символов",
@@ -675,7 +672,6 @@
       "passwordMismatch": "Пароли не совпадают"
     }
   },
-
   "assistantLogin": {
     "title": "Вход для Ассистенты",
     "emailLabel": "Электронная почта",
@@ -691,7 +687,6 @@
     "forgotPassword": "Забыли пароль?",
     "loggingIn": "Входим..."
   },
-
   "forgotPassword": {
     "title": "Сброс пароля",
     "instructions": "Введите ваш email, и мы вышлем вам ссылку для сброса пароля",
@@ -710,7 +705,6 @@
       "general": "Не удалось отправить письмо для сброса"
     }
   },
-
   "resetPassword": {
     "title": "Установить новый пароль",
     "instructions": "Введите новый пароль для",
@@ -730,19 +724,16 @@
       "general": "Не удалось сбросить пароль. Попробуйте ещё раз."
     }
   },
-
   "EarlyDetectionApplications": {
     "header": "Заявки на раннюю диагностику",
     "loading": "Загрузка заявок...",
     "noApplications": "Заявки не найдены.",
     "searchPlaceholder": "Поиск по пациенту, услуге или ID...",
-
     "appointmentHistory": "История приёмов",
     "patientDetails": "Данные пациента",
     "applications": "Заявки",
     "application": "Заявка",
     "earlyDetection": "← Назад к ранней диагностике",
-
     "exportCSV": "Экспорт в CSV",
     "exportSuccess": "Заявки ранней диагностики успешно экспортированы",
     "noDataToExport": "Нет данных для экспорта",
@@ -758,7 +749,6 @@
       "createdAt": "Дата создания"
     }
   },
-
   "myspace": {
     "title": "Мое пространство",
     "request_access": "Запросить доступ",
@@ -859,7 +849,6 @@
     "end_datetime": "Дата и время окончания",
     "grant_access_title": "Предоставить доступ помощнику"
   },
-
   "status": {
     "access_granted": "Доступ предоставлен",
     "active": "Активно",
@@ -871,12 +860,10 @@
     "request_sent": "Запрос отправлен",
     "unknown": "Неизвестно"
   },
-
   "errors": {
     "failed_to_load_doctors": "Не удалось загрузить врачей.",
     "failed_to_send_request": "Не удалось отправить запрос."
   },
-
   "notif_box": {
     "common": "Общие",
     "personal_disabled": "Личные уведомления временно недоступны",
@@ -885,7 +872,6 @@
     "personal": "Личное",
     "title": "Уведомления"
   },
-
   "rescheduleForm": {
     "title": "Запрос на перенос",
     "patient": "Пациент",
@@ -912,7 +898,6 @@
     "cancel": "Отмена",
     "reasonRequired": "Пожалуйста, введите причину."
   },
-
   "patientSelection": {
     "title": "Выбор пациента",
     "selectedPatient": "Выбранный пациент",
@@ -969,7 +954,7 @@
       "processing": "Обработка..."
     }
   },
-   "meeting_room": {
+  "meeting_room": {
     "title": "Комната встречи",
     "back": "Назад",
     "refresh": "Обновить",
@@ -980,8 +965,7 @@
     "missing_title": "Ссылка на встречу отсутствует",
     "missing_desc": "Вернитесь и сгенерируйте ссылку на встречу."
   },
-
-    "appointment_details_general": {
+  "appointment_details_general": {
     "common": {
       "edit": "Редактировать",
       "confirm": "Подтвердить",
@@ -1543,7 +1527,8 @@
       "statistics": "Статистика",
       "contact": "История контактов",
       "payments": "Оплаты",
-      "telemedicine": "Телемедицина"
+      "telemedicine": "Телемедицина",
+      "service": "Услуги"
     },
     "documents_tab": {
       "choose_file": "Выбрать файл",
@@ -1612,7 +1597,7 @@
     "copy_link": "Копировать ссылку",
     "url_copied": "Ссылка скопирована"
   },
-    "earlyDiagnosis": {
+  "earlyDiagnosis": {
     "earlyDiagnosis": "Ранняя диагностика",
     "createNewBooking": "Создать новую запись",
     "customerInformation": "Информация о клиенте",
@@ -1822,6 +1807,30 @@
     "specialist_Ophthalmologist": "Офтальмолог",
     "specialist_Surgeon": "Хирург",
     "specialist_ENT": "ЛОР",
-    "specialist_Ultrasound": "УЗИ"
+    "specialist_Ultrasound": "УЗИ",
+    "add": "Добавить",
+    "clickToUpload": "Нажмите для загрузки файлов",
+    "selectTest": "Выберите тест",
+    "files": "Файлы",
+    "addText": "Добавить текст",
+    "noTests": "Тесты не настроены"
+  },
+  "service": {
+    "label": "Услуги",
+    "addedServices": "Добавленные услуги",
+    "addServices": "Добавить услугу",
+    "noAddedPositions": "Услуги ещё не добавлены.",
+    "code": "Код",
+    "name": "Название",
+    "price": "Цена",
+    "action": "Действие",
+    "unnamedPosition": "Безымянная позиция",
+    "rootFolder": "Все услуги",
+    "emptyFolder": "Эта папка пуста.",
+    "loadFailed": "Не удалось загрузить услуги",
+    "remove": "Удалено",
+    "removeFailed": "Не удалось удалить",
+    "positionAdded": "Добавлено",
+    "saveFailed": "Не удалось сохранить"
   }
 }

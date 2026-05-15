@@ -36,11 +36,6 @@ const ServiceCategorySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    speciality: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "SpecialtyMaster",
-      default: null,
-    },
     specialities: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -59,6 +54,5 @@ ServiceCategorySchema.index({ parent: 1 });
 ServiceCategorySchema.index({ branch: 1 });
 ServiceCategorySchema.index({ isActive: 1 });
 ServiceCategorySchema.index({ name: 1 });
-ServiceCategorySchema.index({ speciality: 1 });
 
 module.exports = mongoose.model("ServiceCategory", ServiceCategorySchema);

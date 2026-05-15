@@ -2573,17 +2573,17 @@
   left: 2px;
   right: 2px;
   background: repeating-linear-gradient(
-    -45deg,
-    #f1f5f9,
-    #f1f5f9 4px,
-    #e2e8f0 4px,
-    #e2e8f0 8px
+    45deg,
+    #fef3c7,
+    #fef3c7 4px,
+    #fffbeb 4px,
+    #fffbeb 10px
   );
-  /* border-left: 3px solid #94a3b8; */
+  border-left: 3px solid #f59e0b;
   border-radius: 4px;
   padding: 2px 6px;
   overflow: hidden;
-  z-index: 1;
+  z-index: 2;
   pointer-events: auto;
   cursor: default;
 }
@@ -2591,14 +2591,14 @@
 .week-break-label {
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: #b45309;
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 
 .week-break-time {
   font-size: 10px;
-  color: #64748b;
+  color: #92400e;
 }
 
 .modal-header h2 {
@@ -3151,4 +3151,79 @@
   background: rgba(10, 46, 93, 0.05);
   color: #0A2E5D;
   font-weight: 500;
+}
+
+/* ── Schedule-aware calendar slot coloring ───────────────────────────────── */
+.dac-working-hours {
+  background: #dcfce7;
+}
+.dac-working-hours:hover {
+  background: #bbf7d0;
+}
+
+.dac-outside-hours {
+  background: #f3f4f6 !important;
+  opacity: 0.55;
+}
+.dac-outside-hours:hover {
+  background: #e5e7eb !important;
+}
+
+.dac-break-cell {
+  background: repeating-linear-gradient(
+    45deg,
+    #fef3c7,
+    #fef3c7 4px,
+    #fffbeb 4px,
+    #fffbeb 10px
+  ) !important;
+}
+.dac-break-cell:hover {
+  background: repeating-linear-gradient(
+    45deg,
+    #fde68a,
+    #fde68a 4px,
+    #fef3c7 4px,
+    #fef3c7 10px
+  ) !important;
+}
+
+.dac-leave-cell {
+  background: repeating-linear-gradient(
+    45deg,
+    #fee2e2,
+    #fee2e2 4px,
+    #fff1f2 4px,
+    #fff1f2 10px
+  ) !important;
+}
+.dac-leave-cell:hover {
+  background: repeating-linear-gradient(
+    45deg,
+    #fecaca,
+    #fecaca 4px,
+    #fee2e2 4px,
+    #fee2e2 10px
+  ) !important;
+}
+
+/* Day-off column header banner */
+.week-day-off-col {
+  position: relative;
+}
+.week-day-off-banner {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #dc2626;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 2px 4px;
 }

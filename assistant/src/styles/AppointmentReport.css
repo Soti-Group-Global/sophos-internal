@@ -874,7 +874,7 @@
 
 .ed-signatures-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-top: 30px;
   padding-top: 10px;
 }
@@ -1097,3 +1097,8 @@
 .ed-status-pill.ed-status-normal   { background: #22c55e; color: #fff; }
 .ed-status-pill.ed-status-attention { background: #f59e0b; color: #fff; }
 .ed-status-pill.ed-status-urgent   { background: #ef4444; color: #fff; }
+
+.ed-cover-patient-plain { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+.ed-cover-patient-name { font-size: 13pt; font-weight: 700; color: #1a2b4a; }
+.ed-cover-patient-line { font-size: 10pt; color: #444; line-height: 1.6; }
+.ed-cover-patient-label { font-weight: 600; color: #1a2b4a; }

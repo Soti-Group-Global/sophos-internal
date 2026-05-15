@@ -2,7 +2,7 @@
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX } from "react-icons/fi";
+import { FiChevronDown, FiSearch, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX, FiPlus } from "react-icons/fi";
 import { Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -432,6 +432,20 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
   const [sectionPdfModal, setSectionPdfModal] = useState(null);
   const morphFileRef = useRef(null);
   const procFileRef = useRef(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalMode, setAddModalMode] = useState(null);
+  const [addModalTestId, setAddModalTestId] = useState("");
+  const [addModalFiles, setAddModalFiles] = useState([]);
+  const [addModalText, setAddModalText] = useState("");
+  const [addModalSubmitting, setAddModalSubmitting] = useState(false);
+  const [addModalSearchQ, setAddModalSearchQ] = useState("");
+  const [addModalDropOpen, setAddModalDropOpen] = useState(false);
+  const addFileInputRef = useRef(null);
+  // Maps fileId/noteId → batchId — persisted to localStorage so grouping survives page refresh
+  const lsKey = `ht_batch_map_${application?.applicationId || ""}`;
+  const [batchMap, setBatchMap] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(lsKey) || "{}"); } catch { return {}; }
+  });
 
   const formatDate = useCallback((dateStr) => {
     if (!dateStr) return "—";
@@ -545,6 +559,11 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
 
   const appId = application?.applicationId;
 
+  useEffect(() => {
+    if (!appId || Object.keys(batchMap).length === 0) return;
+    try { localStorage.setItem(lsKey, JSON.stringify(batchMap)); } catch {}
+  }, [batchMap, appId, lsKey]);
+
   /* nav item id → Application schema field name */
   const SECTION_SCHEMA = {
     morphologicalResearch: "morphologicalResearch",
@@ -615,6 +634,121 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     setLabUploadSection(null);
     setLabUploadTestId("");
     setLabUploadFile(null);
+  }, []);
+
+  const openAddModal = useCallback((mode, preSelectedTestId = "") => {
+    setAddModalMode(mode);
+    setAddModalTestId(preSelectedTestId);
+    setAddModalFiles([]);
+    setAddModalText("");
+    setAddModalSearchQ("");
+    setAddModalDropOpen(false);
+    setAddModalOpen(true);
+  }, []);
+
+  const handleAddModalSubmit = useCallback(async () => {
+    if (!addModalTestId) { toast.error(t("history_tab.select_test", { defaultValue: "Select a test" })); return; }
+    const addModalTextPlain = addModalText.replace(/<[^>]*>/g, "").trim();
+    if (addModalFiles.length === 0 && !addModalTextPlain) {
+      toast.error(t("history_tab.add_file_or_text", { defaultValue: "Add at least one file or text" })); return;
+    }
+    setAddModalSubmitting(true);
+    const batchId = `b${Date.now()}`;
+    const newBatchEntries = {};
+    try {
+      let prevFileIds = new Set((selectedTest?.files || []).map((f) => f.fileId));
+      let latestFileTest = null;
+      let latestNoteTest = null;
+
+      for (const file of addModalFiles) {
+        const result = addModalMode === "studiesManipulations"
+          ? await uploadApplicationInstrumentalAnalysisFile(addModalTestId, file)
+          : await uploadApplicationLaboratoryTestFile(addModalTestId, file);
+        latestFileTest = result?.data || result;
+        // Find newly added file IDs and tag them with this batch
+        (latestFileTest.files || []).forEach((f) => {
+          if (!prevFileIds.has(f.fileId)) { newBatchEntries[f.fileId] = batchId; prevFileIds.add(f.fileId); }
+        });
+        if (addModalMode === "studiesManipulations") {
+          setStudyTests((prev) => prev.map((t) => t._id === addModalTestId ? latestFileTest : t));
+        } else {
+          setLabTests((prev) => prev.map((t) => t._id === addModalTestId ? latestFileTest : t));
+        }
+      }
+
+      if (addModalTextPlain) {
+        const prevNoteIds = new Set((latestFileTest?.notes || selectedTest?.notes || []).map((n) => String(n._id)));
+        const noteResult = addModalMode === "studiesManipulations"
+          ? await addApplicationInstrumentalAnalysisNote(addModalTestId, { note: addModalText })
+          : await addApplicationLaboratoryTestNote(addModalTestId, { note: addModalText });
+        latestNoteTest = noteResult?.data || noteResult;
+        (latestNoteTest.notes || []).forEach((n) => {
+          if (!prevNoteIds.has(String(n._id))) newBatchEntries[String(n._id)] = batchId;
+        });
+        if (addModalMode === "studiesManipulations") {
+          setStudyTests((prev) => prev.map((t) => t._id === addModalTestId ? latestNoteTest : t));
+        } else {
+          setLabTests((prev) => prev.map((t) => t._id === addModalTestId ? latestNoteTest : t));
+        }
+      }
+
+      if (Object.keys(newBatchEntries).length > 0) {
+        setBatchMap((prev) => ({ ...prev, ...newBatchEntries }));
+      }
+      const finalTest = latestNoteTest || latestFileTest;
+      if (finalTest) {
+        setSelectedTest(finalTest);
+        setSelectedTestMode(addModalMode);
+      }
+      setAddModalOpen(false);
+      toast.success(t("history_tab.file_uploaded", { defaultValue: "Added successfully" }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || t("history_tab.failed_upload_file", { defaultValue: "Failed to add" }));
+    } finally {
+      setAddModalSubmitting(false);
+    }
+  }, [addModalMode, addModalTestId, addModalFiles, addModalText, selectedTest, t]);
+
+  const groupTestItems = useCallback((files, notes, bm = {}) => {
+    const items = [
+      ...files.map((f) => ({ ...f, _type: "file", _key: f.fileId, _time: f.uploadedAt ? new Date(f.uploadedAt).getTime() : 0 })),
+      ...notes.map((n) => ({ ...n, _type: "note", _key: String(n._id), _time: n.createdAt ? new Date(n.createdAt).getTime() : 0 })),
+    ].sort((a, b) => a._time - b._time);
+
+    // Separate items that have a known batch ID from those that don't
+    const batchGroups = {}; // batchId → items[]
+    const unbatched = [];
+    for (const item of items) {
+      const bid = bm[item._key];
+      if (bid) {
+        if (!batchGroups[bid]) batchGroups[bid] = [];
+        batchGroups[bid].push(item);
+      } else {
+        unbatched.push(item);
+      }
+    }
+
+    // Time-based grouping for server-loaded items (10 s threshold)
+    const timeGroups = [];
+    let cur = [];
+    let lastT = -Infinity;
+    for (const item of unbatched) {
+      if (item._time - lastT > 10000) {
+        if (cur.length) timeGroups.push(cur);
+        cur = [item];
+      } else {
+        cur.push(item);
+      }
+      lastT = item._time;
+    }
+    if (cur.length) timeGroups.push(cur);
+
+    // Merge all groups sorted by earliest item time
+    return [...Object.values(batchGroups), ...timeGroups].sort((a, b) => {
+      const ta = Math.min(...a.map((i) => i._time));
+      const tb = Math.min(...b.map((i) => i._time));
+      return ta - tb;
+    });
   }, []);
 
   const handleLabUploadSubmit = useCallback(async () => {
@@ -955,6 +1089,45 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     }
   }, [selectedTest, selectedTestMode, t]);
 
+  const handleDeleteGroup = useCallback(async (group) => {
+    if (!selectedTest || !selectedTestMode) return;
+    const files = group.filter((i) => i._type === "file");
+    const notes = group.filter((i) => i._type === "note");
+    try {
+      let updatedTest = selectedTest;
+      for (const item of files) {
+        const res = selectedTestMode === "studiesManipulations"
+          ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, item.fileId)
+          : await removeApplicationLaboratoryTestFile(selectedTest._id, item.fileId);
+        updatedTest = res?.data || res;
+      }
+      for (const item of notes) {
+        const res = selectedTestMode === "studiesManipulations"
+          ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, item._id)
+          : await deleteApplicationLaboratoryTestNote(selectedTest._id, item._id);
+        updatedTest = res?.data || res;
+      }
+      setSelectedTest(updatedTest);
+      if (selectedTestMode === "studiesManipulations") {
+        setStudyTests((prev) => prev.map((t) => (t._id === updatedTest._id ? updatedTest : t)));
+      } else {
+        setLabTests((prev) => prev.map((t) => (t._id === updatedTest._id ? updatedTest : t)));
+      }
+      const keysToRemove = group.map((i) => i._key).filter(Boolean);
+      if (keysToRemove.length > 0) {
+        setBatchMap((prev) => {
+          const next = { ...prev };
+          keysToRemove.forEach((k) => delete next[k]);
+          return next;
+        });
+      }
+      toast.success(t("history_tab.group_deleted", { defaultValue: "Group deleted" }));
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.message || "Failed to delete group";
+      toast.error(message);
+    }
+  }, [selectedTest, selectedTestMode, t]);
+
   /* Close all editing fields when clicking outside any field (skipped in bulk-edit mode) */
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -1234,20 +1407,6 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
               {section.fields && renderFields(section.fields)}
               {((section.id === "examinationPlan" && activeNavItem === "laboratoryAnalysis") || (section.id === "physicalExam" && activeNavItem === "studiesManipulations")) && (
                 <div className="ht-lab-analysis-panel">
-                  <div className="ht-lab-analysis-header">
-                    <span>
-                      {activeNavItem === "laboratoryAnalysis"
-                        ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" })
-                        : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}
-                    </span>
-                    <button
-                      type="button"
-                      className="ht-lab-analysis-manage-btn"
-                      onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}
-                    >
-                      {t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
-                    </button>
-                  </div>
                   {(() => {
                     const allTests = activeNavItem === "laboratoryAnalysis" ? labTests : studyTests;
                     const withFiles = allTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
@@ -1457,115 +1616,111 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                     <span className="ht-td-subtitle">{selectedTest.name.en}</span>
                   )}
                 </div>
-                <button type="button" className="ht-td-close" onClick={handleCloseSelectedTest} aria-label="Close">
-                  <FiX size={18} />
+                <button type="button" className="ht-td-btn" onClick={() => openAddModal(selectedTestMode, null)}>
+                  <FiPlus size={14} />
+                  {t("history_tab.add", { defaultValue: "Add" })}
                 </button>
               </div>
 
-              {/* Actions */}
-              <div className="ht-td-actions">
-                <button type="button" className="ht-td-btn" onClick={(e) => openLabUploadModal(selectedTestMode, e, selectedTest?._id)}>
-                  <FiUpload size={14} />
-                  {t("history_tab.upload_file", { defaultValue: "Upload file" })}
-                </button>
-                <button type="button" className="ht-td-btn" onClick={handleOpenTestNoteEditor}>
-                  <FiFileText size={14} />
-                  {t("history_tab.add_text", { defaultValue: "Add text" })}
-                </button>
-              </div>
-
-              <input ref={fileInputRef} type="file" multiple className="ht-hidden-file-input" onChange={handleTestFileChange} />
-              {testFileUploadError && <div className="ht-error-message">{testFileUploadError}</div>}
-              {isUploadingTestFile && <div className="ht-td-uploading">{t("history_tab.uploading", { defaultValue: "Uploading…" })}</div>}
-
-              {/* Items list — files + notes interleaved */}
-              <div className="ht-td-list">
-                {selectedTestFiles.map((file) => {
-                  const ext = (file.fileName || "").split(".").pop().toUpperCase().slice(0, 5);
-                  const dt = file.uploadedAt ? new Date(file.uploadedAt) : null;
-                  const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
-                  const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
-                  return (
-                    <div key={String(file.fileId)} className="ht-td-item">
-                      <span className={`ht-td-badge ht-td-badge--${ext.toLowerCase()}`}>{ext}</span>
-                      <div className="ht-td-item-info">
-                        <span className="ht-td-item-name">{file.fileName}</span>
-                        {dateStr && (
-                          <span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>
-                        )}
+              {/* Grouped entries */}
+              {selectedTestFiles.length === 0 && selectedTestNotes.length === 0 ? null : (
+                <div className="ht-td-list">
+                  {groupTestItems(selectedTestFiles, selectedTestNotes, batchMap).map((group, gIdx) => {
+                    const dt = group[0]?._time ? new Date(group[0]._time) : null;
+                    const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
+                    const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+                    return (
+                      <div key={gIdx} className="ht-td-group">
+                        <div className="ht-td-group-items">
+                          <div className="ht-td-group-card-header">
+                            <div className="ht-td-group-date">
+                              <FiClock size={11} />
+                              <span>{dateStr} · {timeStr}</span>
+                            </div>
+                            <button type="button" className="ht-td-group-delete-btn" onClick={() => handleDeleteGroup(group)} aria-label="Delete group">
+                              <FiTrash2 size={13} />
+                            </button>
+                          </div>
+                          <div className="ht-td-group-grid">
+                            {group.map((item) => item._type === "file" ? (
+                              <div key={String(item.fileId)} className="ht-td-item">
+                                <span className={`ht-td-badge ht-td-badge--${(item.fileName || "").split(".").pop().toLowerCase().slice(0, 5)}`}>
+                                  {(item.fileName || "").split(".").pop().toUpperCase().slice(0, 5)}
+                                </span>
+                                <div className="ht-td-item-info">
+                                  <span className="ht-td-item-name">{item.fileName}</span>
+                                </div>
+                                <div className="ht-td-item-actions">
+                                  <button type="button" className="ht-td-icon-btn" onClick={() => handleViewTestFile(item.fileId)} aria-label="View"><FiEye size={14} /></button>
+                                  <button type="button" className="ht-td-icon-btn" onClick={() => handleRemoveTestFile(item.fileId)} aria-label="Delete"><FiTrash2 size={14} /></button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div key={String(item._id)} className="ht-td-item">
+                                <span className="ht-td-note-icon"><FiFileText size={16} /></span>
+                                <div className="ht-td-item-info">
+                                  <div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: item.content }} />
+                                </div>
+                                <div className="ht-td-item-actions">
+                                  <button type="button" className="ht-td-icon-btn" onClick={() => handleEditTestNote(item)} aria-label="Edit"><FiEdit2 size={14} /></button>
+                                  <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote(item._id)} aria-label="Delete"><FiTrash2 size={14} /></button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className="ht-td-item-actions">
-                        <button type="button" className="ht-td-icon-btn" onClick={() => handleViewTestFile(file.fileId)} aria-label="View"><FiEye size={14} /></button>
-                        <button type="button" className="ht-td-icon-btn" onClick={() => handleRemoveTestFile(file.fileId)} aria-label="Delete"><FiTrash2 size={14} /></button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {selectedTestNotes.map((note) => {
-                  const dt = note.createdAt ? new Date(note.createdAt) : null;
-                  const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
-                  const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
-                  return (
-                    <div key={String(note._id)} className="ht-td-item">
-                      <span className="ht-td-note-icon"><FiFileText size={16} /></span>
-                      <div className="ht-td-item-info">
-                        <div className="ht-td-item-name" dangerouslySetInnerHTML={{ __html: note.content }} />
-                        {dateStr && (
-                          <span className="ht-td-item-meta"><FiClock size={11} />{dateStr} · {timeStr}</span>
-                        )}
-                      </div>
-                      <div className="ht-td-item-actions">
-                        <button type="button" className="ht-td-icon-btn" onClick={() => handleEditTestNote(note)} aria-label="Edit"><FiEdit2 size={14} /></button>
-                        <button type="button" className="ht-td-icon-btn" onClick={() => handleDeleteTestNote(note._id)} aria-label="Delete"><FiTrash2 size={14} /></button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Note editor */}
-              {showTestNoteEditor && (
-                <div className="ht-td-note-editor">
-                  <RichTextEditor
-                    value={testNoteDraft}
-                    onChange={(value) => setTestNoteDraft(value)}
-                    placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })}
-                  />
-                  <div className="ht-td-note-editor-actions">
-                    <button type="button" className="ht-td-save-btn" onClick={handleSaveTestNote}>
-                      {t("history_tab.save", { defaultValue: "Save" })}
-                    </button>
-                    <button type="button" className="ht-td-cancel-btn" onClick={() => setShowTestNoteEditor(false)}>
-                      {t("history_tab.cancel", { defaultValue: "Cancel" })}
-                    </button>
-                  </div>
+                    );
+                  })}
                 </div>
+              )}
+
+              {/* Note editor popup */}
+              {showTestNoteEditor && createPortal(
+                <>
+                  <div className="ht-add-overlay" onClick={() => setShowTestNoteEditor(false)} />
+                  <div className="ht-add-modal">
+                    <div className="ht-add-modal-header">
+                      <span className="ht-add-modal-title">
+                        {editingNoteId
+                          ? t("history_tab.edit_note", { defaultValue: "Edit Note" })
+                          : t("history_tab.add_note", { defaultValue: "Add Note" })}
+                      </span>
+                      <button type="button" className="ht-add-modal-close" onClick={() => setShowTestNoteEditor(false)}>
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                    <div className="ht-add-step">
+                      <div className="ht-add-rte-wrap">
+                        <RichTextEditor
+                          value={testNoteDraft}
+                          onChange={(value) => setTestNoteDraft(value)}
+                          placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })}
+                        />
+                      </div>
+                      <div className="ht-add-modal-footer">
+                        <button type="button" className="ht-add-btn-secondary" onClick={() => setShowTestNoteEditor(false)}>
+                          {t("history_tab.cancel", { defaultValue: "Cancel" })}
+                        </button>
+                        <button type="button" className="ht-add-btn-primary" onClick={handleSaveTestNote}>
+                          {t("history_tab.save", { defaultValue: "Save" })}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>,
+                document.body
               )}
             </div>
           ) : activeNavItem === "conclusion" ? (
             <div className="ht-conclusion-wrap">
-              <AppointmentReport booking={application} pastConsultations={patientAppointments} />
+              <AppointmentReport booking={application} patient={patient} pastConsultations={patientAppointments} />
             </div>
           ) : (activeNavItem === "laboratoryAnalysis" || activeNavItem === "studiesManipulations") && !selectedTest ? (() => {
             const allTests = activeNavItem === "laboratoryAnalysis" ? labTests : studyTests;
             const withFiles = allTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
             return (
               <div className="ht-lab-analysis-panel">
-                <div className="ht-lab-analysis-header">
-                  <span>
-                    {activeNavItem === "laboratoryAnalysis"
-                      ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" })
-                      : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}
-                  </span>
-                  <button
-                    type="button"
-                    className="ht-lab-analysis-manage-btn"
-                    onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}
-                  >
-                    {t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
-                  </button>
-                </div>
                 {withFiles.length > 0 ? (
                   <div className="ht-lab-analysis-grid">
                     {allTests.map((test) => {
@@ -1589,28 +1744,15 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                   </div>
                 ) : (
                   <div className="ht-lab-empty-view">
-                    <div className="ht-lab-empty-actions">
+                    <div className="ht-lab-empty-add-row">
                       <button
                         type="button"
                         className="ht-lab-empty-btn"
-                        onClick={(e) => openLabUploadModal(activeNavItem, e)}
+                        onClick={() => openAddModal(activeNavItem, "")}
                       >
-                        <FiUpload size={14} />
-                        {t("history_tab.upload_file", { defaultValue: "Upload file" })}
+                        <FiPlus size={14} />
+                        {t("history_tab.add", { defaultValue: "Add" })}
                       </button>
-                      <button
-                        type="button"
-                        className="ht-lab-empty-btn"
-                        onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}
-                      >
-                        <FiFileText size={14} />
-                        {t("history_tab.add_text", { defaultValue: "Add text" })}
-                      </button>
-                    </div>
-                    <div className="ht-lab-empty-card">
-                      <span className="ht-lab-empty-card-text">
-                        {t("history_tab.no_files", { defaultValue: "Нет файлов" })}
-                      </span>
                     </div>
                     <div className="ht-lab-empty-card">
                       <span className="ht-lab-empty-card-text">
@@ -1987,6 +2129,148 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
           patient={patient}
           onClose={() => setSectionPdfModal(null)}
         />
+      )}
+
+      {addModalOpen && createPortal(
+        <>
+          <div className="ht-add-overlay" onClick={() => setAddModalOpen(false)} />
+          <div className="ht-add-modal ht-add-modal--wide">
+            <div className="ht-add-modal-header">
+              <span className="ht-add-modal-title">
+                {t("history_tab.add", { defaultValue: "Add" })}
+              </span>
+              <button type="button" className="ht-add-modal-close" onClick={() => setAddModalOpen(false)}>
+                <FiX size={16} />
+              </button>
+            </div>
+
+            <div className="ht-add-step">
+              {/* ── Searchable test dropdown ── */}
+              <div className="ht-add-section-label">
+                {t("history_tab.select_test_label", { defaultValue: "Select test" })}
+              </div>
+              {(() => {
+                const tests = addModalMode === "studiesManipulations" ? studyTests : labTests;
+                const filtered = tests.filter((test) => {
+                  const name = (test.name?.ru || test.name?.en || "").toLowerCase();
+                  return name.includes(addModalSearchQ.toLowerCase());
+                });
+                const selected = tests.find((test) => test._id === addModalTestId);
+                return (
+                  <div className="ht-test-dropdown" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setAddModalDropOpen(false); }} tabIndex={-1}>
+                    <div
+                      className={`ht-test-dropdown-trigger${addModalDropOpen ? " open" : ""}`}
+                      onClick={() => setAddModalDropOpen((p) => !p)}
+                    >
+                      <span className={selected ? "ht-test-dropdown-value" : "ht-test-dropdown-placeholder"}>
+                        {selected ? (selected.name?.ru || selected.name?.en || "") : t("history_tab.select_test_placeholder", { defaultValue: "— select a test —" })}
+                      </span>
+                      <FiChevronDown size={14} style={{ flexShrink: 0, color: "#64748b", transform: addModalDropOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+                    </div>
+                    {addModalDropOpen && (
+                      <div className="ht-test-dropdown-menu">
+                        <div className="ht-test-dropdown-search-wrap">
+                          <FiSearch size={13} className="ht-test-dropdown-search-icon" />
+                          <input
+                            autoFocus
+                            className="ht-test-dropdown-search"
+                            placeholder={t("history_tab.search_test", { defaultValue: "Search…" })}
+                            value={addModalSearchQ}
+                            onChange={(e) => setAddModalSearchQ(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        {filtered.length === 0 ? (
+                          <div className="ht-test-dropdown-empty">
+                            {t("history_tab.no_tests_yet", { defaultValue: "No tests found." })}
+                          </div>
+                        ) : (
+                          filtered.map((test) => (
+                            <div
+                              key={test._id}
+                              className={`ht-test-dropdown-item${addModalTestId === test._id ? " selected" : ""}`}
+                              onMouseDown={() => { setAddModalTestId(test._id); setAddModalDropOpen(false); setAddModalSearchQ(""); }}
+                            >
+                              <span className="ht-test-dropdown-item-name">{test.name?.ru || test.name?.en || ""}</span>
+                              {test.name?.en && test.name?.ru && (
+                                <span className="ht-test-dropdown-item-sub">{test.name.en}</span>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* ── File picker ── */}
+              <div className="ht-add-section-label" style={{ marginTop: 8 }}>
+                {t("history_tab.files_title", { defaultValue: "Files" })}
+              </div>
+              <div className="ht-add-file-zone" onClick={() => addFileInputRef.current?.click()}>
+                <FiUpload size={20} style={{ color: "#94a3b8" }} />
+                <span>{t("history_tab.click_to_upload", { defaultValue: "Click to choose files" })}</span>
+              </div>
+              <input
+                ref={addFileInputRef}
+                type="file"
+                multiple
+                className="ht-hidden-file-input"
+                onChange={(e) => {
+                  const picked = Array.from(e.target.files || []);
+                  setAddModalFiles((prev) => [...prev, ...picked]);
+                  e.target.value = "";
+                }}
+              />
+              {addModalFiles.length > 0 && (
+                <div className="ht-add-file-list">
+                  {addModalFiles.map((f, i) => (
+                    <div key={i} className="ht-add-file-item">
+                      <span className="ht-add-file-name">{f.name}</span>
+                      <button
+                        type="button"
+                        className="ht-add-file-remove"
+                        onClick={() => setAddModalFiles((prev) => prev.filter((_, j) => j !== i))}
+                      >
+                        <FiX size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Text ── */}
+              <div className="ht-add-section-label" style={{ marginTop: 8 }}>
+                {t("history_tab.add_text", { defaultValue: "Text (optional)" })}
+              </div>
+              <div className="ht-add-rte-wrap">
+                <RichTextEditor
+                  value={addModalText}
+                  onChange={(val) => setAddModalText(val)}
+                  placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })}
+                />
+              </div>
+
+              <div className="ht-add-modal-footer">
+                <button type="button" className="ht-add-btn-secondary" onClick={() => setAddModalOpen(false)}>
+                  {t("history_tab.cancel", { defaultValue: "Cancel" })}
+                </button>
+                <button
+                  type="button"
+                  className="ht-add-btn-primary"
+                  disabled={addModalSubmitting || !addModalTestId || (addModalFiles.length === 0 && !addModalText.trim())}
+                  onClick={handleAddModalSubmit}
+                >
+                  {addModalSubmitting
+                    ? t("history_tab.uploading", { defaultValue: "Uploading…" })
+                    : t("history_tab.save", { defaultValue: "Save" })}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>,
+        document.body
       )}
 
       {deleteConfirmTest && createPortal(

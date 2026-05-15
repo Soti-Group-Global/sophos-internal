@@ -123,6 +123,9 @@ const Sidebar = ({ isSidebarOpen = false, isMobileOpen = false, onMobileClose, o
         { icon: Activity, key: "analysis", path: "/analysis" },
         { icon: ListTodo, key: "task", path: "/tasks" },
         { icon: Building, key: "corporateRegistration", path: "/corporate-registration" },
+        { icon: ClipboardPlus, key: "services", path: "/services" },
+        { icon: ClipboardList, key: "serviceManager", path: "/service-manager" },
+        { icon: CalendarCheck, key: "scheduleManagement", path: "/schedule" },
       ],
     },
     {
@@ -139,21 +142,18 @@ const Sidebar = ({ isSidebarOpen = false, isMobileOpen = false, onMobileClose, o
         { icon: User, key: "profile", path: "/profile" },
       ],
     },
+    /*
     {
       nameKey: "content",
       icon: FolderOpen,
       key: "content",
       items: [
-      //  { icon: Stethoscope, key: "doctors", path: "/doctors-profile" },
-      //  { icon: BookOpen, key: "blogs", path: "/blogs" },
         { icon: ClipboardPlus, key: "services", path: "/services" },
         { icon: ClipboardList, key: "serviceManager", path: "/service-manager" },
-        { icon: CalendarCheck , key: "scheduleManagement", path: "/schedule" },
-      //  { icon: ClipboardPlus, key: "vacancies", path: "/vacancies" },
-      //  { icon: Star, key: "reviews", path: "/reviews" },
-      //  { icon: Image, key: "promos", path: "/promos" },
+        { icon: CalendarCheck, key: "scheduleManagement", path: "/schedule" },
       ],
     },
+    */
     /*
     {
       nameKey: "forms",

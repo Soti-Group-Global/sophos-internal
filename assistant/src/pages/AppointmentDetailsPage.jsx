@@ -89,13 +89,13 @@ const AppointmentDetailsPage = () => {
   };
 
   const TABS = [
-    { key: "general", label: t("tabs.general"), icon: <MdOutlinePerson size={16} /> },
-    { key: "history", label: t("tabs.history"), icon: <FiClock size={15} /> },
-    { key: "medical", label: t("tabs.medical"), icon: <LuClipboardList size={15} /> },
-    { key: "documents", label: t("tabs.documents"), icon: <FiFolder size={15} /> },
-    { key: "followups", label: t("tabs.followups"), icon: <FiRepeat size={15} /> },
+    { key: "general",      label: t("tabs.general"),      icon: <MdOutlinePerson size={16} /> },
+    { key: "history",      label: t("tabs.history"),      icon: <FiClock size={15} /> },
+    { key: "service",      label: t("tabs.service"),      icon: <FiSettings size={15} /> },
+    { key: "medical",      label: t("tabs.medical"),      icon: <LuClipboardList size={15} /> },
+    { key: "documents",    label: t("tabs.documents"),    icon: <FiFolder size={15} /> },
+    { key: "followups",    label: t("tabs.followups"),    icon: <FiRepeat size={15} /> },
     { key: "telemedicine", label: t("tabs.telemedicine"), icon: <FiVideo size={15} /> },
-    { key: "service", label: t("tabs.service") || "Service", icon: <FiSettings size={15} /> },
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -111,6 +111,7 @@ const AppointmentDetailsPage = () => {
   const historyTabRef = useRef(null);
   const [patientApps, setPatientApps] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("hide-global-sidebar");
@@ -239,7 +240,7 @@ const AppointmentDetailsPage = () => {
       case "telemedicine":
         return <TelemedicineTab application={application} />;
       case "report":
-        return <AppointmentReport booking={application} />;
+        return <AppointmentReport booking={application} patient={patient} />;
       case "service":
         return <Service applicationId={application.applicationId} />;
       default:
@@ -248,7 +249,7 @@ const AppointmentDetailsPage = () => {
   };
 
   return (
-    <div className="adp-page">
+    <div className={`adp-page${navOpen ? " adp-nav-open" : ""}`}>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover />
       <div className="adp-top-header">
         <button className="adp-back-btn" onClick={() => navigate("/appointments")}>
@@ -284,8 +285,15 @@ const AppointmentDetailsPage = () => {
         </div>
       </div>
 
-      {/* Left vertical iconic tabs (replace top tab bar visually) */}
-      <nav className="apd-vertical-tabs" aria-label="Appointment sections">
+      {/* Left vertical iconic tabs */}
+      <nav className={`apd-vertical-tabs${navOpen ? " apd-vertical-tabs--open" : ""}`} aria-label="Appointment sections">
+        <button
+          className="apd-nav-toggle"
+          onClick={() => setNavOpen((o) => !o)}
+          title={navOpen ? "Collapse" : "Expand"}
+        >
+          <span className="apd-nav-toggle-icon">{navOpen ? "‹" : "›"}</span>
+        </button>
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -295,6 +303,7 @@ const AppointmentDetailsPage = () => {
             aria-pressed={activeTab === tab.key}
           >
             <span className="apd-vert-icon">{tab.icon}</span>
+            {navOpen && <span className="apd-vert-label">{tab.label}</span>}
           </button>
         ))}
       </nav>

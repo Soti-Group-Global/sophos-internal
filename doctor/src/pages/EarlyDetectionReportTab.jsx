@@ -851,7 +851,7 @@ export default function EarlyDetectionReportTab({ booking }) {
                   </div>
                 </div>
                 <div className="ed-bmi-box">
-                  <div className="ed-bmi-label">BMI</div>
+                  <div className="ed-bmi-label">Индекс массы тела</div>
                   <div className="ed-bmi-value">{bmi}</div>
                   <div className="ed-bmi-bar-wrap">
                     {/* Arrow indicator */}

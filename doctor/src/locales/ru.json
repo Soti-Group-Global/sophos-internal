@@ -1,4 +1,4 @@
-﻿{
+{
   "general": {
     "doctor": "Доктор",
     "office": "Кабинет врача",
@@ -25,7 +25,6 @@
     "noResults": "Ничего не найдено",
     "placeholder": "Введите имя пациента, запись и т.д."
   },
-
   "sidebar": {
     "myAppointments": "Мои приёмы",
     "patients": "Пациенты",
@@ -34,10 +33,10 @@
     "messages": "Сообщения",
     "profile": "Профиль",
     "earlyDetection": "Ранняя диагностика",
-    "application":"Заявка",
-    "personalDetails":"личные данные",
-    "allicationHistory":"история привязки",
-    "backToEarlyDetection":"← Назад к ранней диагностике",
+    "application": "Заявка",
+    "personalDetails": "личные данные",
+    "allicationHistory": "история привязки",
+    "backToEarlyDetection": "← Назад к ранней диагностике",
     "mySpace": "Мое пространство",
     "assistants": "Ассистенты",
     "client": "Клиент",
@@ -58,11 +57,9 @@
     "pending payment": "Ожидает оплаты",
     "awaiting for payment": "В ожидании оплаты"
   },
-
-  "timeZone":{
-    "MSK":"МСК"
+  "timeZone": {
+    "MSK": "МСК"
   },
-
   "appointments": {
     "appointment": "Запись",
     "patientDetails": "Данные пациента",
@@ -95,7 +92,7 @@
     "resultsCount": "Показано {{from}}–{{to}} из {{total}} записей",
     "exportCSV": "Экспорт в CSV",
     "starting": "Начало...",
-    "startSession":"Начать сеанс",
+    "startSession": "Начать сеанс",
     "exportSuccess": "Записи успешно экспортированы",
     "noDataToExport": "Нет данных для экспорта",
     "csv": {
@@ -115,10 +112,10 @@
       "application": "Заявка",
       "earlyDetection": "Ранняя диагностика"
     },
-    "telemedicineSession":"Сеанс телемедицины",
-    "active":"Активный",
-    "ended":"Завершённый",
-    "scheduled":"Запланирован",
+    "telemedicineSession": "Сеанс телемедицины",
+    "active": "Активный",
+    "ended": "Завершённый",
+    "scheduled": "Запланирован",
     "participants": "Участники",
     "roomId": "ID комнаты",
     "startedAt": "Начато",
@@ -126,7 +123,7 @@
     "joinSession": "Присоединиться к сеансу",
     "ending": "Завершение...",
     "endSession": "Завершить сеанс",
-    "telemedicine":"телемедицины",
+    "telemedicine": "телемедицины",
     "patient": "Пациент",
     "sex": "Пол",
     "age": "Возраст",
@@ -148,11 +145,10 @@
     "workingDayCancelled": "Рабочий день отменён",
     "breakComment": "КОММЕНТАРИЙ",
     "breakLabel": "Перерыв",
-    "savingBreak": "Сохранение\u2026",
+    "savingBreak": "Сохранение…",
     "saveBreak": "Сохранить",
-    "loadingBreaks": "Загрузка\u2026"
+    "loadingBreaks": "Загрузка…"
   },
-
   "appointment": {
     "backToAppointments": "Назад к записям",
     "backToSchedule": "Назад к расписанию",
@@ -302,27 +298,26 @@
     "yourThoughts": "Введите ваши мысли",
     "changePhoto": "Сменить фото"
   },
-  "days":{
-    "mon":"Пн",
-    "tue":"Вт",
-    "wed":"Ср",
-    "thur":"Чт",
-    "fri":"Пт",
-    "sat":"Сб",
-    "sun":"Вс"
+  "days": {
+    "mon": "Пн",
+    "tue": "Вт",
+    "wed": "Ср",
+    "thur": "Чт",
+    "fri": "Пт",
+    "sat": "Сб",
+    "sun": "Вс"
   },
-  "tasks":{
-    "welcome":"Добро пожаловать в ваше рабочее пространство!",
-    "selectaProject":"Выберите проект на боковой панели, чтобы начать.",
-    "noProjectFound":"Проект не найден",
-    "noCompanyYet":"Пока нет проектов компании",
-    "manageWorkspace":"Организуйте свое рабочее пространство",
-    "searchProjects":"Поиск проектов...",
-    "projects":"Проекты",
-    "company":"Компания",
-    "personal":"Персональный"
+  "tasks": {
+    "welcome": "Добро пожаловать в ваше рабочее пространство!",
+    "selectaProject": "Выберите проект на боковой панели, чтобы начать.",
+    "noProjectFound": "Проект не найден",
+    "noCompanyYet": "Пока нет проектов компании",
+    "manageWorkspace": "Организуйте свое рабочее пространство",
+    "searchProjects": "Поиск проектов...",
+    "projects": "Проекты",
+    "company": "Компания",
+    "personal": "Персональный"
   },
-
   "medicalHistory": {
     "title": "Медицинская история",
     "prescription": "Рецепт",
@@ -336,7 +331,6 @@
     "link_prompt": "Введите URL",
     "insert_blank": "Вставить поле"
   },
-
   "patients": {
     "title": "Пациенты",
     "searchPlaceholder": "Поиск по имени, почте, услуге...",
@@ -379,7 +373,6 @@
       "service": "Услуга"
     },
     "years": "{{count}} лет",
-
     "noDocUploadYet": "Документы еще не загружены",
     "noTestOrdersYet": "Анализы еще не назначены",
     "noPrescription": "Назначения отсутствуют",
@@ -387,7 +380,6 @@
     "failedLoadDoctorInfo": "Не удалось загрузить информацию о враче",
     "somethingWentWrong": "Что-то пошло не так"
   },
-
   "patient": {
     "unnamed": "Пациент без имени",
     "ageWithUnit": "{{age}} лет",
@@ -469,7 +461,6 @@
     "Telemedicine": "Телемедицина",
     "Consultation": "Консультация"
   },
-
   "appointmentHistory": {
     "history": {
       "title": "История приёмов",
@@ -485,17 +476,16 @@
     },
     "viewDetails": "Посмотреть детали"
   },
-  "pending":"В ожидании",
-  "font_default":"По умолчанию",
-  "font_Arial":"Ариал",
-  "font_TimesNewRoman":"Таймс Нью Роман",
-  "font_CourierNew":"Курьер Новый",
-  "font_Georgia":"Грузия",
-  "font_Verdana":"Вердана",
-  "font_Tahoma":"Тахома",
-  "font_TrebuchetMS":"Требушет MS",
+  "pending": "В ожидании",
+  "font_default": "По умолчанию",
+  "font_Arial": "Ариал",
+  "font_TimesNewRoman": "Таймс Нью Роман",
+  "font_CourierNew": "Курьер Новый",
+  "font_Georgia": "Грузия",
+  "font_Verdana": "Вердана",
+  "font_Tahoma": "Тахома",
+  "font_TrebuchetMS": "Требушет MS",
   "addedToSystemOn": "Добавлено в систему на",
-
   "months": {
     "0": "Январь",
     "1": "Февраль",
@@ -511,7 +501,7 @@
     "11": "Декабрь"
   },
   "calendar": {
-    "today":"Сегодня",
+    "today": "Сегодня",
     "close": "Закрыть",
     "selectDate": "Выберите дату",
     "previousMonth": "Предыдущий месяц",
@@ -532,7 +522,15 @@
       "Ноябрь",
       "Декабрь"
     ],
-    "weekdays_short": ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"],
+    "weekdays_short": [
+      "ПН",
+      "ВТ",
+      "СР",
+      "ЧТ",
+      "ПТ",
+      "СБ",
+      "ВС"
+    ],
     "title": "Расписание приемов",
     "subtitle": "Управляйте своими назначениями",
     "loading": "Загрузка назначений...",
@@ -569,7 +567,6 @@
       "defaultMessage": "Здравствуйте,\n\nЯ не смогу принять в запланированное время для этого назначения:\n\n- Номер назначения: {{appointmentId}}\n- Пациент: {{patient}}\n- Услуга: {{serviceType}}\n- Изначальная дата: {{date}}\n- Временной интервал: {{startTime}} - {{endTime}}\n\nПожалуйста, предложите альтернативное время, которое вам подходит.\n\nС уважением,\nДоктор {{doctorName}}"
     }
   },
-
   "calendarHeader": {
     "views": {
       "month": "Месяц",
@@ -578,7 +575,6 @@
     },
     "today": "Текущий месяц"
   },
-
   "schedule": {
     "title": "График доступности",
     "subtitle": "Установите свою доступность на следующие 30 дней",
@@ -623,7 +619,6 @@
       "customDays": "Выбранные дни"
     }
   },
-
   "messages": {
     "title": "Чат менеджера",
     "noMessages": "Пока нет сообщений",
@@ -672,7 +667,6 @@
       "fileSize": "Размер файла превышает 10МБ"
     }
   },
-
   "profile": {
     "title": "Профиль врача",
     "imageUpload": "Загрузить изображение",
@@ -730,7 +724,6 @@
       "noProfile": "Профиль врача не найден"
     }
   },
-
   "patientDetails": {
     "backToPatients": "Назад к пациентам",
     "age": "Возраст",
@@ -743,7 +736,6 @@
       "medicalHistory": "Медицинская история"
     }
   },
-
   "doctorLogin": {
     "title": "Вход для врачей",
     "emailLabel": "Электронная почта",
@@ -760,7 +752,6 @@
     "loggingIn": "Входим...",
     "invalidCredentials": "Неверные учетные данные"
   },
-
   "resetPassword": {
     "title": "Сброс пароля",
     "instructions": "Введите новый пароль для",
@@ -797,18 +788,15 @@
       "general": "Не удалось отправить письмо для сброса"
     }
   },
-
   "EarlyDetectionApplications": {
     "header": "Заявки на раннюю диагностику",
     "loading": "Загрузка заявок...",
     "noApplications": "Заявки не найдены.",
-
     "appointmentHistory": "История приёмов",
     "patientDetails": "Данные пациента",
     "applications": "Заявки",
     "application": "Заявка",
     "earlyDetection": "← Назад к ранней диагностике",
-
     "exportCSV": "Экспорт в CSV",
     "exportSuccess": "Заявки раннего обнаружения успешно экспортированы",
     "noDataToExport": "Нет данных для экспорта",
@@ -998,7 +986,6 @@
     "missing_title": "Ссылка на встречу отсутствует",
     "missing_desc": "Вернитесь и сгенерируйте ссылку на встречу."
   },
-
   "pdtab": {
     "common": {
       "save": "Сохранить",
@@ -1363,17 +1350,15 @@
     "update_label": "Обновить",
     "save_label": "Сохранить как новый",
     "cancel_label": "Отмена",
-    "empty":"Пустой",
+    "empty": "Пустой",
     "heading_normal": "Обычный_заголовок",
     "heading_1": "Заголовок_1",
     "heading_2": "Заголовок_2",
     "heading_3": "Заголовок_3",
     "heading_4": "Заголовок_4"
   },
-
-  "current":"Текущий",
-  "notDefined":"Не определено",
-
+  "current": "Текущий",
+  "notDefined": "Не определено",
   "history_tab": {
     "sidebar": {
       "specialistConsultation": "Консультация специалиста",
@@ -1516,7 +1501,6 @@
     "tomorrow": "Завтра",
     "yesterday": "Вчера"
   },
-
   "maxMessenger": {
     "chats": "Чаты",
     "noMessages": "Нет сообщений...",
@@ -1538,7 +1522,6 @@
     "video": "Видео",
     "file": "Файл"
   },
-
   "appointmentPdf": {
     "title": "Сводка приёма",
     "patientInfo": "Информация о пациенте",
@@ -1557,7 +1540,6 @@
     "conclusion": "Заключение",
     "noConclusion": "Заключение не добавлено"
   },
-
   "fillBlanks": {
     "close": "Закрыть",
     "hint": "Нажмите на каждое пустое поле и введите текст. Нажмите Enter или Tab для перехода к следующему.",
@@ -1565,7 +1547,6 @@
     "cancel": "Отмена",
     "insert": "Вставить"
   },
-
   "projectSidebar": {
     "newProject": "Новый проект",
     "noDescription": "Без описания",
@@ -1579,7 +1560,6 @@
     "descriptionPlaceholder": "Опишите цели проекта...",
     "cancel": "Отмена"
   },
-
   "projectWorkspace": {
     "membersAddedSuccess": "Участники успешно добавлены!",
     "failedAddMembers": "Не удалось добавить участников.",
@@ -1593,7 +1573,6 @@
     "allEmployeesAssigned": "Все сотрудники уже участвуют в этом проекте",
     "addSelectedMembers": "Добавить выбранных участников"
   },
-
   "medicalHistoryDetail": {
     "title": "Детали приёма",
     "appointmentInfo": "Информация о приёме",
@@ -1622,7 +1601,6 @@
     "backToPatient": "← Назад к пациенту",
     "backToHistory": "← Назад к медицинской истории"
   },
-
   "medicalHistoryTab": {
     "noPatientEmail": "Email пациента не указан",
     "failedLoadHistory": "Не удалось загрузить историю приёмов",
@@ -1631,15 +1609,14 @@
     "noRecordsYet": "У вас ещё нет записей медицинской истории",
     "noMatch": "Нет приёмов, соответствующих критериям фильтра"
   },
-
   "resetPasswordPage": {
     "loading": "Загрузка..."
   },
   "earlyDiagnosis": {
     "conclusion": "Заключение",
-    "selectTest":"ВЫБЕРИТЕ ТЕСТ",
-    "file":"ФАЙЛ",
-    "upload":"Загрузить",
+    "selectTest": "ВЫБЕРИТЕ ТЕСТ",
+    "file": "ФАЙЛ",
+    "upload": "Загрузить",
     "appointments": "Приёмы",
     "patients": "Пациенты",
     "addedToSystemOn": "Добавлен в систему",
@@ -1771,7 +1748,6 @@
     "failedToLoadBookings": "Не удалось загрузить записи",
     "newLink": "Новый платёж",
     "generating": "Создание...",
-    "status": "Статус",
     "paymentLinkCopied": "Ссылка на оплату скопирована!",
     "failedToCopy": "Не удалось скопировать ссылку",
     "cannotGenerateForPaid": "Невозможно создать ссылку для оплаченной записи",
@@ -1857,7 +1833,6 @@
     "specialist_ENT": "ЛОР",
     "specialist_Ultrasound": "УЗИ",
     "dob": "Дата рождения",
-    "consultation": "Консультация",
     "dateNotSet": "Дата не установлена",
     "markAsCompleted": "Отметить как выполненное",
     "selectTime": "Выберите время",
@@ -1866,7 +1841,6 @@
     "transaction": "Транзакция",
     "paymentProcessed": "успешно обработан для этой записи.",
     "nextMilestone": "Следующий этап",
-    "service": "Услуга",
     "systemEvent": "Системное событие",
     "bookingCreateDescription": "Первоначальная запись создана в системе.",
     "testNameEn": "Название теста (EN)",
@@ -1877,9 +1851,13 @@
     "remove": "Удалить",
     "deleting": "Удаление...",
     "statusVerified": "Проверено",
-    "specialist": "Специалист",
     "unknown": "Неизвестно",
-    "doctor": "Врач"
+    "doctor": "Врач",
+    "add": "Добавить",
+    "clickToUpload": "Нажмите для загрузки файлов",
+    "addText": "Добавить текст",
+    "files": "Файлы",
+    "noTests": "Тесты не настроены"
   },
   "appointment_details_general": {
     "common": {
@@ -2184,6 +2162,44 @@
       "paid": "Оплачено",
       "pending": "В ожидании"
     }
+  },
+  "service": {
+    "label": "Услуги",
+    "addedServices": "Добавленные услуги",
+    "addServices": "Добавить услугу",
+    "noAddedPositions": "Услуги ещё не добавлены.",
+    "code": "Код",
+    "name": "Название",
+    "price": "Цена",
+    "action": "Действие",
+    "unnamedPosition": "Безымянная позиция",
+    "rootFolder": "Все услуги",
+    "emptyFolder": "Эта папка пуста.",
+    "tabAll": "Все",
+    "tabMy": "Мои услуги",
+    "tabOther": "Другие услуги",
+    "loadFailed": "Не удалось загрузить услуги",
+    "remove": "Удалено",
+    "removeFailed": "Не удалось удалить",
+    "positionAdded": "Добавлено",
+    "saveFailed": "Не удалось сохранить"
+  },
+  "followups_tab": {
+    "toast_saved": "Повторный приём сохранён",
+    "toast_error": "Не удалось сохранить повторный приём",
+    "recorded_title": "Повторный приём записан",
+    "label_comment": "Комментарий",
+    "label_booked": "Забронировано",
+    "booked_yes": "Да",
+    "booked_no": "Ещё нет",
+    "label_appointment": "Запись",
+    "empty_title": "Повторный приём не записан",
+    "empty_text": "Укажите необходимость повторного приёма для этого пациента.",
+    "btn_require": "Требуется повторный приём",
+    "card_heading": "Сохранить данные повторного приёма",
+    "textarea_placeholder": "Введите заметки или инструкции для повторного приёма…",
+    "btn_cancel": "Отмена",
+    "btn_saving": "Сохранение…",
+    "btn_save": "Сохранить"
   }
 }
-

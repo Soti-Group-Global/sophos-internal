@@ -15,6 +15,8 @@ import {
   getDoctorBreaks,
   deleteDoctorBreak,
   updateDoctorBreak,
+  getDoctorWeeklySchedule,
+  getDoctorDateOverride,
 } from "../utils/api";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/EarlyDetectionApplications.css";
@@ -119,6 +121,8 @@ const EarlyDetectionApplications = () => {
   const [deletingBreakIdx, setDeletingBreakIdx] = useState(null);
   const [weekBreaks, setWeekBreaks] = useState([]);
   const [miniCalOpen, setMiniCalOpen] = useState(false); // mobile toggle
+  const [weeklyScheduleCache, setWeeklyScheduleCache] = useState(null);
+  const [dateOverrideCache, setDateOverrideCache] = useState({});
 
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -262,6 +266,44 @@ const EarlyDetectionApplications = () => {
     };
     loadDoctor();
   }, []);
+
+  // Fetch weekly schedule once doctor email is known
+  useEffect(() => {
+    const email = doctorInfo.email || getEmailFromToken();
+    if (!email) return;
+    getDoctorWeeklySchedule(email)
+      .then((res) => {
+        const schedule = res?.schedule || res?.data?.schedule;
+        if (Array.isArray(schedule)) {
+          const map = {};
+          schedule.forEach((d) => { map[d.day] = d; });
+          setWeeklyScheduleCache(map);
+        }
+      })
+      .catch(() => {});
+  }, [doctorInfo.email]);
+
+  // Fetch date overrides for all days in the visible week
+  useEffect(() => {
+    const email = doctorInfo.email || getEmailFromToken();
+    if (!email || !selectedWeekStart) return;
+    const weekDayStrs = Array.from({ length: 7 }, (_, i) =>
+      selectedWeekStart.clone().add(i, "days").format("YYYY-MM-DD")
+    );
+    weekDayStrs.forEach((ds) => {
+      getDoctorDateOverride(email, ds)
+        .then((res) => {
+          const override = res?.override || res?.data?.override;
+          setDateOverrideCache((prev) => {
+            if (override) return { ...prev, [ds]: override };
+            const n = { ...prev };
+            delete n[ds];
+            return n;
+          });
+        })
+        .catch(() => {});
+    });
+  }, [doctorInfo.email, selectedWeekStart]);
 
   // Close day menu when clicking outside
   useEffect(() => {
@@ -429,6 +471,41 @@ const EarlyDetectionApplications = () => {
     if (!day.isSame(miniCalMonth, "month")) {
       setMiniCalMonth(day.clone().startOf("month"));
     }
+  };
+
+  // ── Schedule helpers ────────────────────────────────────────────────────────
+  const ED_DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const getEffectiveDay = (dateStr) => {
+    const override = dateOverrideCache[dateStr];
+    if (override) return override;
+    if (!weeklyScheduleCache) return null;
+    const dayName = ED_DAY_NAMES[new Date(dateStr + "T00:00:00").getDay()];
+    return weeklyScheduleCache[dayName] || null;
+  };
+  const isScheduleDayOff = (dateStr) => {
+    const d = getEffectiveDay(dateStr);
+    return d ? d.isDayOff : false;
+  };
+  const isScheduleBreakSlot = (dateStr, hour, minute) => {
+    const d = getEffectiveDay(dateStr);
+    if (!d || d.isDayOff) return false;
+    const slotMins = hour * 60 + minute;
+    return (d.slots || []).some((s) => {
+      if (s.type !== "break") return false;
+      const [sh, sm] = s.startTime.split(":").map(Number);
+      const [eh, em] = s.endTime.split(":").map(Number);
+      return slotMins >= sh * 60 + sm && slotMins < eh * 60 + em;
+    });
+  };
+  const isOutsideWorkingHours = (dateStr, hour, minute) => {
+    const d = getEffectiveDay(dateStr);
+    if (!d || d.isDayOff || !d.slots || d.slots.length === 0) return false;
+    const slotMins = hour * 60 + minute;
+    return !d.slots.some((s) => {
+      const [sh, sm] = s.startTime.split(":").map(Number);
+      const [eh, em] = s.endTime.split(":").map(Number);
+      return slotMins >= sh * 60 + sm && slotMins < eh * 60 + em;
+    });
   };
 
   const canModifyDay = (day) => {
@@ -1105,17 +1182,40 @@ const EarlyDetectionApplications = () => {
                     ))}
                   </div>
 
-                  {weekDays.map((day, dayIdx) => (
+                  {weekDays.map((day, dayIdx) => {
+                    const ds = day.format("YYYY-MM-DD");
+                    const dayOff = isScheduleDayOff(ds);
+                    return (
                     <div
                       key={dayIdx}
-                      className={`week-day-column ${day.isSame(moment(), "day") ? "today" : ""}${day.isSame(selectedDay, "day") ? " selected-day" : ""}`}
+                      className={`week-day-column ${day.isSame(moment(), "day") ? "today" : ""}${day.isSame(selectedDay, "day") ? " selected-day" : ""}${dayOff ? " week-day-off-col" : ""}`}
                     >
-                      {timeSlots.map((slot) => (
+                      {dayOff && (
+                        <div className="week-day-off-banner">
+                          {t("calendar.weeklyDayOff", "WEEKLY DAY OFF")}
+                        </div>
+                      )}
+
+                      {timeSlots.map((slot) => {
+                        const [h, m] = slot.split(":").map(Number);
+                        const inScheduleBreak = !dayOff && isScheduleBreakSlot(ds, h, m);
+                        const outsideHours = !dayOff && !inScheduleBreak && isOutsideWorkingHours(ds, h, m);
+                        const cellClass = dayOff
+                          ? "dac-leave-cell"
+                          : inScheduleBreak
+                            ? "dac-break-cell"
+                            : outsideHours
+                              ? "dac-outside-hours"
+                              : weeklyScheduleCache
+                                ? "dac-working-hours"
+                                : "";
+                        return (
                         <div
                           key={slot}
-                          className={`week-time-cell ${slot.endsWith(":30") ? "half" : ""}`}
-                        ></div>
-                      ))}
+                          className={`week-time-cell ${slot.endsWith(":30") ? "half" : ""} ${cellClass}`}
+                        />
+                        );
+                      })}
 
                       {weekEvents
                         .filter((ev) => ev.start.isSame(day, "day"))
@@ -1208,7 +1308,8 @@ const EarlyDetectionApplications = () => {
                           );
                         })}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
