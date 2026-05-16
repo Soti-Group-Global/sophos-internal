@@ -350,7 +350,7 @@ const AppointmentDetailsPage = () => {
           />
         );
       case "history":
-        return <HistoryTab ref={historyTabRef} application={application} patient={patient} />;
+        return <HistoryTab ref={historyTabRef} application={application} patient={patient} onHistoryFormSaved={(saved) => setApplication((prev) => ({ ...prev, historyForm: saved }))} />;
       case "medical":
         return <MedicalHistoryTab history={history} patient={patient} currentApplicationId={application.applicationId} doctorsMap={doctorsMap} />;
       case "payments":

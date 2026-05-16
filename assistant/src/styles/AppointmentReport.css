@@ -571,6 +571,28 @@
   padding: 2px 0;
   border-bottom: 1px solid #d1dae8;
 }
+.ed-field-inline {
+  margin-bottom: 8px;
+  font-size: 8pt;
+  color: #374151;
+  line-height: 1.5;
+}
+.ed-field-inline-label {
+  font-size: 9.5pt;
+  font-weight: 700;
+  color: #1a2b4a;
+}
+.ed-field-inline-value {
+  display: inline;
+  font-size: 7.5pt;
+}
+.ed-field-inline-value p {
+  display: inline;
+  margin: 0;
+}
+.ed-field-inline-value p + p::before {
+  content: " ";
+}
 
 /* Status badges */
 .ed-status-badges-row {

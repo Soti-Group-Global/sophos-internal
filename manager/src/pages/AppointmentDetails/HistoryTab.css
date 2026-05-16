@@ -2666,6 +2666,8 @@
   width: min(680px, 96vw);
   max-height: 88vh;
 }
+.ht-add-modal.ht-add-modal--note { width: min(720px, 96vw); max-height: 88vh; }
+.ht-add-modal.ht-add-modal--note .ht-add-rte-wrap { min-height: 320px; }
 
 /* ── Searchable test dropdown ── */
 .ht-test-dropdown {

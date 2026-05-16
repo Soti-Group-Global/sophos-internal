@@ -923,14 +923,23 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     fetchStudyTests();
   }, []);
 
-  // Auto-select first test when navigating to lab/study tabs (or when tests first load while already on those tabs)
+  const testHasData = useCallback((test) =>
+    (Array.isArray(test?.files) && test.files.length > 0) ||
+    !!test?.fileId ||
+    (Array.isArray(test?.notes) && test.notes.length > 0) ||
+    !!test?.note,
+  []);
+
+  // Auto-select first test with data when navigating to lab/study tabs
   useEffect(() => {
-    if (activeNavItem === "laboratoryAnalysis" && !selectedTest && labTests.length > 0) {
-      handleSelectTest(labTests[0], "laboratoryAnalysis");
-    } else if (activeNavItem === "studiesManipulations" && !selectedTest && studyTests.length > 0) {
-      handleSelectTest(studyTests[0], "studiesManipulations");
+    if (activeNavItem === "laboratoryAnalysis" && !selectedTest) {
+      const first = labTests.find(testHasData);
+      if (first) handleSelectTest(first, "laboratoryAnalysis");
+    } else if (activeNavItem === "studiesManipulations" && !selectedTest) {
+      const first = studyTests.find(testHasData);
+      if (first) handleSelectTest(first, "studiesManipulations");
     }
-  }, [activeNavItem, labTests, studyTests, selectedTest, handleSelectTest]);
+  }, [activeNavItem, labTests, studyTests, selectedTest, handleSelectTest, testHasData]);
 
   const getFieldTemplates = useCallback((fieldKey) => templates.filter((t) => t.fieldKey === fieldKey), [templates]);
 
@@ -1171,10 +1180,10 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
                 {item.id === "laboratoryAnalysis" && isLabPanelOpen && (
                   <div className="ht-tests-panel">
-                    {labTests.length === 0 ? (
+                    {labTests.filter(testHasData).length === 0 ? (
                       <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
                     ) : (
-                      labTests.map((test) => (
+                      labTests.filter(testHasData).map((test) => (
                         <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
@@ -1185,10 +1194,10 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
                 {item.id === "studiesManipulations" && isStudyPanelOpen && (
                   <div className="ht-tests-panel">
-                    {studyTests.length === 0 ? (
+                    {studyTests.filter(testHasData).length === 0 ? (
                       <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
                     ) : (
-                      studyTests.map((test) => (
+                      studyTests.filter(testHasData).map((test) => (
                         <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "studiesManipulations")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
@@ -1320,7 +1329,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
               {showTestNoteEditor && createPortal(
                 <>
                   <div className="ht-add-overlay" onClick={() => setShowTestNoteEditor(false)} />
-                  <div className="ht-add-modal">
+                  <div className="ht-add-modal ht-add-modal--note">
                     <div className="ht-add-modal-header">
                       <span className="ht-add-modal-title">{editingNoteId ? t("history_tab.edit_note", { defaultValue: "Edit Note" }) : t("history_tab.add_note", { defaultValue: "Add Note" })}</span>
                       <button type="button" className="ht-add-modal-close" onClick={() => setShowTestNoteEditor(false)}><FiX size={16} /></button>

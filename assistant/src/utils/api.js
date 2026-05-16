@@ -600,8 +600,8 @@ export const updateApplication = async (applicationId, data) => {
 // Save the full historyForm object on an application
 export const updateHistoryForm = async (applicationId, historyForm) => {
   const res = await api.put(
-    `/applications/by-application-id/${encodeURIComponent(applicationId)}/history-form`,
-    { historyForm }
+    `/applications/${encodeURIComponent(applicationId)}/history-form`,
+    historyForm
   );
   return res.data;
 };

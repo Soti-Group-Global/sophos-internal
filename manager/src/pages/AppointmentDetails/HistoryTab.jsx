@@ -295,7 +295,7 @@ const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, p
    HistoryTab component
    ================================================================ */
    
-const HistoryTab = forwardRef(({ application, patient }, ref) => {
+const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref) => {
   const { t } = useTranslation("history_tab");
 
   /* Initialise from application.historyForm (per-appointment), fallback to patient.historyForm */
@@ -1302,6 +1302,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
           isFirstAppointment: typeof result.isFirstAppointment === "boolean" ? result.isFirstAppointment : prev.isFirstAppointment,
           isRepetitiveAppointment: typeof result.isRepetitiveAppointment === "boolean" ? result.isRepetitiveAppointment : prev.isRepetitiveAppointment,
         }));
+        onHistoryFormSaved?.(result?.historyForm ?? result);
       }
       toast.success(t("history_tab.saved", { defaultValue: "Saved" }));
       if (hasAnyContent()) {
@@ -1313,7 +1314,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     } finally {
       setIsSavingForm(false);
     }
-  }, [application, form, t]);
+  }, [application, form, t, onHistoryFormSaved]);
 
   /* Verify toggle badge */
   const VerifyBadge = ({ fieldKey }) => {
@@ -1679,7 +1680,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
               {showTestNoteEditor && createPortal(
                 <>
                   <div className="ht-add-overlay" onClick={() => setShowTestNoteEditor(false)} />
-                  <div className="ht-add-modal">
+                  <div className="ht-add-modal ht-add-modal--note">
                     <div className="ht-add-modal-header">
                       <span className="ht-add-modal-title">
                         {editingNoteId

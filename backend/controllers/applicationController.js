@@ -1875,7 +1875,7 @@ async function updateHistoryFormForDoctor(req, res) {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    res.json({ message: "History form updated successfully" });
+    res.json({ message: "History form updated successfully", historyForm: application.historyForm });
   } catch (error) {
     console.error("Error updating history form:", error, "request body:", req.body);
     res.status(500).json({ message: "Failed to update history form" });

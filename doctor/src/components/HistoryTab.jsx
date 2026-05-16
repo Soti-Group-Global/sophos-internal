@@ -223,7 +223,7 @@ const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, p
   </div>
 ));
 
-const HistoryTab = forwardRef(({ application, patient }, ref) => {
+const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
   const { t } = useTranslation("history_tab");
 
   const initForm = () => {
@@ -989,14 +989,23 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     fetchStudyTests();
   }, []);
 
-  // Auto-select first test when navigating to lab/study tabs (or when tests first load while already on those tabs)
+  const testHasData = useCallback((test) =>
+    (Array.isArray(test?.files) && test.files.length > 0) ||
+    !!test?.fileId ||
+    (Array.isArray(test?.notes) && test.notes.length > 0) ||
+    !!test?.note,
+  []);
+
+  // Auto-select first test with data when navigating to lab/study tabs
   useEffect(() => {
-    if (activeNavItem === "laboratoryAnalysis" && !selectedTest && labTests.length > 0) {
-      handleSelectTest(labTests[0], "laboratoryAnalysis");
-    } else if (activeNavItem === "studiesManipulations" && !selectedTest && studyTests.length > 0) {
-      handleSelectTest(studyTests[0], "studiesManipulations");
+    if (activeNavItem === "laboratoryAnalysis" && !selectedTest) {
+      const first = labTests.find(testHasData);
+      if (first) handleSelectTest(first, "laboratoryAnalysis");
+    } else if (activeNavItem === "studiesManipulations" && !selectedTest) {
+      const first = studyTests.find(testHasData);
+      if (first) handleSelectTest(first, "studiesManipulations");
     }
-  }, [activeNavItem, labTests, studyTests, selectedTest, handleSelectTest]);
+  }, [activeNavItem, labTests, studyTests, selectedTest, handleSelectTest, testHasData]);
 
   const getFieldTemplates = useCallback((fieldKey) => templates.filter((t) => t.fieldKey === fieldKey), [templates]);
 
@@ -1063,6 +1072,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
           isFirstAppointment: typeof result.isFirstAppointment === "boolean" ? result.isFirstAppointment : prev.isFirstAppointment,
           isRepetitiveAppointment: typeof result.isRepetitiveAppointment === "boolean" ? result.isRepetitiveAppointment : prev.isRepetitiveAppointment,
         }));
+        onSaved?.(result?.historyForm ?? result);
       }
       toast.success(t("history_tab.saved", { defaultValue: "Saved" }));
       if (hasAnyContent()) {
@@ -1074,7 +1084,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
     } finally {
       setIsSavingForm(false);
     }
-  }, [application, form, t, hasAnyContent]);
+  }, [application, form, t, hasAnyContent, onSaved]);
 
   const VerifyBadge = ({ fieldKey }) => {
     const verified = !!form[fieldKey]?.isVerified;
@@ -1223,10 +1233,10 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 </div>
 
                 {item.id === "laboratoryAnalysis" && isLabPanelOpen && (() => {
-                  const withFiles = labTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
-                  return withFiles.length === 0 ? null : (
+                  const withData = labTests.filter(testHasData);
+                  return withData.length === 0 ? null : (
                     <div className="ht-tests-panel">
-                      {withFiles.map((test) => (
+                      {withData.map((test) => (
                         <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
@@ -1236,10 +1246,10 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
                 })()}
 
                 {item.id === "studiesManipulations" && isStudyPanelOpen && (() => {
-                  const withFiles = studyTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
-                  return withFiles.length === 0 ? null : (
+                  const withData = studyTests.filter(testHasData);
+                  return withData.length === 0 ? null : (
                     <div className="ht-tests-panel">
-                      {withFiles.map((test) => (
+                      {withData.map((test) => (
                         <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "studiesManipulations")}>
                           <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
                         </button>
@@ -1376,7 +1386,7 @@ const HistoryTab = forwardRef(({ application, patient }, ref) => {
               {showTestNoteEditor && createPortal(
                 <>
                   <div className="ht-add-overlay" onClick={() => setShowTestNoteEditor(false)} />
-                  <div className="ht-add-modal">
+                  <div className="ht-add-modal ht-add-modal--note">
                     <div className="ht-add-modal-header">
                       <span className="ht-add-modal-title">{editingNoteId ? t("history_tab.edit_note", { defaultValue: "Edit Note" }) : t("history_tab.add_note", { defaultValue: "Add Note" })}</span>
                       <button type="button" className="ht-add-modal-close" onClick={() => setShowTestNoteEditor(false)}><FiX size={16} /></button>

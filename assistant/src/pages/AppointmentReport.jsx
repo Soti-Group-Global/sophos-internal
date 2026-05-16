@@ -355,9 +355,12 @@ export default function AppointmentReport({ booking, patient: patientProp = null
               "clinicalDiagnosis", "treatmentPlan",
             ];
 
-            const consultations = booking?.consultations?.length
-              ? booking.consultations
-              : (booking?.historyForm ? [{ historyForm: booking.historyForm }] : []);
+            const fallbackHf = booking?.historyForm || patientProp?.historyForm;
+            const rawConsultations = booking?.consultations?.length ? booking.consultations : [];
+            const consultationsWithHistory = rawConsultations.filter((c) => c.historyForm);
+            const consultations = consultationsWithHistory.length
+              ? consultationsWithHistory
+              : (fallbackHf ? [{ historyForm: fallbackHf }] : []);
 
             const items = [];
 
@@ -398,14 +401,14 @@ export default function AppointmentReport({ booking, patient: patientProp = null
                 const val = hf[fieldId]?.value;
                 if (!stripHtml(val)) return;
                 items.push({
-                  key: `cons-${ci}-${fieldId}-hdr`,
-                  keepWithNext: true,
-                  el: <div className="ed-field-title">{FIELD_LABELS[fieldId]}</div>,
-                });
-                items.push({
-                  key: `cons-${ci}-${fieldId}-body`,
+                  key: `cons-${ci}-${fieldId}`,
                   keepWithNext: false,
-                  el: <div className="ed-section-content-text" dangerouslySetInnerHTML={{ __html: val }} />,
+                  el: (
+                    <div className="ed-field-inline">
+                      <span className="ed-field-inline-label">{FIELD_LABELS[fieldId]}:&nbsp;</span>
+                      <span className="ed-field-inline-value" dangerouslySetInnerHTML={{ __html: val }} />
+                    </div>
+                  ),
                 });
               });
             });
@@ -425,7 +428,11 @@ export default function AppointmentReport({ booking, patient: patientProp = null
               items.push({ key: "rec-body", keepWithNext: false, el: <div className="ed-section-content-text" dangerouslySetInnerHTML={{ __html: recommendationsText }} /> });
             }
 
+            const hfFingerprint = consultations
+              .map(c => Object.entries(c.historyForm || {}).map(([, f]) => (typeof f === "object" ? f?.value : "")).join(""))
+              .join("|");
             const contentKey = consultations.map(c => c._id || c.date).join(",")
+              + "|" + hfFingerprint
               + "|" + page4Entries.map(e => e.name + e.text).join(",")
               + "|" + diagnosisText + "|" + followUpText + "|" + recommendationsText;
 

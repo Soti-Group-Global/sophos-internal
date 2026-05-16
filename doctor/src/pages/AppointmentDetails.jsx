@@ -1160,6 +1160,7 @@ const AppointmentDetails = () => {
                   <HistoryTab
                     application={appointment}
                     patient={patientDetails}
+                    onSaved={(saved) => setAppointment((prev) => ({ ...prev, historyForm: saved }))}
                   />
                 )}
 

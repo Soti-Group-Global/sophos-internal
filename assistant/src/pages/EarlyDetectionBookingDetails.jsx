@@ -1916,7 +1916,7 @@ const EarlyDetectionBookingDetails = () => {
             {showTestNoteEditor && createPortal(
               <>
                 <div className="ht-add-overlay" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }} />
-                <div className="ht-add-modal">
+                <div className="ht-add-modal ht-add-modal--note">
                   <div className="ht-add-modal-header">
                     <span className="ht-add-modal-title">{editingTestNoteId ? t("earlyDiagnosis.editNote", "Edit Note") : t("earlyDiagnosis.addNote", "Add Note")}</span>
                     <button type="button" className="ht-add-modal-close" onClick={() => { setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null); }}><XIcon size={16} /></button>
