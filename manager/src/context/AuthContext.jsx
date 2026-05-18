@@ -63,7 +63,6 @@ export const AuthProvider = ({ children }) => {
           // Fallback: include stored refresh token in body in case the
           // httpOnly cookie is blocked (cross-origin HTTP with IP address).
           const storedRt = sessionStorage.getItem("manager_rt");
-          console.log("[AuthContext] Calling refresh, storedRt:", storedRt ? "PRESENT" : "MISSING");
 
           const response = await fetch(refreshUrl, {
             method: "POST",
@@ -71,8 +70,6 @@ export const AuthProvider = ({ children }) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(storedRt ? { refreshToken: storedRt } : {}),
           });
-
-          console.log("[AuthContext] Refresh response status:", response.status);
 
           if (!response.ok) throw new Error("Refresh failed");
 
@@ -85,9 +82,7 @@ export const AuthProvider = ({ children }) => {
           setToken(newToken);
           setUser(savedUser);
           api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-        } catch (err) {
-          console.log("[AuthContext] Refresh failed:", err.message);
-          // Refresh cookie expired — clear session
+        } catch {
           localStorage.removeItem("hadManagerSession");
           localStorage.removeItem("user");
         }

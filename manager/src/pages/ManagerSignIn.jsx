@@ -51,21 +51,6 @@ function ManagerSignIn() {
       const response = await managerSignin({ email, password });
       const { token, user, refreshToken } = response.data;
 
-      console.log("[SignIn] Login OK — request URL:", response.config?.baseURL, response.config?.url);
-      console.log("[SignIn] Token received:", token ? "YES" : "NO");
-
-      // Immediately call the backend to check if the cookie was stored
-      try {
-        const cookieCheck = await fetch(`${import.meta.env.VITE_BASE_URL || "http://localhost:3003"}/api/auth/cookie-check`, {
-          method: "GET",
-          credentials: "include",
-        });
-        const cookieData = await cookieCheck.json();
-        console.log("[SignIn] Cookie check after login:", cookieData);
-      } catch (e) {
-        console.log("[SignIn] Cookie check failed:", e.message);
-      }
-
       login(token, user, refreshToken);
 
       toast.success(t('login.successMessage'));
