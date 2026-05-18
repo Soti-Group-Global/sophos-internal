@@ -39,7 +39,6 @@ const EarlyDetection                 = lazy(() => import("./pages/EarlyDetection
 const MySpace                        = lazy(() => import("./pages/MySpace"));
 const ResetPassword                  = lazy(() => import("./pages/ResetPassword"));
 const ScheduleManagement             = lazy(() => import("./pages/ScheduleManagement"));
-const StockManagement                = lazy(() => import("./pages/StockManagement"));
 const InventoryManagement            = lazy(() => import("./pages/InventoryManagement"));
 const StockRequest                   = lazy(() => import("./pages/StockRequest"));
 const MeetingRoom                    = lazy(() => import("./pages/MeetingRoom"));
