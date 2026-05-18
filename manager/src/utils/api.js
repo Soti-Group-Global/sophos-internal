@@ -3290,7 +3290,7 @@ export const getManagersData = async (branchName) => {
 // GET all assistants (both head & regular)
 export const getAssistantsData = async () => {
   try {
-    const res = await api.get("/assistants/getAssistants");
+    const res = await api.get("/assistants/list");
     return res.data; // Expected: { assistants: [...] }
   } catch (err) {
     throw err.response?.data || { message: "Error fetching assistants" };

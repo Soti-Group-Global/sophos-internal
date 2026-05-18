@@ -10,6 +10,7 @@ const Layout = () => {
   const location = useLocation();
   const isAppointmentDetails = /^\/appointments\/[^/]+$/.test(location.pathname);
   const isEarlyDetectionDetails = /^\/early-detection-bookings\/[^/]+$/.test(location.pathname);
+  const isMessagesPage = location.pathname === "/messages";
   const isMeetingRoom = location.pathname === "/meeting-room" || isEarlyDetectionDetails || isAppointmentDetails;
 
   useEffect(() => {
@@ -54,7 +55,7 @@ const Layout = () => {
         {!isMeetingRoom && (
           <Header toggleSidebar={toggleSidebar} isMobile={isMobile} />
         )}
-        <main className={`layout-content${isAppointmentDetails ? " layout-content--white" : ""}`}>
+        <main className={`layout-content${(isAppointmentDetails || isMessagesPage) ? " layout-content--white" : ""}`}>
           <Outlet />
         </main>
       </div>

@@ -313,10 +313,9 @@
 }
 
 /* Shift content to the right so vertical bar doesn't overlap */
-.adp-content-scroll, .adp-content { margin-left: 84px; }
+.adp-content-scroll { margin-left: 84px; }
 
-.adp-page--nav-expanded .adp-content-scroll,
-.adp-page--nav-expanded .adp-content { margin-left: 208px; }
+.adp-page--nav-expanded .adp-content-scroll { margin-left: 208px; }
 
 /* Hide the left patient appointments list when page requests it */
 body.hide-global-sidebar .adp-app-sidebar {

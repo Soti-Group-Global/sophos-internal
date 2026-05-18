@@ -123,7 +123,7 @@ const Sidebar = ({ isSidebarOpen = false, isMobileOpen = false, onMobileClose, o
         { icon: Activity, key: "analysis", path: "/analysis" },
         { icon: ListTodo, key: "task", path: "/tasks" },
         { icon: Building, key: "corporateRegistration", path: "/corporate-registration" },
-        { icon: ClipboardPlus, key: "services", path: "/services" },
+        //{ icon: ClipboardPlus, key: "services", path: "/services" },
         { icon: ClipboardList, key: "serviceManager", path: "/service-manager" },
         { icon: CalendarCheck, key: "scheduleManagement", path: "/schedule" },
       ],

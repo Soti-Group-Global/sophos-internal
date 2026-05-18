@@ -1,17 +1,13 @@
-/* Modern Messages Container */
+﻿/* Modern Messages Container */
 .mm-modern-page {
-  padding: 20px;
-  max-height: 100vh;
-  background: linear-gradient(135deg, #e6e6e8 0%, #e6e6e8 100%);
+  height: 100%;
+  background: white;
 }
 
 .mm-modern-container {
   display: flex;
-  max-height: calc(100vh - 15vh);
-  min-height: calc(100vh - 15vh);
+  height: 100%;
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
@@ -40,22 +36,22 @@
 }
 
 .mm-current-user-avatar {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #0A2E5D;
+  border: 2px solid #0A2E5D;
 }
 
 .mm-user-details h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #2d3748;
 }
 
 .mm-user-role {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #718096;
   text-transform: capitalize;
 }
@@ -63,7 +59,6 @@
 .mm-menu-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
   color: #718096;
   cursor: pointer;
   padding: 8px;
@@ -98,7 +93,6 @@
   padding: 12px 16px 12px 44px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 0.9rem;
   background: #f7fafc;
   transition: all 0.2s;
 }
@@ -107,114 +101,135 @@
   outline: none;
   border-color: #0A2E5D;
   background: white;
-  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.08);
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1);
 }
 
 /* Contacts List */
 .mm-contacts-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 20px 20px;
+  padding: 8px 12px 16px;
 }
 
 .mm-contact-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .mm-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding: 0 8px;
+  margin-bottom: 6px;
+  padding: 4px 6px;
 }
 
 .mm-section-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #4a5568;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .mm-section-badge {
-  background: rgba(10, 46, 93, 0.1);
-  color: #0A2E5D;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  background: #0A2E5D;
+  color: white;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 /* Contact Items */
 .mm-contact-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 4px;
+  transition: all 0.18s ease;
+  margin-bottom: 3px;
+  border: 1px solid transparent;
 }
 
 .mm-contact-item:hover {
-  background: #edf2f7;
+  background: #f0f4ff;
+  border-color: #dbe6ff;
 }
 
 .mm-contact-selected {
-  background: rgba(10, 46, 93, 0.1) !important;
-  color: #0A2E5D;
+  background: linear-gradient(135deg, #0A2E5D 0%, #061e3d 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 3px 10px rgba(10, 46, 93, 0.35);
 }
 
 .mm-contact-selected .mm-contact-name,
 .mm-contact-selected .mm-contact-role {
-  color: white;
+  color: white !important;
+}
+
+.mm-contact-selected .mm-contact-status {
+  border-color: #0A2E5D;
 }
 
 .mm-contact-avatar {
   position: relative;
+  flex-shrink: 0;
 }
 
 .mm-contact-avatar img {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #e2e8f0;
+}
+
+.mm-contact-selected .mm-contact-avatar img {
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .mm-contact-status {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 12px;
-  height: 12px;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   border: 2px solid white;
 }
 
 .mm-contact-info {
   flex: 1;
+  min-width: 0;
 }
 
 .mm-contact-name {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.87rem;
   font-weight: 600;
-  color: #2d3748;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .mm-contact-role {
-  font-size: 0.8rem;
-  color: #718096;
+  font-size: 0.75rem;
+  color: #94a3b8;
   text-transform: capitalize;
+  margin-top: 1px;
 }
 
 .mm-empty-contacts {
   text-align: center;
   padding: 20px;
   color: #a0aec0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 /* Modern Chat Panel */
@@ -246,25 +261,25 @@
 }
 
 .mm-chat-user-avatar {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
 }
 
 .mm-status-indicator {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 14px;
-  height: 14px;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   border: 2px solid white;
 }
 
 .mm-chat-user-details h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #2d3748;
 }
@@ -277,7 +292,6 @@
 .mm-action-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
   color: #718096;
   cursor: pointer;
   padding: 8px;
@@ -309,7 +323,6 @@
   background: white;
   padding: 6px 16px;
   border-radius: 20px;
-  font-size: 0.8rem;
   color: #718096;
   border: 1px solid #e2e8f0;
 }
@@ -337,8 +350,8 @@
 }
 
 .mm-message-sent .mm-message-content {
-  background: rgba(10, 46, 93, 0.1);
-  color: #0A2E5D;
+  background: #0A2E5D;
+  color: white;
   border-bottom-right-radius: 4px;
 }
 
@@ -352,11 +365,9 @@
 .mm-message-text {
   margin: 0;
   line-height: 1.4;
-  font-size: 0.95rem;
 }
 
 .mm-message-time {
-  font-size: 0.75rem;
   opacity: 0.8;
   margin-top: 4px;
   text-align: right;
@@ -404,7 +415,6 @@
 }
 
 .mm-file-name {
-  font-size: 0.9rem;
   color: #4a5568;
 }
 
@@ -436,7 +446,6 @@
 .mm-attach-btn-modern {
   background: none;
   border: none;
-  font-size: 1.2rem;
   color: #718096;
   cursor: pointer;
   padding: 12px;
@@ -458,7 +467,6 @@
   padding: 14px 20px;
   border: 1px solid #e2e8f0;
   border-radius: 25px;
-  font-size: 0.95rem;
   background: #f7fafc;
   transition: all 0.2s;
   resize: none;
@@ -468,12 +476,12 @@
   outline: none;
   border-color: #0A2E5D;
   background: white;
-  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.08);
+  box-shadow: 0 0 0 3px rgba(10, 46, 93, 0.1);
 }
 
 .mm-send-btn-modern {
-  background: rgba(10, 46, 93, 0.1);
-  color: #0A2E5D;
+  background: #0A2E5D;
+  color: white;
   border: none;
   width: 48px;
   height: 48px;
@@ -486,7 +494,7 @@
 }
 
 .mm-send-btn-modern:hover:not(:disabled) {
-  background: #3a5a8f;
+  background: #061e3d;
   transform: scale(1.05);
 }
 
@@ -511,20 +519,17 @@
 }
 
 .mm-welcome-icon {
-  font-size: 4rem;
   margin-bottom: 20px;
   opacity: 0.5;
 }
 
 .mm-welcome-content h2 {
   margin: 0 0 12px 0;
-  font-size: 1.5rem;
   color: #4a5568;
 }
 
 .mm-welcome-content p {
   margin: 0;
-  font-size: 1rem;
 }
 
 /* Empty Chat */
@@ -535,20 +540,16 @@
 }
 
 .mm-empty-chat svg {
-  font-size: 3rem;
   margin-bottom: 16px;
   opacity: 0.5;
 }
 
 .mm-empty-chat p {
-  font-size: 1.1rem;
   margin-bottom: 8px;
   color: #4a5568;
 }
 
-.mm-empty-chat span {
-  font-size: 0.9rem;
-}
+.mm-empty-chat span {}
 
 /* Animations */
 @keyframes mm-fadeIn {
@@ -618,7 +619,6 @@
 .mm-view-btn,
 .mm-download-btn {
   color: #fff;
-  font-size: 13px;
   text-decoration: none;
   transition: 0.2s;
 }
@@ -638,7 +638,6 @@
 }
 
 .mm-file-name {
-  font-size: 13px;
   color: var(--text-primary, #f8fafc);
   word-break: break-word;
 }
@@ -646,123 +645,233 @@
 .mm-role-tabs {
   display: flex;
   justify-content: space-between;
-  background: white;
-  padding: 8px;
+  background: rgba(10, 46, 93, 0.08);
+  padding: 5px;
   border-radius: 10px;
-  margin: 10px;
-  gap: 8px;
+  margin: 8px 10px;
+  gap: 4px;
 }
 
 .mm-role-tab {
   flex: 1;
   text-align: center;
-  padding: 6px 10px;
-  font-size: 13px;
+  padding: 5px 8px;
+  font-size: 0.8rem;
   border: none;
-  border-radius: 8px;
-  background:rgba(248, 250, 252, 0.5);
-  color: #59687b;
+  border-radius: 7px;
+  background: transparent;
+  color: #0A2E5D;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
 }
 
 .mm-role-tab.active {
-  background: rgba(10, 46, 93, 0.1);
-  color: #0A2E5D;
-  font-weight: 500;
+  background: #0A2E5D;
+  color: #fff;
+  font-weight: 600;
 }
 
-.mm-message-sender-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #0A2E5D;
-  margin-bottom: 3px;
-  text-align: left;
-}
 
 .mm-unread-badge {
   background: #ef4444;
   color: white;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  line-height: 1.4;
+  flex-shrink: 0;
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 1024px) {
-  .mm-modern-sidebar {
-    width: 300px;
-  }
+.mm-message-sender-name {
+  background-color: #7994c0;
+  border-radius: 20px;
+  padding: 1px 8px;
+  width: fit-content;
+  text-align: center;
+  margin-bottom: 5px;
+  color: #fff;
 }
 
+/* Mobile Back Button - Hidden by default */
+.mm-back-btn-mobile {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #0A2E5D;
+  transition: all 0.2s;
+  border-radius: 50%;
+}
+
+.mm-back-btn-mobile:hover {
+  background: rgba(10, 46, 93, 0.1);
+}
+
+.mm-back-btn-mobile:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Responsive Styles */
 @media (max-width: 768px) {
   .mm-modern-page {
-    padding: 10px;
+    padding: 0;
+    max-height: 100vh;
   }
 
   .mm-modern-container {
-    flex-direction: column;
-    max-height: unset;
+    border-radius: 0;
+    max-height: 100vh;
     min-height: 100vh;
-    border-radius: 12px;
+    position: relative;
   }
 
+  /* Sidebar - Full width on mobile */
   .mm-modern-sidebar {
     width: 100%;
-    max-height: 200px;
-    min-height: 48px;
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
-    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    transition: transform 0.3s ease;
   }
 
-  .mm-chat-area {
-    flex: 1;
-    min-height: calc(100vh - 280px);
+  /* Hide sidebar when chat is active */
+  .mm-modern-sidebar.mm-mobile-sidebar-hidden {
+    transform: translateX(-100%);
+  }
+
+  /* Chat section - Full width on mobile */
+  .mm-modern-chat {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+
+  /* Show chat when active */
+  .mm-modern-chat.mm-mobile-chat-active {
+    transform: translateX(0);
+  }
+
+  /* Show back button on mobile */
+  .mm-back-btn-mobile {
     display: flex;
-    flex-direction: column;
+    margin-right: 8px;
   }
 
+  /* Adjust chat header for back button */
   .mm-chat-header {
-    padding: 10px 14px;
+    padding: 12px 16px;
   }
 
-  .mm-chat-messages {
+  .mm-chat-user-info {
     flex: 1;
-    padding: 10px;
-    overflow-y: auto;
   }
 
-  .mm-chat-input-area {
-    padding: 8px 10px;
+  /* Adjust sidebar header for mobile */
+  .mm-sidebar-header {
+    padding: 12px 16px;
   }
+
+  /* Adjust user avatar sizes */
+  .mm-current-user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mm-chat-user-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Adjust font sizes */
+  .mm-user-details h3 {}
+
+  .mm-user-details span {}
+
+  .mm-chat-user-details h3 {}
+
+  .mm-chat-user-details .mm-user-role {}
+
+  /* Adjust contact items */
+  .mm-contact-item {
+    padding: 12px 16px;
+  }
+
+  .mm-contact-avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .mm-contact-name {}
+
+  .mm-contact-role {}
+
+  /* Adjust search */
+  .mm-search-container {
+    padding: 12px 16px;
+  }
+
+  /* Adjust role tabs */
+  .mm-role-tabs {
+    padding: 8px 12px;
+    margin: 8px 12px;
+  }
+
+  .mm-role-tab {
+    padding: 6px 8px;
+  }
+
+  /* Adjust message bubbles */
+  .mm-message-bubble {
+    max-width: 85%;
+  }
+
+  /* Adjust input area */
+  .mm-chat-input-container {
+    padding: 12px 16px;
+  }
+
+  .mm-chat-input {}
 }
 
 @media (max-width: 480px) {
-  .mm-modern-page {
-    padding: 6px;
-  }
 
-  .mm-sidebar-header {
-    padding: 8px 12px;
-  }
-
-  .mm-user-details h3 {
-    font-size: 0.9rem;
-  }
-
+  /* Further adjustments for very small devices */
   .mm-current-user-avatar {
     width: 36px;
     height: 36px;
   }
 
-  .mm-modern-sidebar {
-    max-height: 160px;
+  .mm-user-details h3 {}
+
+  .mm-user-details span {}
+
+  .mm-contact-avatar {
+    width: 40px;
+    height: 40px;
   }
 
-  .mm-chat-area {
-    min-height: calc(100vh - 240px);
+  .mm-contact-name {}
+
+  .mm-contact-role {}
+
+  .mm-chat-user-details h3 {}
+
+  .mm-section-title {}
+
+  .mm-section-badge {
+    padding: 2px 6px;
   }
 }

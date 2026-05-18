@@ -1,3 +1,218 @@
+/* ── Modern Doctor Profile ── */
+.dp-page {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.dp-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(10, 46, 93, 0.08);
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+}
+
+.dp-banner {
+    height: 90px;
+    background: linear-gradient(135deg, #0a2e5d 0%, #1a4a8a 100%);
+}
+
+.dp-avatar-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: -44px;
+    margin-bottom: 0.5rem;
+}
+
+.dp-avatar-img {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 12px rgba(10, 46, 93, 0.15);
+}
+
+.dp-avatar-initials {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: #0a2e5d;
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 12px rgba(10, 46, 93, 0.15);
+    user-select: none;
+}
+
+.dp-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0 1.5rem 0.5rem;
+}
+
+.dp-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 0.15rem;
+    line-height: 1.3;
+}
+
+.dp-email-subtle {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.dp-edit-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.85rem;
+    background: rgba(10, 46, 93, 0.06);
+    color: #0a2e5d;
+    border: 1px solid rgba(10, 46, 93, 0.15);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+.dp-edit-btn:hover { background: rgba(10, 46, 93, 0.12); }
+
+.dp-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 0.5rem 1.5rem;
+}
+
+.dp-fields {
+    padding: 0.25rem 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.dp-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.dp-field-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.dp-field-label svg { flex-shrink: 0; }
+
+.dp-field-value {
+    font-size: 0.875rem;
+    color: #1e293b;
+    font-weight: 500;
+    text-align: right;
+}
+
+.dp-input {
+    flex: 1;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 0.875rem;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.15s;
+    text-align: right;
+    max-width: 200px;
+}
+.dp-input:focus { border-color: #0a2e5d; }
+
+/* Phone input */
+.dp-phone-wrap { flex: 1; max-width: 220px; }
+.dp-phone-container.react-tel-input { width: 100%; }
+.dp-phone-container .dp-phone-input {
+    width: 100% !important;
+    height: 34px !important;
+    font-size: 0.85rem !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 7px !important;
+    padding-left: 44px !important;
+    color: #1e293b !important;
+}
+.dp-phone-container .dp-phone-input:focus {
+    border-color: #0a2e5d !important;
+    box-shadow: none !important;
+}
+.dp-phone-container .dp-phone-flag-btn {
+    border-radius: 7px 0 0 7px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-right: none !important;
+    background: #f8fafc !important;
+}
+
+/* Custom calendar in profile */
+.dp-calendar-wrap { flex: 1; max-width: 200px; }
+.dp-calendar-wrap .custom-calendar-container { width: 100%; }
+.dp-calendar-wrap .custom-calendar-input {
+    height: 34px !important;
+    font-size: 0.85rem !important;
+    border-radius: 7px !important;
+    padding: 0 0.65rem !important;
+}
+
+.dp-actions {
+    display: flex;
+    gap: 0.65rem;
+    justify-content: flex-end;
+    padding: 0.75rem 1.5rem 1.25rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.dp-cancel-btn {
+    padding: 0.45rem 1.1rem;
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.dp-cancel-btn:hover { background: #f3f4f6; }
+
+.dp-save-btn {
+    padding: 0.45rem 1.1rem;
+    background: #0a2e5d;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.dp-save-btn:hover:not(:disabled) { background: #1a4a8a; }
+.dp-save-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
 .profile-container {
     max-width: 1000px;
     margin: 0 auto;

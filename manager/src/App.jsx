@@ -278,7 +278,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-              
+
               <Route
                 path="/applications/details/:id"
                 element={
@@ -295,7 +295,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-            
+
               <Route
                 path="/early-detection/bookings"
                 element={
@@ -336,7 +336,7 @@ function App() {
                 path="/early-detection/payment-failed"
                 element={<EarlyDetectionPaymentFailed />}
               />
-              
+
               <Route
                 path="/messenger"
                 element={
@@ -523,7 +523,7 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-             
+
               <Route
                 path="/analysis"
                 element={
@@ -606,8 +606,8 @@ function App() {
                   </RoleProtectedRoute>
                 }
               />
-              
-              
+
+
               <Route
                 path="/blogs"
                 element={

@@ -2,96 +2,21 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import defaultUser from '../assets/default-user.png';
 import '../styles/Profile.css';
-import { getDoctor, getImage } from '../utils/api';
+import { getDoctor, getImage, updateDoctor } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import CustomCalendar from '../components/CustomeCalendar';
 
-const EMPTY_ML = { en: '', ru: '' };
-
-// Strip HTML tags and return plain text
 const stripHtml = (html) => {
   if (!html) return '';
   const doc = new DOMParser().parseFromString(html, 'text/html');
   return doc.body.textContent || '';
 };
 
-const INITIAL_FORM = {
-  // Personal
-  firstName: { ...EMPTY_ML },
-  middleName: { ...EMPTY_ML },
-  lastName: { ...EMPTY_ML },
-  dateOfBirth: '',
-  gender: '',
-  age: '',
-  email: '',
-  phoneNumber: '',
-
-  // Professional
-  position: { ...EMPTY_ML },
-  regalia: { ...EMPTY_ML },
-  yearOfExperience: '',
-
-  // Location & Services
-  location: { ...EMPTY_ML },
-  branches: [],
-  languages: [],
-  services: { online: false, offline: false },
-  expert: false,
-  specialist: false,
-  feesAmount: '',
-  currency: 'RUB',
-
-  // Education & Experience
-  education: { ...EMPTY_ML },
-  workExperience: { ...EMPTY_ML },
-  advancedTraining: { ...EMPTY_ML },
-  professionalDevelopments: { ...EMPTY_ML },
-
-  // Achievements
-  awards: { ...EMPTY_ML },
-  internationalMemberships: { ...EMPTY_ML },
-  russianMemberships: { ...EMPTY_ML },
-  scientificActivities: { ...EMPTY_ML },
-
-  // About
-  about: { ...EMPTY_ML },
-};
-
-const SectionHeader = ({ sectionKey, label, isExpanded, onToggle }) => (
-  <div className="profile-section-header" onClick={() => onToggle(sectionKey)}>
-    <h3>{label}</h3>
-    {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-  </div>
-);
-
-const MLInput = ({ label, value, type = 'text' }) => (
-  <div className="form-group">
-    <label>{label}</label>
-    <input
-      type={type}
-      value={value || ''}
-      readOnly
-      disabled
-      className="input-disabled"
-    />
-  </div>
-);
-
-const MLTextarea = ({ label, value, rows = 3 }) => (
-  <div className="form-group full-width">
-    <label>{label}</label>
-    <textarea
-      value={value || ''}
-      readOnly
-      disabled
-      className="input-disabled"
-      rows={rows}
-    />
-  </div>
-);
+const EMPTY_ML = { en: '', ru: '' };
 
 const Profile = () => {
   const { t, i18n } = useTranslation();
@@ -99,251 +24,218 @@ const Profile = () => {
   const lang = i18n.language || 'en';
 
   const [image, setImage] = useState(defaultUser);
-  const [formData, setFormData] = useState(INITIAL_FORM);
-  const [expandedSections, setExpandedSections] = useState({
-    personal: true,
-    professional: true,
-    locationServices: false,
-    educationExperience: false,
-    achievements: false,
-    about: false,
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: { ...EMPTY_ML },
+    middleName: { ...EMPTY_ML },
+    lastName: { ...EMPTY_ML },
+    dateOfBirth: '',
+    email: '',
+    phoneNumber: '',
   });
+  const [editData, setEditData] = useState({ ...formData });
 
-  // ─── Fetch doctor profile on mount ───
-  useEffect(() => {
-    const fetchDoctor = async () => {
-      try {
-        const response = await getDoctor();
-        const d = response.data.doctor;
-
-        setFormData({
-          firstName: d.firstName || { ...EMPTY_ML },
-          middleName: d.middleName || { ...EMPTY_ML },
-          lastName: d.lastName || { ...EMPTY_ML },
-          dateOfBirth: d.dateOfBirth?.substring(0, 10) || '',
-          gender: d.gender || '',
-          age: d.age ?? '',
-          email: d.email || '',
-          phoneNumber: d.phoneNumber || '',
-
-          position: d.position || { ...EMPTY_ML },
-          regalia: d.regalia || { ...EMPTY_ML },
-          yearOfExperience: d.yearOfExperience ?? '',
-
-          location: d.location || { ...EMPTY_ML },
-          branches: d.branches || [],
-          languages: d.languages || [],
-          services: d.services || { online: false, offline: false },
-          expert: d.expert || false,
-          specialist: d.specialist || false,
-          feesAmount: d.feesAmount ?? '',
-          currency: d.currency || 'RUB',
-
-          education: d.education || { ...EMPTY_ML },
-          workExperience: d.workExperience || { ...EMPTY_ML },
-          advancedTraining: d.advancedTraining || { ...EMPTY_ML },
-          professionalDevelopments: d.professionalDevelopments || { ...EMPTY_ML },
-
-          awards: d.awards || { ...EMPTY_ML },
-          internationalMemberships: d.internationalMemberships || { ...EMPTY_ML },
-          russianMemberships: d.russianMemberships || { ...EMPTY_ML },
-          scientificActivities: d.scientificActivities || { ...EMPTY_ML },
-
-          about: d.about || { ...EMPTY_ML },
-        });
-
-        if (d.profileFileId) {
-          try {
-            const blob = await getImage(d.profileFileId);
-            setImage(URL.createObjectURL(blob));
-          } catch (imgError) {
-            console.warn('Profile image load failed, using default', imgError);
-            // leave default image in place
-          }
-        }
-      } catch (err) {
-        // display appropriate message to user
-        const msg = err.response?.data?.message;
-        if (err.response?.status === 404 && msg === 'Doctor profile not found') {
-          toast.error(t('profile.messages.fetchError') + ': ' + t('profile.messages.noProfile'));
-          // optionally redirect home
-          // navigate('/');
-        } else {
-          toast.error(t('profile.messages.fetchError'));
-        }
-        console.error('Get Doctor Error', err.response?.data || err.message);
-      }
-    };
-
-    fetchDoctor();
-  }, [t]);
-
-  // Listen for WS updates
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.detail?.type === 'doctorUpdated') {
-        // Re-fetch would go here
-      }
-    };
-    window.addEventListener('ws-message', handler);
-    return () => window.removeEventListener('ws-message', handler);
-  }, []);
-
-  const toggleSection = (key) =>
-    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  // ─── Render helpers ───
-  const mlValue = (field) => {
+  const ml = (field) => {
     const v = formData[field];
     const raw = typeof v === 'object' && v !== null ? (v[lang] || '') : (v || '');
     return stripHtml(raw);
   };
 
-  const ml = (field) => mlValue(field);
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        const response = await getDoctor();
+        const d = response.data.doctor;
+        const data = {
+          firstName: d.firstName || { ...EMPTY_ML },
+          middleName: d.middleName || { ...EMPTY_ML },
+          lastName: d.lastName || { ...EMPTY_ML },
+          dateOfBirth: d.dateOfBirth?.substring(0, 10) || '',
+          email: d.email || '',
+          phoneNumber: d.phoneNumber || '',
+        };
+        setFormData(data);
+        setEditData(data);
+
+        if (d.profileFileId) {
+          try {
+            const blob = await getImage(d.profileFileId);
+            setImage(URL.createObjectURL(blob));
+          } catch {
+            // keep default
+          }
+        }
+      } catch (err) {
+        toast.error(t('profile.messages.fetchError'));
+      }
+    };
+    fetchDoctor();
+  }, [t]);
+
+  const handleEdit = () => {
+    setEditData({ ...formData });
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => setIsEditing(false);
+
+  const handleChange = (field, value) => {
+    setEditData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateDoctor({
+        phoneNumber: editData.phoneNumber,
+        dateOfBirth: editData.dateOfBirth,
+      });
+      setFormData((prev) => ({
+        ...prev,
+        phoneNumber: editData.phoneNumber,
+        dateOfBirth: editData.dateOfBirth,
+      }));
+      setIsEditing(false);
+      toast.success(t('profile.messages.updateSuccess', 'Profile updated'));
+    } catch {
+      toast.error(t('profile.messages.updateError', 'Failed to update profile'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const fullName = [ml('firstName'), ml('middleName'), ml('lastName')].filter(Boolean).join(' ');
+  const initials = [`${ml('firstName')}`, `${ml('lastName')}`]
+    .map((s) => s[0] || '')
+    .join('')
+    .toUpperCase();
 
   return (
     <>
-      <div className="profile-container">
-        {/* Profile Image */}
-        <div className="profile-image-section">
-          <div className="image-wrapper">
-            <img
-              src={image}
-              onError={() => setImage(defaultUser)}
-              alt="Profile"
-              className="profile-img"
-            />
+      <div className="dp-page">
+        <div className="dp-card">
+          {/* Banner */}
+          <div className="dp-banner" />
 
-          </div>
-        </div>
-
-        <h2 className="profile-heading">{t('profile.title')}</h2>
-
-        {/* ═══════ PERSONAL INFORMATION ═══════ */}
-        <SectionHeader sectionKey="personal" label={t('profile.sections.personal')} isExpanded={expandedSections.personal} onToggle={toggleSection} />
-        {expandedSections.personal && (
-          <div className="profile-form two-columns">
-            <MLInput label={t('profile.form.firstName')} value={ml('firstName')} />
-            <MLInput label={t('profile.form.middleName')} value={ml('middleName')} />
-            <MLInput label={t('profile.form.lastName')} value={ml('lastName')} />
-
-            <div className="form-group">
-              <label>{t('profile.form.email')}</label>
-              <input name="email" type="email" value={formData.email} disabled className="input-disabled" />
-            </div>
-
-            <div className="form-group">
-              <label>{t('profile.form.phoneNumber')}</label>
-              <input name="phoneNumber" type="tel" value={formData.phoneNumber} disabled className="input-disabled" />
-            </div>
-
-            <div className="form-group">
-              <label>{t('profile.form.gender')}</label>
-              <input type="text" value={formData.gender} disabled className="input-disabled" />
-            </div>
-
-            <div className="form-group">
-              <label>{t('profile.form.dateOfBirth')}</label>
-              <CustomCalendar
-                name="dateOfBirth"
-                value={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
-                disabled
-                className="input-disabled"
+          {/* Avatar */}
+          <div className="dp-avatar-wrap">
+            {image === defaultUser ? (
+              <div className="dp-avatar-initials">{initials || '?'}</div>
+            ) : (
+              <img
+                src={image}
+                onError={() => setImage(defaultUser)}
+                alt="Profile"
+                className="dp-avatar-img"
               />
+            )}
+          </div>
+
+          {/* Header row */}
+          <div className="dp-header-row">
+            <div>
+              <h2 className="dp-name">{fullName || '—'}</h2>
+              <p className="dp-email-subtle">{formData.email || '—'}</p>
+            </div>
+            {!isEditing && (
+              <button className="dp-edit-btn" onClick={handleEdit}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                {t('common.edit', 'Edit')}
+              </button>
+            )}
+          </div>
+
+          <div className="dp-divider" />
+
+          {/* Fields */}
+          <div className="dp-fields">
+            <div className="dp-field">
+              <span className="dp-field-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 4.87 2 2 0 0 1 3.58 2.68h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                {t('profile.form.phoneNumber')}
+              </span>
+              {isEditing ? (
+                <div className="dp-phone-wrap">
+                  <PhoneInput
+                    country="ru"
+                    value={editData.phoneNumber}
+                    onChange={(val) => handleChange('phoneNumber', '+' + val)}
+                    inputClass="dp-phone-input"
+                    buttonClass="dp-phone-flag-btn"
+                    containerClass="dp-phone-container"
+                    enableSearch
+                  />
+                </div>
+              ) : (
+                <span className="dp-field-value">{formData.phoneNumber || '—'}</span>
+              )}
             </div>
 
-            <div className="form-group">
-              <label>{t('profile.form.age')}</label>
-              <input name="age" type="number" value={formData.age} disabled className="input-disabled" />
+            <div className="dp-field">
+              <span className="dp-field-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {t('profile.form.dateOfBirth')}
+              </span>
+              {isEditing ? (
+                <div className="dp-calendar-wrap">
+                  <CustomCalendar
+                    value={editData.dateOfBirth ? (() => {
+                      const [y, m, d] = editData.dateOfBirth.split('-').map(Number);
+                      return new Date(y, m - 1, d);
+                    })() : null}
+                    onChange={(date) => {
+                      if (date) {
+                        const y = date.getFullYear();
+                        const m = String(date.getMonth() + 1).padStart(2, '0');
+                        const d = String(date.getDate()).padStart(2, '0');
+                        handleChange('dateOfBirth', `${y}-${m}-${d}`);
+                      }
+                    }}
+                    dateFormat="dd/MM/yyyy"
+                    showYearDropdown
+                    showMonthDropdown
+                  />
+                </div>
+              ) : (
+                <span className="dp-field-value">
+                  {formData.dateOfBirth
+                    ? formData.dateOfBirth.split('-').reverse().join('-')
+                    : '—'}
+                </span>
+              )}
+            </div>
+
+            <div className="dp-field">
+              <span className="dp-field-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                </svg>
+                {t('profile.form.email')}
+              </span>
+              <span className="dp-field-value">{formData.email || '—'}</span>
             </div>
           </div>
-        )}
 
-        {/* ═══════ PROFESSIONAL DETAILS ═══════ */}
-        <SectionHeader sectionKey="professional" label={t('profile.sections.professional')} isExpanded={expandedSections.professional} onToggle={toggleSection} />
-        {expandedSections.professional && (
-          <div className="profile-form two-columns">
-            <MLInput label={t('profile.form.position')} value={ml('position')} />
-            <MLInput label={t('profile.form.regalia')} value={ml('regalia')} />
-
-            <div className="form-group">
-              <label>{t('profile.form.yearOfExperience')}</label>
-              <input name="yearOfExperience" type="number" value={formData.yearOfExperience} disabled className="input-disabled" />
+          {/* Action buttons */}
+          {isEditing && (
+            <div className="dp-actions">
+              <button className="dp-cancel-btn" onClick={handleCancel} disabled={isSaving}>
+                {t('common.cancel')}
+              </button>
+              <button className="dp-save-btn" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? t('common.loading', 'Saving...') : t('common.save', 'Save')}
+              </button>
             </div>
-
-            <div className="form-group checkbox-row">
-              <label className="checkbox-label">
-                <input type="checkbox" name="expert" checked={formData.expert} disabled />
-                {t('profile.form.expert')}
-              </label>
-              <label className="checkbox-label">
-                <input type="checkbox" name="specialist" checked={formData.specialist} disabled />
-                {t('profile.form.specialistLabel')}
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* ═══════ LOCATION & SERVICES ═══════ */}
-        <SectionHeader sectionKey="locationServices" label={t('profile.sections.locationServices')} isExpanded={expandedSections.locationServices} onToggle={toggleSection} />
-        {expandedSections.locationServices && (
-          <div className="profile-form two-columns">
-            <MLInput label={t('profile.form.location')} value={ml('location')} />
-
-            <div className="form-group">
-              <label>{t('profile.form.feesAmount')}</label>
-              <input name="feesAmount" type="number" value={formData.feesAmount} disabled className="input-disabled" />
-            </div>
-
-            <div className="form-group">
-              <label>{t('profile.form.currency')}</label>
-              <input type="text" value={formData.currency} disabled className="input-disabled" />
-            </div>
-
-            <div className="form-group checkbox-row">
-              <label className="service-toggle-label">{t('profile.form.services')}</label>
-              <label className="checkbox-label">
-                <input type="checkbox" checked={formData.services.online} disabled />
-                {t('profile.form.serviceOnline')}
-              </label>
-              <label className="checkbox-label">
-                <input type="checkbox" checked={formData.services.offline} disabled />
-                {t('profile.form.serviceOffline')}
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* ═══════ EDUCATION & EXPERIENCE ═══════ */}
-        <SectionHeader sectionKey="educationExperience" label={t('profile.sections.educationExperience')} isExpanded={expandedSections.educationExperience} onToggle={toggleSection} />
-        {expandedSections.educationExperience && (
-          <div className="profile-form">
-            <MLTextarea label={t('profile.form.education')} value={ml('education')} rows={3} />
-            <MLTextarea label={t('profile.form.workExperience')} value={ml('workExperience')} rows={3} />
-            <MLTextarea label={t('profile.form.advancedTraining')} value={ml('advancedTraining')} rows={3} />
-            <MLTextarea label={t('profile.form.professionalDevelopments')} value={ml('professionalDevelopments')} rows={3} />
-          </div>
-        )}
-
-        {/* ═══════ ACHIEVEMENTS & MEMBERSHIPS ═══════ */}
-        <SectionHeader sectionKey="achievements" label={t('profile.sections.achievements')} isExpanded={expandedSections.achievements} onToggle={toggleSection} />
-        {expandedSections.achievements && (
-          <div className="profile-form">
-            <MLTextarea label={t('profile.form.awards')} value={ml('awards')} rows={2} />
-            <MLTextarea label={t('profile.form.internationalMemberships')} value={ml('internationalMemberships')} rows={2} />
-            <MLTextarea label={t('profile.form.russianMemberships')} value={ml('russianMemberships')} rows={2} />
-            <MLTextarea label={t('profile.form.scientificActivities')} value={ml('scientificActivities')} rows={2} />
-          </div>
-        )}
-
-        {/* ═══════ ABOUT ═══════ */}
-        <SectionHeader sectionKey="about" label={t('profile.sections.about')} isExpanded={expandedSections.about} onToggle={toggleSection} />
-        {expandedSections.about && (
-          <div className="profile-form">
-            <MLTextarea label={t('profile.form.aboutText')} value={ml('about')} rows={4} />
-          </div>
-        )}
-
+          )}
+        </div>
       </div>
 
       <ToastContainer position="top-right" autoClose={3000} />

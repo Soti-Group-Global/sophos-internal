@@ -918,6 +918,15 @@
   font-size: 9pt;
   color: #333;
 }
+.ed-signature-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.ed-signature-date {
+  font-size: 9pt;
+  color: #333;
+}
 
 /* ── Page 4 form panel ─────────────────────────────────────── */
 .ed-p4-subsection {

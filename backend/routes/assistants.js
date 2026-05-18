@@ -92,6 +92,7 @@ router.post('/availability', auth, createAvailability);
 router.get('/availability', auth, getAvailability);
 router.delete('/availability/:id', auth, deleteAvailability);
 router.get('/getAssistants', auth, getAssistants);
+router.get('/list', auth, getAssistantsList);
 
 // Create assistant
 router.post("/", [auth, upload, ...assistantValidation], createAssistant);

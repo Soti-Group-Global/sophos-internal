@@ -21,7 +21,7 @@ function formatDate(dateStr) {
   });
 }
 
-function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4, doctorName, doctorRole }) {
+function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4, doctorName, doctorRole, dateOfIssue }) {
   const measureRef = useRef(null);
   const bodyProbeRef = useRef(null);
   const slotsRef = useRef([]);
@@ -129,7 +129,12 @@ function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4, doctorN
       {(doctorName || doctorRole) && (
         <div className="ed-signature-block">
           <div className="ed-signature-line">………………………………</div>
-          {doctorName && <strong>{doctorName}</strong>}
+          {doctorName && (
+            <div className="ed-signature-name-row">
+              <strong>{doctorName}</strong>
+              {dateOfIssue && <span className="ed-signature-date">(Дата выдачи: {dateOfIssue})</span>}
+            </div>
+          )}
           {doctorRole && <div className="ed-signature-role">{doctorRole}</div>}
         </div>
       )}
@@ -381,7 +386,7 @@ export default function AppointmentReport({ booking, patient: patientProp = null
                     )}
                     {coverFields.dob && coverFields.dob !== "—" && (
                       <div className="ed-cover-patient-line">
-                        <span className="ed-cover-patient-label">Дата:&nbsp;</span>{coverFields.dob}
+                        <span className="ed-cover-patient-label">Дата рождения:&nbsp;</span>{coverFields.dob}
                       </div>
                     )}
                     {coverFields.phone && coverFields.phone !== "—" && (
@@ -436,7 +441,7 @@ export default function AppointmentReport({ booking, patient: patientProp = null
               + "|" + page4Entries.map(e => e.name + e.text).join(",")
               + "|" + diagnosisText + "|" + followUpText + "|" + recommendationsText;
 
-            return <ConclusionPages key={contentKey} items={items} PageHeader={PageHeader} PageFooter={PageFooter} startPage={1} doctorName={doctorName} doctorRole={doctorRole} />;
+            return <ConclusionPages key={contentKey} items={items} PageHeader={PageHeader} PageFooter={PageFooter} startPage={1} doctorName={doctorName} doctorRole={doctorRole} dateOfIssue={coverFields.examDate} />;
           })()}
 
         </div>

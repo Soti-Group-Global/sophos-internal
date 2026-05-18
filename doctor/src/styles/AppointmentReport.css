@@ -925,6 +925,15 @@
   font-size: 9pt;
   color: #333;
 }
+.ed-signature-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.ed-signature-date {
+  font-size: 9pt;
+  color: #333;
+}
 
 .ed-cover-patient-plain { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
 .ed-cover-patient-name { font-size: 13pt; font-weight: 700; color: #1a2b4a; }

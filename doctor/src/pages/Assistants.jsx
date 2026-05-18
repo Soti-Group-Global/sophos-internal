@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { useTranslation } from "react-i18next";
 import "../styles/Assistants.css";
 import {
@@ -474,7 +475,7 @@ const Assistants = () => {
             {t("assistants.addAssistant", "Add Assistant")}
           </button>
           {assistants.length > 0 && (
-            <button className="export-csv-button" onClick={exportToCSV}>
+            <button className="assistants-export-csv-btn" onClick={exportToCSV}>
               <svg
                 width="16"
                 height="16"
@@ -521,9 +522,9 @@ const Assistants = () => {
       ) : (
         <div className="assistants-grid">
           {assistants.map((assistant, index) => {
-            const imageUrl = assistant.profileFileId
-              ? imageUrls[assistant.profileFileId] || "/default-user.png"
-              : "/default-user.png";
+            const hasImage = assistant.profileFileId && imageUrls[assistant.profileFileId];
+            const imageUrl = hasImage ? imageUrls[assistant.profileFileId] : null;
+            const initials = `${(assistant.lastName || "")[0] || ""}${(assistant.firstName || "")[0] || ""}`.toUpperCase();
 
             return (
               <div
@@ -533,13 +534,18 @@ const Assistants = () => {
               >
                 <div className="assistant-card-header">
                   <div className="assistant-avatar">
-                    <img
-                      src={imageUrl}
-                      alt={`${assistant.firstName} ${assistant.lastName}`}
-                      onError={(e) => {
-                        e.target.src = "/default-user.png";
-                      }}
-                    />
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={`${assistant.firstName} ${assistant.lastName}`}
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                          e.target.nextSibling && (e.target.nextSibling.style.display = "flex");
+                        }}
+                      />
+                    ) : (
+                      <div className="assistant-avatar-initials">{initials}</div>
+                    )}
                     <div className="online-indicator"></div>
                   </div>
 
@@ -606,8 +612,8 @@ const Assistants = () => {
         </div>
       )}
 
-      {selectedAssistant && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
+      {selectedAssistant && ReactDOM.createPortal(
+        <div className="assistants-modal-overlay" onClick={handleCloseModal}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-section">
@@ -855,12 +861,13 @@ const Assistants = () => {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {selectedAssistant && showRequestModal && (
+      {selectedAssistant && showRequestModal && ReactDOM.createPortal(
         <div
-          className="modal-overlay"
+          className="assistants-modal-overlay"
           onClick={closeRequestOnlyModal}
         >
           <div className="modal-container request-modal" onClick={(e) => e.stopPropagation()}>
@@ -949,11 +956,12 @@ const Assistants = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showRemoveConfirm && selectedAssistant && (
-        <div className="modal-overlay" onClick={() => setShowRemoveConfirm(false)}>
+      {showRemoveConfirm && selectedAssistant && ReactDOM.createPortal(
+        <div className="assistants-modal-overlay" onClick={() => setShowRemoveConfirm(false)}>
           <div
             className="modal-container remove-confirm-modal"
             onClick={(e) => e.stopPropagation()}
@@ -988,11 +996,12 @@ const Assistants = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showAddAssistantModal && (
-        <div className="modal-overlay" onClick={closeAddAssistantModal}>
+      {showAddAssistantModal && ReactDOM.createPortal(
+        <div className="assistants-modal-overlay" onClick={closeAddAssistantModal}>
           <div
             className="modal-container request-modal add-assistant-modal"
             onClick={(e) => e.stopPropagation()}
@@ -1000,11 +1009,6 @@ const Assistants = () => {
             <div className="modal-header">
               <div className="modal-title-section">
                 <h2 className="modal-title">{t("assistants.requestAssistantTitle", "Request a Assistant")}</h2>
-                <p className="modal-subtitle">
-                  {selectedRequestAssistant
-                    ? `${getAssistantFullName(selectedRequestAssistant)} ${selectedRequestAssistant.email ? `(${selectedRequestAssistant.email})` : ""}`
-                    : t("assistants.selectAssistant", "Select an assistant")}
-                </p>
               </div>
               <button className="assistant-close-button" onClick={closeAddAssistantModal}>
                 <svg
@@ -1098,12 +1102,12 @@ const Assistants = () => {
               </div>
             </div>
 
-            <div className="entry-actions request-modal-actions">
-              <button className="cancel-button" onClick={closeAddAssistantModal}>
+            <div className="add-assistant-modal-footer">
+              <button className="add-assistant-cancel-btn" onClick={closeAddAssistantModal}>
                 {t("common.cancel")}
               </button>
               <button
-                className="grant-button"
+                className="add-assistant-submit-btn"
                 disabled={
                   isRequestSubmitting ||
                   !selectedRequestAssistant ||
@@ -1116,7 +1120,8 @@ const Assistants = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
