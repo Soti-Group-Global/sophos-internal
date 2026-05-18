@@ -145,11 +145,6 @@ const EarlyDetectionCalendarView = ({ bookings = [], loading = true }) => {
   /* sync applications with bookings prop */
   useEffect(() => {
     setApplications(bookings || []);
-    console.log("📅 Bookings received:", bookings);
-    if (bookings && bookings.length > 0) {
-      console.log("First booking structure:", bookings[0]);
-      console.log("Available fields:", Object.keys(bookings[0]));
-    }
   }, [bookings]);
 
   /* Helper: Combine date + time into ISO datetime */
@@ -228,7 +223,6 @@ const EarlyDetectionCalendarView = ({ bookings = [], loading = true }) => {
       const m = moment(fullDateTime).tz("Europe/Moscow");
       const matches = m.hour() === hour && m.minute() >= minute && m.minute() < minute + 30;
       if (matches) {
-        console.log(`✅ Found booking at ${hour}:${String(minute).padStart(2, "0")}`, appt);
       }
       return matches;
     });

@@ -2,7 +2,6 @@ import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useContext } from "react";
 
 import DoctorLogin from "./pages/DoctorLogin";
-import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
 import Patients from "./pages/Patients";
 import Schedule from "./pages/Schedule";
@@ -89,7 +88,6 @@ function App() {
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/appointments" element={<Appointments />} />
                   <Route path="/patients" element={<Patients />} />
                   <Route path="/schedule" element={<Schedule />} />

@@ -1304,13 +1304,9 @@ export const getDoctorsLite = async () => {
     const response = await api.get("/doctors/lite", {
       headers: {},
     });
-    // Handle different response formats: could be array directly or wrapped
-    console.log("[getDoctorsLite] full response:", response);
-    console.log("[getDoctorsLite] response.data:", response.data);
-    console.log("[getDoctorsLite] response.status:", response.status);
+
     const data = response.data;
     const result = Array.isArray(data) ? data : (data?.doctors || data?.data || []);
-    console.log("[getDoctorsLite] parsed result length:", result.length, "first item:", result[0]);
     return result;
   } catch (error) {
     console.error("Get Doctors Error:", error.response?.data || error.message);

@@ -214,7 +214,6 @@ exports.getFolderContents = async (req, res) => {
       const specIdSet = new Set(specialities.split(",").map((s) => s.trim()).filter(Boolean));
       const matchingIds = await buildMatchingCategoryIds(specIdSet);
       const filtered = categories.filter((cat) => matchingIds.has(cat._id.toString()));
-      console.log("[getFolderContents] speciality filter matched:", filtered.map((c) => c.name));
       return res.json({ categories: filtered, positions });
     }
 
