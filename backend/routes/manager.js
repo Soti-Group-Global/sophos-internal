@@ -25,6 +25,16 @@ const validateUpload = require("../middleware/validateUpload");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// Debug: check what cookies the browser actually sent (temporary)
+router.get("/cookie-check", (req, res) => {
+  console.log("[cookie-check] cookies:", JSON.stringify(req.cookies));
+  res.json({
+    receivedCookies: Object.keys(req.cookies),
+    hasManagerToken: !!req.cookies?.manager_refresh_token,
+    hasStaffToken: !!req.cookies?.staff_refresh_token,
+  });
+});
+
 // Auth routes
 router.post("/manager-signin", managerSignIn);
 router.post("/assistant-signin", assistantSignIn);
