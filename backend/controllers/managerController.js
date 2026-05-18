@@ -92,7 +92,9 @@ const managerSignIn = async (req, res) => {
 
     // Clear the old shared cookie name so stale cookies don't persist
     res.clearCookie("refresh_token", { path: "/api/auth" });
+    console.log("[managerSignIn] Setting manager_refresh_token cookie for user:", user.email);
     setManagerAuthCookies(res, token, refreshToken);
+    console.log("[managerSignIn] Cookie headers set:", res.getHeader("Set-Cookie"));
     res.json({
       token,
       refreshToken,
