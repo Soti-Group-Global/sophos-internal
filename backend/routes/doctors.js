@@ -11,6 +11,7 @@ const {
   getDoctorById,
   getDoctorFees,
   updateDoctor,
+  updateMe,
   deleteDoctor,
   getDoctorByEmail,
   getDoctorBreaks,
@@ -50,6 +51,7 @@ const upload = multer({
 // Doctor CRUD routes
 router.post("/doctor-signin", doctorSignIn);
 router.get("/me", auth, getMe);
+router.put("/me", auth, updateMe);
 router.get("/doctor-breaks", auth, getMyBreaks);
 router.post("/doctor-breaks", auth, createOrUpdateMyBreaks);
 router.put("/doctor-breaks/:breakId", auth, updateMyBreakById);

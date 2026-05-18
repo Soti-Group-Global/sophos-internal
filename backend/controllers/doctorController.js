@@ -1071,6 +1071,23 @@ const getDoctorsForAssistant = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 } 
+const updateMe = async (req, res) => {
+  try {
+    const { phoneNumber, dateOfBirth } = req.body;
+    const doctor = await Doctor.findOne({ email: req.user.email });
+    if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+
+    if (phoneNumber !== undefined) doctor.phoneNumber = phoneNumber;
+    if (dateOfBirth !== undefined) doctor.dateOfBirth = dateOfBirth;
+
+    await doctor.save();
+    res.json({ message: 'Profile updated', doctor });
+  } catch (err) {
+    console.error('updateMe error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createDoctor,
   getDoctors,
@@ -1078,6 +1095,7 @@ module.exports = {
   getDoctorById,
   getDoctorFees,
   updateDoctor,
+  updateMe,
   deleteDoctor,
   getDoctorByEmail,
   getDoctorImageById,
@@ -1094,5 +1112,4 @@ module.exports = {
   uploadMessageFile,
   getDoctorsLite,
   getAllDoctorsForMessages,
-  getDoctorImageById
 };
