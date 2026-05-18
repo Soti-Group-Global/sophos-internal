@@ -12,15 +12,19 @@ const api = axios.create({
 let refreshPromise = null;
 
 const refreshAccessToken = async () => {
-  // No body needed — refresh_token httpOnly cookie is sent automatically
+  const storedRt = sessionStorage.getItem("manager_rt");
   const response = await axios.post(
     `${api.defaults.baseURL}/auth/refresh-token`,
-    {},
+    storedRt ? { refreshToken: storedRt } : {},
     { withCredentials: true, headers: { "Content-Type": "application/json" } }
   );
 
   const token = response.data?.token || response.data?.accessToken;
   if (!token) throw new Error("No token returned from refresh");
+
+  if (response.data?.refreshToken) {
+    sessionStorage.setItem("manager_rt", response.data.refreshToken);
+  }
 
   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   if (response.data?.user) {

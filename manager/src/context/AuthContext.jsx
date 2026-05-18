@@ -18,7 +18,12 @@ export const AuthProvider = ({ children }) => {
   const login = (newToken, userData, newRefreshToken, shouldNavigate = true) => {
     setToken(newToken);
     setUser(userData);
-    if (newRefreshToken) setRefreshToken(newRefreshToken);
+    if (newRefreshToken) {
+      setRefreshToken(newRefreshToken);
+      // Store refresh token in sessionStorage as fallback for when the
+      // httpOnly cookie is blocked by the browser (cross-origin HTTP + IP).
+      sessionStorage.setItem("manager_rt", newRefreshToken);
+    }
 
     // Keep only non-sensitive data in localStorage
     localStorage.setItem("hadManagerSession", "true");
@@ -39,6 +44,7 @@ export const AuthProvider = ({ children }) => {
 
     localStorage.removeItem("hadManagerSession");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("manager_rt");
 
     delete api.defaults.headers.common["Authorization"];
 
@@ -54,15 +60,16 @@ export const AuthProvider = ({ children }) => {
       if (hadSession && savedUser) {
         try {
           const refreshUrl = `${import.meta.env.VITE_BASE_URL || "http://localhost:3003"}/api/auth/refresh-token`;
-          console.log("[AuthContext] VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
-          console.log("[AuthContext] Calling refresh at:", refreshUrl);
-          console.log("[AuthContext] Visible cookies (non-httpOnly only):", document.cookie);
+          // Fallback: include stored refresh token in body in case the
+          // httpOnly cookie is blocked (cross-origin HTTP with IP address).
+          const storedRt = sessionStorage.getItem("manager_rt");
+          console.log("[AuthContext] Calling refresh, storedRt:", storedRt ? "PRESENT" : "MISSING");
 
           const response = await fetch(refreshUrl, {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
+            body: JSON.stringify(storedRt ? { refreshToken: storedRt } : {}),
           });
 
           console.log("[AuthContext] Refresh response status:", response.status);
@@ -71,6 +78,9 @@ export const AuthProvider = ({ children }) => {
 
           const data = await response.json();
           const newToken = data.token || data.accessToken;
+          const newRt = data.refreshToken;
+
+          if (newRt) sessionStorage.setItem("manager_rt", newRt);
 
           setToken(newToken);
           setUser(savedUser);
