@@ -189,7 +189,10 @@ app.use(
         "http://localhost:5176",
         "https://health-direct-manager.vercel.app",
         "https://manager.sophos-med.ru",
-        "https://health-direct-site.vercel.app"
+        "https://health-direct-site.vercel.app",
+        ...(process.env.ALLOWED_ORIGINS
+          ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+          : []),
       ];
 
       // Allow requests with no origin (like mobile apps or curl requests)

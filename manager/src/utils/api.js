@@ -2,8 +2,10 @@
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 
+const _baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3003";
+
 const api = axios.create({
-  baseURL: "http://localhost:3003/api",
+  baseURL: `${_baseUrl}/api`,
   withCredentials: true,
 });
 
