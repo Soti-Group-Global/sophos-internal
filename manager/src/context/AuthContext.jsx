@@ -53,12 +53,19 @@ export const AuthProvider = ({ children }) => {
 
       if (hadSession && savedUser) {
         try {
-          const response = await fetch(`${import.meta.env.VITE_BASE_URL || "http://localhost:3003"}/api/auth/refresh-token`, {
+          const refreshUrl = `${import.meta.env.VITE_BASE_URL || "http://localhost:3003"}/api/auth/refresh-token`;
+          console.log("[AuthContext] VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
+          console.log("[AuthContext] Calling refresh at:", refreshUrl);
+          console.log("[AuthContext] Visible cookies (non-httpOnly only):", document.cookie);
+
+          const response = await fetch(refreshUrl, {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({}),
           });
+
+          console.log("[AuthContext] Refresh response status:", response.status);
 
           if (!response.ok) throw new Error("Refresh failed");
 
@@ -68,7 +75,8 @@ export const AuthProvider = ({ children }) => {
           setToken(newToken);
           setUser(savedUser);
           api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-        } catch {
+        } catch (err) {
+          console.log("[AuthContext] Refresh failed:", err.message);
           // Refresh cookie expired — clear session
           localStorage.removeItem("hadManagerSession");
           localStorage.removeItem("user");

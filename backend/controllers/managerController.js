@@ -209,12 +209,19 @@ const resetPassword = async (req, res) => {
 // Refresh Token
 const refreshToken = async (req, res) => {
   try {
+    console.log("[refreshToken] All cookies received:", JSON.stringify(req.cookies));
+    console.log("[refreshToken] Origin:", req.headers.origin);
+    console.log("[refreshToken] manager_refresh_token cookie:", req.cookies?.manager_refresh_token ? "PRESENT" : "MISSING");
+    console.log("[refreshToken] refresh_token cookie:", req.cookies?.refresh_token ? "PRESENT" : "MISSING");
+    console.log("[refreshToken] body.refreshToken:", req.body?.refreshToken ? "PRESENT" : "MISSING");
+
     // Also accept the old cookie name during migration (role check below still blocks non-manager tokens)
     const refreshTokenValue =
       req.cookies?.manager_refresh_token || req.cookies?.refresh_token ||
       req.body?.refreshToken || req.header("x-refresh-token") || "";
 
     if (!refreshTokenValue) {
+      console.log("[refreshToken] 400 — no token found in cookies, body, or header");
       return res.status(400).json({ message: "Refresh token is required" });
     }
 
