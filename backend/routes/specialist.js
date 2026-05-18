@@ -3,6 +3,15 @@ const multer = require("multer");
 const router = express.Router();
 
 const auth = require("../middleware/auth");
+const validateUpload = require("../middleware/validateUpload");
+
+const MANAGER_ROLES = ['manager', 'head_manager', 'super_admin'];
+const requireManagerRole = (req, res, next) => {
+  if (!MANAGER_ROLES.includes(req.user?.role)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
 const {
   createSpecialist,
   getAllSpecialists,
@@ -27,7 +36,7 @@ const upload = multer({
 }).single("profileImage");
 
 // Create Specialist
-router.post("/", [auth, upload], createSpecialist);
+router.post("/", [auth, upload], validateUpload(["image"]), createSpecialist);
 
 // Get all Specialists (optionally filtered by branch name)
 router.get("/", auth, getAllSpecialists);
@@ -42,9 +51,9 @@ router.get("/:id/fees", auth, getSpecialistFees);
 router.get("/:id", auth, getSpecialistById);
 
 // Update Specialist
-router.put("/:id", [auth, upload], updateSpecialist);
+router.put("/:id", [auth, upload], validateUpload(["image"]), updateSpecialist);
 
-// Delete Specialist
-router.delete("/:id", auth, deleteSpecialist);
+// Delete Specialist (manager-level only)
+router.delete("/:id", auth, requireManagerRole, deleteSpecialist);
 
 module.exports = router;

@@ -4,28 +4,23 @@ import { jwtDecode } from "jwt-decode";
 
 const api = axios.create({
   baseURL: "http://localhost:3003/api",
-  withCredentials: false,
+  withCredentials: true,
 });
 
 let refreshPromise = null;
 
 const refreshAccessToken = async () => {
-  const refreshToken = localStorage.getItem("refreshToken");
-  if (!refreshToken) throw new Error("Missing refresh token");
-
+  // No body needed — refresh_token httpOnly cookie is sent automatically
   const response = await axios.post(
     `${api.defaults.baseURL}/auth/refresh-token`,
-    { refreshToken },
-    { headers: { "Content-Type": "application/json" } }
+    {},
+    { withCredentials: true, headers: { "Content-Type": "application/json" } }
   );
 
-  const token = response.data?.token;
+  const token = response.data?.token || response.data?.accessToken;
   if (!token) throw new Error("No token returned from refresh");
 
-  localStorage.setItem("token", token);
-  if (response.data?.refreshToken) {
-    localStorage.setItem("refreshToken", response.data.refreshToken);
-  }
+  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   if (response.data?.user) {
     localStorage.setItem("user", JSON.stringify(response.data.user));
   }
@@ -34,14 +29,10 @@ const refreshAccessToken = async () => {
 };
 
 /* ---------------- Request Interceptor ---------------- */
+// Token is in api.defaults.headers.common (set on login/refresh) — no localStorage needed.
+// Cookie is also sent automatically via withCredentials: true.
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      // Use Bearer token format
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-
     // Handle Content-Type automatically
     if (!config.headers["Content-Type"]) {
       if (config.data instanceof FormData) {
@@ -50,7 +41,6 @@ api.interceptors.request.use(
         config.headers["Content-Type"] = "application/json";
       }
     }
-
     return config;
   },
   (error) => Promise.reject(error)
@@ -77,8 +67,7 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !isAuthRoute) {
       if (originalRequest._retry) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
+        delete api.defaults.headers.common["Authorization"];
         setTimeout(() => {
           window.location.href = "/manager-signin";
         }, 100);
@@ -97,10 +86,10 @@ api.interceptors.response.use(
         const newToken = await refreshPromise;
         originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
+        delete api.defaults.headers.common["Authorization"];
         setTimeout(() => {
           window.location.href = "/manager-signin";
         }, 100);

@@ -157,9 +157,7 @@ exports.initTBankPayment = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to initialize payment',
-      error: error.message
-    });
+      message: 'Failed to initialize payment',    });
   }
 };
 
@@ -296,9 +294,7 @@ exports.tbankPaymentWebhook = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Webhook processing failed',
-      error: error.message
-    });
+      message: 'Webhook processing failed',    });
   }
 };
 
@@ -361,9 +357,7 @@ exports.checkPaymentStatus = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to check payment status',
-      error: error.message
-    });
+      message: 'Failed to check payment status',    });
   }
 };
 
@@ -439,8 +433,6 @@ exports.cancelTBankPayment = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to cancel payment',
-      error: error.message
-    });
+      message: 'Failed to cancel payment',    });
   }
 };

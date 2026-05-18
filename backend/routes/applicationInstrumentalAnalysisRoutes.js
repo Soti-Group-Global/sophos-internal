@@ -3,6 +3,7 @@ const multer = require("multer");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const upload = multer({ storage: multer.memoryStorage() });
+const validateUpload = require("../middleware/validateUpload");
 const {
   createInstrumentalAnalysis,
   getInstrumentalAnalyses,
@@ -26,7 +27,7 @@ router.get("/:id", auth, getInstrumentalAnalysisById);
 // Update an instrumental analysis by ID
 router.put("/:id", auth, updateInstrumentalAnalysis);
 // Upload a file for an instrumental analysis
-router.post("/:id/upload-file", auth, upload.single("file"), uploadInstrumentalAnalysisFile);
+router.post("/:id/upload-file", auth, upload.single("file"), validateUpload(["image", "pdf", "doc"]), uploadInstrumentalAnalysisFile);
 // Get an uploaded file for an instrumental analysis
 router.get("/:id/file", auth, getInstrumentalAnalysisFile);
 router.get("/:id/file/:fileId", auth, getInstrumentalAnalysisFile);

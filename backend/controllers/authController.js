@@ -9,6 +9,7 @@ const {
   createRefreshToken,
   validateUserCredentials,
 } = require("../utils/authUtils");
+const { setStaffAuthCookies, clearStaffAuthCookies } = require("../utils/cookieUtils");
 
 const doctorSignIn = async (req, res) => {
   const { email, password } = req.body;
@@ -30,6 +31,7 @@ const doctorSignIn = async (req, res) => {
     const normalizedEmail = normalizeEmail(email);
     const doctorProfile = await DoctorsProfile.findOne({ email: normalizedEmail });
 
+    setStaffAuthCookies(res, accessToken, refreshToken);
     return res.status(200).json({
       success: true,
       accessToken,
@@ -50,7 +52,8 @@ const doctorSignIn = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error("doctorSignIn error:", error.message);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -77,6 +80,7 @@ const assistantSignIn = async (req, res) => {
       ? await HeadAssistant.findOne({ email: normalizedEmail })
       : await Assistant.findOne({ email: normalizedEmail });
 
+    setStaffAuthCookies(res, accessToken, refreshToken);
     return res.status(200).json({
       accessToken,
       refreshToken,
@@ -97,13 +101,16 @@ const assistantSignIn = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error("assistantSignIn error:", error.message);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
 const refreshAuthToken = async (req, res) => {
   try {
+    // Also accept the old cookie name during migration (role check below still blocks manager tokens)
     const refreshTokenValue =
+      req.cookies?.staff_refresh_token || req.cookies?.refresh_token ||
       req.body?.refreshToken || req.header("x-refresh-token") || "";
 
     if (!refreshTokenValue) {
@@ -131,9 +138,12 @@ const refreshAuthToken = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    const newAccessToken = createAccessToken(user);
+    const newRefreshToken = createRefreshToken(user);
+    setStaffAuthCookies(res, newAccessToken, newRefreshToken);
     return res.json({
-      accessToken: createAccessToken(user),
-      refreshToken: createRefreshToken(user),
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
@@ -141,10 +151,12 @@ const refreshAuthToken = async (req, res) => {
 };
 
 const doctorLogout = async (req, res) => {
+  clearStaffAuthCookies(res);
   return res.status(200).json({ success: true });
 };
 
 const assistantLogout = async (req, res) => {
+  clearStaffAuthCookies(res);
   return res.status(200).json({ success: true });
 };
 

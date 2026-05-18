@@ -169,9 +169,7 @@ exports.initInstallmentPayment = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to initialize installment payment',
-      error: error.message
-    });
+      message: 'Failed to initialize installment payment',    });
   }
 };
 
@@ -236,9 +234,7 @@ exports.getInstallmentDetails = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to get installment details',
-      error: error.message
-    });
+      message: 'Failed to get installment details',    });
   }
 };
 
@@ -342,9 +338,7 @@ exports.updateInstallmentPayment = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to update installment payment',
-      error: error.message
-    });
+      message: 'Failed to update installment payment',    });
   }
 };
 
@@ -408,8 +402,6 @@ exports.cancelInstallmentPlan = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to cancel installment plan',
-      error: error.message
-    });
+      message: 'Failed to cancel installment plan',    });
   }
 };

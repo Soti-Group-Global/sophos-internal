@@ -1,32 +1,33 @@
 import { createContext, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import api, { setAuthContext, scheduleTokenRefresh, stopTokenRefresh  } from "../utils/api";
+import api, { setAuthContext, scheduleTokenRefresh, stopTokenRefresh, restoreSession } from "../utils/api";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("accessToken"));
-  const [refreshToken, setRefreshToken] = useState(localStorage.getItem("refreshToken"));
+  // Tokens live in memory only — never in localStorage
+  const [token, setToken] = useState(null);
+  const [refreshToken, setRefreshToken] = useState(null);
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user") || "null"));
   const [profileCompleted, setProfileCompleted] = useState(user?.profileCompleted || false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // store timer reference
   const refreshTimer = useRef(null);
 
   // Assistant login
-  const login = async (accessToken, refreshToken, assistantData) => {
-
+  const login = async (accessToken, refreshTokenValue, assistantData) => {
     setToken(accessToken);
-    setRefreshToken(refreshToken);
+    setRefreshToken(refreshTokenValue);
     setUser(assistantData);
     setProfileCompleted(assistantData.profileCompleted || false);
 
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
+    // Keep only non-sensitive data in localStorage
     localStorage.setItem("hadSession", "true");
     localStorage.setItem("user", JSON.stringify(assistantData));
+
+    // Store token in axios defaults (in-memory, not localStorage)
+    api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
     // start silent refresh
     refreshTimer.current = scheduleTokenRefresh(accessToken);
@@ -34,46 +35,36 @@ export const AuthProvider = ({ children }) => {
     navigate("/appointments");
   };
 
-  //  Assistant logout
-const logout = async (redirect = true) => {
-  try {
-    // Always read the latest refresh token from localStorage, not from
-    // React state, because this function may be captured by a stale closure
-    // inside the api.js auth context.
-    const currentRefreshToken = localStorage.getItem("refreshToken");
-    if (currentRefreshToken) {
-      await api.post("/auth/assistant-logout", null, {
-        headers: { Authorization: `Bearer ${currentRefreshToken}` },
-      });
+  // Assistant logout
+  const logout = async (redirect = true) => {
+    try {
+      await api.post("/auth/assistant-logout");
+    } catch (err) {
+      console.warn("[AUTH] Assistant logout API error:", err.message);
+    } finally {
+      setToken(null);
+      setRefreshToken(null);
+      setUser(null);
+      setProfileCompleted(false);
+
+      localStorage.removeItem("hadSession");
+      localStorage.removeItem("user");
+
+      // Clean up legacy / orphaned keys
+      localStorage.removeItem("email");
+      localStorage.removeItem("formattedName");
+      localStorage.removeItem("language");
+      localStorage.removeItem("role");
+      localStorage.removeItem("selectedLanguage");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("assistantPassword");
+
+      delete api.defaults.headers.common["Authorization"];
+      stopTokenRefresh();
+
+      if (redirect) navigate("/");
     }
-  } catch (err) {
-    console.warn("[AUTH] Assistant logout API error:", err.message);
-  } finally {
-    setToken(null);
-    setRefreshToken(null);
-    setUser(null);
-    setProfileCompleted(false);
-
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("hadSession");
-    localStorage.removeItem("user");
-
-    // Clean up legacy / orphaned keys
-    localStorage.removeItem("email");
-    localStorage.removeItem("formattedName");
-    localStorage.removeItem("language");
-    localStorage.removeItem("role");
-    localStorage.removeItem("selectedLanguage");
-    localStorage.removeItem("userData");
-    localStorage.removeItem("token");
-    localStorage.removeItem("assistantPassword");
-
-    stopTokenRefresh(); // clear silent refresh
-
-    if (redirect) navigate("/");
-  }
-};
+  };
 
   const updateUser = (updatedUserData) => {
     setUser(updatedUserData);
@@ -81,39 +72,44 @@ const logout = async (redirect = true) => {
     localStorage.setItem("user", JSON.stringify(updatedUserData));
   };
 
-  // Restore session
-  useEffect(() => {
-    const storedToken = localStorage.getItem("accessToken");
-    const storedRefresh = localStorage.getItem("refreshToken");
-    const hadSession = localStorage.getItem("hadSession") === "true";
-    const savedUser = JSON.parse(localStorage.getItem("user") || "null");
-
-    if (hadSession && storedToken && storedRefresh && savedUser) {
-      setToken(storedToken);
-      setRefreshToken(storedRefresh);
-      setUser(savedUser);
-      setProfileCompleted(savedUser.profileCompleted || false);
-
-      // restart silent refresh
-      refreshTimer.current = scheduleTokenRefresh(storedToken);
-    } else {
-    }
-
-    setIsLoading(false);
-    setAuthContext({ logout, login, updateToken });
-  }, []);
-
+  // Allow interceptors to update tokens in memory
   const updateToken = (newAccess, newRefresh) => {
     setToken(newAccess);
     if (newRefresh) setRefreshToken(newRefresh);
 
-    localStorage.setItem("accessToken", newAccess);
-    if (newRefresh) localStorage.setItem("refreshToken", newRefresh);
+    api.defaults.headers.common["Authorization"] = `Bearer ${newAccess}`;
 
-    // restart silent refresh
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
     refreshTimer.current = scheduleTokenRefresh(newAccess);
   };
+
+  // Restore session on app load via httpOnly cookie
+  useEffect(() => {
+    const init = async () => {
+      const hadSession = localStorage.getItem("hadSession") === "true";
+      const savedUser = JSON.parse(localStorage.getItem("user") || "null");
+
+      if (hadSession && savedUser) {
+        try {
+          const data = await restoreSession();
+          setToken(data.accessToken);
+          if (data.refreshToken) setRefreshToken(data.refreshToken);
+          setUser(savedUser);
+          setProfileCompleted(savedUser.profileCompleted || false);
+          refreshTimer.current = scheduleTokenRefresh(data.accessToken);
+        } catch {
+          // Refresh cookie expired — clear session
+          localStorage.removeItem("hadSession");
+          localStorage.removeItem("user");
+        }
+      }
+
+      setIsLoading(false);
+      setAuthContext({ logout, login, updateToken });
+    };
+
+    init();
+  }, []);
 
   return (
     <AuthContext.Provider

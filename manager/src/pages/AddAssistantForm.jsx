@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import Select from "react-select";
-import { addAssistant } from "../utils/api";
+import api, { addAssistant } from "../utils/api";
 import "../styles/DoctorsForm.css";
 
 function AddAssistantForm() {
@@ -177,9 +177,7 @@ function AddAssistantForm() {
         
         toast.error(error.response?.data?.message || t("failed_add"));
         if (error.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("userEmail");
-          localStorage.removeItem("userRole");
+          delete api.defaults.headers.common["Authorization"];
           navigate("/");
         }
       }

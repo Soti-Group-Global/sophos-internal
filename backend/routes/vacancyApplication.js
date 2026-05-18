@@ -18,6 +18,7 @@ const {
   getContactRequestsByVacancy
 } = require('../controllers/vacancyApplicationController');
 const auth = require('../middleware/auth');
+const validateUpload = require('../middleware/validateUpload');
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -64,7 +65,7 @@ router.get('/stats/overview', auth, getVacancyStats);
 router.get('/resume/:fileId', auth, downloadResume);
 
 // 4. Parameterized routes last
-router.post('/:id/apply', upload.single('resume'), submitApplication);
+router.post('/:id/apply', upload.single('resume'), validateUpload(["pdf", "doc"]), submitApplication);
 router.post('/:id/contact', submitContactRequest);
 router.get('/:id/applications', auth, getApplicationsByVacancy);
 

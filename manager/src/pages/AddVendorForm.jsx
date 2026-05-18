@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import Select from 'react-select';
-import { addVendor, getSpecialties } from '../utils/api';
+import api, { addVendor, getSpecialties } from '../utils/api';
 import defaultUser from '../assets/default-user.png';
 import '../styles/AnalysisForms.css';
 
@@ -152,9 +152,7 @@ function AddVendorForm() {
       } catch (error) {
         toast.error(error.response?.data?.message || t('failed'));
         if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('userEmail');
-          localStorage.removeItem('userRole');
+          delete api.defaults.headers.common["Authorization"];
           navigate('/');
         }
       }

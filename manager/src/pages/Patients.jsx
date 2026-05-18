@@ -21,7 +21,7 @@ import clsx from "clsx";
 import { toast } from "react-toastify";
 import "../styles/Patients.css";
 import { useNavigate } from "react-router-dom";
-import { getPatients, sendPatientEmail, deletePatient } from "../utils/api";
+import api, { getPatients, sendPatientEmail, deletePatient } from "../utils/api";
 import WhatsAppChatBot from "./WhatsAppChatBot";
 import TelegramChatBot from "./TelegramChatBot";
 import LoadingComponent from "../components/Loading/LoadingComponent";
@@ -230,7 +230,7 @@ const Patients = () => {
       setEmailError(error.response?.data?.message || t("email_failed"));
       toast.error(error.response?.data?.message || t("email_failed"));
       if (error.response?.status === 401) {
-        localStorage.removeItem("token");
+        delete api.defaults.headers.common["Authorization"];
         navigate("/");
       }
     } finally {

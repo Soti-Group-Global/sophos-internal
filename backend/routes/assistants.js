@@ -2,7 +2,16 @@ const express = require("express");
 const multer = require("multer");
 const { body } = require("express-validator");
 const auth = require("../middleware/auth");
+const validateUpload = require("../middleware/validateUpload");
 const router = express.Router();
+
+const MANAGER_ROLES = ['manager', 'head_manager', 'super_admin'];
+const requireManagerRole = (req, res, next) => {
+  if (!MANAGER_ROLES.includes(req.user?.role)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
 
 const {
   createAssistant,
@@ -83,7 +92,7 @@ router.post("/assistant-signin", assistantSignIn);
 
 router.get('/me', auth, getMe);
 router.put('/me', auth, updateMe);
-router.post('/upload/profile-image', auth, upload, uploadProfileImage);
+router.post('/upload/profile-image', auth, upload, validateUpload(["image"]), uploadProfileImage);
 router.get('/image-by-id/:id', auth, getImageById);
 router.get('/doctors', auth, getAssistantDoctors);
 router.post('/access-requests', auth, createAccessRequest);
@@ -95,7 +104,7 @@ router.get('/getAssistants', auth, getAssistants);
 router.get('/list', auth, getAssistantsList);
 
 // Create assistant
-router.post("/", [auth, upload, ...assistantValidation], createAssistant);
+router.post("/", [auth, upload, ...assistantValidation], validateUpload(["image"]), createAssistant);
 
 // Get all assistants (optionally filtered by branch name)
 router.get("/", auth, getAllAssistants);
@@ -141,10 +150,10 @@ router.patch("/update-access-time", auth, updateAccessTime);
 router.get("/:id", auth, getAssistantById);
 
 // Update assistant
-router.put("/:id", [auth, upload, ...assistantValidation], updateAssistant);
+router.put("/:id", [auth, upload, ...assistantValidation], validateUpload(["image"]), updateAssistant);
 
-// Delete assistant
-router.delete("/:id", auth, deleteAssistant);
+// Delete assistant (manager-level only)
+router.delete("/:id", auth, requireManagerRole, deleteAssistant);
 
 // Remove doctor assignment from assistant
 router.delete("/:id/assign-doctor/:doctorEmail", auth, removeDoctorAssignment);

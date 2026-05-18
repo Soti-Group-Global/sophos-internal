@@ -40,7 +40,7 @@ const MedicalHistory = () => {
     };
 
     fetchData();
-  }, [patientEmail, t]);
+  }, [patientEmail]);
 
   const handleAppointmentClick = (appointmentId) => {
     navigate(`/appointments/${encodeURIComponent(appointmentId)}`, {

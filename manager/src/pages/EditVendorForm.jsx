@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import Select from 'react-select';
-import { getVendorById, updateVendor, getSpecialties } from '../utils/api';
+import api, { getVendorById, updateVendor, getSpecialties } from '../utils/api';
 import defaultUser from '../assets/default-user.png';
 import '../styles/AnalysisForms.css';
 
@@ -182,9 +182,7 @@ function EditVendorForm() {
       } catch (error) {
         toast.error(error.response?.data?.message || t('failed'));
         if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('userEmail');
-          localStorage.removeItem('userRole');
+          delete api.defaults.headers.common["Authorization"];
           navigate('/');
         }
       }

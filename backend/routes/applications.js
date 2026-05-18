@@ -1,7 +1,16 @@
 ﻿const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+
+const MANAGER_ROLES = ['manager', 'head_manager', 'super_admin'];
+const requireManagerRole = (req, res, next) => {
+  if (!MANAGER_ROLES.includes(req.user?.role)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
 const multer = require("multer");
+const validateUpload = require("../middleware/validateUpload");
 const {
   uploadDocumentFile,
   uploadDocumentUrl,
@@ -76,12 +85,12 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
 });
 
-// --- Delete application ---
-router.delete("/:id(*)", auth, deleteApplication);
+// --- Delete application (manager-level only) ---
+router.delete("/:id(*)", auth, requireManagerRole, deleteApplication);
 
 // --- Document routes ---
-router.post("/:id(*)/documents/file", upload.single("file"), uploadDocumentFile);
-router.post("/:id(*)/documents/url", uploadDocumentUrl);
+router.post("/:id(*)/documents/file", auth, upload.single("file"), validateUpload(["image", "pdf", "doc"]), uploadDocumentFile);
+router.post("/:id(*)/documents/url", auth, uploadDocumentUrl);
 router.delete("/:id(*)/documents/:filename", auth, deleteDocument);
 
 // --- User lookup ---
@@ -115,9 +124,9 @@ router.get(
 // --- Calendar (doctors interface) - MUST be before /:id route ---
 router.get("/calender", auth, getCalendarDataForDoctors);
 
-// --- Media routes ---
-router.get("/media/:id/media", getMediaFile);
-router.get("/media/:id", getMediaById);
+// --- Media routes (auth required) ---
+router.get("/media/:id/media", auth, getMediaFile);
+router.get("/media/:id", auth, getMediaById);
 
 // --- Payment webhook & return ---
 router.post("/webhook/yookassa", yookassaWebhook);

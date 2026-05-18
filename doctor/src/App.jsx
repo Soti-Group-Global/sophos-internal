@@ -26,9 +26,8 @@ import MeetingRoom from "./pages/meetingRoom";
 import EarlyDetectionApplications from "./components/EarlyDetectionApplications";
 
 
-// check login state using refresh token
 const ProtectedRoute = () => {
-  const { refreshToken, isLoading } = useContext(AuthContext);
+  const { token, isLoading } = useContext(AuthContext);
 
   if (isLoading) {
     return (
@@ -38,7 +37,7 @@ const ProtectedRoute = () => {
     );
   }
 
-  if (!refreshToken) {
+  if (!token) {
     return <Navigate to="/" replace />;
   }
 
@@ -46,7 +45,7 @@ const ProtectedRoute = () => {
 };
 
 const PublicRoute = () => {
-  const { refreshToken, isLoading } = useContext(AuthContext);
+  const { token, isLoading } = useContext(AuthContext);
 
   if (isLoading) {
     return (
@@ -56,7 +55,7 @@ const PublicRoute = () => {
     );
   }
 
-  if (refreshToken) {
+  if (token) {
     // user is already signed in — send them to their appointments by default
     return <Navigate to="/appointments" replace />;
   }

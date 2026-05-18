@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const auth = require("../middleware/auth");
+const validateUpload = require("../middleware/validateUpload");
 const upload = multer({ storage: multer.memoryStorage() });
 const {
   submitBooking,
@@ -52,35 +53,37 @@ router.post("/payment/webhook", paymentWebhook); // YooKassa
 router.post("/payment/tbank-webhook", tbankPaymentWebhook); // T-Bank
 
 // Admin routes
-router.get("/bookings", getBookings);
-router.get("/invoices/monthly/:month/:year", getMonthlyInvoices);
+router.get("/bookings", auth, getBookings);
+router.get("/invoices/monthly/:month/:year", auth, getMonthlyInvoices);
 
 // Admin booking management routes
-router.put("/bookings/:id/status", updateBookingStatus);
-router.put("/bookings/:id/payment-status", updatePaymentStatus);
-router.put("/bookings/:id/mark-as-paid", markAsPaid);
-router.put("/bookings/:id/cancel", cancelBooking);
-router.put("/bookings/:id", updateBooking);
-router.delete("/bookings/:id", deleteBooking);
-router.post("/bookings/manual", createManualBooking);
-router.post("/bookings/:id/generate-payment-link", generatePaymentLink);
-router.post("/bookings/:id/notes", addInternalNote);
-router.put("/bookings/:id/notes/:noteId", updateInternalNote);
-router.delete("/bookings/:id/notes/:noteId", deleteInternalNote);
-router.get("/bookings/tests/:section", getManagedTests);
-router.post("/bookings/tests/:section", createManagedTest);
-router.put("/bookings/tests/:section/:testId", updateManagedTest);
-router.delete("/bookings/tests/:section/:testId", deleteManagedTest);
+router.put("/bookings/:id/status", auth, updateBookingStatus);
+router.put("/bookings/:id/payment-status", auth, updatePaymentStatus);
+router.put("/bookings/:id/mark-as-paid", auth, markAsPaid);
+router.put("/bookings/:id/cancel", auth, cancelBooking);
+router.put("/bookings/:id", auth, updateBooking);
+router.delete("/bookings/:id", auth, deleteBooking);
+router.post("/bookings/manual", auth, createManualBooking);
+router.post("/bookings/:id/generate-payment-link", auth, generatePaymentLink);
+router.post("/bookings/:id/notes", auth, addInternalNote);
+router.put("/bookings/:id/notes/:noteId", auth, updateInternalNote);
+router.delete("/bookings/:id/notes/:noteId", auth, deleteInternalNote);
+router.get("/bookings/tests/:section", auth, getManagedTests);
+router.post("/bookings/tests/:section", auth, createManagedTest);
+router.put("/bookings/tests/:section/:testId", auth, updateManagedTest);
+router.delete("/bookings/tests/:section/:testId", auth, deleteManagedTest);
 router.post(
   "/bookings/:id/schedule/:section/upload",
+  auth,
   upload.single("file"),
+  validateUpload(["image", "pdf", "doc"]),
   uploadScheduleSectionFile,
 );
-router.get("/bookings/files/:fileId", getScheduleFile);
-router.put("/bookings/:id/specialist/:idx", saveSpecialistHistoryForm);
-router.post("/bookings/:id/schedule/:section/items/:itemId/notes", addTestEntryNote);
-router.put("/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId", updateTestEntryNote);
-router.delete("/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId", deleteTestEntryNote);
+router.get("/bookings/files/:fileId", auth, getScheduleFile);
+router.put("/bookings/:id/specialist/:idx", auth, saveSpecialistHistoryForm);
+router.post("/bookings/:id/schedule/:section/items/:itemId/notes", auth, addTestEntryNote);
+router.put("/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId", auth, updateTestEntryNote);
+router.delete("/bookings/:id/schedule/:section/entries/:entryId/notes/:noteId", auth, deleteTestEntryNote);
 
 // === Early Detection Booking Routes ===
 router.get('/doctor', auth, getWeeklyBookingsOnCalendar);

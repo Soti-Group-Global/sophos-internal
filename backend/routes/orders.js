@@ -1,6 +1,7 @@
 ﻿const express = require('express');
 const multer = require('multer');
 const auth = require('../middleware/auth');
+const validateUpload = require('../middleware/validateUpload');
 const {
   getOrders,
   getOrdersByVendor,
@@ -52,7 +53,7 @@ router.post('/assign-vendor', auth, bulkAssignVendor);
 router.post('/bulk', auth, bulkCreateOrders);
 
 // POST /api/orders/:testId/upload-result — upload test result
-router.post('/:testId/upload-result', auth, upload, uploadTestResult);
+router.post('/:testId/upload-result', auth, upload, validateUpload(["image", "pdf"]), uploadTestResult);
 
 // PATCH /api/orders/:id/status — update order status
 router.patch('/:id/status', auth, updateOrderStatus);

@@ -2,7 +2,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { getSpecialtyById, updateSpecialty } from '../utils/api';
+import api, { getSpecialtyById, updateSpecialty } from '../utils/api';
 import '../styles/AnalysisForms.css';
 
 function EditSpecialtyForm() {
@@ -110,9 +110,7 @@ function EditSpecialtyForm() {
       } catch (error) {
         toast.error(error.response?.data?.message || t('failed'));
         if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('userEmail');
-          localStorage.removeItem('userRole');
+          delete api.defaults.headers.common["Authorization"];
           navigate('/');
         }
       }

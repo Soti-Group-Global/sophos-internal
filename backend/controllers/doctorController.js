@@ -654,9 +654,7 @@ const getDoctorImageById = async (req, res) => {
     return res.status(404).json({ message: 'Image not found' });
   } catch (error) {
     return res.status(500).json({
-      message: 'Error fetching image',
-      error: error.message,
-    });
+      message: 'Error fetching image',    });
   }
 };
 
@@ -681,7 +679,7 @@ const getDoctorBreaks = async (req, res) => {
 
     res.json(breaks);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -736,7 +734,7 @@ const createOrUpdateMyBreaks = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating my breaks:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -786,7 +784,7 @@ const updateMyBreakById = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating break by id:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -813,7 +811,7 @@ const deleteMyBreakById = async (req, res) => {
     return res.json({ message: 'Breaks deleted successfully', data: doctorBreak });
   } catch (error) {
     console.error('Error deleting break by id:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -826,11 +824,22 @@ const getMe = async (req, res) => {
       return res.status(401).json({ message: 'Not authenticated' });
     }
 
-    // Fetch doctor profile using authenticated user's email
-    const doctor = await Doctor.findOne({ email: req.user.email });
-    
+    // Fetch doctor profile — case-insensitive to handle email casing mismatches
+    const emailRegex = new RegExp(`^${req.user.email}$`, 'i');
+    const doctor = await Doctor.findOne({ email: emailRegex });
+
     if (!doctor) {
-      return res.status(404).json({ message: 'Doctor profile not found' });
+      // Profile not created yet — return minimal stub from User model
+      return res.json({
+        doctor: {
+          email: req.user.email,
+          role: req.user.role,
+          firstName: "",
+          lastName: "",
+          profilePicture: null,
+          profileCompleted: req.user.profileCompleted,
+        },
+      });
     }
 
     // Get profile picture if exists
@@ -864,7 +873,7 @@ const getMe = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching doctor profile:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -890,7 +899,7 @@ const getMyBreaks = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching doctor breaks:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -903,7 +912,7 @@ const getDoctorBranchesList = async (req, res) => {
     res.json({ branches });
   } catch (error) {
     console.error('Error fetching doctor branches:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -1074,7 +1083,7 @@ const getDoctorsForAssistant = async (req, res) => {
 const updateMe = async (req, res) => {
   try {
     const { phoneNumber, dateOfBirth } = req.body;
-    const doctor = await Doctor.findOne({ email: req.user.email });
+    const doctor = await Doctor.findOne({ email: new RegExp(`^${req.user.email}$`, 'i') });
     if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
 
     if (phoneNumber !== undefined) doctor.phoneNumber = phoneNumber;

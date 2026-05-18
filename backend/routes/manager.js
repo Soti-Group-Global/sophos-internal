@@ -21,6 +21,7 @@ const {
   refreshAuthToken,
 } = require("../controllers/authController");
 
+const validateUpload = require("../middleware/validateUpload");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -37,8 +38,8 @@ router.get("/validate", auth, validateToken);
 // Manager CRUD routes
 router.get("/", auth, getManagers);
 router.get("/managers-data", auth, getManagersData);
-router.post("/", auth, upload.single("profileImage"), createManager);
-router.put("/:id", auth, upload.single("profileImage"), updateManager);
+router.post("/", auth, upload.single("profileImage"), validateUpload(["image"]), createManager);
+router.put("/:id", auth, upload.single("profileImage"), validateUpload(["image"]), updateManager);
 router.delete("/:id", auth, deleteManager);
 
 module.exports = router;

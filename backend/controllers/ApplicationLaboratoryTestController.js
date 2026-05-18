@@ -14,7 +14,7 @@ exports.createLaboratoryTest = async (req, res) => {
     await laboratoryTest.save();
     res.status(201).json(laboratoryTest);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -24,7 +24,7 @@ exports.getLaboratoryTests = async (req, res) => {
     const laboratoryTests = await ApplicationLaboratoryTest.find();
     res.status(200).json(laboratoryTests);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -38,7 +38,7 @@ exports.getLaboratoryTestById = async (req, res) => {
     }
     res.status(200).json(laboratoryTest);
     } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -60,7 +60,7 @@ exports.updateLaboratoryTest = async (req, res) => {
     }
     res.status(200).json(updatedLaboratoryTest);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -112,7 +112,7 @@ exports.uploadLaboratoryTestFile = async (req, res) => {
 
     res.status(200).json(test);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -147,7 +147,7 @@ exports.getLaboratoryTestFile = async (req, res) => {
     const readStream = bucket.openDownloadStream(objectId);
     readStream.pipe(res);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -188,7 +188,7 @@ exports.removeLaboratoryTestFile = async (req, res) => {
     await test.save();
     res.status(200).json(test);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -221,7 +221,7 @@ exports.addLaboratoryTestNote = async (req, res) => {
     }
     res.status(200).json(updatedLaboratoryTest);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -248,7 +248,7 @@ exports.updateLaboratoryTestNote = async (req, res) => {
     }
     res.status(200).json(updatedLaboratoryTest);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -269,7 +269,7 @@ exports.deleteLaboratoryTestNote = async (req, res) => {
     }
     res.status(200).json(updatedLaboratoryTest);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };
 
@@ -283,6 +283,6 @@ exports.deleteLaboratoryTest = async (req, res) => {
     }
     res.status(200).json({ message: "Laboratory test deleted successfully" });
     } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ message: "Server error" });
   }
 };

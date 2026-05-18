@@ -278,9 +278,7 @@ exports.joinMeetingByUser = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: "Failed to join meeting",
-      error: error.message,
-    });
+      message: "Failed to join meeting",    });
   }
 };
 
@@ -379,9 +377,7 @@ exports.joinDoctorRoom = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: "Failed to join doctor room",
-      error: error.message,
-    });
+      message: "Failed to join doctor room",    });
   }
 };
 
@@ -645,15 +641,11 @@ exports.streamRecording = async (req, res) => {
     if (error.response?.status === 404) {
       return res.status(404).json({
         status: false,
-        message: "Recording not found",
-        error: error.message
-      });
+        message: "Recording not found",      });
     }
 
     return res.status(500).json({
       status: false,
-      message: "Failed to stream recording",
-      error: error.message
-    });
+      message: "Failed to stream recording",    });
   }
 };

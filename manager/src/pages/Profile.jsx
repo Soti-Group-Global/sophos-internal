@@ -13,7 +13,7 @@ import "react-phone-input-2/lib/style.css";
 
 const Profile = () => {
   const { t } = useTranslation("profile");
-  const { user, login } = useContext(AuthContext);
+  const { user, token, login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [activeSection, setActiveSection] = useState("profile");
@@ -150,7 +150,7 @@ const Profile = () => {
       const updatedUser = response.data.user;
 
       if (updatedUser) {
-        login(localStorage.getItem("token"), updatedUser, null, false);
+        login(token, updatedUser, null, false);
         if (updatedUser.profilePicture) {
           setProfileImage(updatedUser.profilePicture);
         }

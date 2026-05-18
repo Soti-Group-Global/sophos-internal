@@ -3,6 +3,7 @@ const multer = require("multer");
 const router = express.Router();
 const auth = require("../middleware/auth");
 const upload = multer({ storage: multer.memoryStorage() });
+const validateUpload = require("../middleware/validateUpload");
 const {
   createLaboratoryTest,
   getLaboratoryTests,
@@ -26,7 +27,7 @@ router.get("/:id", auth, getLaboratoryTestById);
 // Update a laboratory test by ID
 router.put("/:id", auth, updateLaboratoryTest);
 // Upload a file for a laboratory test
-router.post("/:id/upload-file", auth, upload.single("file"), uploadLaboratoryTestFile);
+router.post("/:id/upload-file", auth, upload.single("file"), validateUpload(["image", "pdf", "doc"]), uploadLaboratoryTestFile);
 // Get an uploaded file for a laboratory test
 router.get("/:id/file", auth, getLaboratoryTestFile);
 router.get("/:id/file/:fileId", auth, getLaboratoryTestFile);

@@ -19,18 +19,17 @@ let refreshPromise = null; // single in-flight promise; deduplicates concurrent 
  * Sends one /auth/refresh HTTP call and updates localStorage + axios defaults.
  * Uses a raw axios instance to bypass our own request/response interceptors.
  */
-async function sendRefreshRequest(rt) {
+async function sendRefreshRequest() {
+  // No body needed — refresh_token httpOnly cookie is sent automatically
   const { data } = await axios.post(
     `${import.meta.env.VITE_BASE_URL}/api/auth/refresh`,
-    { refreshToken: rt }
+    {},
+    { withCredentials: true }
   );
 
   const newToken   = data.accessToken;
   const newRefresh = data.refreshToken;
   if (!newToken) throw new Error("Refresh failed: no new access token");
-
-  localStorage.setItem("accessToken", newToken);
-  if (newRefresh) localStorage.setItem("refreshToken", newRefresh);
 
   api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
@@ -50,9 +49,7 @@ async function doRefresh() {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
-    const rt = localStorage.getItem("refreshToken");
-    if (!rt) throw new Error("No refresh token");
-    return await sendRefreshRequest(rt);
+    return await sendRefreshRequest();
   })();
 
   try {
@@ -62,31 +59,14 @@ async function doRefresh() {
   }
 }
 
-// === Cross-tab Token Sync ===
-// When another tab successfully refreshes and writes new tokens to localStorage,
-// the `storage` event fires in every OTHER tab.  Pick up the update immediately
-// so stale headers never cause a 401 → 403 loop.
-if (typeof window !== "undefined") {
-  window.addEventListener("storage", (e) => {
-    if (e.key === "accessToken" && e.newValue) {
-      api.defaults.headers.common["Authorization"] = `Bearer ${e.newValue}`;
-      // Notify React state without triggering a new refresh cycle.
-      if (authContext?.updateToken) {
-        authContext.updateToken(e.newValue, localStorage.getItem("refreshToken"));
-      }
-    }
-  });
-}
+// Cross-tab sync: if another tab refreshes, this tab will get a 401 and
+// its own interceptor will refresh via cookie — no localStorage polling needed.
 
 // === Request Interceptor ===
+// Token is in api.defaults.headers.common (set on login/refresh) — no localStorage needed.
+// Cookie is also sent automatically via withCredentials: true.
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
+  (config) => config,
   (error) => {
     console.error("[REQUEST ERROR]", error);
     return Promise.reject(error);
@@ -139,8 +119,9 @@ let refreshTimer = null;
  */
 function isTokenExpiringSoon(bufferMs = 60_000) {
   try {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return true;
+    const authHeader = api.defaults.headers.common["Authorization"];
+    if (!authHeader) return true;
+    const token = authHeader.replace("Bearer ", "");
     const { exp } = jwtDecode(token);
     return exp * 1000 - Date.now() < bufferMs;
   } catch {
@@ -189,6 +170,17 @@ export function stopTokenRefresh() {
   }
 }
 
+// Used by AuthContext on page load — restores session via httpOnly cookie
+export async function restoreSession() {
+  const { data } = await axios.post(
+    `${import.meta.env.VITE_BASE_URL}/api/auth/refresh`,
+    {},
+    { withCredentials: true }
+  );
+  api.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
+  return data;
+}
+
 // === Visibility Change Handler ===
 // When user returns to a backgrounded tab, check if the token needs refreshing.
 // Browser timer throttling can cause setTimeout to miss the refresh window.
@@ -231,7 +223,8 @@ export const assistantSignin = async (data) => {
 // Get email from token
 export const getEmailFromToken = () => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const authHeader = api.defaults.headers.common["Authorization"];
+    const token = authHeader ? authHeader.replace("Bearer ", "") : null;
     if (!token) {
       return null;
     }
@@ -2028,7 +2021,8 @@ export const getProjects = async (email) => {
   // Include role (required by backend) — prefer token payload, fallback to localStorage
   let role = null;
   try {
-    const token = localStorage.getItem("accessToken");
+    const authHeader = api.defaults.headers.common["Authorization"];
+    const token = authHeader ? authHeader.replace("Bearer ", "") : null;
     if (token) {
       const decoded = jwtDecode(token);
       role = decoded?.role || null;

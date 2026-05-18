@@ -1,6 +1,8 @@
-// Get the token from localStorage
+import api from "./api";
+
 export const getToken = () => {
-  return localStorage.getItem("token");
+  const header = api.defaults.headers.common["Authorization"];
+  return header ? header.replace("Bearer ", "") : null;
 };
 
 // Check if token is expired (assumes JWT)

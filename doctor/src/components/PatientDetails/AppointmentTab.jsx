@@ -21,6 +21,7 @@ import {
     viewResultDocument,
   downloadResultDocument,
 } from "../../utils/api";
+import api from "../../utils/api";
 import {
   FiCalendar,
   FiClock,
@@ -134,7 +135,7 @@ const AppointmentTab = ({ appointmentId, currentUser, patient }) => {
         )}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+            Authorization: `Bearer ${api.defaults.headers.common["Authorization"]?.replace("Bearer ", "")}`
           },
         }
       );
@@ -457,7 +458,7 @@ const AppointmentTab = ({ appointmentId, currentUser, patient }) => {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+          Authorization: `Bearer ${api.defaults.headers.common["Authorization"]?.replace("Bearer ", "")}`
         }
       );
 
@@ -567,7 +568,7 @@ const AppointmentTab = ({ appointmentId, currentUser, patient }) => {
           method: "POST",
           body: formData,
           headers: {
-            "x-auth-token": localStorage.getItem("token"),
+            "x-auth-token": api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
           },
         }
       );

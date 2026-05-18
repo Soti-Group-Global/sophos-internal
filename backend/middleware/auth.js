@@ -3,7 +3,6 @@ const User = require('../models/User');
 
 module.exports = async (req, res, next) => {
   try {
-    // Get token from Authorization header (Bearer <token>) or legacy x-auth-token
     const authHeader = req.header('Authorization');
     const bearerToken = authHeader && authHeader.startsWith('Bearer ')
       ? authHeader.split(' ')[1]

@@ -15,7 +15,7 @@ exports.createInstrumentalAnalysis = async (req, res) => {
         res.status(201).json(instrumentalAnalysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -26,7 +26,7 @@ exports.getInstrumentalAnalyses = async (req, res) => {
         res.status(200).json(instrumentalAnalyses);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -41,7 +41,7 @@ exports.getInstrumentalAnalysisById = async (req, res) => {
         res.status(200).json(instrumentalAnalysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -64,7 +64,7 @@ exports.updateInstrumentalAnalysis = async (req, res) => {
         res.status(200).json(updatedInstrumentalAnalysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -117,7 +117,7 @@ exports.uploadInstrumentalAnalysisFile = async (req, res) => {
         res.status(200).json(analysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -153,7 +153,7 @@ exports.getInstrumentalAnalysisFile = async (req, res) => {
         readStream.pipe(res);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -195,7 +195,7 @@ exports.removeInstrumentalAnalysisFile = async (req, res) => {
         res.status(200).json(analysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -229,7 +229,7 @@ exports.addInstrumentalAnalysisNote = async (req, res) => {
         res.status(200).json(updatedInstrumentalAnalysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -257,7 +257,7 @@ exports.updateInstrumentalAnalysisNote = async (req, res) => {
         res.status(200).json(updatedInstrumentalAnalysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -279,7 +279,7 @@ exports.deleteInstrumentalAnalysisNote = async (req, res) => {
         res.status(200).json(updatedInstrumentalAnalysis);
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };
 
@@ -294,6 +294,6 @@ exports.deleteInstrumentalAnalysis = async (req, res) => {
         res.status(200).json({ message: "Instrumental analysis deleted successfully" });
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: "Server error" });
     }
 };

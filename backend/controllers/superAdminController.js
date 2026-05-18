@@ -48,7 +48,7 @@ const superAdminSignIn = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -102,7 +102,7 @@ const getSuperAdminsData = async (req, res) => {
 
     res.status(200).json({ superAdmins: enrichedSuperAdmins });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -199,7 +199,7 @@ const createSuperAdmin = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -253,7 +253,7 @@ const updateSuperAdmin = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -287,7 +287,7 @@ const deleteSuperAdmin = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

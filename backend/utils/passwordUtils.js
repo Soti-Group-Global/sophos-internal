@@ -34,7 +34,7 @@ const generatePassword = (email) => {
 // Generate and hash password
 const generateHashedPassword = async (email) => {
   const plainPassword = generateRandomPassword();
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(12);
   const hashedPassword = await bcrypt.hash(plainPassword, salt);
   return { plainPassword, hashedPassword };
 };

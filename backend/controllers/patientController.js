@@ -106,7 +106,7 @@ const getAllPatients = async (req, res) => {
 
     res.status(200).json({ patients: patientsWithImages });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch patients', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch patients' });
   }
 };
 
@@ -120,7 +120,7 @@ const getPatientById = async (req, res) => {
     const profilePicture = await readProfilePicture(patient.profileFileId);
     res.status(200).json({ patient: { ...patient.toObject(), profilePicture } });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch patient', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch patient' });
   }
 };
 
@@ -134,7 +134,7 @@ const getPatientByPatientId = async (req, res) => {
     const profilePicture = await readProfilePicture(patient.profileFileId);
     res.status(200).json({ patient: { ...patient.toObject(), profilePicture } });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch patient', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch patient' });
   }
 };
 
@@ -148,7 +148,7 @@ const getPatientByEmail = async (req, res) => {
     const profilePicture = await readProfilePicture(patient.profileFileId);
     res.status(200).json({ patient: { ...patient.toObject(), profilePicture } });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch patient', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch patient' });
   }
 };
 
@@ -205,7 +205,7 @@ const addPatient = async (req, res) => {
       // If user doesn't exist, create one
       if (!user) {
         const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+        const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
         user = new User({
           email,
@@ -332,7 +332,7 @@ const addPatient = async (req, res) => {
       patient: { ...patient.toObject(), profilePicture },
     });
   } catch (error) {
-    res.status(400).json({ message: 'Failed to add patient', error: error.message });
+    res.status(400).json({ message: 'Failed to add patient' });
   }
 };
 
@@ -801,7 +801,7 @@ const patchPatient = async (req, res) => {
 
     res.status(200).json({ message: 'Patient updated successfully', patient: updated });
   } catch (error) {
-    res.status(400).json({ message: 'Failed to update patient', error: error.message });
+    res.status(400).json({ message: 'Failed to update patient' });
   }
 };
 
@@ -829,7 +829,7 @@ const deletePatient = async (req, res) => {
     await patient.deleteOne();
     res.status(200).json({ message: 'Patient deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete patient', error: error.message });
+    res.status(500).json({ message: 'Failed to delete patient' });
   }
 };
 
@@ -861,7 +861,7 @@ const sendEmail = async (req, res) => {
     await transporter.sendMail(mailOptions);
     res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to send email', error: error.message });
+    res.status(500).json({ message: 'Failed to send email' });
   }
 };
 
@@ -1006,7 +1006,7 @@ const createPatient = async (req, res) => {
         return res.status(409).json({ message: 'User with this email already exists' });
       }
 
-      const saltRounds = 10;
+      const saltRounds = 12;
       const hashedPassword = await bcrypt.hash(randomPassword, saltRounds);
 
       const newUser = new User({

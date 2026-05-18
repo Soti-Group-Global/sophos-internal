@@ -71,7 +71,7 @@ const Profile = () => {
       }
     };
     fetchDoctor();
-  }, [t]);
+  }, []);
 
   const handleEdit = () => {
     setEditData({ ...formData });

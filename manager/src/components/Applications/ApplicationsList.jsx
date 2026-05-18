@@ -57,7 +57,7 @@ import ExportPDFModal from "./ExportPDFModal";
 import "./ApplicationsList.css";
 import SearchBar from "../SearchBar/SearchBar";
 
-import {
+import api, {
   getApplications,
   addDocument,
   getMedia,
@@ -244,9 +244,7 @@ const ApplicationsList = () => {
         error.response?.data?.message || t("applications.error_fetch"),
       );
       if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userEmail");
-        setCurrentUserEmail("");
+        delete api.defaults.headers.common["Authorization"];
         navigate("/");
       }
     } finally {
@@ -479,9 +477,7 @@ const ApplicationsList = () => {
         error.response?.data?.message || t("applications.document_add_failed"),
       );
       if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userEmail");
-        setCurrentUserEmail("");
+        delete api.defaults.headers.common["Authorization"];
         navigate("/");
       }
     }
@@ -593,9 +589,7 @@ const ApplicationsList = () => {
         error.response?.data?.message || t("applications.email_failed"),
       );
       if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userEmail");
-        setCurrentUserEmail("");
+        delete api.defaults.headers.common["Authorization"];
         navigate("/");
       }
     } finally {
@@ -626,9 +620,7 @@ const ApplicationsList = () => {
           t("applications.document_preview_failed"),
       );
       if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userEmail");
-        setCurrentUserEmail("");
+        delete api.defaults.headers.common["Authorization"];
         navigate("/");
       }
     }

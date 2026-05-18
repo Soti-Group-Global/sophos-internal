@@ -30,6 +30,10 @@ const {
   getDoctorImageById,
 } = require("../controllers/doctorController");
 
+const validateUpload = require("../middleware/validateUpload");
+const requireOwnership = require("../middleware/requireOwnership");
+const Doctor = require("../models/DoctorsProfile");
+
 // Configure multer with memory storage
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -71,12 +75,21 @@ router.get("/messages", auth, getMessage);
 router.get("/image-by-id/:fileId", auth, getDoctorImageById);
 
 // Generic CRUD routes
-router.post("/", [auth, upload], createDoctor);
+router.post("/", [auth, upload], validateUpload(["image"]), createDoctor);
 router.get("/", auth, getDoctors);
 router.get("/:id", auth, getDoctorById);
 router.get("/:id/fees", auth, getDoctorFees);
-router.put("/:id", [auth, upload], updateDoctor);
-router.delete("/:id", auth, deleteDoctor);
+router.put("/:id", [auth, upload], validateUpload(["image"]),
+  requireOwnership({ model: Doctor, ownerField: 'email', userField: 'email',
+    allowedRoles: ['manager', 'head_manager', 'super_admin', 'content_manager'] }),
+  updateDoctor);
+router.delete("/:id", auth,
+  (req, res, next) => {
+    const allowed = ['manager', 'head_manager', 'super_admin'];
+    if (!allowed.includes(req.user?.role)) return res.status(403).json({ message: 'Access denied' });
+    next();
+  },
+  deleteDoctor);
 
 // Doctor breaks routes
 router.get("/breaks/:doctorEmail/:date", auth, getDoctorBreaks);

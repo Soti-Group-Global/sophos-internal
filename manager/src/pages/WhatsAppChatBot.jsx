@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
+import api from "../utils/api";
 import { FiX } from "react-icons/fi";
 import { FaArrowRight } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,7 +22,7 @@ const WhatsAppChatBot = ({ isOpen, onClose, phoneNumber, profileId }) => {
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = api.defaults.headers.common["Authorization"]?.replace("Bearer ", "");
       const res = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/whatsapp/chat/messages?chat_id=${encodeURIComponent(
           phoneNumber
@@ -71,7 +72,7 @@ const WhatsAppChatBot = ({ isOpen, onClose, phoneNumber, profileId }) => {
   const sendMessage = async () => {
     if (!message.trim()) return;
     try {
-      const token = localStorage.getItem("token");
+      const token = api.defaults.headers.common["Authorization"]?.replace("Bearer ", "");
       const res = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/whatsapp/send`,
         {

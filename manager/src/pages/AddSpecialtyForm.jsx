@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { addSpecialty } from '../utils/api';
+import api, { addSpecialty } from '../utils/api';
 import '../styles/AnalysisForms.css';
 
 function AddSpecialtyForm() {
@@ -89,9 +89,7 @@ function AddSpecialtyForm() {
       } catch (error) {
         toast.error(error.response?.data?.message || t('failed'));
         if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('userEmail');
-          localStorage.removeItem('userRole');
+          delete api.defaults.headers.common["Authorization"];
           navigate('/manager-signin');
         }
       }

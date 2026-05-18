@@ -94,7 +94,7 @@ const Service = ({ applicationId }) => {
                 toast.error(t("service.loadFailed", "Unable to load saved positions"));
             }
         })();
-    }, [applicationId, t]);
+    }, [applicationId]);
 
     // Load folder contents
     const loadFolder = useCallback(async () => {
@@ -112,7 +112,7 @@ const Service = ({ applicationId }) => {
         } finally {
             setLoading(false);
         }
-    }, [currentFolder, t, activeTab, mySpecialityIds]);
+    }, [currentFolder, activeTab, mySpecialityIds]);
 
     useEffect(() => {
         if (drawerOpen) loadFolder();

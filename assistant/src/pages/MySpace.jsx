@@ -107,7 +107,7 @@ const MySpace = () => {
       }
     };
     run();
-  }, [user?.email, t]);
+  }, [user?.email]);
 
   const toggle = (idx) => setExpanded((s) => ({ ...s, [idx]: !s[idx] }));
 
@@ -120,11 +120,8 @@ const MySpace = () => {
         setDoctorsLoading(true);
         setDoctorsError("");
         const list = await getDoctorsLite();
-        console.log("[MySpace] getDoctorsLite response:", list, "type:", typeof list, "isArray:", Array.isArray(list));
         if (mounted) {
           const doctorsArray = Array.isArray(list) ? list : (list?.doctors || list?.data || []);
-          console.log("[MySpace] after parsing, doctors count:", doctorsArray.length);
-          console.log("[MySpace] first doctor:", doctorsArray[0]);
           setAllDoctors(doctorsArray);
           if (doctorsArray.length === 0) {
             setDoctorsError("No doctors found");

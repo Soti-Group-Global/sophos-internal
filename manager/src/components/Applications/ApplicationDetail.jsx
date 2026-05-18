@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
+import api from "../../utils/api";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   getApplication as getApplicationById,
@@ -383,7 +384,7 @@ const ApplicationDetail = ({ id: propId, onClose, onUpdate }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-auth-token": localStorage.getItem("token"),
+          "x-auth-token": api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
         },
         body: JSON.stringify({
           applicationId: application.applicationId,
@@ -451,7 +452,7 @@ const ApplicationDetail = ({ id: propId, onClose, onUpdate }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-auth-token": localStorage.getItem("token"),
+            "x-auth-token": api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
           },
           body: JSON.stringify(payload),
         });
@@ -688,7 +689,7 @@ const ApplicationDetail = ({ id: propId, onClose, onUpdate }) => {
     const createData = await meetingCreateOrJoin({
       applicationId: applicationNumber || application._id,
       roomId,
-      token: localStorage.getItem("token"),
+      token: api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
       title,
       options: { metadata },
     });
@@ -714,7 +715,7 @@ const ApplicationDetail = ({ id: propId, onClose, onUpdate }) => {
       let data = await meetingJoinByUser({
         applicationId: application.applicationId || application._id,
         roomId,
-        token: localStorage.getItem("token"),
+        token: api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
         profilePic: application.doctorProfilePic || null,
       });
 
@@ -736,7 +737,7 @@ const ApplicationDetail = ({ id: propId, onClose, onUpdate }) => {
         data = await meetingCreateOrJoin({
           applicationId: applicationNumber || application._id,
           roomId,
-          token: localStorage.getItem("token"),
+          token: api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
           title: `Appointment ${applicationNumber}`,
           options: {
             metadata: {
@@ -767,7 +768,7 @@ const ApplicationDetail = ({ id: propId, onClose, onUpdate }) => {
         data = await meetingJoinByUser({
           applicationId: application.applicationId || application._id,
           roomId: data.roomId || roomId,
-          token: localStorage.getItem("token"),
+          token: api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
           profilePic: application.doctorProfilePic || null,
         });
       }
@@ -990,7 +991,7 @@ const ApplicationDetail = ({ id: propId, onClose, onUpdate }) => {
               ) : recordings.length > 0 ? (
                 <div className="app-detail-recordings-list">
                   {recordings.map((recording) => {
-                    const token = localStorage.getItem("token");
+                    const token = api.defaults.headers.common["Authorization"]?.replace("Bearer ", "");
                     const videoUrl = recording.record_id
                       ? `${import.meta.env.VITE_BASE_URL || 'http://localhost:3003'}/api/meetings/recordings/${recording.record_id}/stream?token=${token}`
                       : null;

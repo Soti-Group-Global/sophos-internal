@@ -3,6 +3,10 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 require("dotenv").config();
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
 const auditLogger = require("./middleware/auditLogger");
 const auth = require("./middleware/auth");
 
@@ -144,6 +148,35 @@ connectDB();
 
 
 
+// ── Security headers ──────────────────────────────────────────────
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // allow GridFS image responses
+}));
+
+// ── Rate limiting ─────────────────────────────────────────────────
+// Skipped in development: React Strict Mode double-invokes effects, and all
+// three frontend dev servers share the same localhost IP bucket, which causes
+// legitimate requests to hit the limit instantly.
+const IS_DEV = process.env.NODE_ENV !== "production";
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,                   // max 20 signin attempts per window per IP
+  skip: () => IS_DEV,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many login attempts, please try again after 15 minutes." },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,       // 1 minute
+  max: 300,                  // generous limit for normal API usage
+  skip: () => IS_DEV,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests, please slow down." },
+});
+
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -178,11 +211,15 @@ app.use(
 // Handle preflight requests explicitly
 app.options('*', cors());
 
-// Serve static files from public directory
-app.use('/uploads', express.static('public/uploads'));
+// Serve static files from public directory (auth required)
+app.use('/uploads', auth, express.static('public/uploads'));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(cookieParser());
+
+// ── NoSQL injection sanitization (must be AFTER body parsers) ─────
+app.use(mongoSanitize());
 
 // Global audit logging for all API requests
 app.use(auditLogger);
@@ -196,6 +233,17 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// ── Apply rate limits ─────────────────────────────────────────────
+// Strict limit on all signin/auth endpoints
+app.use("/api/auth", authLimiter);
+app.use("/api/doctors/doctor-signin", authLimiter);
+app.use("/api/assistants/assistant-signin", authLimiter);
+app.use("/api/head-assistant/signin", authLimiter);
+app.use("/api/head-doctor/signin", authLimiter);
+app.use("/api/specialist/signin", authLimiter);
+// General API throttle
+app.use("/api", apiLimiter);
 
 // Routes
 app.use("/api/applications", applicationRoutes);

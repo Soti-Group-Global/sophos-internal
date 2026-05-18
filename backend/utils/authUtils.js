@@ -14,7 +14,7 @@ const createAccessToken = (user) =>
       type: "access",
     },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "1h" }
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m" }
   );
 
 const createRefreshToken = (user) =>

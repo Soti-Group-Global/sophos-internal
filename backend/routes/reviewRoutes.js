@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const router = express.Router();
 
+const auth = require("../middleware/auth");
 const {
   submitReview,
   getReviews,
@@ -55,13 +56,13 @@ const handleFileUpload = (req, res, next) => {
   });
 };
 
-router.get("/", getReviews);
+router.get("/", auth, getReviews);
 router.get("/public", getPublicReview);
-router.get("/:id", getReviewById);
-router.post("/", handleFileUpload, submitReview);
-router.put("/:id", handleFileUpload, updateReview);
-router.delete("/:id", deleteReview);
+router.get("/:id", auth, getReviewById);
+router.post("/", auth, handleFileUpload, submitReview);
+router.put("/:id", auth, handleFileUpload, updateReview);
+router.delete("/:id", auth, deleteReview);
 router.get('/doctor/:doctorId', getReviewsByDoctor);
-router.get("/file/:fileId", getReviewFile);
+router.get("/file/:fileId", auth, getReviewFile);
 
 module.exports = router;

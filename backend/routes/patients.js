@@ -3,7 +3,16 @@ const router = express.Router();
 const { body } = require('express-validator');
 const auth = require('../middleware/auth');
 const multer = require('multer');
+const validateUpload = require('../middleware/validateUpload');
 const patientController = require('../controllers/patientController');
+
+const MANAGER_ROLES = ['manager', 'head_manager', 'super_admin'];
+const requireManagerRole = (req, res, next) => {
+  if (!MANAGER_ROLES.includes(req.user?.role)) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
 
 // Configure multer with memory storage
 const storage = multer.memoryStorage();
@@ -56,6 +65,7 @@ router.post(
     body('email').optional({ checkFalsy: true }).isEmail().withMessage('Invalid email'),
     body('phoneNumber').trim().notEmpty().withMessage('Phone number is required'),
   ],
+  validateUpload(["image"]),
   patientController.addPatient
 );
 
@@ -70,6 +80,7 @@ router.put(
     body('gender').isIn(['Male', 'Female', 'Other']).withMessage('Invalid gender'),
     body('dateOfBirth').isISO8601().withMessage('Invalid date format. Must be YYYY-MM-DD or ISO 8601'),
   ],
+  validateUpload(["image"]),
   patientController.updatePatient
 );
 
@@ -109,8 +120,8 @@ router.put('/:id/radiation-doses', auth, patientController.updateRadiationDoses)
 // Patch a patient – partial update for GeneralInformationTab fields
 router.patch('/:id', auth, patientController.patchPatient);
 
-// Delete a patient
-router.delete('/:id', auth, patientController.deletePatient);
+// Delete a patient (manager-level only)
+router.delete('/:id', auth, requireManagerRole, patientController.deletePatient);
 
 // Send email to patient
 router.post(

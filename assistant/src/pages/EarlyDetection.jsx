@@ -112,44 +112,28 @@ const EarlyDetection = () => {
 
   // Fetch bookings
   const fetchBookings = useCallback(async () => {
-    console.log("[EarlyDetection] fetchBookings() started", {
-      userEmail: user?.email,
-      role: user?.role,
-    });
-
     if (!user?.email) {
-      setError(t("EarlyDetectionApplications.errorAuth", { defaultValue: "Not authenticated." }));
+      setError("Not authenticated.");
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     setError(null);
     try {
-      // For both doctors and assistants, use the /early-detection/doctor endpoint
-      // which returns ALL ED bookings (no longer filters by doctor assignment)
       const response = await getEarlyDetectionBookingsByDoctor(user.email);
-      
       const raw = Array.isArray(response?.data) ? response.data : [];
       const bookingsData = Array.from(
         new Map(raw.map((b) => [String(b?._id || b?.applicationId), b])).values()
       );
-
-      console.log("[EarlyDetection] ED bookings fetched", {
-        userEmail: user.email,
-        role: user.role,
-        count: bookingsData.length,
-        firstItem: bookingsData[0] || null,
-      });
-
       setBookings(bookingsData);
     } catch (err) {
       console.error("[EarlyDetection] fetchBookings() failed", err);
-      setError(err.message || t("EarlyDetectionApplications.errorLoad", { defaultValue: "Failed to load bookings" }));
+      setError(err.message || "Failed to load bookings");
     } finally {
       setLoading(false);
     }
-  }, [user?.email, user?.role, t]);
+  }, [user?.email, user?.role]);
 
   useEffect(() => {
     fetchBookings();

@@ -361,7 +361,7 @@ exports.getManagedTests = async (req, res) => {
     const items = await Model.find().sort({ 'name.en': 1, 'name.ru': 1, createdAt: -1 }).lean();
     return res.status(200).json({ success: true, data: items });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to load tests', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to load tests' });
   }
 };
 
@@ -387,7 +387,7 @@ exports.createManagedTest = async (req, res) => {
     const created = await Model.create({ name: { en: nameEn, ru: nameRu } });
     return res.status(201).json({ success: true, data: created });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to create test', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to create test' });
   }
 };
 
@@ -422,7 +422,7 @@ exports.updateManagedTest = async (req, res) => {
 
     return res.status(200).json({ success: true, data: updated });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to update test', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to update test' });
   }
 };
 
@@ -447,7 +447,7 @@ exports.deleteManagedTest = async (req, res) => {
 
     return res.status(200).json({ success: true, message: 'Test deleted' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to delete test', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to delete test' });
   }
 };
 
@@ -577,7 +577,7 @@ exports.uploadScheduleSectionFile = async (req, res) => {
       data: serializedBooking,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to upload file', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to upload file' });
   }
 };
 
@@ -612,12 +612,12 @@ exports.getScheduleFile = async (req, res) => {
     const readStream = bucket.openDownloadStream(objectId);
     readStream.on('error', (error) => {
       if (!res.headersSent) {
-        res.status(500).json({ success: false, message: 'Failed to stream file', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to stream file' });
       }
     });
     readStream.pipe(res);
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to get file', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to get file' });
   }
 };
 
@@ -1037,16 +1037,12 @@ exports.submitBooking = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
-        error: error.message
-      });
+        message: 'Validation error',      });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Error processing booking',
-      error: error.message
-    });
+      message: 'Error processing booking',    });
   }
 };
 
@@ -1091,9 +1087,7 @@ exports.getUserBookings = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching user bookings',
-      error: error.message
-    });
+      message: 'Error fetching user bookings',    });
   }
 };
 
@@ -1136,9 +1130,7 @@ exports.cancelUnpaidBooking = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error cancelling booking',
-      error: error.message
-    });
+      message: 'Error cancelling booking',    });
   }
 };
 
@@ -1405,9 +1397,7 @@ exports.checkPaymentStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error checking payment status',
-      error: error.message
-    });
+      message: 'Error checking payment status',    });
   }
 };
 
@@ -1453,9 +1443,7 @@ exports.getBookingById = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching booking',
-      error: error.message
-    });
+      message: 'Error fetching booking',    });
   }
 };
 
@@ -1564,7 +1552,7 @@ const getWeeklyBookingsOnCalendar = async (req, res) => {
     res.json(transformedBookings);
   } catch (error) {
     console.error("Error fetching bookings for calendar:", error);
-    res.status(500).json({ message: "Failed to fetch bookings for calendar", error: error.message });
+    res.status(500).json({ message: "Failed to fetch bookings for calendar" });
   }
 };
 
@@ -1595,9 +1583,7 @@ exports.getInvoiceByNumber = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching invoice',
-      error: error.message
-    });
+      message: 'Error fetching invoice',    });
   }
 };
 
@@ -1643,9 +1629,7 @@ exports.getMonthlyInvoices = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching monthly invoices',
-      error: error.message
-    });
+      message: 'Error fetching monthly invoices',    });
   }
 };
 
@@ -1667,9 +1651,7 @@ exports.getBookings = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching bookings',
-      error: error.message
-    });
+      message: 'Error fetching bookings',    });
   }
 };
 
@@ -1732,9 +1714,7 @@ exports.updateBookingStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error updating booking status',
-      error: error.message
-    });
+      message: 'Error updating booking status',    });
   }
 };
 
@@ -1900,9 +1880,7 @@ exports.updatePaymentStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error updating payment status',
-      error: error.message
-    });
+      message: 'Error updating payment status',    });
   }
 };
 
@@ -1978,9 +1956,7 @@ exports.markAsPaid = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error marking booking as paid',
-      error: error.message
-    });
+      message: 'Error marking booking as paid',    });
   }
 };
 
@@ -1996,7 +1972,7 @@ exports.deleteBooking = async (req, res) => {
     }
     res.status(200).json({ message: "Booking deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete booking", error: error.message });
+    res.status(500).json({ message: "Failed to delete booking" });
   }
 };
 
@@ -2068,9 +2044,7 @@ exports.cancelBooking = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error cancelling booking',
-      error: error.message
-    });
+      message: 'Error cancelling booking',    });
   }
 };
 
@@ -2270,16 +2244,12 @@ exports.updateBooking = async (req, res) => {
     if (error.message === 'Patient email is required' || error.message === 'Missing required patient information') {
       return res.status(400).json({
         success: false,
-        message: error.message,
-        error: error.message
-      });
+        message: error.message,      });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Error updating booking',
-      error: error.message
-    });
+      message: 'Error updating booking',    });
   }
 };
 
@@ -2708,9 +2678,7 @@ exports.createManualBooking = async (req, res) => {
     if (error.message === 'Patient email is required' || error.message === 'Missing required patient information') {
       return res.status(400).json({
         success: false,
-        message: error.message,
-        error: error.message
-      });
+        message: error.message,      });
     }
 
     // Handle duplicate key errors
@@ -2726,25 +2694,19 @@ exports.createManualBooking = async (req, res) => {
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
-        error: error.message
-      });
+        message: 'Validation error',      });
     }
 
     // Handle payment link creation errors
     if (error.message.includes('payment link')) {
       return res.status(500).json({
         success: false,
-        message: 'Payment link creation failed',
-        error: error.message
-      });
+        message: 'Payment link creation failed',      });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Error creating manual booking',
-      error: error.message
-    });
+      message: 'Error creating manual booking',    });
   }
 };
 
@@ -2982,9 +2944,7 @@ exports.generatePaymentLink = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error generating payment link',
-      error: error.message
-    });
+      message: 'Error generating payment link',    });
   }
 };  
 
@@ -3126,9 +3086,7 @@ exports.validatePaymentLink = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error validating payment link',
-      error: error.message
-    });
+      message: 'Error validating payment link',    });
   }
 };
 
@@ -3149,7 +3107,7 @@ const getInternalNotes = async (req, res) => {
     res.json({ internalNotes: safeNotes });
   } catch (error) {
     console.error("Error fetching internal notes:", error);
-    res.status(500).json({ message: "Failed to fetch internal notes", error: error.message });
+    res.status(500).json({ message: "Failed to fetch internal notes" });
   }
 };
 
@@ -3270,9 +3228,7 @@ exports.addInternalNote = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error adding note',
-      error: error.message
-    });
+      message: 'Error adding note',    });
   }
 };
 
@@ -3321,9 +3277,7 @@ exports.updateInternalNote = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error updating note',
-      error: error.message
-    });
+      message: 'Error updating note',    });
   }
 };
 
@@ -3363,9 +3317,7 @@ exports.deleteInternalNote = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error deleting note',
-      error: error.message
-    });
+      message: 'Error deleting note',    });
   }
 };
 
@@ -3405,7 +3357,7 @@ exports.addTestEntryNote = async (req, res) => {
     ]);
     res.status(200).json({ success: true, data: populated });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error adding note', error: error.message });
+    res.status(500).json({ success: false, message: 'Error adding note' });
   }
 };
 
@@ -3433,7 +3385,7 @@ exports.updateTestEntryNote = async (req, res) => {
     ]);
     res.status(200).json({ success: true, data: populated });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error updating note', error: error.message });
+    res.status(500).json({ success: false, message: 'Error updating note' });
   }
 };
 
@@ -3458,7 +3410,7 @@ exports.deleteTestEntryNote = async (req, res) => {
     ]);
     res.status(200).json({ success: true, data: populated });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error deleting note', error: error.message });
+    res.status(500).json({ success: false, message: 'Error deleting note' });
   }
 };
 

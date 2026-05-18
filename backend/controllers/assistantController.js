@@ -673,7 +673,7 @@ const getAssistants = async (req, res) => {
     res.status(200).json({ assistants: allAssistants });
   } catch (error) {
     console.error("Error fetching assistants:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 }
 
@@ -698,7 +698,7 @@ const getAssistantsList = async (req, res) => {
 
     res.status(200).json({ assistants: allAssistants });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

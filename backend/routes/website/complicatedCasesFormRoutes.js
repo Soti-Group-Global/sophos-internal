@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const router = express.Router();
+const validateUpload = require("../../middleware/validateUpload");
 
 const {
   submitComplicatedCasesForm,
@@ -23,14 +24,14 @@ const upload = multer({
 });
 
 // Form CRUD routes
-router.post("/", upload.array("files", 10), submitComplicatedCasesForm);
+router.post("/", upload.array("files", 10), validateUpload(["image", "pdf", "doc"]), submitComplicatedCasesForm);
 router.get("/", getComplicatedCasesForms);
 router.get("/:id", getComplicatedCasesFormById);
 router.put("/:id", updateComplicatedCasesForm);
 router.delete("/:id", deleteComplicatedCasesForm);
 
 // File upload/download routes
-router.post("/upload", upload.single("file"), uploadFile);
+router.post("/upload", upload.single("file"), validateUpload(["image", "pdf", "doc"]), uploadFile);
 router.get("/file/:fileId", getFile);
 router.delete("/file/:fileId", deleteFile);
 

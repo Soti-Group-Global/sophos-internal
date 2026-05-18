@@ -10,7 +10,7 @@ exports.getAllSpecialties = async (req, res) => {
     const specialties = await SpecialtyMaster.find().sort({ name_en: 1 });
     res.status(200).json(specialties);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch specialties', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch specialties' });
   }
 };
 
@@ -26,7 +26,7 @@ exports.getSpecialtyById = async (req, res) => {
     
     res.status(200).json(specialty);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch specialty', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch specialty' });
   }
 };
 
@@ -66,7 +66,7 @@ exports.createSpecialty = async (req, res) => {
     });
     res.status(201).json(newSpecialty);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create specialty', error: error.message });
+    res.status(500).json({ message: 'Failed to create specialty' });
   }
 };
 
@@ -117,7 +117,7 @@ exports.updateSpecialty = async (req, res) => {
     
     res.status(200).json(updatedSpecialty);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update specialty', error: error.message });
+    res.status(500).json({ message: 'Failed to update specialty' });
   }
 };
 
@@ -150,7 +150,7 @@ exports.deleteSpecialty = async (req, res) => {
     
     res.status(200).json({ message: 'Specialty deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete specialty', error: error.message });
+    res.status(500).json({ message: 'Failed to delete specialty' });
   }
 };
 
@@ -168,7 +168,7 @@ exports.getAllSubSpecialities = async (req, res) => {
     
     res.status(200).json(subSpecialities);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch sub-specialities', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch sub-specialities' });
   }
 };
 
@@ -185,7 +185,7 @@ exports.getSubSpecialityById = async (req, res) => {
     
     res.status(200).json(subSpeciality);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch sub-speciality', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch sub-speciality' });
   }
 };
 
@@ -238,7 +238,7 @@ exports.createSubSpeciality = async (req, res) => {
     
     res.status(201).json(newSubSpeciality);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create sub-speciality', error: error.message });
+    res.status(500).json({ message: 'Failed to create sub-speciality' });
   }
 };
 
@@ -297,7 +297,7 @@ exports.updateSubSpeciality = async (req, res) => {
     
     res.status(200).json(updatedSubSpeciality);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update sub-speciality', error: error.message });
+    res.status(500).json({ message: 'Failed to update sub-speciality' });
   }
 };
 
@@ -321,6 +321,6 @@ exports.deleteSubSpeciality = async (req, res) => {
     
     res.status(200).json({ message: 'Sub-speciality deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete sub-speciality', error: error.message });
+    res.status(500).json({ message: 'Failed to delete sub-speciality' });
   }
 };

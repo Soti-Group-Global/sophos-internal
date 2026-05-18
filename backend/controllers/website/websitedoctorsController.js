@@ -757,9 +757,7 @@ const getDoctorProfileImage = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error fetching image",
-      error: error.message,
-    });
+      message: "Error fetching image",    });
   }
 };
 

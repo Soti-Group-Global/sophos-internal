@@ -1,7 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const baseUrl = import.meta.env.VITE_BASE_URL;
+const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3003";
 
 let authContext = null;
 export const setAuthContext = (ctx) => {
@@ -27,11 +27,11 @@ function onRefreshed(newToken) {
 }
 
 // === Request Interceptor ===
+// Tokens are in api.defaults.headers.common (set on login/refresh).
+// Cookie is also sent automatically via withCredentials: true.
+// Only special-case the Max Messenger routes which need a different token.
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token && !config.url.includes("/max/")) {
-    config.headers.Authorization = `Bearer ${token}`;
-  } else if (config.url.includes("/max/")) {
+  if (config.url.includes("/max/")) {
     config.headers.Authorization = import.meta.env.VITE_MAX_API_TOKEN || "f25d8ff6573b44915f8b1b5410dd508b252addbf";
   }
   return config;
@@ -77,16 +77,11 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (!refreshToken) throw new Error("No refresh token");
-
-        const { data } = await axios.post(`${baseUrl}/api/auth/refresh`, { refreshToken });
+        // No body needed — refresh_token httpOnly cookie is sent automatically
+        const { data } = await axios.post(`${baseUrl}/api/auth/refresh`, {}, { withCredentials: true });
 
         const newToken = data.accessToken;
         const newRefresh = data.refreshToken;
-
-        localStorage.setItem("accessToken", newToken);
-        if (newRefresh) localStorage.setItem("refreshToken", newRefresh);
 
         api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
         authContext?.updateToken?.(newToken, newRefresh);
@@ -120,14 +115,9 @@ export function scheduleTokenRefresh(token) {
   if (delay > 0) {
     refreshTimer = setTimeout(async () => {
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        const { data } = await api.post("/auth/refresh", { refreshToken });
-
-        localStorage.setItem("accessToken", data.accessToken);
-        if (data.refreshToken) {
-          localStorage.setItem("refreshToken", data.refreshToken);
-        }
-
+        // Cookie is sent automatically — no localStorage needed
+        const { data } = await axios.post(`${baseUrl}/api/auth/refresh`, {}, { withCredentials: true });
+        api.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
         authContext?.updateToken?.(data.accessToken, data.refreshToken);
       } catch (err) {
         console.error("[AUTH] Silent refresh failed:", err.message);
@@ -144,6 +134,13 @@ export function stopTokenRefresh() {
     clearTimeout(refreshTimer);
     refreshTimer = null;
   }
+}
+
+// Used by AuthContext on page load — calls refresh endpoint via httpOnly cookie
+export async function restoreSession() {
+  const { data } = await axios.post(`${baseUrl}/api/auth/refresh`, {}, { withCredentials: true });
+  api.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
+  return data;
 }
 
 // === Safe Fetch ===
@@ -180,7 +177,8 @@ export const doctorSignup = async (data) => {
 
 export const getEmailFromToken = () => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const authHeader = api.defaults.headers.common["Authorization"];
+    const token = authHeader ? authHeader.replace("Bearer ", "") : null;
 
     if (!token) {
       return null;
@@ -213,7 +211,8 @@ export const getEmailFromToken = () => {
 // Get role from token
 export const getRoleFromToken = () => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const authHeader = api.defaults.headers.common["Authorization"];
+    const token = authHeader ? authHeader.replace("Bearer ", "") : null;
     if (!token) return null;
 
     const decoded = jwtDecode(token);
@@ -1615,10 +1614,11 @@ export const getDoctors = async () => {
 // Get all managers (manager + head_manager)
 export const getManagersData = async () => {
   try {
-    const res = await api.get("/managers/all");
+    const res = await api.get("/managers/");
+    const all = res.data?.managers || [];
     return {
-      managers: res.data?.managers || [],
-      headManagers: res.data?.headManagers || [],
+      managers: all.filter((m) => m.role !== "head_manager"),
+      headManagers: all.filter((m) => m.role === "head_manager"),
     };
   } catch (error) {
     if (error?.response?.status === 404) {

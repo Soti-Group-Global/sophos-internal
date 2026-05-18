@@ -165,36 +165,33 @@ const EarlyDetectionApplications = () => {
     setMiniCalMonth((m) => m.clone());
   }, [i18n.language]);
 
+  // Resolve email once — useMemo returns the same primitive string even after
+  // loadDoctor() sets doctorInfo.email to the same value, preventing a
+  // redundant second fetch.
+  const resolvedEmail = useMemo(
+    () => doctorInfo.email || user?.email || "",
+    [doctorInfo.email, user?.email],
+  );
 
   useEffect(() => {
+    if (isLoading || !resolvedEmail) return;
+
     const fetchApplications = async () => {
-      const doctorEmail = doctorInfo.email || user?.email;
-
-      if (isLoading || !doctorEmail) {
-        return;
-      }
-
       try {
         setLoading(true);
         setError(null);
 
-        // Use Promise.allSettled to safely handle the API response
         const [edResult] = await Promise.allSettled([
-          getDoctorEarlyDetectionApplications(doctorEmail),
+          getDoctorEarlyDetectionApplications(resolvedEmail),
         ]);
 
-
-        // Check if request was fulfilled before accessing data
         const edRaw =
-          edResult.status === "fulfilled" &&
-            Array.isArray(edResult.value?.data)
+          edResult.status === "fulfilled" && Array.isArray(edResult.value?.data)
             ? edResult.value.data
             : [];
         const edAppointments = Array.from(
           new Map(edRaw.map((b) => [String(b?._id || b?.applicationId), b])).values()
         );
-
-
 
         setApplications(edAppointments);
       } catch (error) {
@@ -208,7 +205,7 @@ const EarlyDetectionApplications = () => {
     };
 
     fetchApplications();
-  }, [doctorInfo.email, user?.email, isLoading]);
+  }, [resolvedEmail, isLoading]);
 
   // Fetch doctor breaks for calendar rendering
   const fetchBreaks = useCallback(async () => {
@@ -269,7 +266,7 @@ const EarlyDetectionApplications = () => {
 
   // Fetch weekly schedule once doctor email is known
   useEffect(() => {
-    const email = doctorInfo.email || getEmailFromToken();
+    const email = resolvedEmail || getEmailFromToken();
     if (!email) return;
     getDoctorWeeklySchedule(email)
       .then((res) => {
@@ -281,11 +278,11 @@ const EarlyDetectionApplications = () => {
         }
       })
       .catch(() => {});
-  }, [doctorInfo.email]);
+  }, [resolvedEmail]);
 
   // Fetch date overrides for all days in the visible week
   useEffect(() => {
-    const email = doctorInfo.email || getEmailFromToken();
+    const email = resolvedEmail || getEmailFromToken();
     if (!email || !selectedWeekStart) return;
     const weekDayStrs = Array.from({ length: 7 }, (_, i) =>
       selectedWeekStart.clone().add(i, "days").format("YYYY-MM-DD")
@@ -303,7 +300,7 @@ const EarlyDetectionApplications = () => {
         })
         .catch(() => {});
     });
-  }, [doctorInfo.email, selectedWeekStart]);
+  }, [resolvedEmail, selectedWeekStart]);
 
   // Close day menu when clicking outside
   useEffect(() => {
@@ -365,19 +362,6 @@ const EarlyDetectionApplications = () => {
           (a.patientEmail || "").toLowerCase().includes(term) ||
           (a.applicationId || "").toLowerCase().includes(term),
       );
-    }
-    if (result.length === 0 && applications.length > 0) {
-      console.warn("[ED] All applications filtered out! Current filter:", filter);
-    }
-    if (applications.length > 0) {
-      console.table(applications.map(a => ({
-        id: a._id,
-        applicationId: a.applicationId,
-        patientName: a.patientName,
-        date: a.date,
-        startTime: a.startTime,
-        status: a.appointmentStatus
-      })));
     }
     return result;
   }, [applications, filter, searchTerm]);

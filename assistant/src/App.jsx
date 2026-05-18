@@ -48,9 +48,8 @@ const PageLoader = () => (
   <div className="flex justify-center items-center h-screen">Loading...</div>
 );
 
-// check login state using refresh token
 const ProtectedRoute = () => {
-  const { refreshToken, isLoading } = useContext(AuthContext);
+  const { token, isLoading } = useContext(AuthContext);
 
   if (isLoading) {
     return (
@@ -60,7 +59,7 @@ const ProtectedRoute = () => {
     );
   }
 
-  if (!refreshToken) {
+  if (!token) {
     return <Navigate to="/" replace />;
   }
 
@@ -68,7 +67,7 @@ const ProtectedRoute = () => {
 };
 
 const PublicRoute = () => {
-  const { refreshToken, isLoading } = useContext(AuthContext);
+  const { token, isLoading } = useContext(AuthContext);
 
   if (isLoading) {
     return (
@@ -78,7 +77,7 @@ const PublicRoute = () => {
     );
   }
 
-  if (refreshToken) {
+  if (token) {
     return <Navigate to="/appointments" replace />;
   }
 

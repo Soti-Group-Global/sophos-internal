@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const { body } = require("express-validator");
 const auth = require("../middleware/auth");
+const validateUpload = require("../middleware/validateUpload");
 const {
   getPublicBlogs,
   getPublicBlogById,
@@ -41,6 +42,7 @@ router.post(
     upload,
     body("title.en").trim().notEmpty().withMessage("English title is required"),
   ],
+  validateUpload(["image"]),
   createBlog
 );
 router.get("/", auth, getAllBlogs);
@@ -57,6 +59,7 @@ router.put(
       .notEmpty()
       .withMessage("English title cannot be empty"),
   ],
+  validateUpload(["image"]),
   updateBlog
 );
 router.delete("/:id", auth, deleteBlog);

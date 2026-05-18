@@ -133,9 +133,7 @@ const getAllDoctors = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server Error",
-      error: error.message,
-    });
+      message: "Server Error",    });
   }
 };
 
@@ -236,9 +234,7 @@ const getDoctorsProfileData = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server Error",
-      error: error.message,
-    });
+      message: "Server Error",    });
   }
 };
 
@@ -279,9 +275,7 @@ const getEarlyDetectionDoctors = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server Error",
-      error: error.message,
-    });
+      message: "Server Error",    });
   }
 };
 
@@ -387,9 +381,7 @@ const getDoctorServices = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server Error",
-      error: error.message,
-    });
+      message: "Server Error",    });
   }
 };
 
@@ -638,9 +630,7 @@ const createDoctor = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Server Error",
-      error: error.message,
-    });
+      message: "Server Error",    });
   }
 };
 
@@ -948,9 +938,7 @@ const updateDoctor = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Server Error",
-      error: error.message,
-    });
+      message: "Server Error",    });
   }
 };
 
@@ -1045,7 +1033,7 @@ const addReview = async (req, res) => {
 
     res
       .status(500)
-      .json({ success: false, message: "Server Error", error: error.message });
+      .json({ success: false, message: "Server Error" });
   }
 };
 
@@ -1084,7 +1072,7 @@ const getDoctorsBySpecialty = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Server Error", error: error.message });
+      .json({ success: false, message: "Server Error" });
   }
 };
 
@@ -1116,7 +1104,7 @@ const getFeaturedDoctors = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Server Error", error: error.message });
+      .json({ success: false, message: "Server Error" });
   }
 };
 
@@ -1169,9 +1157,7 @@ const getDoctorProfileImage = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error fetching image",
-      error: error.message,
-    });
+      message: "Error fetching image",    });
   }
 };
 
@@ -1210,9 +1196,7 @@ const serveDoctorProfileImage = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Error fetching image",
-      error: error.message,
-    });
+      message: "Error fetching image",    });
   }
 };
 
@@ -1251,9 +1235,7 @@ const getDoctorsMinimal = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server Error",
-      error: error.message,
-    });
+      message: "Server Error",    });
   }
 };
 
@@ -1455,9 +1437,7 @@ const sendDoctorCredentials = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to send credentials",
-      error: error.message,
-    });
+      message: "Failed to send credentials",    });
   }
 };
 
@@ -1476,9 +1456,7 @@ const checkDoctorHasAccount = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to check account status",
-      error: error.message,
-    });
+      message: "Failed to check account status",    });
   }
 };
 
@@ -1647,9 +1625,7 @@ const testDoctorCredentialsEmail = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to send test email",
-      error: error.message,
-    });
+      message: "Failed to send test email",    });
   }
 };
 
@@ -1686,9 +1662,7 @@ const updateDoctorsOrder = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to update doctors order",
-      error: error.message
-    });
+      message: "Failed to update doctors order",    });
   }
 };
 

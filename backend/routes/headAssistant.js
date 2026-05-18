@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const { body } = require('express-validator');
 const auth = require('../middleware/auth');
+const validateUpload = require('../middleware/validateUpload');
 const {
   createHeadAssistant,
   getAllHeadAssistants,
@@ -69,7 +70,7 @@ const assignDoctorValidation = [
 ];
 
 // Create HeadAssistant
-router.post("/", [auth, upload, ...createValidation], createHeadAssistant);
+router.post("/", [auth, upload, ...createValidation], validateUpload(["image"]), createHeadAssistant);
 
 // Get all Head Assistants (optionally filtered by branch name)
 router.get("/", auth, getAllHeadAssistants);
@@ -93,7 +94,7 @@ router.delete("/availability/:id", deleteAvailability);
 router.get('/:id', auth, getHeadAssistantById);
 
 // Update HeadAssistant
-router.put("/:id", [auth, upload, ...updateValidation], updateHeadAssistant);
+router.put("/:id", [auth, upload, ...updateValidation], validateUpload(["image"]), updateHeadAssistant);
 
 // Delete HeadAssistant
 router.delete('/:id', auth, deleteHeadAssistant);

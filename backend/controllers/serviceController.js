@@ -189,7 +189,7 @@ exports.uploadFile = async (req, res) => {
       fileName: req.file.originalname,
     });
   } catch (error) {
-    res.status(500).json({ message: "File upload failed", error: error.message });
+    res.status(500).json({ message: "File upload failed" });
   }
 };
 

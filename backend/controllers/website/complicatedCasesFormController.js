@@ -59,9 +59,7 @@ exports.submitComplicatedCasesForm = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Error submitting the form",
-      error: error.message,
-    });
+      message: "Error submitting the form",    });
   }
 };
 
@@ -77,9 +75,7 @@ exports.getComplicatedCasesForms = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-    });
+      message: "Internal server error",    });
   }
 };
 
@@ -101,9 +97,7 @@ exports.getComplicatedCasesFormById = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-    });
+      message: "Internal server error",    });
   }
 };
 
@@ -129,9 +123,7 @@ exports.updateComplicatedCasesForm = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-    });
+      message: "Internal server error",    });
   }
 };
 
@@ -164,9 +156,7 @@ exports.deleteComplicatedCasesForm = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-    });
+      message: "Internal server error",    });
   }
 };
 
@@ -204,7 +194,7 @@ exports.uploadFile = async (req, res) => {
   } catch (error) {
     res.status(500).json({ 
       message: "File upload failed", 
-      error: error.message 
+
     });
   }
 };
@@ -241,8 +231,7 @@ exports.getFile = async (req, res) => {
   } catch (error) {
     if (!res.headersSent) {
       res.status(500).json({ 
-        message: "File retrieval failed", 
-        error: error.message 
+        message: "File retrieval failed",  
       });
     }
   }
@@ -267,7 +256,7 @@ exports.deleteFile = async (req, res) => {
   } catch (error) {
     res.status(500).json({ 
       message: "File deletion failed", 
-      error: error.message 
+
     });
   }
 };

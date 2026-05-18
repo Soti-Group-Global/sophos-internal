@@ -46,7 +46,7 @@ function ResetPassword() {
     };
 
     verifyToken();
-  }, [token, t]);
+  }, [token]);
 
   const validatePassword = (pwd) => {
     const minLength = pwd.length >= 8;

@@ -152,9 +152,7 @@ exports.submitApplication = async (req, res) => {
 
     res.status(400).json({
       success: false,
-      message: "Error submitting application",
-      error: error.message,
-    });
+      message: "Error submitting application",    });
   }
 };
 
@@ -185,9 +183,7 @@ exports.getApplicationsByVacancy = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      message: "Server error",    });
   }
 };
 
@@ -225,9 +221,7 @@ exports.getAllApplications = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      message: "Server error",    });
   }
 };
 
@@ -254,9 +248,7 @@ exports.getApplication = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      message: "Server error",    });
   }
 };
 
@@ -288,9 +280,7 @@ exports.updateApplicationStatus = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: "Error updating application",
-      error: error.message,
-    });
+      message: "Error updating application",    });
   }
 };
 
@@ -337,9 +327,7 @@ exports.getVacancyStats = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      message: "Server error",    });
   }
 };
 
@@ -404,9 +392,7 @@ exports.downloadResume = async (req, res) => {
       if (!res.headersSent) {
         res.status(500).json({
           success: false,
-          message: "Error downloading file",
-          error: error.message,
-        });
+          message: "Error downloading file",        });
       } else {
         res.end();
       }
@@ -423,9 +409,7 @@ exports.downloadResume = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Server error",
-      error: error.message,
-    });
+      message: "Server error",    });
   }
 };
 

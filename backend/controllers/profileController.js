@@ -150,7 +150,7 @@ const getProfile = async (req, res) => {
     // Return consistent structure
     res.status(200).json({ user: profileData });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -384,7 +384,7 @@ const updateOrCreateProfile = async (req, res) => {
       user: responseData,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -415,7 +415,7 @@ const changePassword = async (req, res) => {
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     user.password = await bcrypt.hash(newPassword, salt);
 
     // Save updated password
@@ -423,7 +423,8 @@ const changePassword = async (req, res) => {
 
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("changePassword error:", error.message);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

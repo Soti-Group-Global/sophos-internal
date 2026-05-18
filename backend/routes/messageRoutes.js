@@ -4,6 +4,7 @@ const multer = require("multer");
 const messageController = require("../controllers/messageController");
 
 // Use memory storage for GridFS
+const validateUpload = require("../middleware/validateUpload");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -14,7 +15,7 @@ router.get("/user/:email", messageController.getUserMessages);
 router.put("/mark-read", messageController.markMessagesAsRead);
 
 // File upload & retrieval
-router.post("/upload", upload.single("file"), messageController.uploadFile);
+router.post("/upload", upload.single("file"), validateUpload(["image", "pdf", "doc"]), messageController.uploadFile);
 router.get("/file-by-id/:fileId", messageController.getFileById);
 
 router.put("/mark-read", messageController.markMessagesAsRead);

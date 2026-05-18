@@ -26,7 +26,7 @@ const getOrders = async (req, res) => {
     const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch orders' });
   }
 };
 
@@ -68,7 +68,7 @@ const getOrdersByVendor = async (req, res) => {
     const groupedOrders = Object.values(grouped);
     res.json(groupedOrders);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch vendor orders', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch vendor orders' });
   }
 };
 
@@ -141,7 +141,7 @@ const updateOrderStatus = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: 'Invalid order ID' });
     }
-    res.status(500).json({ message: 'Failed to update order status', error: error.message });
+    res.status(500).json({ message: 'Failed to update order status' });
   }
 };
 
@@ -193,7 +193,7 @@ const uploadTestResult = async (req, res) => {
       testId,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to upload test result', error: error.message });
+    res.status(500).json({ message: 'Failed to upload test result' });
   }
 };
 
@@ -229,7 +229,7 @@ const getResultFile = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.fileId)) {
       return res.status(400).json({ message: 'Invalid file ID' });
     }
-    res.status(500).json({ message: 'Failed to retrieve file', error: error.message });
+    res.status(500).json({ message: 'Failed to retrieve file' });
   }
 };
 
@@ -280,7 +280,7 @@ const assignVendor = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: 'Invalid order ID' });
     }
-    res.status(500).json({ message: 'Failed to assign vendor', error: error.message });
+    res.status(500).json({ message: 'Failed to assign vendor' });
   }
 };
 
@@ -332,7 +332,7 @@ const bulkAssignVendor = async (req, res) => {
 
     res.json(updatedOrders);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to assign vendor to orders', error: error.message });
+    res.status(500).json({ message: 'Failed to assign vendor to orders' });
   }
 };
 

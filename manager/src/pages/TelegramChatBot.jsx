@@ -6,7 +6,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/TelegramChatBot.css";
 import TelegramMessagesContainer from "./TelegramMessagesContainer";
-import { getTelegramMessages, sendTelegramMessage } from "../utils/api";
+import api, { getTelegramMessages, sendTelegramMessage } from "../utils/api";
 
 const TelegramChatBot = ({ isOpen, onClose, phoneNumber, profileId }) => {
   const [messages, setMessages] = useState([]);
@@ -61,8 +61,7 @@ const TelegramChatBot = ({ isOpen, onClose, phoneNumber, profileId }) => {
         autoClose: 3000,
       });
       if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userEmail");
+        delete api.defaults.headers.common["Authorization"];
         onClose();
       }
     }

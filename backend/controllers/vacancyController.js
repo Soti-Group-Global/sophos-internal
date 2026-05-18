@@ -105,9 +105,7 @@ exports.getVacancies = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
-    });
+      message: 'Server error',    });
   }
 };
 
@@ -176,9 +174,7 @@ exports.getVacancy = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
-    });
+      message: 'Server error',    });
   }
 };
 
@@ -283,17 +279,13 @@ exports.createVacancy = async (req, res) => {
 
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
-        error: error.message,
-        validationErrors: errorMessages
+        message: 'Validation failed',        validationErrors: errorMessages
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Error creating vacancy',
-      error: error.message
-    });
+      message: 'Error creating vacancy',    });
   }
 };
 
@@ -367,9 +359,7 @@ exports.updateVacancy = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: 'Error updating vacancy',
-      error: error.message
-    });
+      message: 'Error updating vacancy',    });
   }
 };
 
@@ -397,9 +387,7 @@ exports.deleteVacancy = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
-    });
+      message: 'Server error',    });
   }
 };
 
@@ -454,9 +442,7 @@ exports.searchVacancies = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
-    });
+      message: 'Server error',    });
   }
 };
 
@@ -484,9 +470,7 @@ exports.publishVacancy = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: 'Error publishing vacancy',
-      error: error.message
-    });
+      message: 'Error publishing vacancy',    });
   }
 };
 
@@ -514,8 +498,6 @@ exports.closeVacancy = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: 'Error closing vacancy',
-      error: error.message
-    });
+      message: 'Error closing vacancy',    });
   }
 };

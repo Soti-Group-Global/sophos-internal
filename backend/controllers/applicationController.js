@@ -399,7 +399,7 @@ async function getUserIdByEmail(req, res) {
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Failed to fetch user ID", error: error.message });
+      .json({ message: "Failed to fetch user ID" });
   }
 }
 
@@ -480,7 +480,7 @@ async function getApplicationsByPatientId(req, res) {
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Failed to fetch applications", error: error.message });
+      .json({ message: "Failed to fetch applications" });
   }
 }
 
@@ -511,7 +511,7 @@ async function getApplicationCountsByMonth(req, res) {
 
     res.status(200).json(counts);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch monthly counts", error: error.message });
+    res.status(500).json({ message: "Failed to fetch monthly counts" });
   }
 }
 
@@ -556,7 +556,7 @@ async function getApplicationsByDate(req, res) {
 
     res.status(200).json(applications);
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(500).json({ message: "Server Error" });
   }
 }
 
@@ -742,7 +742,7 @@ async function updateApplication(req, res) {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: "Invalid application ID" });
     }
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 }
 
@@ -982,9 +982,7 @@ async function getMedicalHistoryByPatientId(req, res) {
     res.status(200).json(applications);
   } catch (error) {
     res.status(500).json({
-      message: "Failed to fetch medical history",
-      error: error.message,
-    });
+      message: "Failed to fetch medical history",    });
   }
 }
 
@@ -1436,9 +1434,7 @@ async function getAppointmentsByDoctorEmail(req, res) {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch appointments',
-      error: error.message
-    });
+      message: 'Failed to fetch appointments',    });
   }
 }
 
@@ -1544,7 +1540,7 @@ async function getAppointmentsByAssistantEmail(req, res) {
     return res.json({ success: true, data: { appointments: enrichedAppointments, totalCount } });
   } catch (error) {
     console.error('Assistant appointments fetch error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch appointments', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch appointments' });
   }
 }
 
@@ -2195,7 +2191,7 @@ async function getAssistantAppointments(req,res){
   } catch (error) {
     console.error('[Appointments] ✗ Error:', error.message);
     console.error(error.stack);
-    res.status(500).json({ success: false, message: 'Failed to fetch appointments', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch appointments' });
   }
 }
 
@@ -3091,9 +3087,7 @@ async function createPayment(req, res) {
     }
   } catch (error) {
     return res.status(500).json({
-      message: "Failed to create payment",
-      error: error.message,
-    });
+      message: "Failed to create payment",    });
   }
 }
 
@@ -3448,7 +3442,7 @@ async function sendApplicationEmail(req, res) {
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Failed to send email", error: error.message });
+      .json({ message: "Failed to send email" });
   }
 }
 
@@ -3580,7 +3574,7 @@ async function getApplicationByAppointmentId(req, res) {
 
     res.json(application);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 }
 
@@ -3618,7 +3612,7 @@ async function updatePrescription(req, res) {
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Failed to update prescription", error: error.message });
+      .json({ message: "Failed to update prescription" });
   }
 }
 
@@ -3655,7 +3649,7 @@ async function updateConclusion(req, res) {
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Failed to update conclusion", error: error.message });
+      .json({ message: "Failed to update conclusion" });
   }
 }
 

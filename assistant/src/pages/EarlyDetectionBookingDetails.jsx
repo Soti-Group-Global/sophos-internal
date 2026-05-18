@@ -406,42 +406,13 @@ const EarlyDetectionBookingDetails = () => {
             .map((e) => String(e?.doctorEmail || "").trim().toLowerCase())
             .filter(Boolean),
         );
-        console.log("[EDBookingAccess] assistant access fetched", {
-          assistantEmail: email,
-          role,
-          totalEntries: Array.isArray(entries) ? entries.length : 0,
-          allowedDoctorEmails: Array.from(emails),
-          now: now.toISOString(),
-          rawEntries: entries,
-        });
         setAccessibleDoctorEmails(emails);
       })
-      .catch((err) => {
-        console.log("[EDBookingAccess] failed to fetch assistant doctors", {
-          assistantEmail: email,
-          role,
-          error: err?.response?.data || err?.message || err,
-        });
+      .catch(() => {
         setAccessibleDoctorEmails(new Set());
       });
   }, []);
 
-  useEffect(() => {
-    console.log("[EDBookingAccess] accessibleDoctorEmails state", {
-      value:
-        accessibleDoctorEmails === "all"
-          ? "all"
-          : accessibleDoctorEmails instanceof Set
-            ? Array.from(accessibleDoctorEmails)
-            : accessibleDoctorEmails,
-      type:
-        accessibleDoctorEmails === "all"
-          ? "all"
-          : accessibleDoctorEmails instanceof Set
-            ? "set"
-            : typeof accessibleDoctorEmails,
-    });
-  }, [accessibleDoctorEmails]);
 
   useEffect(() => {
     loadDoctors();

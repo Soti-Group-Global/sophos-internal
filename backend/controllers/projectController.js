@@ -133,7 +133,7 @@ exports.addMembersToProject = async (req, res) => {
       members: project.members,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -153,8 +153,6 @@ exports.getProjectMembers = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Server error while fetching project members",
-      error: error.message,
-    });
+      message: "Server error while fetching project members",    });
   }
 };

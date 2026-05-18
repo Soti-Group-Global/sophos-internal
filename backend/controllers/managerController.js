@@ -1,6 +1,7 @@
 ﻿const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { setManagerAuthCookies, clearManagerAuthCookies } = require("../utils/cookieUtils");
 const { transporter, sendManagerAccountEmail, sendForgotPasswordEmail } = require('../utils/emailService');
 const User = require("../models/User");
 const Manager = require("../models/Manager");
@@ -89,13 +90,16 @@ const managerSignIn = async (req, res) => {
     } catch (profileError) {
     }
 
+    // Clear the old shared cookie name so stale cookies don't persist
+    res.clearCookie("refresh_token", { path: "/api/auth" });
+    setManagerAuthCookies(res, token, refreshToken);
     res.json({
       token,
       refreshToken,
       user: profileData,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -169,9 +173,7 @@ const forgotPassword = async (req, res) => {
       success: false,
       message: language === 'ru'
         ? 'Не удалось обработать запрос на сброс пароля.'
-        : 'Failed to process password reset request.',
-      error: error.message
-    });
+        : 'Failed to process password reset request.',    });
   }
 };
 
@@ -192,21 +194,24 @@ const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({ success: false, message: language === 'ru' ? 'Ссылка для сброса пароля недействительна или срок её действия истёк.' : 'Password reset link is invalid or has expired.' });
     }
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     user.password = await bcrypt.hash(password, salt);
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
     await user.save();
     res.json({ success: true, message: language === 'ru' ? 'Пароль успешно изменён.' : 'Password has been reset successfully.' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to reset password.', error: error.message });
+    console.error("resetPassword error:", error.message);
+    res.status(500).json({ success: false, message: 'Failed to reset password.' });
   }
 };
 
 // Refresh Token
 const refreshToken = async (req, res) => {
   try {
+    // Also accept the old cookie name during migration (role check below still blocks non-manager tokens)
     const refreshTokenValue =
+      req.cookies?.manager_refresh_token || req.cookies?.refresh_token ||
       req.body?.refreshToken || req.header("x-refresh-token") || "";
 
     if (!refreshTokenValue) {
@@ -240,9 +245,12 @@ const refreshToken = async (req, res) => {
     }
 
     const token = createAccessToken(user);
+    const newRefresh = createRefreshToken(user);
+    setManagerAuthCookies(res, token, newRefresh);
 
     return res.json({
       token,
+      refreshToken: newRefresh,
       user: {
         email: user.email,
         profileCompleted: user.profileCompleted,
@@ -351,7 +359,7 @@ const getManagersData = async (req, res) => {
 
     res.status(200).json({ managers: enrichedManagers });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -493,7 +501,7 @@ const createManager = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -559,7 +567,7 @@ const updateManager = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -605,7 +613,7 @@ const deleteManager = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

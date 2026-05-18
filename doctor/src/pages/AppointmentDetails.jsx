@@ -32,6 +32,7 @@ import {
   uploadDocumentFile,
   uploadDocumentUrl,
 } from "../utils/api";
+import api from "../utils/api";
 import "../styles/AppointmentDetails.css";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -368,7 +369,7 @@ const AppointmentDetails = () => {
     };
 
     fetchEarlyDetection();
-  }, [activeSubTab, doctorEmail, earlyDetectionFetched, loadingEarlyDetection, t]);
+  }, [activeSubTab, doctorEmail, earlyDetectionFetched, loadingEarlyDetection]);
 
   const fetchTestOrders = async () => {
     try {
@@ -378,7 +379,7 @@ const AppointmentDetails = () => {
         )}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${api.defaults.headers.common["Authorization"]?.replace("Bearer ", "")}`,
           },
         },
       );
@@ -734,7 +735,7 @@ const AppointmentDetails = () => {
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            "x-auth-token": localStorage.getItem("token"),
+            "x-auth-token": api.defaults.headers.common["Authorization"]?.replace("Bearer ", ""),
           },
         },
       );

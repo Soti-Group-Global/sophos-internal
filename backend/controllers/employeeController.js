@@ -77,9 +77,7 @@ exports.getEmployees = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Server error while fetching employees",
-      error: error.message,
-    });
+      message: "Server error while fetching employees",    });
   }
 };
 
@@ -136,7 +134,7 @@ exports.getApplicationByDate = async (req, res) => {
 
     res.status(200).json(applications);
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -333,7 +331,7 @@ exports.getAllAvailabilities = async (req, res) => {
 
     res.status(200).json(cleanedCombined);
   } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
