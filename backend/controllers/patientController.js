@@ -49,10 +49,23 @@ function getPatientId(req) {
 // Get all patients (with optional doctorEmail query)
 const getAllPatients = async (req, res) => {
   try {
-    const { doctorEmail } = req.query;
+    const { doctorEmail, search } = req.query;
     const normalizedDoctorEmail = doctorEmail ? doctorEmail.toLowerCase() : null;
 
-    const patients = await Patient.find().lean();
+    const patientFilter = {};
+    if (search && search.trim()) {
+      const term = search.trim();
+      patientFilter.$or = [
+        { firstName:   { $regex: term, $options: "i" } },
+        { middleName:  { $regex: term, $options: "i" } },
+        { lastName:    { $regex: term, $options: "i" } },
+        { email:       { $regex: term, $options: "i" } },
+        { phoneNumber: { $regex: term, $options: "i" } },
+        { patientId:   { $regex: term, $options: "i" } },
+      ];
+    }
+
+    const patients = await Patient.find(patientFilter).lean();
 
     let applications = [];
     const patientIds    = patients.map((p) => p.patientId).filter(Boolean);
