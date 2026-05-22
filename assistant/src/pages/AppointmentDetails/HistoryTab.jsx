@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { FiChevronDown, FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX, FiPlus } from "react-icons/fi";
+import { FiSettings, FiEdit2, FiTrash2, FiEye, FiUpload, FiFileText, FiClock, FiX, FiPlus, FiChevronDown, FiSearch } from "react-icons/fi";
 import { Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -15,31 +15,29 @@ import {
   deleteHistoryTemplate,
   getApplication,
   getApplicationsByPatientId,
+  getPatientSection,
+  uploadPatientSectionFile,
+  removePatientSectionFile,
+  updatePatientSectionComment,
+  updateHistoryForm,
   getAllApplicationLaboratoryTests,
   createApplicationLaboratoryTest,
-  updateApplicationLaboratoryTest,
   deleteApplicationLaboratoryTest,
   uploadApplicationLaboratoryTestFile,
-  removeApplicationLaboratoryTestFile,
   fetchApplicationLaboratoryTestFile,
+  removeApplicationLaboratoryTestFile,
   addApplicationLaboratoryTestNote,
   updateApplicationLaboratoryTestNote,
   deleteApplicationLaboratoryTestNote,
   getAllApplicationInstrumentalAnalysis,
   createApplicationInstrumentalAnalysis,
-  updateApplicationInstrumentalAnalysis,
   deleteApplicationInstrumentalAnalysis,
   uploadApplicationInstrumentalAnalysisFile,
-  removeApplicationInstrumentalAnalysisFile,
   fetchApplicationInstrumentalAnalysisFile,
+  removeApplicationInstrumentalAnalysisFile,
   addApplicationInstrumentalAnalysisNote,
   updateApplicationInstrumentalAnalysisNote,
   deleteApplicationInstrumentalAnalysisNote,
-  getApplicationSection,
-  uploadApplicationSectionFile,
-  removeApplicationSectionFile,
-  updateApplicationSectionComment,
-  updateHistoryForm,
 } from "../../utils/api";
 import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
 import TemplatePicker from "../../components/RichTextEditor/TemplatePicker";
@@ -188,12 +186,11 @@ const KEY_TITLE_MAP = {};
 }(HISTORY_SECTIONS));
 
 const HISTORY_NAV_ITEMS = [
-  { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", icon: <FiChevronDown size={14} />, sectionId: "complaints" },
+  { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", sectionId: "complaints" },
   { id: "laboratoryAnalysis", labelKey: "sidebar.laboratoryAnalysis", sectionId: "examinationPlan" },
   { id: "studiesManipulations", labelKey: "sidebar.studiesManipulations", sectionId: "physicalExam" },
   { id: "morphologicalResearch", labelKey: "sidebar.morphologicalResearch", sectionId: "examinationResults" },
   { id: "proceduresManipulations", labelKey: "sidebar.proceduresManipulations", sectionId: "treatmentPlan" },
-  { id: "conclusion", labelKey: "sidebar.conclusion", sectionId: "clinicalDiagnosis" },
 ];
 
 const RichTextField = React.memo(({ label, value, editing, onToggle, onChange, placeholder, emptyPlaceholder, templatePicker }) => (
@@ -292,6 +289,10 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(true);
   const editModeInitRef = useRef(false);
+  const [currentConsultationView, setCurrentConsultationView] = useState("normal");
+  const [pastConsultationView, setPastConsultationView] = useState("normal");
+  const currentReportRef = useRef(null);
+  const pastReportRef = useRef(null);
 
   /* Auto-select the current appointment once application data arrives */
   useEffect(() => {
@@ -331,41 +332,31 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     setEditingFields({});
   }, [hasAnyContent]);
 
-  const [labTests, setLabTests] = useState([]);
-  const [studyTests, setStudyTests] = useState([]);
-  const [selectedLabTests, setSelectedLabTests] = useState({});
-  const [selectedStudyTests, setSelectedStudyTests] = useState({});
   const [isLabPanelOpen, setIsLabPanelOpen] = useState(false);
   const [isStudyPanelOpen, setIsStudyPanelOpen] = useState(false);
-  const [labPopupOpen, setLabPopupOpen] = useState(false);
-  const [labPopupMode, setLabPopupMode] = useState(null);
-  const [newTestNameEN, setNewTestNameEN] = useState("");
-  const [newTestNameRU, setNewTestNameRU] = useState("");
-  const [editingTestId, setEditingTestId] = useState(null);
-  const [deleteConfirmTest, setDeleteConfirmTest] = useState(null);
+  const [labTests, setLabTests] = useState([]);
+  const [studyTests, setStudyTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [selectedTestMode, setSelectedTestMode] = useState(null);
   const [showTestNoteEditor, setShowTestNoteEditor] = useState(false);
   const [testNoteDraft, setTestNoteDraft] = useState("");
   const [editingNoteId, setEditingNoteId] = useState(null);
-  const [isUploadingTestFile, setIsUploadingTestFile] = useState(false);
-  const [testFileUploadError, setTestFileUploadError] = useState(null);
-  const fileInputRef = useRef(null);
-  const addFileInputRef = useRef(null);
+  const [labPopupOpen, setLabPopupOpen] = useState(false);
+  const [labPopupMode, setLabPopupMode] = useState(null);
+  const [newTestNameRU, setNewTestNameRU] = useState("");
+  const [newTestNameEN, setNewTestNameEN] = useState("");
+  const [editingTestId, setEditingTestId] = useState(null);
+  const [deleteConfirmTest, setDeleteConfirmTest] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addModalStep, setAddModalStep] = useState(1);
   const [addModalMode, setAddModalMode] = useState(null);
   const [addModalTestId, setAddModalTestId] = useState("");
   const [addModalFiles, setAddModalFiles] = useState([]);
   const [addModalText, setAddModalText] = useState("");
   const [addModalSubmitting, setAddModalSubmitting] = useState(false);
-  const [addSearchQ, setAddSearchQ] = useState("");
-  const [addDropOpen, setAddDropOpen] = useState(false);
-  const appId = application?.applicationId || application?._id || "";
-  const lsKey = `ht_batch_map_${appId}`;
-  const [batchMap, setBatchMap] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(lsKey) || "{}"); } catch { return {}; }
-  });
+  const [addModalSearchQ, setAddModalSearchQ] = useState("");
+  const [addModalDropOpen, setAddModalDropOpen] = useState(false);
+  const addFileInputRef = useRef(null);
+  const patientId = patient?.patientId || application?.patientId || "";
   const [sectionData, setSectionData] = useState({
     morphologicalResearch: { files: [], comment: {} },
     proceduresManipulations: { files: [], comment: {} },
@@ -419,6 +410,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
   const handleSelectPastAppointment = useCallback(async (apptId) => {
     setSelectedConsultationId(apptId);
+    setPastConsultationView("normal");
     if (apptId === application?.applicationId) {
       setSelectedApptData(null);
       return;
@@ -437,15 +429,48 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
   const handleSidebarItemClick = useCallback(async (item, _e) => {
     setActiveNavItem(item.id);
-    setSelectedTest(null);
     if (item.id === "specialistConsultation") {
-      setIsAppointmentsPanelOpen((prev) => !prev);
+      setIsLabPanelOpen(false);
+      setIsStudyPanelOpen(false);
+      setIsAppointmentsPanelOpen(true);
+      setSelectedTest(null);
+      setSelectedTestMode(null);
     } else if (item.id === "laboratoryAnalysis") {
-      setIsLabPanelOpen((prev) => !prev);
+      setIsAppointmentsPanelOpen(false);
+      setIsStudyPanelOpen(false);
+      setIsLabPanelOpen(true);
+      const first = labTests.find((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+      if (first) {
+        setSelectedTest(first);
+        setSelectedTestMode("laboratoryAnalysis");
+        setShowTestNoteEditor(false);
+        setTestNoteDraft("");
+      } else {
+        setSelectedTest(null);
+        setSelectedTestMode(null);
+      }
     } else if (item.id === "studiesManipulations") {
-      setIsStudyPanelOpen((prev) => !prev);
+      setIsAppointmentsPanelOpen(false);
+      setIsLabPanelOpen(false);
+      setIsStudyPanelOpen(true);
+      const first = studyTests.find((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+      if (first) {
+        setSelectedTest(first);
+        setSelectedTestMode("studiesManipulations");
+        setShowTestNoteEditor(false);
+        setTestNoteDraft("");
+      } else {
+        setSelectedTest(null);
+        setSelectedTestMode(null);
+      }
+    } else {
+      setIsAppointmentsPanelOpen(false);
+      setIsLabPanelOpen(false);
+      setIsStudyPanelOpen(false);
+      setSelectedTest(null);
+      setSelectedTestMode(null);
     }
-  }, []);
+  }, [labTests, studyTests]);
 
 
   const SECTION_SCHEMA = {
@@ -456,14 +481,15 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
   useEffect(() => {
     if (!PANEL_NAV_IDS.includes(activeNavItem)) return;
+    if (!patientId) return;
     const schemaKey = SECTION_SCHEMA[activeNavItem];
-    getApplicationSection(appId, schemaKey)
+    getPatientSection(patientId, schemaKey)
       .then((data) => {
         setSectionData((prev) => ({ ...prev, [activeNavItem]: data }));
         setSectionDirty((prev) => ({ ...prev, [activeNavItem]: false }));
       })
       .catch(() => {});
-  }, [activeNavItem, appId]);
+  }, [activeNavItem, patientId]);
 
   const handleSectionFileChange = useCallback(async (navId, e) => {
     const files = Array.from(e.target.files || []);
@@ -473,7 +499,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     setSectionUploading((prev) => ({ ...prev, [navId]: true }));
     try {
       for (const file of files) {
-        const result = await uploadApplicationSectionFile(appId, schemaKey, file);
+        const result = await uploadPatientSectionFile(patientId, schemaKey, file);
         setSectionData((prev) => ({ ...prev, [navId]: result.section }));
       }
     } catch (err) {
@@ -481,377 +507,236 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     } finally {
       setSectionUploading((prev) => ({ ...prev, [navId]: false }));
     }
-  }, [appId]);
+  }, [patientId]);
 
   const handleSectionFileRemove = useCallback(async (navId, fileId) => {
     const schemaKey = SECTION_SCHEMA[navId];
     try {
-      const result = await removeApplicationSectionFile(appId, schemaKey, fileId);
+      const result = await removePatientSectionFile(patientId, schemaKey, fileId);
       setSectionData((prev) => ({ ...prev, [navId]: result.section }));
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to remove file");
     }
-  }, [appId]);
+  }, [patientId]);
 
   const handleSectionCommentSave = useCallback(async (navId, value) => {
     const schemaKey = SECTION_SCHEMA[navId];
     try {
-      const result = await updateApplicationSectionComment(appId, schemaKey, value);
+      const result = await updatePatientSectionComment(patientId, schemaKey, value);
       setSectionData((prev) => ({ ...prev, [navId]: result.section }));
       setSectionDirty((prev) => ({ ...prev, [navId]: false }));
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to save comment");
     }
-  }, [appId]);
+  }, [patientId]);
 
-  const openLabAnalysisPopup = useCallback((mode, e) => {
-    if (e?.stopPropagation) e.stopPropagation();
-    setLabPopupMode(mode);
-    setLabPopupOpen(true);
-    setEditingTestId(null);
-  }, []);
-
-  const closeLabAnalysisPopup = useCallback(() => {
-    setLabPopupOpen(false);
-    setLabPopupMode(null);
-    setNewTestNameEN("");
-    setNewTestNameRU("");
-    setEditingTestId(null);
-    setDeleteConfirmTest(null);
-  }, []);
-
-  const openEditTest = useCallback((test) => {
-    setEditingTestId(test._id);
-    setNewTestNameEN(test.name?.en || "");
-    setNewTestNameRU(test.name?.ru || "");
-  }, []);
-
-  const cancelEditTest = useCallback(() => {
-    setEditingTestId(null);
-    setNewTestNameEN("");
-    setNewTestNameRU("");
-  }, []);
-
-  const handleSaveTest = useCallback(async () => {
-    if (!newTestNameEN.trim() || !newTestNameRU.trim()) {
-      toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter both EN and RU names." }));
-      return;
-    }
-    const payload = { name: { en: newTestNameEN.trim(), ru: newTestNameRU.trim() } };
-    try {
-      if (editingTestId) {
-        const response = labPopupMode === "studiesManipulations"
-          ? await updateApplicationInstrumentalAnalysis(editingTestId, payload)
-          : await updateApplicationLaboratoryTest(editingTestId, payload);
-        const updated = response?.data || response;
-        if (labPopupMode === "studiesManipulations") {
-          setStudyTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
-        } else {
-          setLabTests((prev) => prev.map((item) => (item._id === editingTestId ? updated : item)));
-        }
-        toast.success(t("history_tab.test_updated", { defaultValue: "Test updated" }));
-      } else {
-        const response = labPopupMode === "studiesManipulations"
-          ? await createApplicationInstrumentalAnalysis(payload)
-          : await createApplicationLaboratoryTest(payload);
-        const created = response?.data || response;
-        if (created) {
-          if (labPopupMode === "studiesManipulations") {
-            setStudyTests((prev) => [...prev, created]);
-            setSelectedStudyTests((prev) => ({ ...prev, [created._id]: true }));
-          } else {
-            setLabTests((prev) => [...prev, created]);
-            setSelectedLabTests((prev) => ({ ...prev, [created._id]: true }));
-          }
-          toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
-        }
-      }
-      setEditingTestId(null);
-      setNewTestNameEN("");
-      setNewTestNameRU("");
-    } catch (err) {
-      toast.error(editingTestId
-        ? t("history_tab.failed_update_test", { defaultValue: "Failed to update test" })
-        : t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
-    }
-  }, [editingTestId, labPopupMode, newTestNameEN, newTestNameRU, t]);
-
-  const openDeleteConfirm = useCallback((test) => { setDeleteConfirmTest(test); }, []);
-  const closeDeleteConfirm = useCallback(() => { setDeleteConfirmTest(null); }, []);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteConfirmTest) return;
-    try {
-      await (labPopupMode === "studiesManipulations"
-        ? deleteApplicationInstrumentalAnalysis(deleteConfirmTest._id)
-        : deleteApplicationLaboratoryTest(deleteConfirmTest._id));
-      if (labPopupMode === "studiesManipulations") {
-        setStudyTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
-        setSelectedStudyTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
-      } else {
-        setLabTests((prev) => prev.filter((item) => item._id !== deleteConfirmTest._id));
-        setSelectedLabTests((prev) => { const next = { ...prev }; delete next[deleteConfirmTest._id]; return next; });
-      }
-      if (editingTestId === deleteConfirmTest._id) cancelEditTest();
-      setDeleteConfirmTest(null);
-      toast.success(t("history_tab.test_deleted", { defaultValue: "Test deleted" }));
-    } catch (err) {
-      toast.error(t("history_tab.failed_delete_test", { defaultValue: "Failed to delete test" }));
-    }
-  }, [cancelEditTest, deleteConfirmTest, editingTestId, labPopupMode, t]);
-
-  const handleToggleLabTest = useCallback((id, useStudyMode = false) => {
-    if (useStudyMode || labPopupMode === "studiesManipulations") {
-      setSelectedStudyTests((prev) => ({ ...prev, [id]: !prev[id] }));
-    } else {
-      setSelectedLabTests((prev) => ({ ...prev, [id]: !prev[id] }));
-    }
-  }, [labPopupMode]);
+  useEffect(() => {
+    if (!patientId) return;
+    getAllApplicationLaboratoryTests({ patientId })
+      .then((data) => setLabTests(Array.isArray(data) ? data : []))
+      .catch(() => {});
+    getAllApplicationInstrumentalAnalysis({ patientId })
+      .then((data) => setStudyTests(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [patientId]);
 
   const handleSelectTest = useCallback((test, mode) => {
     setSelectedTest(test);
     setSelectedTestMode(mode);
     setShowTestNoteEditor(false);
-    setTestNoteDraft(test?.note || "");
-    setTestFileUploadError(null);
-  }, []);
-
-  const handleCloseSelectedTest = useCallback(() => {
-    setSelectedTest(null);
-    setSelectedTestMode(null);
-    setShowTestNoteEditor(false);
     setTestNoteDraft("");
-    setTestFileUploadError(null);
+    setEditingNoteId(null);
   }, []);
 
-  const selectedTestFiles = React.useMemo(() => {
-    if (!selectedTest) return [];
-    if (Array.isArray(selectedTest.files) && selectedTest.files.length > 0) return selectedTest.files;
-    if (selectedTest.fileId) {
-      return [{
-        fileId: selectedTest.fileId,
-        fileName: selectedTest.fileName || selectedTest.originalName || t("history_tab.unknown_file", { defaultValue: "Unknown file" }),
-        fileMimeType: selectedTest.fileMimeType || "",
-        fileSize: selectedTest.fileSize || 0,
-        uploadedAt: selectedTest.uploadedAt || null,
-      }];
-    }
-    return [];
-  }, [selectedTest, t]);
-
-  const handleTestFileUpload = useCallback(async (file) => {
-    if (!selectedTest || !selectedTestMode || !file) return;
-    setIsUploadingTestFile(true);
-    setTestFileUploadError(null);
-    try {
-      const response = selectedTestMode === "studiesManipulations"
-        ? await uploadApplicationInstrumentalAnalysisFile(selectedTest._id, file)
-        : await uploadApplicationLaboratoryTestFile(selectedTest._id, file);
-      const updated = response?.data || response;
-      setSelectedTest(updated);
-      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      toast.success(t("history_tab.file_uploaded", { defaultValue: "File uploaded" }));
-    } catch (error) {
-      const message = error?.response?.data?.error || error?.message || t("history_tab.failed_upload_file", { defaultValue: "Failed to upload file" });
-      setTestFileUploadError(message);
-      toast.error(message);
-    } finally {
-      setIsUploadingTestFile(false);
-    }
-  }, [selectedTest, selectedTestMode, t]);
-
-  const handleTestFileChange = useCallback(async (event) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length === 0) return;
-    for (const file of files) await handleTestFileUpload(file);
-    event.target.value = "";
-  }, [handleTestFileUpload]);
-
-  const selectedTestNotes = React.useMemo(() => {
-    if (!selectedTest) return [];
-    const notes = Array.isArray(selectedTest.notes) ? selectedTest.notes : [];
-    if (notes.length > 0) return notes;
-    if (selectedTest.note) return [{ _id: "legacy-note", content: selectedTest.note, createdAt: selectedTest.updatedAt || selectedTest.createdAt || new Date(), updatedAt: selectedTest.updatedAt || selectedTest.createdAt || new Date() }];
-    return [];
-  }, [selectedTest]);
-
-  useEffect(() => {
-    if (!appId || Object.keys(batchMap).length === 0) return;
-    try { localStorage.setItem(lsKey, JSON.stringify(batchMap)); } catch {}
-  }, [batchMap, appId, lsKey]);
-
-  const groupTestItems = useCallback((files, notes, bm = {}) => {
-    const items = [
-      ...files.map((f) => ({ ...f, _type: "file", _key: f.fileId, _time: f.uploadedAt ? new Date(f.uploadedAt).getTime() : 0 })),
-      ...notes.map((n) => ({ ...n, _type: "note", _key: String(n._id), _time: n.createdAt ? new Date(n.createdAt).getTime() : 0 })),
-    ].sort((a, b) => a._time - b._time);
-    const batchGroups = {}; const unbatched = [];
-    for (const item of items) {
-      const bid = bm[item._key];
-      if (bid) { if (!batchGroups[bid]) batchGroups[bid] = []; batchGroups[bid].push(item); }
-      else unbatched.push(item);
-    }
-    const timeGroups = []; let cur = []; let lastT = -Infinity;
-    for (const item of unbatched) {
-      if (item._time - lastT > 10000) { if (cur.length) timeGroups.push(cur); cur = [item]; }
-      else cur.push(item);
-      lastT = item._time;
-    }
-    if (cur.length) timeGroups.push(cur);
-    return [...Object.values(batchGroups), ...timeGroups].sort((a, b) => Math.min(...a.map((i) => i._time)) - Math.min(...b.map((i) => i._time)));
-  }, []);
-
-  const openAddModal = useCallback((mode, preTestId) => {
-    setAddModalMode(mode);
-    setAddModalFiles([]);
-    setAddModalText("");
-    setAddModalTestId(preTestId || "");
-    setAddSearchQ("");
-    setAddDropOpen(false);
-    setAddModalOpen(true);
-  }, []);
-
-  const handleAddModalSubmit = useCallback(async () => {
-    if (!addModalTestId) return;
-    const hasFiles = addModalFiles.length > 0;
-    const textContent = addModalText.replace(/<[^>]*>/g, "").trim();
-    if (!hasFiles && !textContent) return;
-    setAddModalSubmitting(true);
-    const batchId = `b${Date.now()}`;
-    const newBatchEntries = {};
-    const allTests = addModalMode === "studiesManipulations" ? studyTests : labTests;
-    const targetTest = allTests.find((t) => t._id === addModalTestId);
-    if (!targetTest) { setAddModalSubmitting(false); return; }
-    try {
-      let updatedTest = targetTest;
-      let prevFileIds = new Set((updatedTest.files || []).map((f) => f.fileId));
-      for (const file of addModalFiles) {
-        const res = addModalMode === "studiesManipulations"
-          ? await uploadApplicationInstrumentalAnalysisFile(targetTest._id, file)
-          : await uploadApplicationLaboratoryTestFile(targetTest._id, file);
-        updatedTest = res?.data || res;
-        const newFile = (updatedTest.files || []).find((f) => !prevFileIds.has(f.fileId));
-        if (newFile) { newBatchEntries[newFile.fileId] = batchId; prevFileIds.add(newFile.fileId); }
-      }
-      if (textContent) {
-        let prevNoteIds = new Set((updatedTest.notes || []).map((n) => String(n._id)));
-        const res = addModalMode === "studiesManipulations"
-          ? await addApplicationInstrumentalAnalysisNote(targetTest._id, { note: addModalText })
-          : await addApplicationLaboratoryTestNote(targetTest._id, { note: addModalText });
-        updatedTest = res?.data || res;
-        const newNote = (updatedTest.notes || []).find((n) => !prevNoteIds.has(String(n._id)));
-        if (newNote) newBatchEntries[String(newNote._id)] = batchId;
-      }
-      if (addModalMode === "studiesManipulations") setStudyTests((prev) => prev.map((t) => t._id === updatedTest._id ? updatedTest : t));
-      else setLabTests((prev) => prev.map((t) => t._id === updatedTest._id ? updatedTest : t));
-      if (selectedTest?._id === updatedTest._id) setSelectedTest(updatedTest);
-      else if (!selectedTest) handleSelectTest(updatedTest, addModalMode);
-      setBatchMap((prev) => ({ ...prev, ...newBatchEntries }));
-      toast.success(t("history_tab.file_uploaded", { defaultValue: "File uploaded" }));
-      setAddModalOpen(false);
-    } catch (error) {
-      toast.error(error?.response?.data?.error || error?.message || "Failed to upload");
-    } finally {
-      setAddModalSubmitting(false);
-    }
-  }, [addModalTestId, addModalMode, addModalFiles, addModalText, studyTests, labTests, selectedTest, handleSelectTest, t]);
-
-  const handleDeleteGroup = useCallback(async (group) => {
-    if (!selectedTest || !selectedTestMode) return;
-    const files = group.filter((i) => i._type === "file");
-    const notes = group.filter((i) => i._type === "note");
-    try {
-      let updatedTest = selectedTest;
-      for (const item of files) {
-        const res = selectedTestMode === "studiesManipulations"
-          ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, item.fileId)
-          : await removeApplicationLaboratoryTestFile(selectedTest._id, item.fileId);
-        updatedTest = res?.data || res;
-      }
-      for (const item of notes) {
-        const res = selectedTestMode === "studiesManipulations"
-          ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, item._id)
-          : await deleteApplicationLaboratoryTestNote(selectedTest._id, item._id);
-        updatedTest = res?.data || res;
-      }
-      setSelectedTest(updatedTest);
-      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((t) => t._id === updatedTest._id ? updatedTest : t));
-      else setLabTests((prev) => prev.map((t) => t._id === updatedTest._id ? updatedTest : t));
-      const keysToRemove = group.map((i) => i._key).filter(Boolean);
-      if (keysToRemove.length) setBatchMap((prev) => { const n = { ...prev }; keysToRemove.forEach((k) => delete n[k]); return n; });
-      toast.success(t("history_tab.group_deleted", { defaultValue: "Group deleted" }));
-    } catch (error) {
-      toast.error(error?.response?.data?.error || error?.message || "Failed to delete group");
-    }
-  }, [selectedTest, selectedTestMode, t]);
-
-  const handleOpenTestNoteEditor = useCallback(() => { setShowTestNoteEditor(true); setEditingNoteId(null); setTestNoteDraft(""); }, []);
-  const handleEditTestNote = useCallback((note) => { setShowTestNoteEditor(true); setEditingNoteId(note._id); setTestNoteDraft(note.content || ""); }, []);
-
-  const handleSaveTestNote = useCallback(async () => {
-    if (!selectedTest || !selectedTestMode || !testNoteDraft.trim()) return;
-    try {
-      const response = selectedTestMode === "studiesManipulations"
-        ? editingNoteId ? await updateApplicationInstrumentalAnalysisNote(selectedTest._id, editingNoteId, { note: testNoteDraft }) : await addApplicationInstrumentalAnalysisNote(selectedTest._id, { note: testNoteDraft })
-        : editingNoteId ? await updateApplicationLaboratoryTestNote(selectedTest._id, editingNoteId, { note: testNoteDraft }) : await addApplicationLaboratoryTestNote(selectedTest._id, { note: testNoteDraft });
-      const updated = response?.data || response;
-      setSelectedTest(updated);
-      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      toast.success(t("history_tab.note_saved", { defaultValue: "Note saved" }));
-      setShowTestNoteEditor(false); setEditingNoteId(null); setTestNoteDraft("");
-    } catch (error) {
-      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_save_note", { defaultValue: "Failed to save note" }));
-    }
-  }, [selectedTest, selectedTestMode, testNoteDraft, editingNoteId, t]);
-
-  const handleRemoveTestFile = useCallback(async (fileId) => {
-    if (!selectedTest || !selectedTestMode || !fileId) return;
-    try {
-      const response = selectedTestMode === "studiesManipulations"
-        ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
-        : await removeApplicationLaboratoryTestFile(selectedTest._id, fileId);
-      const updated = response?.data || response;
-      setSelectedTest(updated);
-      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      toast.success(t("history_tab.file_removed", { defaultValue: "File removed" }));
-    } catch (error) {
-      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_remove_file", { defaultValue: "Failed to remove file" }));
-    }
-  }, [selectedTest, selectedTestMode, t]);
 
   const handleViewTestFile = useCallback(async (fileId) => {
     if (!selectedTest || !selectedTestMode || !fileId) return;
     try {
       const blob = selectedTestMode === "studiesManipulations"
-        ? await fetchApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
-        : await fetchApplicationLaboratoryTestFile(selectedTest._id, fileId);
+        ? await fetchApplicationInstrumentalAnalysisFile(selectedTest._id, fileId, patientId)
+        : await fetchApplicationLaboratoryTestFile(selectedTest._id, fileId, patientId);
       const url = window.URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener,noreferrer");
       setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-    } catch (error) {
-      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_view_file", { defaultValue: "Failed to open file" }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || t("history_tab.failed_view_file", { defaultValue: "Failed to open file" }));
     }
-  }, [selectedTest, selectedTestMode, t]);
+  }, [selectedTest, selectedTestMode, patientId, t]);
+
+  const handleRemoveTestFile = useCallback(async (fileId) => {
+    if (!selectedTest || !selectedTestMode || !fileId) return;
+    try {
+      const res = selectedTestMode === "studiesManipulations"
+        ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, fileId, patientId)
+        : await removeApplicationLaboratoryTestFile(selectedTest._id, fileId, patientId);
+      const updated = res?.data || res;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((t) => t._id === updated._id ? updated : t));
+      else setLabTests((prev) => prev.map((t) => t._id === updated._id ? updated : t));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || t("history_tab.failed_remove_file", { defaultValue: "Failed to remove file" }));
+    }
+  }, [selectedTest, selectedTestMode, patientId, t]);
+
+  const handleOpenTestNoteEditor = useCallback(() => { setShowTestNoteEditor(true); setEditingNoteId(null); setTestNoteDraft(""); }, []);
+
+  const handleEditTestNote = useCallback((note) => { setShowTestNoteEditor(true); setEditingNoteId(note._id); setTestNoteDraft(note.content || ""); }, []);
+
+  const handleSaveTestNote = useCallback(async () => {
+    if (!selectedTest || !selectedTestMode || !testNoteDraft.replace(/<[^>]*>/g, "").trim()) return;
+    try {
+      const res = selectedTestMode === "studiesManipulations"
+        ? editingNoteId
+          ? await updateApplicationInstrumentalAnalysisNote(selectedTest._id, editingNoteId, { note: testNoteDraft }, patientId)
+          : await addApplicationInstrumentalAnalysisNote(selectedTest._id, { note: testNoteDraft }, patientId)
+        : editingNoteId
+          ? await updateApplicationLaboratoryTestNote(selectedTest._id, editingNoteId, { note: testNoteDraft }, patientId)
+          : await addApplicationLaboratoryTestNote(selectedTest._id, { note: testNoteDraft }, patientId);
+      const updated = res?.data || res;
+      setSelectedTest(updated);
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((t) => t._id === updated._id ? updated : t));
+      else setLabTests((prev) => prev.map((t) => t._id === updated._id ? updated : t));
+      toast.success(t("history_tab.note_saved", { defaultValue: "Note saved" }));
+      setShowTestNoteEditor(false); setEditingNoteId(null); setTestNoteDraft("");
+    } catch (err) {
+      toast.error(err?.response?.data?.error || t("history_tab.failed_save_note", { defaultValue: "Failed to save note" }));
+    }
+  }, [selectedTest, selectedTestMode, testNoteDraft, editingNoteId, patientId, t]);
 
   const handleDeleteTestNote = useCallback(async (noteId) => {
     if (!selectedTest || !selectedTestMode || !noteId) return;
     try {
-      const response = selectedTestMode === "studiesManipulations"
-        ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, noteId)
-        : await deleteApplicationLaboratoryTestNote(selectedTest._id, noteId);
-      const updated = response?.data || response;
+      const res = selectedTestMode === "studiesManipulations"
+        ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, noteId, patientId)
+        : await deleteApplicationLaboratoryTestNote(selectedTest._id, noteId, patientId);
+      const updated = res?.data || res;
       setSelectedTest(updated);
-      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      else setLabTests((prev) => prev.map((item) => (item._id === updated._id ? updated : item)));
-      toast.success(t("history_tab.note_deleted", { defaultValue: "Note deleted" }));
-      setShowTestNoteEditor(false);
-    } catch (error) {
-      toast.error(error?.response?.data?.error || error?.message || t("history_tab.failed_delete_note", { defaultValue: "Failed to delete note" }));
+      if (selectedTestMode === "studiesManipulations") setStudyTests((prev) => prev.map((t) => t._id === updated._id ? updated : t));
+      else setLabTests((prev) => prev.map((t) => t._id === updated._id ? updated : t));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || t("history_tab.failed_delete_note", { defaultValue: "Failed to delete note" }));
     }
-  }, [selectedTest, selectedTestMode, t]);
+  }, [selectedTest, selectedTestMode, patientId, t]);
+
+  const handleSaveCatalogItem = useCallback(async () => {
+    if (!newTestNameRU.trim() && !newTestNameEN.trim()) { toast.error(t("history_tab.enter_test_name", { defaultValue: "Please enter a name." })); return; }
+    const payload = { name: { ru: newTestNameRU.trim(), en: newTestNameEN.trim() || newTestNameRU.trim() } };
+    try {
+      const res = labPopupMode === "studiesManipulations"
+        ? await createApplicationInstrumentalAnalysis(payload)
+        : await createApplicationLaboratoryTest(payload);
+      const created = res?.data || res;
+      if (created) {
+        if (labPopupMode === "studiesManipulations") setStudyTests((prev) => [...prev, created]);
+        else setLabTests((prev) => [...prev, created]);
+        toast.success(t("history_tab.test_added", { defaultValue: "Test added" }));
+      }
+      setNewTestNameRU(""); setNewTestNameEN(""); setEditingTestId(null);
+    } catch (err) {
+      toast.error(t("history_tab.failed_add_test", { defaultValue: "Failed to add test" }));
+    }
+  }, [labPopupMode, newTestNameRU, newTestNameEN, t]);
+
+  const handleDeleteCatalogItem = useCallback(async (test) => {
+    try {
+      if (labPopupMode === "studiesManipulations") {
+        await deleteApplicationInstrumentalAnalysis(test._id);
+        setStudyTests((prev) => prev.filter((t) => t._id !== test._id));
+      } else {
+        await deleteApplicationLaboratoryTest(test._id);
+        setLabTests((prev) => prev.filter((t) => t._id !== test._id));
+      }
+      if (selectedTest?._id === test._id) { setSelectedTest(null); setSelectedTestMode(null); }
+      setDeleteConfirmTest(null);
+      toast.success(t("history_tab.test_deleted", { defaultValue: "Test deleted" }));
+    } catch (err) {
+      toast.error(t("history_tab.failed_delete_test", { defaultValue: "Failed to delete test" }));
+    }
+  }, [labPopupMode, selectedTest, t]);
+
+  const groupTestItems = useCallback((files, notes) => {
+    const items = [
+      ...files.map((f) => ({ ...f, _type: "file", _key: f.fileId, _time: f.uploadedAt ? new Date(f.uploadedAt).getTime() : 0 })),
+      ...notes.map((n) => ({ ...n, _type: "note", _key: String(n._id), _time: n.createdAt ? new Date(n.createdAt).getTime() : 0 })),
+    ].sort((a, b) => a._time - b._time);
+    const timeGroups = [];
+    let cur = [], lastT = -Infinity;
+    for (const item of items) {
+      if (item._time - lastT > 10000) { if (cur.length) timeGroups.push(cur); cur = [item]; } else { cur.push(item); }
+      lastT = item._time;
+    }
+    if (cur.length) timeGroups.push(cur);
+    return timeGroups;
+  }, []);
+
+  const openDeleteConfirm = useCallback((test) => { setDeleteConfirmTest(test); }, []);
+
+  const openLabAnalysisPopup = useCallback((mode, e) => {
+    if (e?.stopPropagation) e.stopPropagation();
+    setLabPopupMode(mode); setLabPopupOpen(true); setEditingTestId(null);
+  }, []);
+
+  const closeLabAnalysisPopup = useCallback(() => {
+    setLabPopupOpen(false); setLabPopupMode(null); setNewTestNameRU(""); setNewTestNameEN(""); setEditingTestId(null); setDeleteConfirmTest(null);
+  }, []);
+
+  const openAddModal = useCallback((mode, preSelectedTestId = "") => {
+    setAddModalMode(mode);
+    setAddModalTestId(preSelectedTestId || "");
+    setAddModalFiles([]);
+    setAddModalText("");
+    setAddModalSearchQ("");
+    setAddModalDropOpen(false);
+    setAddModalOpen(true);
+  }, []);
+
+  const handleAddModalSubmit = useCallback(async () => {
+    if (!addModalTestId) { toast.error(t("history_tab.select_test", { defaultValue: "Select a test" })); return; }
+    const plainText = addModalText.replace(/<[^>]*>/g, "").trim();
+    if (addModalFiles.length === 0 && !plainText) { toast.error(t("history_tab.add_file_or_text", { defaultValue: "Add at least one file or text" })); return; }
+    setAddModalSubmitting(true);
+    try {
+      let latestTest = null;
+      for (const file of addModalFiles) {
+        const res = addModalMode === "studiesManipulations"
+          ? await uploadApplicationInstrumentalAnalysisFile(addModalTestId, file, patientId)
+          : await uploadApplicationLaboratoryTestFile(addModalTestId, file, patientId);
+        latestTest = res?.data || res;
+        if (addModalMode === "studiesManipulations") setStudyTests((prev) => prev.map((t) => t._id === addModalTestId ? latestTest : t));
+        else setLabTests((prev) => prev.map((t) => t._id === addModalTestId ? latestTest : t));
+      }
+      if (plainText) {
+        const noteRes = addModalMode === "studiesManipulations"
+          ? await addApplicationInstrumentalAnalysisNote(addModalTestId, { note: addModalText }, patientId)
+          : await addApplicationLaboratoryTestNote(addModalTestId, { note: addModalText }, patientId);
+        latestTest = noteRes?.data || noteRes;
+        if (addModalMode === "studiesManipulations") setStudyTests((prev) => prev.map((t) => t._id === addModalTestId ? latestTest : t));
+        else setLabTests((prev) => prev.map((t) => t._id === addModalTestId ? latestTest : t));
+      }
+      if (latestTest) { setSelectedTest(latestTest); setSelectedTestMode(addModalMode); }
+      setAddModalOpen(false);
+      toast.success(t("history_tab.file_uploaded", { defaultValue: "Added successfully" }));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || t("history_tab.failed_upload_file", { defaultValue: "Failed to add" }));
+    } finally {
+      setAddModalSubmitting(false);
+    }
+  }, [addModalMode, addModalTestId, addModalFiles, addModalText, patientId, t]);
+
+  const selectedTestFiles = React.useMemo(() => {
+    if (!selectedTest) return [];
+    if (Array.isArray(selectedTest.files) && selectedTest.files.length > 0) return selectedTest.files;
+    if (selectedTest.fileId) return [{ fileId: selectedTest.fileId, fileName: selectedTest.fileName || selectedTest.originalName || "", uploadedAt: selectedTest.uploadedAt || null }];
+    return [];
+  }, [selectedTest]);
+
+  const selectedTestNotes = React.useMemo(() => {
+    if (!selectedTest) return [];
+    const notes = Array.isArray(selectedTest.notes) ? selectedTest.notes : [];
+    if (notes.length > 0) return notes;
+    if (selectedTest.note) return [{ _id: "legacy-note", content: selectedTest.note, createdAt: selectedTest.updatedAt || selectedTest.createdAt || new Date() }];
+    return [];
+  }, [selectedTest]);
 
   /* Close editing fields when clicking outside — skip in bulk-edit mode */
   useEffect(() => {
@@ -902,44 +787,6 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
     fetchTemplates();
   }, []);
 
-  useEffect(() => {
-    const fetchLabTests = async () => {
-      try {
-        const response = await getAllApplicationLaboratoryTests();
-        const tests = Array.isArray(response?.data) ? response.data : response || [];
-        setLabTests(tests);
-        setSelectedLabTests(tests.reduce((acc, test) => { acc[test._id] = false; return acc; }, {}));
-      } catch (err) {}
-    };
-    const fetchStudyTests = async () => {
-      try {
-        const response = await getAllApplicationInstrumentalAnalysis();
-        const tests = Array.isArray(response?.data) ? response.data : response || [];
-        setStudyTests(tests);
-        setSelectedStudyTests(tests.reduce((acc, test) => { acc[test._id] = false; return acc; }, {}));
-      } catch (err) {}
-    };
-    fetchLabTests();
-    fetchStudyTests();
-  }, []);
-
-  const testHasData = useCallback((test) =>
-    (Array.isArray(test?.files) && test.files.length > 0) ||
-    !!test?.fileId ||
-    (Array.isArray(test?.notes) && test.notes.length > 0) ||
-    !!test?.note,
-  []);
-
-  // Auto-select first test with data when navigating to lab/study tabs
-  useEffect(() => {
-    if (activeNavItem === "laboratoryAnalysis" && !selectedTest) {
-      const first = labTests.find(testHasData);
-      if (first) handleSelectTest(first, "laboratoryAnalysis");
-    } else if (activeNavItem === "studiesManipulations" && !selectedTest) {
-      const first = studyTests.find(testHasData);
-      if (first) handleSelectTest(first, "studiesManipulations");
-    }
-  }, [activeNavItem, labTests, studyTests, selectedTest, handleSelectTest, testHasData]);
 
   const getFieldTemplates = useCallback((fieldKey) => templates.filter((t) => t.fieldKey === fieldKey), [templates]);
 
@@ -1108,43 +955,6 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
           ) : (
             <>
               {section.fields && renderFields(section.fields)}
-              {((section.id === "examinationPlan" && activeNavItem === "laboratoryAnalysis") || (section.id === "physicalExam" && activeNavItem === "studiesManipulations")) && (
-                <div className="ht-lab-analysis-panel">
-                  <div className="ht-lab-analysis-header">
-                    <span>
-                      {activeNavItem === "laboratoryAnalysis"
-                        ? t("history_tab.available_lab_analysis", { defaultValue: "Available Laboratory Analysis" })
-                        : t("history_tab.available_studies", { defaultValue: "Available Studies & Manipulations" })}
-                    </span>
-                    <button type="button" className="ht-lab-analysis-manage-btn" onClick={(e) => openLabAnalysisPopup(activeNavItem, e)}>
-                      {t("history_tab.manage_tests", { defaultValue: "Manage tests" })}
-                    </button>
-                  </div>
-                  {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).length > 0 ? (
-                    <div className="ht-lab-analysis-grid">
-                      {(activeNavItem === "laboratoryAnalysis" ? labTests : studyTests).map((test) => {
-                        const isChecked = activeNavItem === "laboratoryAnalysis" ? !!selectedLabTests[test._id] : !!selectedStudyTests[test._id];
-                        return (
-                          <div
-                            key={test._id}
-                            className={`ht-lab-analysis-item ht-lab-analysis-item--selectable${isChecked ? " ht-lab-analysis-item--selected" : ""}`}
-                            onClick={() => { handleToggleLabTest(test._id, activeNavItem === "studiesManipulations"); handleSelectTest(test, activeNavItem); }}
-                          >
-                            <div className="ht-lab-analysis-item-label">
-                              <span className="lab-name-en">{test.name?.en || ""}</span>
-                              {test.name?.ru && <span className="lab-name-ru">{test.name.ru}</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="ht-lab-analysis-empty">
-                      {t(activeNavItem === "laboratoryAnalysis" ? "history_tab.no_lab_tests" : "history_tab.no_studies_tests", { defaultValue: activeNavItem === "laboratoryAnalysis" ? "No laboratory tests available." : "No studies/manipulations available." })}
-                    </p>
-                  )}
-                </div>
-              )}
               {section.subsections?.map((sub) => renderSection(sub, level + 1))}
             </>
           )}
@@ -1155,7 +965,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
 
   return (
     <>
-      <div className="ht-shell">
+      <div className={`ht-shell${(isLabPanelOpen || isStudyPanelOpen || isAppointmentsPanelOpen) ? " panel-open" : ""}`}>
         <aside className="ht-sub-sidebar" aria-label={t("sidebar_title")}>
           <div className="ht-sub-sidebar-list">
             {HISTORY_NAV_ITEMS.map((item) => (
@@ -1170,104 +980,120 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                   <span className="ht-sub-sidebar-label">{t(item.labelKey)}</span>
                   <span className="ht-sub-sidebar-actions">
                     {(item.id === "laboratoryAnalysis" || item.id === "studiesManipulations") && (
-                      <button type="button" className="ht-sub-sidebar-setting-btn" onClick={(e) => openLabAnalysisPopup(item.id, e)} aria-label={t("history_tab.manage_lab_tests", { defaultValue: "Manage tests" })}>
+                      <button
+                        type="button"
+                        className="ht-sub-sidebar-setting-btn"
+                        onClick={(e) => openLabAnalysisPopup(item.id, e)}
+                        aria-label={t("history_tab.manage_lab_tests", { defaultValue: "Manage tests" })}
+                      >
                         <FiSettings size={14} />
                       </button>
                     )}
                     {item.icon && <span className="ht-sub-sidebar-icon" aria-hidden="true">{item.icon}</span>}
                   </span>
                 </div>
-
-                {item.id === "laboratoryAnalysis" && isLabPanelOpen && (
-                  <div className="ht-tests-panel">
-                    {labTests.filter(testHasData).length === 0 ? (
-                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
-                    ) : (
-                      labTests.filter(testHasData).map((test) => (
-                        <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "laboratoryAnalysis")}>
-                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {item.id === "studiesManipulations" && isStudyPanelOpen && (
-                  <div className="ht-tests-panel">
-                    {studyTests.filter(testHasData).length === 0 ? (
-                      <p className="ht-tests-panel-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests yet" })}</p>
-                    ) : (
-                      studyTests.filter(testHasData).map((test) => (
-                        <button key={test._id} type="button" className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`} onClick={() => handleSelectTest(test, "studiesManipulations")}>
-                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
-                  <div className="ht-appointments-panel">
-                    {isAppointmentsLoading ? (
-                      <div className="ht-appointments-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}</div>
-                    ) : appointmentsError ? (
-                      <div className="ht-appointments-error">{appointmentsError}</div>
-                    ) : (
-                      <ul className="ht-appointments-list">
-                        {application && (() => {
-                          const name =
-                            application.service?.name?.ru ||
-                            application.service?.name?.en ||
-                            (Array.isArray(application.services) && application.services[0]?.name?.ru) ||
-                            (Array.isArray(application.services) && application.services[0]?.name?.en) ||
-                            t("history_tab.current_appointment", { defaultValue: "Consultation" });
-                          const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
-                          const time = application.startTime ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}` : "";
-                          const isSelected = selectedConsultationId === application.applicationId;
-                          return (
-                            <li
-                              className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => handleSelectPastAppointment(application.applicationId)}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(application.applicationId); }}
-                            >
-                              <div className="ht-appointment-current-row">
-                                <span className="ht-appointment-name">{name}</span>
-                                <span className="ht-appointment-current-badge">{t("history_tab.current_badge", { defaultValue: "Current" })}</span>
-                              </div>
-                              <span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span>
-                            </li>
-                          );
-                        })()}
-                        {patientAppointments.map((appt) => {
-                          const apptId = appt.applicationId || appt._id;
-                          const isSelected = selectedConsultationId === apptId;
-                          const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
-                          const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
-                          const label = t("history_tab.current_appointment", { defaultValue: "Consultation" });
-                          return (
-                            <li
-                              key={apptId}
-                              className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => handleSelectPastAppointment(apptId)}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(apptId); }}
-                            >
-                              <span className="ht-appointment-name">{label}</span>
-                              <span className="ht-appointment-meta">{appointmentDate}{appointmentTime ? ` · ${appointmentTime}` : ""}</span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                )}
               </React.Fragment>
             ))}
           </div>
         </aside>
+
+        {(isLabPanelOpen || isStudyPanelOpen || isAppointmentsPanelOpen) && (
+          <aside className="ht-sub-panel">
+            {/* ── Lab panel (tests with files) ── */}
+            {isLabPanelOpen && (() => {
+              const withFiles = labTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+              return withFiles.length === 0 ? null : (
+                <div className="ht-tests-panel">
+                  {withFiles.map((test) => (
+                    <button
+                      key={test._id}
+                      type="button"
+                      className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`}
+                      onClick={() => handleSelectTest(test, "laboratoryAnalysis")}
+                    >
+                      <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {/* ── Study panel (tests with files) ── */}
+            {isStudyPanelOpen && (() => {
+              const withFiles = studyTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+              return withFiles.length === 0 ? null : (
+                <div className="ht-tests-panel">
+                  {withFiles.map((test) => (
+                    <button
+                      key={test._id}
+                      type="button"
+                      className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`}
+                      onClick={() => handleSelectTest(test, "studiesManipulations")}
+                    >
+                      <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {isAppointmentsPanelOpen && (
+              <div className="ht-appointments-panel">
+                {isAppointmentsLoading ? (
+                  <div className="ht-appointments-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}</div>
+                ) : appointmentsError ? (
+                  <div className="ht-appointments-error">{appointmentsError}</div>
+                ) : (
+                  <ul className="ht-appointments-list">
+                    {application && (() => {
+                      const _appSpec = application.doctors?.[0]?.specialization;
+                      const name = (_appSpec && typeof _appSpec === "object" ? (_appSpec.name_ru || _appSpec.name_en) : _appSpec) || t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                      const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
+                      const time = application.startTime ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}` : "";
+                      const isSelected = selectedConsultationId === application.applicationId;
+                      return (
+                        <li
+                          className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleSelectPastAppointment(application.applicationId)}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(application.applicationId); }}
+                        >
+                          <div className="ht-appointment-current-row">
+                            <span className="ht-appointment-name">{name}</span>
+                            <span className="ht-appointment-current-badge">{t("history_tab.current_badge", { defaultValue: "Current" })}</span>
+                          </div>
+                          <span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span>
+                        </li>
+                      );
+                    })()}
+                    {patientAppointments.map((appt) => {
+                      const apptId = appt.applicationId || appt._id;
+                      const isSelected = selectedConsultationId === apptId;
+                      const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
+                      const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
+                      const _apptSpec = appt.doctors?.[0]?.specialization;
+                      const label = (_apptSpec && typeof _apptSpec === "object" ? (_apptSpec.name_ru || _apptSpec.name_en) : _apptSpec) || t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                      return (
+                        <li
+                          key={apptId}
+                          className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleSelectPastAppointment(apptId)}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(apptId); }}
+                        >
+                          <span className="ht-appointment-name">{label}</span>
+                          <span className="ht-appointment-meta">{appointmentDate}{appointmentTime ? ` · ${appointmentTime}` : ""}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </aside>
+        )}
 
         <div className="ht-main-column" ref={containerRef}>
           {selectedTest ? (
@@ -1275,18 +1101,18 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
               <div className="ht-td-header">
                 <div className="ht-td-title-group">
                   <h2 className="ht-td-title">{selectedTest.name?.ru || selectedTest.name?.en || ""}</h2>
-                  {selectedTest.name?.en && selectedTest.name?.ru && <span className="ht-td-subtitle">{selectedTest.name.en}</span>}
+                  {selectedTest.name?.en && selectedTest.name?.ru && (
+                    <span className="ht-td-subtitle">{selectedTest.name.en}</span>
+                  )}
                 </div>
                 <button type="button" className="ht-td-btn" onClick={() => openAddModal(selectedTestMode, selectedTest._id)}>
-                  <FiPlus size={14} />{t("history_tab.add", { defaultValue: "Add" })}
+                  <FiPlus size={14} />
+                  {t("history_tab.add", { defaultValue: "Add" })}
                 </button>
               </div>
-              {selectedTestFiles.length === 0 && selectedTestNotes.length === 0 ? (
-                null
-              ) : (
-              <>
+              {selectedTestFiles.length === 0 && selectedTestNotes.length === 0 ? null : (
                 <div className="ht-td-list">
-                  {groupTestItems(selectedTestFiles, selectedTestNotes, batchMap).map((group, gIdx) => {
+                  {groupTestItems(selectedTestFiles, selectedTestNotes).map((group, gIdx) => {
                     const dt = group[0]?._time ? new Date(group[0]._time) : null;
                     const dateStr = dt ? `${String(dt.getDate()).padStart(2,"0")}-${String(dt.getMonth()+1).padStart(2,"0")}-${dt.getFullYear()}` : "";
                     const timeStr = dt ? `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
@@ -1295,12 +1121,13 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                         <div className="ht-td-group-items">
                           <div className="ht-td-group-card-header">
                             <div className="ht-td-group-date"><FiClock size={11} /><span>{dateStr} · {timeStr}</span></div>
-                            <button type="button" className="ht-td-group-delete-btn" onClick={() => handleDeleteGroup(group)} aria-label="Delete group"><FiTrash2 size={13} /></button>
                           </div>
                           <div className="ht-td-group-grid">
                             {group.map((item) => item._type === "file" ? (
                               <div key={String(item.fileId)} className="ht-td-item">
-                                <span className={`ht-td-badge ht-td-badge--${(item.fileName || "").split(".").pop().toLowerCase().slice(0,5)}`}>{(item.fileName || "").split(".").pop().toUpperCase().slice(0,5)}</span>
+                                <span className={`ht-td-badge ht-td-badge--${(item.fileName || "").split(".").pop().toLowerCase().slice(0, 5)}`}>
+                                  {(item.fileName || "").split(".").pop().toUpperCase().slice(0, 5)}
+                                </span>
                                 <div className="ht-td-item-info"><span className="ht-td-item-name">{item.fileName}</span></div>
                                 <div className="ht-td-item-actions">
                                   <button type="button" className="ht-td-icon-btn" onClick={() => handleViewTestFile(item.fileId)} aria-label="View"><FiEye size={14} /></button>
@@ -1323,9 +1150,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                     );
                   })}
                 </div>
-              </>
               )}
-              {/* Note edit popup */}
               {showTestNoteEditor && createPortal(
                 <>
                   <div className="ht-add-overlay" onClick={() => setShowTestNoteEditor(false)} />
@@ -1336,7 +1161,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                     </div>
                     <div className="ht-add-step">
                       <div className="ht-add-rte-wrap">
-                        <RichTextEditor value={testNoteDraft} onChange={(v) => setTestNoteDraft(v)} placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })} />
+                        <RichTextEditor value={testNoteDraft} onChange={(value) => setTestNoteDraft(value)} placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })} />
                       </div>
                       <div className="ht-add-modal-footer">
                         <button type="button" className="ht-add-btn-secondary" onClick={() => setShowTestNoteEditor(false)}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>
@@ -1351,6 +1176,21 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
           ) : activeNavItem === "conclusion" ? (
             <div className="ht-conclusion-wrap">
               <AppointmentReport booking={application} patient={patient} />
+            </div>
+          ) : (activeNavItem === "laboratoryAnalysis" || activeNavItem === "studiesManipulations") ? (
+            <div className="ht-td-page">
+              <div className="ht-td-header">
+                <div className="ht-td-title-group" />
+                <button type="button" className="ht-td-btn" onClick={() => openAddModal(activeNavItem, "")}>
+                  <FiPlus size={14} />
+                  {t("history_tab.add", { defaultValue: "Add" })}
+                </button>
+              </div>
+              <div className="ht-lab-empty-body">
+                <div className="ht-lab-empty-card">
+                  <span className="ht-lab-empty-card-text">{t("history_tab.no_entries", { defaultValue: "No entries yet" })}</span>
+                </div>
+              </div>
             </div>
           ) : PANEL_NAV_IDS.includes(activeNavItem) ? (() => {
             const sid = activeNavItem;
@@ -1436,7 +1276,7 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
               <div className="ht-past-appt-view">
                 <div className="ht-past-appt-header">
                   <div className="ht-past-appt-meta">
-                    <span className="ht-past-appt-label">{t("history_tab.current_appointment", { defaultValue: "Consultation" })}</span>
+                    <span className="ht-past-appt-label">{t("history_tab.past_appointment", { defaultValue: "Past Consultation" })}</span>
                     <span className="ht-past-appt-date">
                       {selectedApptData.date ? formatDate(selectedApptData.date) : ""}
                       {selectedApptData.startTime ? ` · ${formatTime(selectedApptData.startTime)}${selectedApptData.endTime ? ` - ${formatTime(selectedApptData.endTime)}` : ""}` : ""}
@@ -1451,20 +1291,63 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                     {t("history_tab.back_to_current", { defaultValue: "Back to current" })}
                   </button>
                 </div>
-                <div className="ht-view-fields">
-                  {ALL_KEYS.map((key) => {
-                    const hf = selectedApptData.historyForm || {};
-                    const f = hf[key];
-                    const val = typeof f === "object" ? f?.value : f;
-                    if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
-                    return (
-                      <div key={key} className="ht-view-field">
-                        <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
-                        <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                <div className="ht-view-toggle-bar">
+                  <div className="ht-toggle-group">
+                    <button
+                      className={`ht-view-toggle-btn${pastConsultationView === "normal" ? " ht-view-toggle-btn--active" : ""}`}
+                      onClick={() => setPastConsultationView("normal")}
+                    >
+                      {t("history_tab.toggle_normal", { defaultValue: "Normal" })}
+                    </button>
+                    <button
+                      className={`ht-view-toggle-btn${pastConsultationView === "report" ? " ht-view-toggle-btn--active" : ""}`}
+                      onClick={() => setPastConsultationView("report")}
+                    >
+                      {t("history_tab.toggle_report", { defaultValue: "Report" })}
+                    </button>
+                  </div>
+                  {pastConsultationView === "report" && (
+                    <button className="ht-dl-pdf-btn" onClick={() => pastReportRef.current?.download()}>
+                      <Download size={14} />
+                      {t("history_tab.download_pdf", { defaultValue: "Download PDF" })}
+                    </button>
+                  )}
+                </div>
+                {pastConsultationView === "normal" ? (
+                  (() => {
+                    const filledKeys = ALL_KEYS.filter((key) => {
+                      const hf = selectedApptData.historyForm || {};
+                      const f = hf[key];
+                      const val = typeof f === "object" ? f?.value : f;
+                      return val?.replace(/<[^>]*>/g, "").trim();
+                    });
+                    return filledKeys.length === 0 ? (
+                      <div className="ht-empty-fields-msg">
+                        {t("history_tab.no_fields_filled", { defaultValue: "The doctor has not filled in any fields yet." })}
+                      </div>
+                    ) : (
+                      <div className="ht-view-wrap">
+                        <div className="ht-view-fields">
+                          {filledKeys.map((key) => {
+                            const hf = selectedApptData.historyForm || {};
+                            const f = hf[key];
+                            const val = typeof f === "object" ? f?.value : f;
+                            return (
+                              <div key={key} className="ht-view-field">
+                                <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                                <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
-                  })}
-                </div>
+                  })()
+                ) : (
+                  <div className="ht-conclusion-wrap ht-conclusion-wrap--inline">
+                    <AppointmentReport ref={pastReportRef} booking={selectedApptData} patient={patient} hideToolbar />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="ht-past-appt-empty">{t("history_tab.no_data", { defaultValue: "No data for this appointment" })}</div>
@@ -1502,47 +1385,64 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
               </div>
             </>
           ) : (
-            <div className="ht-view-wrap">
-              <div className="ht-view-header">
-                <button type="button" className="ht-view-edit-btn" onClick={enterEditMode}>
-                  <FiEdit2 size={14} />
-                  {t("history_tab.edit", { defaultValue: "Edit" })}
-                </button>
+            <div className="ht-past-appt-view">
+              <div className="ht-view-toggle-bar">
+                <div className="ht-toggle-group">
+                  <button
+                    className={`ht-view-toggle-btn${currentConsultationView === "normal" ? " ht-view-toggle-btn--active" : ""}`}
+                    onClick={() => setCurrentConsultationView("normal")}
+                  >
+                    {t("history_tab.toggle_normal", { defaultValue: "Normal" })}
+                  </button>
+                  <button
+                    className={`ht-view-toggle-btn${currentConsultationView === "report" ? " ht-view-toggle-btn--active" : ""}`}
+                    onClick={() => setCurrentConsultationView("report")}
+                  >
+                    {t("history_tab.toggle_report", { defaultValue: "Report" })}
+                  </button>
+                </div>
+                <div className="ht-toggle-right">
+                  <button type="button" className="ht-view-edit-btn" onClick={enterEditMode}>
+                    <FiEdit2 size={14} />
+                    {t("history_tab.edit", { defaultValue: "Edit" })}
+                  </button>
+                  {currentConsultationView === "report" && (
+                    <button className="ht-dl-pdf-btn" onClick={() => currentReportRef.current?.download()}>
+                      <Download size={14} />
+                      {t("history_tab.download_pdf", { defaultValue: "Download PDF" })}
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="ht-view-fields">
-                {ALL_KEYS.map((key) => {
-                  const val = form[key]?.value;
-                  if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
-                  return (
-                    <div key={key} className="ht-view-field">
-                      <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
-                      <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+              {currentConsultationView === "normal" ? (
+                (() => {
+                  const filledFields = ALL_KEYS.filter((key) => form[key]?.value?.replace(/<[^>]*>/g, "").trim());
+                  return filledFields.length === 0 ? (
+                    <div className="ht-empty-fields-msg">
+                      {t("history_tab.no_fields_filled", { defaultValue: "The doctor has not filled in any fields yet." })}
+                    </div>
+                  ) : (
+                    <div className="ht-view-wrap">
+                      <div className="ht-view-fields">
+                        {filledFields.map((key) => (
+                          <div key={key} className="ht-view-field">
+                            <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                            <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: form[key]?.value }} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   );
-                })}
-              </div>
+                })()
+              ) : (
+                <div className="ht-conclusion-wrap ht-conclusion-wrap--inline">
+                  <AppointmentReport ref={currentReportRef} booking={application} patient={patient} hideToolbar />
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
-
-      {/* Sticky footer — only when the history form is the active view */}
-      {!selectedTest &&
-        activeNavItem !== "conclusion" &&
-        !PANEL_NAV_IDS.includes(activeNavItem) &&
-        !(selectedConsultationId && selectedConsultationId !== application?.applicationId) && (
-        <div className="adp-sticky-footer">
-          <button className="adp-footer-btn adp-footer-save-btn" onClick={handleSaveAll} disabled={isSaving}>
-            {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save", { ns: "appointment_details_general" })}
-          </button>
-          <button className="adp-footer-btn adp-footer-save-close-btn" onClick={handleSaveAndClose} disabled={isSaving}>
-            {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save_and_close", { ns: "appointment_details_general" })}
-          </button>
-        </div>
-      )}
-
-      {/* Hidden file input for add modal — lives outside the portal so React onChange fires reliably */}
-      <input ref={addFileInputRef} type="file" multiple style={{ display: "none" }} onChange={(e) => { const files = Array.from(e.target.files || []); e.target.value = ""; setAddModalFiles((prev) => [...prev, ...files]); }} />
 
       {addModalOpen && createPortal(
         <>
@@ -1552,50 +1452,65 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
               <span className="ht-add-modal-title">{t("history_tab.add", { defaultValue: "Add" })}</span>
               <button type="button" className="ht-add-modal-close" onClick={() => setAddModalOpen(false)}><FiX size={16} /></button>
             </div>
-            <div className="ht-add-step" style={addDropOpen ? { overflowY: "visible" } : {}}>
-              <span className="ht-add-section-label">{t("history_tab.select_test", { defaultValue: "SELECT TEST" })}</span>
-              <div className="ht-test-dropdown" style={{ position: "relative" }}>
-                <button type="button" className="ht-test-dropdown-trigger" onClick={() => setAddDropOpen((o) => !o)}>
-                  {addModalTestId ? (<span className="ht-test-dropdown-value">{(() => { const tests = addModalMode === "studiesManipulations" ? studyTests : labTests; const t2 = tests.find((t) => t._id === addModalTestId); return t2?.name?.ru || t2?.name?.en || ""; })()}</span>) : (<span className="ht-test-dropdown-placeholder">{t("history_tab.choose_test", { defaultValue: "— select a test —" })}</span>)}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
-                </button>
-                {addDropOpen && (
-                  <div className="ht-test-dropdown-menu">
-                    <div className="ht-test-dropdown-search-wrap">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                      <input autoFocus className="ht-test-dropdown-search" placeholder={t("history_tab.search", { defaultValue: "Search…" })} value={addSearchQ} onChange={(e) => setAddSearchQ(e.target.value)} />
+            <div className="ht-add-step">
+              <div className="ht-add-section-label">{t("history_tab.select_test_label", { defaultValue: "Select test" })}</div>
+              {(() => {
+                const tests = addModalMode === "studiesManipulations" ? studyTests : labTests;
+                const filtered = tests.filter((test) => (test.name?.ru || test.name?.en || "").toLowerCase().includes(addModalSearchQ.toLowerCase()));
+                const selected = tests.find((test) => test._id === addModalTestId);
+                return (
+                  <div className="ht-test-dropdown" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setAddModalDropOpen(false); }} tabIndex={-1}>
+                    <div className={`ht-test-dropdown-trigger${addModalDropOpen ? " open" : ""}`} onClick={() => setAddModalDropOpen((p) => !p)}>
+                      <span className={selected ? "ht-test-dropdown-value" : "ht-test-dropdown-placeholder"}>
+                        {selected ? (selected.name?.ru || selected.name?.en || "") : t("history_tab.select_test_placeholder", { defaultValue: "— select a test —" })}
+                      </span>
+                      <FiChevronDown size={14} style={{ flexShrink: 0, color: "#64748b", transform: addModalDropOpen ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
                     </div>
-                    {(addModalMode === "studiesManipulations" ? studyTests : labTests).filter((test) => (test.name?.ru || test.name?.en || "").toLowerCase().includes(addSearchQ.toLowerCase())).map((test) => (
-                      <div key={test._id} className={`ht-test-dropdown-item${addModalTestId === test._id ? " selected" : ""}`} onClick={() => { setAddModalTestId(test._id); setAddDropOpen(false); setAddSearchQ(""); }}>
-                        <span className="ht-test-dropdown-item-name">{test.name?.ru || test.name?.en || ""}</span>
+                    {addModalDropOpen && (
+                      <div className="ht-test-dropdown-menu">
+                        <div className="ht-test-dropdown-search-wrap">
+                          <FiSearch size={13} className="ht-test-dropdown-search-icon" />
+                          <input autoFocus className="ht-test-dropdown-search" placeholder={t("history_tab.search_test", { defaultValue: "Search…" })} value={addModalSearchQ} onChange={(e) => setAddModalSearchQ(e.target.value)} onClick={(e) => e.stopPropagation()} />
+                        </div>
+                        {filtered.length === 0 ? (
+                          <div className="ht-test-dropdown-empty">{t("history_tab.no_tests_yet", { defaultValue: "No tests found." })}</div>
+                        ) : (
+                          filtered.map((test) => (
+                            <div key={test._id} className={`ht-test-dropdown-item${addModalTestId === test._id ? " selected" : ""}`} onMouseDown={() => { setAddModalTestId(test._id); setAddModalDropOpen(false); setAddModalSearchQ(""); }}>
+                              <span className="ht-test-dropdown-item-name">{test.name?.ru || test.name?.en || ""}</span>
+                              {test.name?.en && test.name?.ru && test.name.en !== test.name.ru && <span className="ht-test-dropdown-item-sub">{test.name.en}</span>}
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))}
-                    {(addModalMode === "studiesManipulations" ? studyTests : labTests).filter((test) => (test.name?.ru || test.name?.en || "").toLowerCase().includes(addSearchQ.toLowerCase())).length === 0 && (<div className="ht-test-dropdown-empty">{t("history_tab.no_tests", { defaultValue: "No tests available" })}</div>)}
+                    )}
                   </div>
-                )}
+                );
+              })()}
+              <div className="ht-add-section-label" style={{ marginTop: 8 }}>{t("history_tab.files_title", { defaultValue: "Files" })}</div>
+              <div className="ht-add-file-zone" onClick={() => addFileInputRef.current?.click()}>
+                <FiUpload size={20} style={{ color: "#94a3b8" }} />
+                <span>{t("history_tab.click_to_upload", { defaultValue: "Click to choose files" })}</span>
               </div>
-              <span className="ht-add-section-label">{t("history_tab.files", { defaultValue: "FILES" })}</span>
-              <div className="ht-add-file-zone" style={{ cursor: "pointer" }} onClick={() => addFileInputRef.current?.click()}>
-                <FiUpload size={20} /><span>{t("history_tab.click_to_upload", { defaultValue: "Click to upload files" })}</span>
-              </div>
+              <input ref={addFileInputRef} type="file" multiple className="ht-hidden-file-input" onChange={(e) => { const picked = Array.from(e.target.files || []); setAddModalFiles((prev) => [...prev, ...picked]); e.target.value = ""; }} />
               {addModalFiles.length > 0 && (
                 <div className="ht-add-file-list">
                   {addModalFiles.map((f, i) => (
                     <div key={i} className="ht-add-file-item">
                       <span className="ht-add-file-name">{f.name}</span>
-                      <button type="button" className="ht-add-file-remove" onClick={() => setAddModalFiles((prev) => prev.filter((_, idx) => idx !== i))}><FiX size={12} /></button>
+                      <button type="button" className="ht-add-file-remove" onClick={() => setAddModalFiles((prev) => prev.filter((_, j) => j !== i))}><FiX size={12} /></button>
                     </div>
                   ))}
                 </div>
               )}
-              <span className="ht-add-section-label">{t("history_tab.add_text", { defaultValue: "ADD TEXT" })}</span>
+              <div className="ht-add-section-label" style={{ marginTop: 8 }}>{t("history_tab.add_text", { defaultValue: "Add text" })}</div>
               <div className="ht-add-rte-wrap">
-                <RichTextEditor value={addModalText} onChange={(v) => setAddModalText(v)} placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })} />
+                <RichTextEditor value={addModalText} onChange={(val) => setAddModalText(val)} placeholder={t("history_tab.enter_text", { defaultValue: "Enter text…" })} />
               </div>
               <div className="ht-add-modal-footer">
                 <button type="button" className="ht-add-btn-secondary" onClick={() => setAddModalOpen(false)}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>
-                <button type="button" className="ht-add-btn-primary" disabled={addModalSubmitting || !addModalTestId || (addModalFiles.length === 0 && !addModalText.replace(/<[^>]*>/g,"").trim())} onClick={handleAddModalSubmit}>
-                  {addModalSubmitting ? t("history_tab.uploading", { defaultValue: "Uploading…" }) : t("history_tab.submit", { defaultValue: "Submit" })}
+                <button type="button" className="ht-add-btn-primary" disabled={addModalSubmitting || !addModalTestId || (addModalFiles.length === 0 && !addModalText.replace(/<[^>]*>/g, "").trim())} onClick={handleAddModalSubmit}>
+                  {addModalSubmitting ? t("history_tab.uploading", { defaultValue: "Uploading…" }) : t("history_tab.save", { defaultValue: "Save" })}
                 </button>
               </div>
             </div>
@@ -1608,7 +1523,11 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
         <div className="ht-portal-overlay" onClick={closeLabAnalysisPopup}>
           <div className="ht-portal-modal" onClick={(e) => e.stopPropagation()}>
             <div className="ht-portal-header">
-              <h2 className="ht-portal-title">{labPopupMode === "studiesManipulations" ? t("history_tab.manage_study_tests", { defaultValue: "Studies / Manipulations" }) : t("history_tab.manage_tests", { defaultValue: "Laboratory Analysis" })}</h2>
+              <h2 className="ht-portal-title">
+                {labPopupMode === "studiesManipulations"
+                  ? t("history_tab.manage_study_tests", { defaultValue: "Studies / Manipulations" })
+                  : t("history_tab.manage_tests", { defaultValue: "Laboratory Analysis" })}
+              </h2>
               <button className="ht-portal-close" type="button" onClick={closeLabAnalysisPopup} aria-label="Close">×</button>
             </div>
             <div className="ht-portal-form">
@@ -1616,12 +1535,11 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                 <input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_ru", { defaultValue: "Name (RU)" })} value={newTestNameRU} onChange={(e) => setNewTestNameRU(e.target.value)} />
                 <input className="ht-portal-input" type="text" placeholder={t("history_tab.test_name_en", { defaultValue: "Name (EN)" })} value={newTestNameEN} onChange={(e) => setNewTestNameEN(e.target.value)} />
               </div>
-              <button className="ht-portal-add-btn" type="button" onClick={handleSaveTest}>
+              <button className="ht-portal-add-btn" type="button" onClick={handleSaveCatalogItem}>
                 <span className="ht-portal-add-plus">+</span>
                 <span>{editingTestId ? t("history_tab.save", { defaultValue: "Save" }) : t("history_tab.add_btn", { defaultValue: "Add" })}</span>
               </button>
             </div>
-            {editingTestId && <button className="ht-portal-cancel-btn" type="button" onClick={cancelEditTest}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>}
             <div className="ht-portal-list">
               {(labPopupMode === "studiesManipulations" ? studyTests : labTests).length > 0 ? (
                 (labPopupMode === "studiesManipulations" ? studyTests : labTests).map((test) => (
@@ -1631,7 +1549,6 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
                       {test.name?.en && test.name?.ru && <span className="ht-portal-item-sub">{test.name.en}</span>}
                     </div>
                     <div className="ht-portal-item-actions">
-                      <button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openEditTest(test); }} aria-label="Edit"><FiEdit2 size={14} /></button>
                       <button type="button" className="ht-portal-icon-btn" onClick={(e) => { e.stopPropagation(); openDeleteConfirm(test); }} aria-label="Delete"><FiTrash2 size={14} /></button>
                     </div>
                   </div>
@@ -1645,6 +1562,23 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
         document.body
       )}
 
+      {/* Sticky footer — only when the history form is the active view */}
+      {!selectedTest &&
+        activeNavItem !== "conclusion" &&
+        !PANEL_NAV_IDS.includes(activeNavItem) &&
+        activeNavItem !== "laboratoryAnalysis" &&
+        activeNavItem !== "studiesManipulations" &&
+        !(selectedConsultationId && selectedConsultationId !== application?.applicationId) && (
+        <div className="adp-sticky-footer">
+          <button className="adp-footer-btn adp-footer-save-btn" onClick={handleSaveAll} disabled={isSaving}>
+            {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save", { ns: "appointment_details_general" })}
+          </button>
+          <button className="adp-footer-btn adp-footer-save-close-btn" onClick={handleSaveAndClose} disabled={isSaving}>
+            {isSaving ? t("footer.saving", { ns: "appointment_details_general" }) : t("footer.save_and_close", { ns: "appointment_details_general" })}
+          </button>
+        </div>
+      )}
+
       {sectionPdfModal && (
         <SectionPDFModal
           title={sectionPdfModal.title}
@@ -1656,18 +1590,6 @@ const HistoryTab = forwardRef(({ application, patient, onSaved }, ref) => {
         />
       )}
 
-      {deleteConfirmTest && createPortal(
-        <div className="ht-delete-confirm-overlay">
-          <div className="ht-delete-confirm-card">
-            <p>{t("history_tab.confirm_delete_message", { defaultValue: "Are you sure you want to delete this test? This action cannot be undone." })}</p>
-            <div className="ht-delete-confirm-actions">
-              <button type="button" className="ht-cancel-delete-btn" onClick={closeDeleteConfirm}>{t("history_tab.cancel", { defaultValue: "Cancel" })}</button>
-              <button type="button" className="ht-confirm-delete-btn" onClick={handleConfirmDelete}>{t("history_tab.delete", { defaultValue: "Delete" })}</button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
     </>
   );
 });

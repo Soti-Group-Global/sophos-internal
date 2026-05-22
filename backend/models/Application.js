@@ -70,19 +70,6 @@ const documentSchema = new mongoose.Schema(
   { _id: false },
 );
 
-// Lab / Study entry (file or text)
-const labEntrySchema = new mongoose.Schema(
-  {
-    kind: { type: String, enum: ["file", "text"], required: true },
-    text: { type: String, default: "" },
-    label: { type: String, default: "" },
-    filename: { type: String },
-    fileId: { type: mongoose.Schema.Types.ObjectId },
-    createdAt: { type: Date, default: Date.now },
-  },
-  { _id: true },
-);
-
 // Service Order Schema (embedded)
 const serviceOrderSchema = new mongoose.Schema(
   {
@@ -223,7 +210,7 @@ const doctorServiceSchema = new mongoose.Schema(
   {
     doctorEmail: { type: String, required: true },
     doctorName: { type: String },
-    specialization: { type: String },
+    specialization: { type: mongoose.Schema.Types.ObjectId, ref: 'SpecialtyMaster', default: null },
     serviceId: { type: mongoose.Schema.Types.ObjectId, ref: "ServicePosition" },
     serviceName: { type: String },
   },
@@ -307,20 +294,10 @@ const applicationSchema = new mongoose.Schema(
     isFirstAppointment: { type: Boolean, default: false },
     isRepetitiveAppointment: { type: Boolean, default: false },
     historyForm: { type: historyFormSchema, default: () => ({}) },
-    morphologicalResearch: {
-      type: managedUploadSectionSchema,
-      default: () => ({}),
-    },
-    proceduresAndManipulations: {
-      type: managedUploadSectionSchema,
-      default: () => ({}),
-    },
     conclusion: {
       type: managedUploadSectionSchema,
       default: () => ({}),
     },
-    laboratoryAnalysis: { type: [labEntrySchema], default: [] },
-    studiesManipulations: { type: [labEntrySchema], default: [] },
   },
   { timestamps: true, strict: true },
 );

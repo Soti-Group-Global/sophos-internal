@@ -65,6 +65,38 @@
   left: 380px;
 }
 
+/* Secondary panel sidebar — appears to the right of the nav list */
+.ht-sub-panel {
+  position: fixed;
+  left: 256px; /* 56px icon-rail + 200px nav sidebar */
+  top: 70px;
+  width: 200px;
+  height: calc(100vh - 70px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  border-right: 1px solid #e4e7ec;
+  padding: 8px 0;
+  z-index: 19;
+  transition: left 0.2s ease;
+}
+
+.adp-page--nav-expanded .ht-sub-panel {
+  left: 380px; /* 180px nav-open + 200px nav sidebar */
+}
+
+.panel-open .ht-main-column {
+  margin-left: 400px; /* 200px nav + 200px panel */
+}
+
+.panel-open .ht-conclusion-wrap {
+  left: 456px; /* 256px normal + 200px panel */
+}
+
+.adp-page--nav-expanded.panel-open .ht-conclusion-wrap {
+  left: 580px; /* 380px nav-open + 200px panel */
+}
+
 .ht-sub-sidebar-header {
   display: flex;
   align-items: center;
@@ -103,11 +135,7 @@
 }
 
 .ht-appointments-panel {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f5f6f8;
+  padding: 8px 0;
 }
 
 .ht-lab-analysis-panel {
@@ -743,7 +771,7 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
-  z-index: 1100;
+  z-index: 9100;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -944,26 +972,26 @@
   border: none;
   border-left: 2px solid transparent;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s;
 }
 
-.ht-appointment-item:hover {
-  background: #f8faff;
-}
 
 .ht-appointment-item:last-child {
   border-bottom: none;
 }
 
 .ht-appointment-item--current {
-  border-left: 3px solid #3b82f6;
-  padding-left: 8px;
+  padding-left: 10px;
 }
 
 .ht-appointment-item--selected {
   background: #eff6ff;
   border-left: 3px solid #2563eb;
   padding-left: 8px;
+}
+
+.ht-appointment-item--current.ht-appointment-item--selected {
+  border-left: 3px solid #2563eb;
 }
 
 .ht-appointment-current-row {
@@ -2379,6 +2407,82 @@
 }
 
 /* ══════════════════════════════════════════════════════════
+   Normal / Report toggle
+   ══════════════════════════════════════════════════════════ */
+.ht-view-toggle-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  padding: 12px 20px 0;
+}
+
+.ht-toggle-group {
+  display: flex;
+  align-items: center;
+}
+
+.ht-dl-pdf-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ht-dl-pdf-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.ht-view-toggle-btn {
+  padding: 6px 20px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ht-view-toggle-btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.ht-view-toggle-btn:last-child {
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+}
+
+.ht-view-toggle-btn--active {
+  background: #0c3870;
+  border-color: #0c3870;
+  color: #fff;
+}
+
+.ht-view-toggle-btn:not(.ht-view-toggle-btn--active):hover {
+  background: #f5f8ff;
+  color: #0c3870;
+  border-color: #0c3870;
+}
+
+.ht-conclusion-wrap--inline {
+  position: static;
+  height: auto;
+  overflow: visible;
+  left: unset;
+  top: unset;
+}
+
+/* ══════════════════════════════════════════════════════════
    Edit-mode toolbar  (.ht-edit-toolbar)
    ══════════════════════════════════════════════════════════ */
 .ht-edit-toolbar {
@@ -2412,10 +2516,10 @@
    View mode  (.ht-view-*)
    ══════════════════════════════════════════════════════════ */
 .ht-view-wrap {
-  margin: 16px 20px;
+  margin: 10px 16px;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -2449,11 +2553,11 @@
 .ht-view-fields {
   display: flex;
   flex-direction: column;
-  padding: 8px 0 4px;
+  padding: 4px 0 2px;
 }
 
 .ht-view-field {
-  padding: 16px 24px;
+  padding: 8px 16px;
   border-bottom: 1px solid #f3f4f6;
 }
 
@@ -2462,18 +2566,22 @@
 }
 
 .ht-view-field-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #6b7280;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .ht-view-field-content {
-  font-size: 14px;
+  font-size: 13px !important;
   color: #111827;
-  line-height: 1.65;
+  line-height: 1.5;
+}
+
+.ht-view-field-content * {
+  font-size: 13px !important;
 }
 
 .ht-view-field-content p {
@@ -2525,6 +2633,27 @@
   color: #111827;
 }
 
+.ht-past-appt-doctor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.ht-past-appt-doctor-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+.ht-past-appt-doctor-spec {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
 .ht-past-appt-back {
   display: inline-flex;
   align-items: center;
@@ -2548,7 +2677,8 @@
 }
 
 .ht-past-appt-loading,
-.ht-past-appt-empty {
+.ht-past-appt-empty,
+.ht-empty-fields-msg {
   padding: 40px 24px;
   text-align: center;
   font-size: 13px;

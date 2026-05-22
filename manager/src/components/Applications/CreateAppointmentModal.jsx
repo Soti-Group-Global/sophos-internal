@@ -534,7 +534,7 @@ function CreateAppointmentModal({ isOpen, onClose, doctorEmail, date, startTime,
       .map(d => ({
         doctorEmail: d.doctorEmail,
         doctorName: d.doctorName,
-        specialization: d.specialization || "",
+        specialization: d.specialtyId || null,
         serviceId: d.serviceId || null,
         serviceName: d.serviceName || "",
       }));

@@ -5960,7 +5960,33 @@
       "no_files_uploaded": "No files uploaded yet",
       "enter_comment": "Enter comment...",
       "current_badge": "Current",
-      "current_appointment": "Consultation"
+      "current_appointment": "Consultation",
+      "no_fields_filled": "The doctor has not filled in any fields yet.",
+      "toggle_normal": "Normal",
+      "toggle_report": "Report",
+      "download_pdf": "Download PDF",
+      "add": "Add",
+      "add_note": "Add Note",
+      "edit_note": "Edit Note",
+      "click_to_upload": "Click to choose files",
+      "select_test_label": "Select test",
+      "select_test_placeholder": "— select a test —",
+      "search_test": "Search…",
+      "no_entries": "No entries yet",
+      "group_deleted": "Group deleted",
+      "saved": "Saved",
+      "save_error": "Failed to save",
+      "failed_loading_appointment": "Failed to load appointment",
+      "select_test": "Select a test",
+      "add_file_or_text": "Add at least one file or text",
+      "select_file": "Select a file",
+      "back_to_current": "Back to current",
+      "no_history": "No history form data for this appointment.",
+      "view": "View",
+      "saving": "Saving...",
+      "export_pdf": "Export PDF",
+      "file_label": "File",
+      "upload_btn": "Upload"
     }
   },
   "rich_text_editor": {
@@ -6068,7 +6094,8 @@
       "payments": "Payments",
       "documents": "Documents",
       "telemedicine": "Telemedicine",
-      "followups": "Follow-ups"
+      "followups": "Follow-ups",
+      "service": "Services"
     }
   },
   "documents_tab": {
@@ -6425,5 +6452,26 @@
       "Ultrasound": "Ultrasound",
       "consultation": "Consultation"
     }
+  },
+  "service": {
+    "label": "Services",
+    "addedServices": "Added Services",
+    "addServices": "Add Service",
+    "noAddedPositions": "No services added yet.",
+    "code": "Code",
+    "name": "Name",
+    "price": "Price",
+    "action": "Action",
+    "unnamedPosition": "Unnamed position",
+    "rootFolder": "All Services",
+    "emptyFolder": "This folder is empty.",
+    "tabAll": "All",
+    "tabMy": "My Services",
+    "tabOther": "Other Services",
+    "loadFailed": "Failed to load services",
+    "remove": "Removed",
+    "removeFailed": "Failed to remove",
+    "positionAdded": "Added",
+    "saveFailed": "Failed to save"
   }
 }

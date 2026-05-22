@@ -5828,6 +5828,8 @@
     "add": "Добавить",
     "add_note": "Добавить заметку",
     "edit_note": "Редактировать заметку",
+    "file_label": "Файл",
+    "upload_btn": "Загрузить",
     "click_to_upload": "Нажмите для выбора файлов",
     "select_test_label": "Выберите тест",
     "select_test_placeholder": "— выберите тест —",
@@ -5935,7 +5937,33 @@
       "no_files_uploaded": "Файлы ещё не загружены",
       "enter_comment": "Введите комментарий...",
       "current_badge": "Текущая",
-      "current_appointment": "Консультация"
+      "current_appointment": "Консультация",
+      "add": "Добавить",
+      "add_note": "Добавить заметку",
+      "edit_note": "Редактировать заметку",
+      "click_to_upload": "Нажмите для выбора файлов",
+      "select_test_label": "Выберите тест",
+      "select_test_placeholder": "— выберите тест —",
+      "search_test": "Поиск…",
+      "no_entries": "Записей пока нет",
+      "group_deleted": "Группа удалена",
+      "saved": "Сохранено",
+      "save_error": "Не удалось сохранить",
+      "failed_loading_appointment": "Не удалось загрузить приём",
+      "select_test": "Выберите тест",
+      "add_file_or_text": "Добавьте хотя бы один файл или текст",
+      "select_file": "Выберите файл",
+      "back_to_current": "Вернуться к текущей",
+      "no_history": "Нет данных истории для этого приёма.",
+      "no_fields_filled": "Врач ещё не заполнил ни одного поля.",
+      "view": "Просмотреть",
+      "toggle_normal": "Обычный",
+      "toggle_report": "Отчёт",
+      "download_pdf": "Скачать PDF",
+      "saving": "Сохранение...",
+      "export_pdf": "Экспорт в PDF",
+      "file_label": "Файл",
+      "upload_btn": "Загрузить"
     }
   },
   "rich_text_editor": {
@@ -6033,6 +6061,7 @@
     "tabs": {
       "general": "Общая информация",
       "history": "История болезни",
+      "service": "Услуги",
       "medical": "Архив",
       "examinations": "Медицинские обследования",
       "treatment": "Планы лечения",
@@ -6399,5 +6428,26 @@
       "Ultrasound": "УЗИ",
       "consultation": "Консультация"
     }
+  },
+  "service": {
+    "label": "Услуги",
+    "addedServices": "Добавленные услуги",
+    "addServices": "Добавить услугу",
+    "noAddedPositions": "Услуги ещё не добавлены.",
+    "code": "Код",
+    "name": "Название",
+    "price": "Цена",
+    "action": "Действие",
+    "unnamedPosition": "Безымянная позиция",
+    "rootFolder": "Все услуги",
+    "emptyFolder": "Эта папка пуста.",
+    "tabAll": "Все",
+    "tabMy": "Мои услуги",
+    "tabOther": "Другие услуги",
+    "loadFailed": "Не удалось загрузить услуги",
+    "remove": "Удалено",
+    "removeFailed": "Не удалось удалить",
+    "positionAdded": "Добавлено",
+    "saveFailed": "Не удалось сохранить"
   }
 }

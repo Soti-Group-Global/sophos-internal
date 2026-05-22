@@ -921,11 +921,20 @@ function PatientForm() {
                   dateFormat="yyyy-MM-dd"
                   disabled={submitting}
                 />
-                <input className="pf-input" placeholder={tg("diseases.placeholder_diagnosis")} value={row.diagnosis || ""} onChange={(e) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, diagnosis: e.target.value } : r))} disabled={submitting} />
                 <DiseaseCodeSearch
+                  displayMode="name"
+                  placeholder={tg("diseases.placeholder_diagnosis")}
+                  value={row.diagnosis || ""}
+                  onChange={(val) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, diagnosis: val } : r))}
+                  onSelect={({ code, name }) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, diagnosis: name, icdCode: code } : r))}
+                  disabled={submitting}
+                />
+                <DiseaseCodeSearch
+                  displayMode="code"
                   placeholder={tg("diseases.placeholder_icd_code")}
                   value={row.icdCode || ""}
                   onChange={(val) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, icdCode: val } : r))}
+                  onSelect={({ code, name }) => setDiseases((p) => p.map((r, i) => i === idx ? { ...r, icdCode: code, diagnosis: name } : r))}
                   disabled={submitting}
                 />
                 <DoctorDropdown

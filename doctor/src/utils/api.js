@@ -396,7 +396,7 @@ export const updateDoctorDepartment = async (doctorId, department) => {
 export const uploadProfileImage = async (formData) => {
   try {
     const response = await api.post("/doctors/upload/profile-image", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { "Content-Type": "multipart/form-data " },
     });
     return response;
   } catch (error) {
@@ -1983,233 +1983,135 @@ export const getApplicationsByPatientId = async (patientId) => {
   }
 };
 
-// Application Laboratory Tests
-export const createApplicationLaboratoryTest = async (data) => {
-  try {
-    const response = await api.post("/application-laboratory-test", data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getAllApplicationLaboratoryTests = async (params = {}) => {
-  try {
-    const response = await api.get("/application-laboratory-test", { params });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const uploadApplicationLaboratoryTestFile = async (id, file) => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await api.post(`/application-laboratory-test/${id}/upload-file`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const removeApplicationLaboratoryTestFile = async (id, fileId) => {
-  try {
-    const path = `/application-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
-    const response = await api.delete(path);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const fetchApplicationLaboratoryTestFile = async (id, fileId) => {
-  try {
-    const path = `/application-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
-    const response = await api.get(path, { responseType: "blob" });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const addApplicationLaboratoryTestNote = async (id, data) => {
-  try {
-    const response = await api.patch(`/application-laboratory-test/${id}/note`, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const updateApplicationLaboratoryTestNote = async (id, noteId, data) => {
-  try {
-    const response = await api.patch(`/application-laboratory-test/${id}/note/${noteId}`, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const deleteApplicationLaboratoryTestNote = async (id, noteId) => {
-  try {
-    const path = noteId ? `/application-laboratory-test/${id}/note/${noteId}` : `/application-laboratory-test/${id}/note`;
-    const response = await api.delete(path);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getApplicationLaboratoryTestById = async (id) => {
-  try {
-    const response = await api.get(`/application-laboratory-test/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const updateApplicationLaboratoryTest = async (id, data) => {
-  try {
-    const response = await api.put(`/application-laboratory-test/${id}`, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const deleteApplicationLaboratoryTest = async (id) => {
-  try {
-    const response = await api.delete(`/application-laboratory-test/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// Application Instrumental Analysis (studies)
-export const createApplicationInstrumentalAnalysis = async (data) => {
-  try {
-    const response = await api.post("/application-instrumental-analysis", data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const updateApplicationInstrumentalAnalysis = async (id, data) => {
-  try {
-    const response = await api.put(`/application-instrumental-analysis/${encodeURIComponent(id)}`, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const uploadApplicationInstrumentalAnalysisFile = async (id, file) => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await api.post(`/application-instrumental-analysis/${id}/upload-file`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const removeApplicationInstrumentalAnalysisFile = async (id, fileId) => {
-  try {
-    const path = `/application-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
-    const response = await api.delete(path);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const fetchApplicationInstrumentalAnalysisFile = async (id, fileId) => {
-  try {
-    const path = `/application-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
-    const response = await api.get(path, { responseType: "blob" });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const addApplicationInstrumentalAnalysisNote = async (id, data) => {
-  try {
-    const response = await api.patch(`/application-instrumental-analysis/${id}/note`, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const updateApplicationInstrumentalAnalysisNote = async (id, noteId, data) => {
-  try {
-    const response = await api.patch(`/application-instrumental-analysis/${id}/note/${noteId}`, data);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const deleteApplicationInstrumentalAnalysisNote = async (id, noteId) => {
-  try {
-    const path = noteId ? `/application-instrumental-analysis/${id}/note/${noteId}` : `/application-instrumental-analysis/${id}/note`;
-    const response = await api.delete(path);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getAllApplicationInstrumentalAnalysis = async (params = {}) => {
-  try {
-    const response = await api.get("/application-instrumental-analysis", { params });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const deleteApplicationInstrumentalAnalysis = async (id) => {
-  try {
-    const response = await api.delete(`/application-instrumental-analysis/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// Application sections (morphologicalResearch / proceduresAndManipulations)
-export const getApplicationSection = async (applicationId, section) => {
-  const response = await api.get(`/application-section/${encodeURIComponent(applicationId)}/${section}`);
+// Patient-level sections — all four tabs (shared across appointments per patient)
+export const getPatientSection = async (patientId, section) => {
+  const response = await api.get(`/patient-sections/${encodeURIComponent(patientId)}/${section}`);
   return response.data;
 };
 
-export const uploadApplicationSectionFile = async (applicationId, section, file) => {
+export const uploadPatientSectionFile = async (patientId, section, file, label = "") => {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await api.post(`/application-section/${encodeURIComponent(applicationId)}/${section}/upload`, formData, {
+  if (label) formData.append("label", label);
+  const response = await api.post(`/patient-sections/${encodeURIComponent(patientId)}/${section}/upload`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 };
 
-export const removeApplicationSectionFile = async (applicationId, section, fileId) => {
-  const response = await api.delete(`/application-section/${encodeURIComponent(applicationId)}/${section}/file/${fileId}`);
+export const addPatientSectionTextEntry = async (patientId, section, text, label = "") => {
+  const response = await api.post(`/patient-sections/${encodeURIComponent(patientId)}/${section}/text`, { text, label });
   return response.data;
 };
 
-export const updateApplicationSectionComment = async (applicationId, section, value) => {
-  const response = await api.patch(`/application-section/${encodeURIComponent(applicationId)}/${section}/comment`, { value });
+export const getPatientSectionFile = async (patientId, section, fileId) => {
+  const response = await api.get(`/patient-sections/${encodeURIComponent(patientId)}/${section}/file/${fileId}`, { responseType: "blob" });
+  return response.data;
+};
+
+export const removePatientSectionFile = async (patientId, section, fileId) => {
+  const response = await api.delete(`/patient-sections/${encodeURIComponent(patientId)}/${section}/file/${fileId}`);
+  return response.data;
+};
+
+export const removePatientSectionEntry = async (patientId, section, entryId) => {
+  const response = await api.delete(`/patient-sections/${encodeURIComponent(patientId)}/${section}/entries/${entryId}`);
+  return response.data;
+};
+
+export const updatePatientSectionComment = async (patientId, section, value) => {
+  const response = await api.patch(`/patient-sections/${encodeURIComponent(patientId)}/${section}/comment`, { value });
+  return response.data;
+};
+
+// ── PatientLaboratoryTest / PatientInstrumentalAnalysis (catalog + per-patient files & notes) ──
+export const getAllApplicationLaboratoryTests = async (params = {}) => {
+  const response = await api.get("/patient-laboratory-test", { params });
+  return response.data;
+};
+export const createApplicationLaboratoryTest = async (data) => {
+  const response = await api.post("/patient-laboratory-test", data);
+  return response.data;
+};
+export const deleteApplicationLaboratoryTest = async (id) => {
+  const response = await api.delete(`/patient-laboratory-test/${id}`);
+  return response.data;
+};
+export const uploadApplicationLaboratoryTestFile = async (id, file, patientId) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (patientId) formData.append("patientId", patientId);
+  const response = await api.post(`/patient-laboratory-test/${id}/upload-file`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+export const fetchApplicationLaboratoryTestFile = async (id, fileId, patientId) => {
+  const path = `/patient-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
+  const response = await api.get(path, { responseType: "blob", params: { patientId } });
+  return response.data;
+};
+export const removeApplicationLaboratoryTestFile = async (id, fileId, patientId) => {
+  const path = `/patient-laboratory-test/${id}/file${fileId ? `/${fileId}` : ""}`;
+  const response = await api.delete(path, { params: { patientId } });
+  return response.data;
+};
+export const addApplicationLaboratoryTestNote = async (id, data, patientId) => {
+  const response = await api.patch(`/patient-laboratory-test/${id}/note`, { ...data, patientId });
+  return response.data;
+};
+export const updateApplicationLaboratoryTestNote = async (id, noteId, data, patientId) => {
+  const response = await api.patch(`/patient-laboratory-test/${id}/note/${noteId}`, { ...data, patientId });
+  return response.data;
+};
+export const deleteApplicationLaboratoryTestNote = async (id, noteId, patientId) => {
+  const path = noteId ? `/patient-laboratory-test/${id}/note/${noteId}` : `/patient-laboratory-test/${id}/note`;
+  const response = await api.delete(path, { params: { patientId } });
+  return response.data;
+};
+
+export const getAllApplicationInstrumentalAnalysis = async (params = {}) => {
+  const response = await api.get("/patient-instrumental-analysis", { params });
+  return response.data;
+};
+export const createApplicationInstrumentalAnalysis = async (data) => {
+  const response = await api.post("/patient-instrumental-analysis", data);
+  return response.data;
+};
+export const deleteApplicationInstrumentalAnalysis = async (id) => {
+  const response = await api.delete(`/patient-instrumental-analysis/${id}`);
+  return response.data;
+};
+export const uploadApplicationInstrumentalAnalysisFile = async (id, file, patientId) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (patientId) formData.append("patientId", patientId);
+  const response = await api.post(`/patient-instrumental-analysis/${id}/upload-file`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+export const fetchApplicationInstrumentalAnalysisFile = async (id, fileId, patientId) => {
+  const path = `/patient-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
+  const response = await api.get(path, { responseType: "blob", params: { patientId } });
+  return response.data;
+};
+export const removeApplicationInstrumentalAnalysisFile = async (id, fileId, patientId) => {
+  const path = `/patient-instrumental-analysis/${id}/file${fileId ? `/${fileId}` : ""}`;
+  const response = await api.delete(path, { params: { patientId } });
+  return response.data;
+};
+export const addApplicationInstrumentalAnalysisNote = async (id, data, patientId) => {
+  const response = await api.patch(`/patient-instrumental-analysis/${id}/note`, { ...data, patientId });
+  return response.data;
+};
+export const updateApplicationInstrumentalAnalysisNote = async (id, noteId, data, patientId) => {
+  const response = await api.patch(`/patient-instrumental-analysis/${id}/note/${noteId}`, { ...data, patientId });
+  return response.data;
+};
+export const deleteApplicationInstrumentalAnalysisNote = async (id, noteId, patientId) => {
+  const path = noteId ? `/patient-instrumental-analysis/${id}/note/${noteId}` : `/patient-instrumental-analysis/${id}/note`;
+  const response = await api.delete(path, { params: { patientId } });
   return response.data;
 };
 

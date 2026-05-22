@@ -1559,19 +1559,27 @@ const DiseasesSection = forwardRef(({ patient }, ref) => {
                       updateRow(row.id, "endDate", date ? date.toISOString().split('T')[0] : '')
                     }
                   />
-                  <input
-                    className="adp-text-input adp-diag-input"
+                  <DiseaseCodeSearch
+                    className="adp-diag-input"
+                    displayMode="name"
                     placeholder={t("diseases.placeholder_diagnosis")}
                     value={row.diagnosis}
-                    onChange={(e) =>
-                      updateRow(row.id, "diagnosis", e.target.value)
-                    }
+                    onChange={(val) => updateRow(row.id, "diagnosis", val)}
+                    onSelect={({ code, name }) => {
+                      updateRow(row.id, "diagnosis", name);
+                      updateRow(row.id, "icdCode", code);
+                    }}
                   />
                   <DiseaseCodeSearch
                     className="adp-diag-input"
+                    displayMode="code"
                     placeholder={t("diseases.placeholder_icd_code")}
                     value={row.icdCode}
                     onChange={(val) => updateRow(row.id, "icdCode", val)}
+                    onSelect={({ code, name }) => {
+                      updateRow(row.id, "icdCode", code);
+                      updateRow(row.id, "diagnosis", name);
+                    }}
                   />
                   <DoctorAutocomplete
                     value={row.doctor}
@@ -1789,19 +1797,27 @@ const FinalDiagnosisSection = forwardRef(({ patient }, ref) => {
                       updateRow(row.id, "date", date ? date.toISOString().split('T')[0] : '')
                     }
                   />
-                  <input
-                    className="adp-text-input adp-diag-input"
+                  <DiseaseCodeSearch
+                    className="adp-diag-input"
+                    displayMode="name"
                     placeholder={t("final_diagnosis.placeholder_diagnosis")}
                     value={row.diagnosis}
-                    onChange={(e) =>
-                      updateRow(row.id, "diagnosis", e.target.value)
-                    }
+                    onChange={(val) => updateRow(row.id, "diagnosis", val)}
+                    onSelect={({ code, name }) => {
+                      updateRow(row.id, "diagnosis", name);
+                      updateRow(row.id, "icdCode", code);
+                    }}
                   />
                   <DiseaseCodeSearch
                     className="adp-diag-input"
+                    displayMode="code"
                     placeholder={t("final_diagnosis.placeholder_icd")}
                     value={row.icdCode}
                     onChange={(val) => updateRow(row.id, "icdCode", val)}
+                    onSelect={({ code, name }) => {
+                      updateRow(row.id, "icdCode", code);
+                      updateRow(row.id, "diagnosis", name);
+                    }}
                   />
                   <select
                     className="adp-text-input adp-diag-input adp-select"

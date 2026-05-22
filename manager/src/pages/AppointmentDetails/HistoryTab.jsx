@@ -34,10 +34,10 @@ import {
   addApplicationInstrumentalAnalysisNote,
   updateApplicationInstrumentalAnalysisNote,
   deleteApplicationInstrumentalAnalysisNote,
-  getApplicationSection,
-  uploadApplicationSectionFile,
-  removeApplicationSectionFile,
-  updateApplicationSectionComment,
+  getPatientSection,
+  uploadPatientSectionFile,
+  removePatientSectionFile,
+  updatePatientSectionComment,
   updateHistoryForm,
 } from "../../utils/api";
 import RichTextEditor from "../../components/RichTextEditor/RichTextEditor";
@@ -250,12 +250,11 @@ const KEY_TITLE_MAP = {};
 }(HISTORY_SECTIONS));
 
 const HISTORY_NAV_ITEMS = [
-  { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", icon: <FiChevronDown size={14} />, sectionId: "complaints" },
+  { id: "specialistConsultation", labelKey: "sidebar.specialistConsultation", sectionId: "complaints" },
   { id: "laboratoryAnalysis", labelKey: "sidebar.laboratoryAnalysis", sectionId: "examinationPlan" },
   { id: "studiesManipulations", labelKey: "sidebar.studiesManipulations", sectionId: "physicalExam" },
   { id: "morphologicalResearch", labelKey: "sidebar.morphologicalResearch", sectionId: "examinationResults" },
   { id: "proceduresManipulations", labelKey: "sidebar.proceduresManipulations", sectionId: "treatmentPlan" },
-  { id: "conclusion", labelKey: "sidebar.conclusion", sectionId: "clinicalDiagnosis" },
 ];
 
 
@@ -364,6 +363,10 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
   const [isSavingForm, setIsSavingForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(true);
   const editModeInitRef = useRef(false);
+  const [consultationView, setConsultationView] = useState("normal");
+  const [pastConsultationView, setPastConsultationView] = useState("normal");
+  const currentReportRef = useRef(null);
+  const pastReportRef = useRef(null);
 
   // Auto-select the current appointment once the application data arrives
   useEffect(() => {
@@ -505,6 +508,7 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
       setSelectedApptData(null);
       return;
     }
+    setPastConsultationView("normal");
     setSelectedApptLoading(true);
     try {
       const res = await getApplication(apptId);
@@ -522,10 +526,14 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
       setActiveNavItem(item.id);
 
       if (item.id === "specialistConsultation") {
+        setIsLabPanelOpen(false);
+        setIsStudyPanelOpen(false);
+        setIsAppointmentsPanelOpen(true);
         setSelectedTest(null);
-        setIsAppointmentsPanelOpen((prev) => !prev);
       } else if (item.id === "laboratoryAnalysis") {
-        setIsLabPanelOpen((prev) => !prev);
+        setIsAppointmentsPanelOpen(false);
+        setIsStudyPanelOpen(false);
+        setIsLabPanelOpen(true);
         const first = labTests.find((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
         if (first) {
           setSelectedTest(first);
@@ -538,7 +546,9 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
           setSelectedTestMode(null);
         }
       } else if (item.id === "studiesManipulations") {
-        setIsStudyPanelOpen((prev) => !prev);
+        setIsAppointmentsPanelOpen(false);
+        setIsLabPanelOpen(false);
+        setIsStudyPanelOpen(true);
         const first = studyTests.find((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
         if (first) {
           setSelectedTest(first);
@@ -551,6 +561,9 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
           setSelectedTestMode(null);
         }
       } else {
+        setIsAppointmentsPanelOpen(false);
+        setIsLabPanelOpen(false);
+        setIsStudyPanelOpen(false);
         setSelectedTest(null);
       }
     },
@@ -564,23 +577,25 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
     try { localStorage.setItem(lsKey, JSON.stringify(batchMap)); } catch {}
   }, [batchMap, appId, lsKey]);
 
-  /* nav item id → Application schema field name */
+  /* nav item id → PatientManagedSection field name */
   const SECTION_SCHEMA = {
     morphologicalResearch: "morphologicalResearch",
     proceduresManipulations: "proceduresAndManipulations",
   };
   const PANEL_NAV_IDS = Object.keys(SECTION_SCHEMA);
+  const pid = patient?.patientId || patient?._id || application?.patientId;
 
   useEffect(() => {
     if (!PANEL_NAV_IDS.includes(activeNavItem)) return;
+    if (!pid) return;
     const schemaKey = SECTION_SCHEMA[activeNavItem];
-    getApplicationSection(appId, schemaKey)
+    getPatientSection(pid, schemaKey)
       .then((data) => {
         setSectionData((prev) => ({ ...prev, [activeNavItem]: data }));
         setSectionDirty((prev) => ({ ...prev, [activeNavItem]: false }));
       })
       .catch(() => {});
-  }, [activeNavItem, appId]);
+  }, [activeNavItem, pid]);
 
   const handleSectionFileChange = useCallback(async (navId, e) => {
     const files = Array.from(e.target.files || []);
@@ -590,7 +605,7 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
     setSectionUploading((prev) => ({ ...prev, [navId]: true }));
     try {
       for (const file of files) {
-        const result = await uploadApplicationSectionFile(appId, schemaKey, file);
+        const result = await uploadPatientSectionFile(pid, schemaKey, file);
         setSectionData((prev) => ({ ...prev, [navId]: result.section }));
       }
     } catch (err) {
@@ -598,28 +613,28 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
     } finally {
       setSectionUploading((prev) => ({ ...prev, [navId]: false }));
     }
-  }, [appId]);
+  }, [pid]);
 
   const handleSectionFileRemove = useCallback(async (navId, fileId) => {
     const schemaKey = SECTION_SCHEMA[navId];
     try {
-      const result = await removeApplicationSectionFile(appId, schemaKey, fileId);
+      const result = await removePatientSectionFile(pid, schemaKey, fileId);
       setSectionData((prev) => ({ ...prev, [navId]: result.section }));
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to remove file");
     }
-  }, [appId]);
+  }, [pid]);
 
   const handleSectionCommentSave = useCallback(async (navId, value) => {
     const schemaKey = SECTION_SCHEMA[navId];
     try {
-      const result = await updateApplicationSectionComment(appId, schemaKey, value);
+      const result = await updatePatientSectionComment(pid, schemaKey, value);
       setSectionData((prev) => ({ ...prev, [navId]: result.section }));
       setSectionDirty((prev) => ({ ...prev, [navId]: false }));
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to save comment");
     }
-  }, [appId]);
+  }, [pid]);
 
   const openLabUploadModal = useCallback((section, e, preSelectTestId = "") => {
     if (e?.stopPropagation) e.stopPropagation();
@@ -653,6 +668,7 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
       toast.error(t("history_tab.add_file_or_text", { defaultValue: "Add at least one file or text" })); return;
     }
     setAddModalSubmitting(true);
+    const pid = patient?.patientId || patient?._id || application?.patientId;
     const batchId = `b${Date.now()}`;
     const newBatchEntries = {};
     try {
@@ -662,8 +678,8 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
 
       for (const file of addModalFiles) {
         const result = addModalMode === "studiesManipulations"
-          ? await uploadApplicationInstrumentalAnalysisFile(addModalTestId, file)
-          : await uploadApplicationLaboratoryTestFile(addModalTestId, file);
+          ? await uploadApplicationInstrumentalAnalysisFile(addModalTestId, file, pid)
+          : await uploadApplicationLaboratoryTestFile(addModalTestId, file, pid);
         latestFileTest = result?.data || result;
         // Find newly added file IDs and tag them with this batch
         (latestFileTest.files || []).forEach((f) => {
@@ -679,8 +695,8 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
       if (addModalTextPlain) {
         const prevNoteIds = new Set((latestFileTest?.notes || selectedTest?.notes || []).map((n) => String(n._id)));
         const noteResult = addModalMode === "studiesManipulations"
-          ? await addApplicationInstrumentalAnalysisNote(addModalTestId, { note: addModalText })
-          : await addApplicationLaboratoryTestNote(addModalTestId, { note: addModalText });
+          ? await addApplicationInstrumentalAnalysisNote(addModalTestId, { note: addModalText }, pid)
+          : await addApplicationLaboratoryTestNote(addModalTestId, { note: addModalText }, pid);
         latestNoteTest = noteResult?.data || noteResult;
         (latestNoteTest.notes || []).forEach((n) => {
           if (!prevNoteIds.has(String(n._id))) newBatchEntries[String(n._id)] = batchId;
@@ -946,10 +962,11 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
     setIsUploadingTestFile(true);
     setTestFileUploadError(null);
 
+    const pid = patient?.patientId || patient?._id || application?.patientId;
     try {
       const response = selectedTestMode === "studiesManipulations"
-        ? await uploadApplicationInstrumentalAnalysisFile(selectedTest._id, file)
-        : await uploadApplicationLaboratoryTestFile(selectedTest._id, file);
+        ? await uploadApplicationInstrumentalAnalysisFile(selectedTest._id, file, pid)
+        : await uploadApplicationLaboratoryTestFile(selectedTest._id, file, pid);
       const updated = response?.data || response;
       setSelectedTest(updated);
       if (selectedTestMode === "studiesManipulations") {
@@ -1035,10 +1052,11 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
 
   const handleRemoveTestFile = useCallback(async (fileId) => {
     if (!selectedTest || !selectedTestMode || !fileId) return;
+    const pid = patient?.patientId || patient?._id || application?.patientId;
     try {
       const response = selectedTestMode === "studiesManipulations"
-        ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
-        : await removeApplicationLaboratoryTestFile(selectedTest._id, fileId);
+        ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, fileId, pid)
+        : await removeApplicationLaboratoryTestFile(selectedTest._id, fileId, pid);
       const updated = response?.data || response;
       setSelectedTest(updated);
       if (selectedTestMode === "studiesManipulations") {
@@ -1055,10 +1073,11 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
 
   const handleViewTestFile = useCallback(async (fileId) => {
     if (!selectedTest || !selectedTestMode || !fileId) return;
+    const pid = patient?.patientId || patient?._id || application?.patientId;
     try {
       const blob = selectedTestMode === "studiesManipulations"
-        ? await fetchApplicationInstrumentalAnalysisFile(selectedTest._id, fileId)
-        : await fetchApplicationLaboratoryTestFile(selectedTest._id, fileId);
+        ? await fetchApplicationInstrumentalAnalysisFile(selectedTest._id, fileId, pid)
+        : await fetchApplicationLaboratoryTestFile(selectedTest._id, fileId, pid);
       const url = window.URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener,noreferrer");
       setTimeout(() => window.URL.revokeObjectURL(url), 10000);
@@ -1070,10 +1089,11 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
 
   const handleDeleteTestNote = useCallback(async (noteId) => {
     if (!selectedTest || !selectedTestMode || !noteId) return;
+    const pid = patient?.patientId || patient?._id || application?.patientId;
     try {
       const response = selectedTestMode === "studiesManipulations"
-        ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, noteId)
-        : await deleteApplicationLaboratoryTestNote(selectedTest._id, noteId);
+        ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, noteId, pid)
+        : await deleteApplicationLaboratoryTestNote(selectedTest._id, noteId, pid);
       const updated = response?.data || response;
       setSelectedTest(updated);
       if (selectedTestMode === "studiesManipulations") {
@@ -1091,20 +1111,21 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
 
   const handleDeleteGroup = useCallback(async (group) => {
     if (!selectedTest || !selectedTestMode) return;
+    const pid = patient?.patientId || patient?._id || application?.patientId;
     const files = group.filter((i) => i._type === "file");
     const notes = group.filter((i) => i._type === "note");
     try {
       let updatedTest = selectedTest;
       for (const item of files) {
         const res = selectedTestMode === "studiesManipulations"
-          ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, item.fileId)
-          : await removeApplicationLaboratoryTestFile(selectedTest._id, item.fileId);
+          ? await removeApplicationInstrumentalAnalysisFile(selectedTest._id, item.fileId, pid)
+          : await removeApplicationLaboratoryTestFile(selectedTest._id, item.fileId, pid);
         updatedTest = res?.data || res;
       }
       for (const item of notes) {
         const res = selectedTestMode === "studiesManipulations"
-          ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, item._id)
-          : await deleteApplicationLaboratoryTestNote(selectedTest._id, item._id);
+          ? await deleteApplicationInstrumentalAnalysisNote(selectedTest._id, item._id, pid)
+          : await deleteApplicationLaboratoryTestNote(selectedTest._id, item._id, pid);
         updatedTest = res?.data || res;
       }
       setSelectedTest(updatedTest);
@@ -1183,9 +1204,11 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
   }, []);
 
   useEffect(() => {
+    const pid = patient?.patientId || patient?._id || application?.patientId;
+
     const fetchLabTests = async () => {
       try {
-        const response = await getAllApplicationLaboratoryTests();
+        const response = await getAllApplicationLaboratoryTests(pid ? { patientId: pid } : {});
         const tests = Array.isArray(response?.data) ? response.data : response || [];
         setLabTests(tests);
         setSelectedLabTests(
@@ -1201,7 +1224,7 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
 
     const fetchStudyTests = async () => {
       try {
-        const response = await getAllApplicationInstrumentalAnalysis();
+        const response = await getAllApplicationInstrumentalAnalysis(pid ? { patientId: pid } : {});
         const tests = Array.isArray(response?.data) ? response.data : response || [];
         setStudyTests(tests);
         setSelectedStudyTests(
@@ -1217,7 +1240,7 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
 
     fetchLabTests();
     fetchStudyTests();
-  }, []);
+  }, [application, patient]);
 
   /** Returns templates for a specific field key */
   const getFieldTemplates = useCallback(
@@ -1464,7 +1487,7 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
   
   return (
     <>
-      <div className="ht-shell">
+      <div className={`ht-shell${(isLabPanelOpen || isStudyPanelOpen || isAppointmentsPanelOpen) ? " panel-open" : ""}`}>
         <aside className="ht-sub-sidebar" aria-label={t("sidebar_title")}>
           <div className="ht-sub-sidebar-list">
             {HISTORY_NAV_ITEMS.map((item) => (
@@ -1498,113 +1521,115 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
                   </span>
                 </div>
 
-                {item.id === "laboratoryAnalysis" && isLabPanelOpen && (() => {
-                  const withFiles = labTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
-                  return withFiles.length === 0 ? null : (
-                    <div className="ht-tests-panel">
-                      {withFiles.map((test) => (
-                        <button
-                          key={test._id}
-                          type="button"
-                          className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`}
-                          onClick={() => handleSelectTest(test, "laboratoryAnalysis")}
-                        >
-                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                {item.id === "studiesManipulations" && isStudyPanelOpen && (() => {
-                  const withFiles = studyTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
-                  return withFiles.length === 0 ? null : (
-                    <div className="ht-tests-panel">
-                      {withFiles.map((test) => (
-                        <button
-                          key={test._id}
-                          type="button"
-                          className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`}
-                          onClick={() => handleSelectTest(test, "studiesManipulations")}
-                        >
-                          <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                {item.id === "specialistConsultation" && isAppointmentsPanelOpen && (
-                  <div className="ht-appointments-panel">
-                    {isAppointmentsLoading ? (
-                      <div className="ht-appointments-loading">
-                        {t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}
-                      </div>
-                    ) : appointmentsError ? (
-                      <div className="ht-appointments-error">{appointmentsError}</div>
-                    ) : (
-                      <ul className="ht-appointments-list">
-                        {application && (() => {
-                          const name =
-                            application.service?.name?.ru ||
-                            application.service?.name?.en ||
-                            (Array.isArray(application.services) && application.services[0]?.name?.ru) ||
-                            (Array.isArray(application.services) && application.services[0]?.name?.en) ||
-                            t("history_tab.current_appointment", { defaultValue: "Consultation" });
-                          const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
-                          const time = application.startTime
-                            ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}`
-                            : "";
-                          const isSelected = selectedConsultationId === application.applicationId;
-                          return (
-                            <li
-                              className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => handleSelectPastAppointment(application.applicationId)}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(application.applicationId); }}
-                            >
-                              <div className="ht-appointment-current-row">
-                                <span className="ht-appointment-name">{name}</span>
-                                <span className="ht-appointment-current-badge">
-                                  {t("history_tab.current_badge", { defaultValue: "Current" })}
-                                </span>
-                              </div>
-                              <span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span>
-                            </li>
-                          );
-                        })()}
-                        {patientAppointments.map((appt) => {
-                          const apptId = appt.applicationId || appt._id;
-                          const isSelected = selectedConsultationId === apptId;
-                          const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
-                          const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
-                          const label = t("history_tab.current_appointment", { defaultValue: "Consultation" });
-                          return (
-                            <li
-                              key={apptId}
-                              className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => handleSelectPastAppointment(apptId)}
-                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(apptId); }}
-                            >
-                              <span className="ht-appointment-name">{label}</span>
-                              <span className="ht-appointment-meta">
-                                {appointmentDate}
-                                {appointmentTime ? ` · ${appointmentTime}` : ""}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                )}
               </React.Fragment>
             ))}
           </div>
         </aside>
+
+        {(isLabPanelOpen || isStudyPanelOpen || isAppointmentsPanelOpen) && (
+          <aside className="ht-sub-panel">
+            {isLabPanelOpen && (() => {
+              const withFiles = labTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+              return withFiles.length === 0 ? null : (
+                <div className="ht-tests-panel">
+                  {withFiles.map((test) => (
+                    <button
+                      key={test._id}
+                      type="button"
+                      className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`}
+                      onClick={() => handleSelectTest(test, "laboratoryAnalysis")}
+                    >
+                      <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {isStudyPanelOpen && (() => {
+              const withFiles = studyTests.filter((t) => (Array.isArray(t.files) && t.files.length > 0) || t.fileId);
+              return withFiles.length === 0 ? null : (
+                <div className="ht-tests-panel">
+                  {withFiles.map((test) => (
+                    <button
+                      key={test._id}
+                      type="button"
+                      className={`ht-tests-panel-item${selectedTest?._id === test._id ? " ht-tests-panel-item--active" : ""}`}
+                      onClick={() => handleSelectTest(test, "studiesManipulations")}
+                    >
+                      <span className="ht-tests-panel-name">{test.name?.ru || test.name?.en || ""}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {isAppointmentsPanelOpen && (
+              <div className="ht-appointments-panel">
+                {isAppointmentsLoading ? (
+                  <div className="ht-appointments-loading">
+                    {t("history_tab.loading_appointments", { defaultValue: "Loading appointments..." })}
+                  </div>
+                ) : appointmentsError ? (
+                  <div className="ht-appointments-error">{appointmentsError}</div>
+                ) : (
+                  <ul className="ht-appointments-list">
+                    {application && (() => {
+                      const _appSpec = application.doctors?.[0]?.specialization;
+                      const name = (_appSpec && typeof _appSpec === "object" ? (_appSpec.name_ru || _appSpec.name_en) : _appSpec) || t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                      const date = application.date ? formatDate(application.date) : formatDate(application.createdAt);
+                      const time = application.startTime
+                        ? `${formatTime(application.startTime)}${application.endTime ? ` - ${formatTime(application.endTime)}` : ""}`
+                        : "";
+                      const isSelected = selectedConsultationId === application.applicationId;
+                      return (
+                        <li
+                          className={`ht-appointment-item ht-appointment-item--current${isSelected ? " ht-appointment-item--selected" : ""}`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleSelectPastAppointment(application.applicationId)}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(application.applicationId); }}
+                        >
+                          <div className="ht-appointment-current-row">
+                            <span className="ht-appointment-name">{name}</span>
+                            <span className="ht-appointment-current-badge">
+                              {t("history_tab.current_badge", { defaultValue: "Current" })}
+                            </span>
+                          </div>
+                          <span className="ht-appointment-meta">{date}{time ? ` · ${time}` : ""}</span>
+                        </li>
+                      );
+                    })()}
+                    {patientAppointments.map((appt) => {
+                      const apptId = appt.applicationId || appt._id;
+                      const isSelected = selectedConsultationId === apptId;
+                      const appointmentDate = appt.date ? formatDate(appt.date) : formatDate(appt.createdAt);
+                      const appointmentTime = appt.startTime ? `${formatTime(appt.startTime)}${appt.endTime ? ` - ${formatTime(appt.endTime)}` : ""}` : "";
+                      const _apptSpec = appt.doctors?.[0]?.specialization;
+                      const label = (_apptSpec && typeof _apptSpec === "object" ? (_apptSpec.name_ru || _apptSpec.name_en) : _apptSpec) || t("history_tab.current_appointment", { defaultValue: "Consultation" });
+                      return (
+                        <li
+                          key={apptId}
+                          className={`ht-appointment-item${isSelected ? " ht-appointment-item--selected" : ""}`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleSelectPastAppointment(apptId)}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSelectPastAppointment(apptId); }}
+                        >
+                          <span className="ht-appointment-name">{label}</span>
+                          <span className="ht-appointment-meta">
+                            {appointmentDate}
+                            {appointmentTime ? ` · ${appointmentTime}` : ""}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </aside>
+        )}
 
         <div className="ht-main-column" ref={containerRef}>
           {selectedTest ? (
@@ -1883,7 +1908,19 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
           })() : selectedConsultationId && selectedConsultationId !== application?.applicationId ? (
             selectedApptLoading ? (
               <div className="ht-past-appt-loading">{t("history_tab.loading_appointments", { defaultValue: "Loading..." })}</div>
-            ) : selectedApptData ? (
+            ) : selectedApptData ? (() => {
+              const pastDocEmail = selectedApptData.doctorEmail || selectedApptData.doctor?.email;
+              const currDocEmail = application?.doctorEmail;
+              const isDifferentDoctor = pastDocEmail && currDocEmail && pastDocEmail !== currDocEmail;
+              const pastDoc = selectedApptData.doctor;
+              const pastDocName = pastDoc
+                ? [pastDoc.lastName, pastDoc.firstName, pastDoc.middleName].filter(Boolean).join(" ")
+                : selectedApptData.doctors?.[0]?.doctorName || null;
+              const _pastSpec = selectedApptData.doctors?.[0]?.specialization;
+              const pastDocSpec = _pastSpec && typeof _pastSpec === "object"
+                ? (_pastSpec.name_ru || _pastSpec.name_en)
+                : _pastSpec || null;
+              return (
               <div className="ht-past-appt-view">
                 <div className="ht-past-appt-header">
                   <div className="ht-past-appt-meta">
@@ -1892,6 +1929,12 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
                       {selectedApptData.date ? formatDate(selectedApptData.date) : ""}
                       {selectedApptData.startTime ? ` · ${formatTime(selectedApptData.startTime)}${selectedApptData.endTime ? ` - ${formatTime(selectedApptData.endTime)}` : ""}` : ""}
                     </span>
+                    {isDifferentDoctor && (pastDocName || pastDocSpec) && (
+                      <span className="ht-past-appt-doctor">
+                        {pastDocName && <span className="ht-past-appt-doctor-name">{pastDocName}</span>}
+                        {pastDocSpec && <span className="ht-past-appt-doctor-spec">{pastDocSpec}</span>}
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -1902,84 +1945,124 @@ const HistoryTab = forwardRef(({ application, patient, onHistoryFormSaved }, ref
                     {t("history_tab.back_to_current", { defaultValue: "Back to current" })}
                   </button>
                 </div>
-                <div className="ht-view-fields">
-                  {ALL_KEYS.map((key) => {
-                    const hf = selectedApptData.historyForm || {};
+                <div className="ht-view-toggle-bar">
+                  <div className="ht-toggle-group">
+                    <button
+                      type="button"
+                      className={`ht-view-toggle-btn${pastConsultationView === "normal" ? " ht-view-toggle-btn--active" : ""}`}
+                      onClick={() => setPastConsultationView("normal")}
+                    >
+                      {t("history_tab.toggle_normal", { defaultValue: "Normal" })}
+                    </button>
+                    <button
+                      type="button"
+                      className={`ht-view-toggle-btn${pastConsultationView === "report" ? " ht-view-toggle-btn--active" : ""}`}
+                      onClick={() => setPastConsultationView("report")}
+                    >
+                      {t("history_tab.toggle_report", { defaultValue: "Report" })}
+                    </button>
+                  </div>
+                  {pastConsultationView === "report" && (
+                    <button type="button" className="ht-dl-pdf-btn" onClick={() => pastReportRef.current?.download()}>
+                      <Download size={14} />
+                      {t("history_tab.download_pdf", { defaultValue: "Download PDF" })}
+                    </button>
+                  )}
+                </div>
+                {pastConsultationView === "report" ? (
+                  <div className="ht-conclusion-wrap ht-conclusion-wrap--inline">
+                    <AppointmentReport ref={pastReportRef} booking={selectedApptData} patient={patient} pastConsultations={patientAppointments} hideToolbar />
+                  </div>
+                ) : (() => {
+                  const hf = selectedApptData.historyForm || {};
+                  const filledPastFields = ALL_KEYS.filter((key) => {
                     const f = hf[key];
-                    const val = typeof f === "object" ? f?.value : f;
-                    if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
-                    return (
-                      <div key={key} className="ht-view-field">
-                        <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
-                        <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="ht-past-appt-empty">{t("history_tab.no_history", { defaultValue: "No history form data for this appointment." })}</div>
-            )
-          ) : isEditMode ? (
-            <>
-              <div className="ht-edit-toolbar">
-                <button type="button" className="ht-view-mode-btn" onClick={enterViewMode}>
-                  <FiEye size={14} />
-                  {t("history_tab.view", { defaultValue: "View" })}
-                </button>
-              </div>
-              <div className="ht-container">
-                <div className="ht-first-appt-bar">
-                  <label className="ht-first-appt-label">
-                    <input
-                      type="checkbox"
-                      className="ht-first-appt-checkbox"
-                      checked={!!form.isFirstAppointment}
-                      onChange={(e) => setForm((prev) => ({ ...prev, isFirstAppointment: e.target.checked, isRepetitiveAppointment: e.target.checked ? false : prev.isRepetitiveAppointment }))}
-                    />
-                    <span>{t("first_appointment")}</span>
-                  </label>
-                  <label className="ht-first-appt-label">
-                    <input
-                      type="checkbox"
-                      className="ht-first-appt-checkbox"
-                      checked={!!form.isRepetitiveAppointment}
-                      onChange={(e) => setForm((prev) => ({ ...prev, isRepetitiveAppointment: e.target.checked, isFirstAppointment: e.target.checked ? false : prev.isFirstAppointment }))}
-                    />
-                    <span>{t("repetitive_appointment")}</span>
-                  </label>
-                </div>
-                {HISTORY_SECTIONS.map((s) => renderSection(s))}
-              </div>
-              <div className="ht-form-save-bar">
-                <button
-                  type="button"
-                  className="ht-form-save-btn"
-                  onClick={handleSaveForm}
-                  disabled={isSavingForm}
-                >
-                  {isSavingForm
-                    ? t("history_tab.saving", { defaultValue: "Saving..." })
-                    : t("history_tab.save", { defaultValue: "Save" })}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="ht-view-wrap">
-              <div className="ht-view-header" style={{ display: "none" }}>
-              </div>
-              <div className="ht-view-fields">
-                {ALL_KEYS.map((key) => {
-                  const val = form[key]?.value;
-                  if (!val?.replace(/<[^>]*>/g, "").trim()) return null;
-                  return (
-                    <div key={key} className="ht-view-field">
-                      <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
-                      <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                    const v = typeof f === "object" ? f?.value : f;
+                    return v?.replace(/<[^>]*>/g, "").trim();
+                  });
+                  return filledPastFields.length === 0 ? (
+                    <div className="ht-empty-fields-msg">
+                      {t("history_tab.no_fields_filled", { defaultValue: "The doctor has not filled in any fields yet." })}
+                    </div>
+                  ) : (
+                    <div className="ht-view-fields">
+                      {filledPastFields.map((key) => {
+                        const f = hf[key];
+                        const val = typeof f === "object" ? f?.value : f;
+                        return (
+                          <div key={key} className="ht-view-field">
+                            <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                            <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: val }} />
+                          </div>
+                        );
+                      })}
                     </div>
                   );
-                })}
+                })()}
               </div>
+              );
+            })() : (
+              <div className="ht-past-appt-empty">{t("history_tab.no_history", { defaultValue: "No history form data for this appointment." })}</div>
+            )
+          ) : (
+            <div className="ht-past-appt-view">
+              <div className="ht-past-appt-header">
+                <div className="ht-past-appt-meta">
+                  <span className="ht-past-appt-label">{t("history_tab.current_appointment", { defaultValue: "Consultation" })}</span>
+                  <span className="ht-past-appt-date">
+                    {application?.date ? formatDate(application.date) : ""}
+                    {application?.startTime ? ` · ${formatTime(application.startTime)}${application?.endTime ? ` - ${formatTime(application.endTime)}` : ""}` : ""}
+                  </span>
+                </div>
+              </div>
+              <div className="ht-view-toggle-bar">
+                <div className="ht-toggle-group">
+                  <button
+                    type="button"
+                    className={`ht-view-toggle-btn${consultationView === "normal" ? " ht-view-toggle-btn--active" : ""}`}
+                    onClick={() => setConsultationView("normal")}
+                  >
+                    {t("history_tab.toggle_normal", { defaultValue: "Normal" })}
+                  </button>
+                  <button
+                    type="button"
+                    className={`ht-view-toggle-btn${consultationView === "report" ? " ht-view-toggle-btn--active" : ""}`}
+                    onClick={() => setConsultationView("report")}
+                  >
+                    {t("history_tab.toggle_report", { defaultValue: "Report" })}
+                  </button>
+                </div>
+                {consultationView === "report" && (
+                  <button type="button" className="ht-dl-pdf-btn" onClick={() => currentReportRef.current?.download()}>
+                    <Download size={14} />
+                    {t("history_tab.download_pdf", { defaultValue: "Download PDF" })}
+                  </button>
+                )}
+              </div>
+
+              {consultationView === "report" ? (
+                <div className="ht-conclusion-wrap ht-conclusion-wrap--inline">
+                  <AppointmentReport ref={currentReportRef} booking={application} patient={patient} pastConsultations={patientAppointments} hideToolbar />
+                </div>
+              ) : (() => {
+                const filledFields = ALL_KEYS.filter((key) => form[key]?.value?.replace(/<[^>]*>/g, "").trim());
+                return filledFields.length === 0 ? (
+                  <div className="ht-empty-fields-msg">
+                    {t("history_tab.no_fields_filled", { defaultValue: "The doctor has not filled in any fields yet." })}
+                  </div>
+                ) : (
+                  <div className="ht-view-wrap">
+                    <div className="ht-view-fields">
+                      {filledFields.map((key) => (
+                        <div key={key} className="ht-view-field">
+                          <div className="ht-view-field-label">{t(KEY_TITLE_MAP[key])}</div>
+                          <div className="ht-view-field-content" dangerouslySetInnerHTML={{ __html: form[key]?.value }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

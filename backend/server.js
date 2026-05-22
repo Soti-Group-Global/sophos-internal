@@ -96,10 +96,10 @@ const auditLogsRoutes = require("./routes/auditLogs");
 const corporateRegisterRoutes = require('./routes/website/corporateRegisterRoutes');
 const corporateFormRegistrationRoutes = require('./routes/website/corporateFormRegistrationRoutes');
 
-//Instumental analysis and laboratory test routes
-const applicationLaboratoryTestRoutes = require("./routes/applicationLaboratoryTestRoutes");
-const applicationInstrumentalAnalysisRoutes = require("./routes/applicationInstrumentalAnalysisRoutes");
 const applicationSectionRoutes = require("./routes/applicationSectionRoutes");
+const patientSectionRoutes = require("./routes/patientSectionRoutes");
+const patientLaboratoryTestRoutes = require("./routes/patientLaboratoryTestRoutes");
+const patientInstrumentalAnalysisRoutes = require("./routes/patientInstrumentalAnalysisRoutes");
 
 //Categories and services routes
 const serviceCategoryRoutes = require("./routes/serviceCategoryRoutes");
@@ -275,9 +275,10 @@ app.use("/api/assistants", assistantRoutes);
 app.use("/api/specialties", specialtyRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/application-laboratory-test", applicationLaboratoryTestRoutes);
-app.use("/api/application-instrumental-analysis", applicationInstrumentalAnalysisRoutes);
 app.use("/api/application-section", applicationSectionRoutes);
+app.use("/api/patient-sections", patientSectionRoutes);
+app.use("/api/patient-laboratory-test", patientLaboratoryTestRoutes);
+app.use("/api/patient-instrumental-analysis", patientInstrumentalAnalysisRoutes);
 app.use("/api/early-detection", earlyDetectionFormRoutes);
 app.use("/api/head-doctors", headDoctorRoutes);
 app.use("/api/head-assistants", headAssistantRoutes);

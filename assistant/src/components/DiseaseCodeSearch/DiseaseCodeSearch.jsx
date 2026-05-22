@@ -5,6 +5,13 @@ import "./DiseaseCodeSearch.css";
 
 const CODE_RE = /^([A-Z][0-9A-Z.\-]+)/;
 
+const splitItem = (mkbValue) => {
+  const m = mkbValue.match(CODE_RE);
+  const code = m ? m[1] : "";
+  const name = mkbValue.slice(code.length).trim();
+  return { code, name };
+};
+
 const highlight = (text, q) => {
   if (!q) return text;
   const idx = text.toLowerCase().indexOf(q.toLowerCase());
@@ -21,6 +28,8 @@ const highlight = (text, q) => {
 const DiseaseCodeSearch = ({
   value = "",
   onChange,
+  onSelect,
+  displayMode = "name",
   placeholder = "Search ICD / disease code…",
   className = "",
   disabled = false,
@@ -84,11 +93,17 @@ const DiseaseCodeSearch = ({
   };
 
   const handleSelect = (item) => {
-    setQuery(item.MKB_VALUES);
+    const { code, name } = splitItem(item.MKB_VALUES);
+    const displayVal = displayMode === "code" ? code : name;
+    setQuery(displayVal);
     setResults([]);
     setOpen(false);
     setActiveIdx(-1);
-    onChange?.(item.MKB_VALUES);
+    if (onSelect) {
+      onSelect({ code, name });
+    } else {
+      onChange?.(displayVal);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -118,8 +133,7 @@ const DiseaseCodeSearch = ({
     ? createPortal(
         <ul className="dcs-dropdown" style={dropdownStyle} ref={listRef}>
           {results.map((item, idx) => {
-            const codeMatch = item.MKB_VALUES.match(CODE_RE);
-            const code = codeMatch ? codeMatch[1] : null;
+            const { code } = splitItem(item.MKB_VALUES);
             return (
               <li
                 key={item.ID}

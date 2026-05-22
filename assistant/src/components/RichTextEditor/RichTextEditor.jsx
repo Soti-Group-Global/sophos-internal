@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -18,7 +19,22 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import TemplateBlankExtension from "./TemplateBlankExtension";
+import diseases from "../../utils/medical_diseases_code.json";
 import "./RichTextEditor.css";
+
+/* ─── Disease search helpers ─── */
+const CODE_RE = /^([A-Z][0-9A-Z.\-]+)/;
+const splitDisease = (mkbValue) => {
+  const m = mkbValue.match(CODE_RE);
+  const code = m ? m[1] : "";
+  const name = mkbValue.slice(code.length).trim();
+  return { code, name };
+};
+const searchDiseases = (q) => {
+  if (!q.trim()) return diseases.slice(0, 20);
+  const lower = q.toLowerCase();
+  return diseases.filter((d) => d.MKB_VALUES.toLowerCase().includes(lower)).slice(0, 20);
+};
 
 /* ─── Preset colors ─── */
 const COLOR_PRESETS = [
@@ -295,6 +311,20 @@ const RichTextEditor = ({ value = "", onChange, placeholder = "Введите т
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  /* ── Disease slash-menu state ── */
+  const [diseaseMenu, setDiseaseMenu] = useState({
+    open: false, query: "", triggerFrom: 0, results: [], activeIdx: -1, style: {},
+  });
+  const diseaseMenuRef = useRef(diseaseMenu);
+  diseaseMenuRef.current = diseaseMenu;
+
+  const closeDiseaseMenu = useCallback(() => {
+    setDiseaseMenu({ open: false, query: "", triggerFrom: 0, results: [], activeIdx: -1, style: {} });
+  }, []);
+
+  /* stored in a ref so editorProps closure always sees the latest version */
+  const selectDiseaseRef = useRef(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -320,8 +350,66 @@ const RichTextEditor = ({ value = "", onChange, placeholder = "Введите т
     content: value,
     onUpdate: ({ editor: ed }) => {
       onChangeRef.current?.(ed.getHTML());
+
+      /* Detect /query trigger */
+      const { from } = ed.state.selection;
+      const textBefore = ed.state.doc.textBetween(Math.max(0, from - 100), from);
+      const match = textBefore.match(/\/([^\s/]*)$/);
+
+      if (match) {
+        const query = match[1];
+        const results = searchDiseases(query);
+        const coords = ed.view.coordsAtPos(from);
+        setDiseaseMenu({
+          open: true,
+          query,
+          triggerFrom: from - match[0].length,
+          results,
+          activeIdx: -1,
+          style: { top: coords.bottom + 4, left: coords.left },
+        });
+      } else if (diseaseMenuRef.current.open) {
+        closeDiseaseMenu();
+      }
+    },
+    editorProps: {
+      handleKeyDown: (_view, event) => {
+        const menu = diseaseMenuRef.current;
+        if (!menu.open) return false;
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          setDiseaseMenu((m) => ({ ...m, activeIdx: Math.min(m.activeIdx + 1, m.results.length - 1) }));
+          return true;
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          setDiseaseMenu((m) => ({ ...m, activeIdx: Math.max(m.activeIdx - 1, 0) }));
+          return true;
+        }
+        if (event.key === "Enter" && menu.activeIdx >= 0) {
+          event.preventDefault();
+          selectDiseaseRef.current?.(menu.results[menu.activeIdx]);
+          return true;
+        }
+        if (event.key === "Escape") {
+          closeDiseaseMenu();
+          return true;
+        }
+        return false;
+      },
     },
   });
+
+  /* wire up selectDisease after editor is ready */
+  selectDiseaseRef.current = useCallback((item) => {
+    if (!editor) return;
+    const { code, name } = splitDisease(item.MKB_VALUES);
+    const text = `${code} ${name}`;
+    const { from } = editor.state.selection;
+    const triggerFrom = diseaseMenuRef.current.triggerFrom;
+    editor.chain().focus().deleteRange({ from: triggerFrom, to: from }).insertContent(text).run();
+    closeDiseaseMenu();
+  }, [editor, closeDiseaseMenu]);
 
   /* Sync external value changes (e.g. template apply).
      Two guards:
@@ -334,15 +422,39 @@ const RichTextEditor = ({ value = "", onChange, placeholder = "Введите т
   useEffect(() => {
     if (!editor) return;
     if (value === prevValue.current) return;
-    prevValue.current = value;                // update first to break the loop
-    if (value === editor.getHTML()) return;   // user typed it — don't reset cursor
+    prevValue.current = value;
+    if (value === editor.getHTML()) return;
     editor.commands.setContent(value || "", false, { preserveWhitespace: "full" });
   }, [value, editor]);
+
+  /* Disease dropdown portal */
+  const diseaseDropdown = diseaseMenu.open && diseaseMenu.results.length > 0
+    ? createPortal(
+        <ul className="rte-disease-list" style={{ position: "fixed", zIndex: 99999, ...diseaseMenu.style }}>
+          {diseaseMenu.results.map((item, idx) => {
+            const { code, name } = splitDisease(item.MKB_VALUES);
+            return (
+              <li
+                key={item.ID}
+                className={`rte-disease-item${diseaseMenu.activeIdx === idx ? " rte-disease-item--active" : ""}`}
+                onMouseDown={(e) => { e.preventDefault(); selectDiseaseRef.current?.(item); }}
+                onMouseEnter={() => setDiseaseMenu((m) => ({ ...m, activeIdx: idx }))}
+              >
+                {code && <span className="rte-disease-code">{code}</span>}
+                <span className="rte-disease-name">{name}</span>
+              </li>
+            );
+          })}
+        </ul>,
+        document.body
+      )
+    : null;
 
   return (
     <div className="rte-container">
       <Toolbar editor={editor} />
       <EditorContent editor={editor} className="rte-content" />
+      {diseaseDropdown}
     </div>
   );
 };

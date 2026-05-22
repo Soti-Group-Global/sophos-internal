@@ -46,6 +46,7 @@ const Service = ({ applicationId }) => {
     const [addedPositions, setAddedPositions] = useState([]);
     const [selectedIds, setSelectedIds]       = useState(new Set());
     const [myPositionIds, setMyPositionIds]     = useState(new Set());
+    const [myPositions, setMyPositions]         = useState([]);
     const [mySpecialityIds, setMySpecialityIds] = useState(new Set());
 
     // Load all of the doctor's speciality IDs once
@@ -73,10 +74,9 @@ const Service = ({ applicationId }) => {
                         getAllServicePositions({ speciality: specId, limit: 5000 })
                     )
                 );
-                const allIds = new Set(
-                    results.flatMap((data) => normalizePositions(data).map((p) => p._id))
-                );
-                setMyPositionIds(allIds);
+                const allPos = results.flatMap((data) => normalizePositions(data));
+                setMyPositionIds(new Set(allPos.map((p) => p._id)));
+                setMyPositions(allPos);
             } catch {}
         })();
     }, [drawerOpen, mySpecialityIds]);
@@ -125,13 +125,14 @@ const Service = ({ applicationId }) => {
         return positions;
     }, [positions, activeTab, myPositionIds]);
 
-    // Categories are already filtered by the backend when activeTab === "my".
-    // For "other" tab, exclude categories that match any of the doctor's specialities.
     const visibleCategories = useMemo(() => {
-        if (activeTab !== "other") return categories;
+        if (activeTab === "all" || mySpecialityIds.size === 0) return categories;
         return categories.filter((cat) => {
             const list = Array.isArray(cat.specialities) ? cat.specialities : [];
-            return !list.some((entry) => mySpecialityIds.has(String(entry?._id || entry)));
+            // Untagged folders: show in "all" only (already handled above)
+            if (list.length === 0) return activeTab === "other";
+            const matched = list.some((entry) => mySpecialityIds.has(String(entry?._id || entry)));
+            return activeTab === "my" ? matched : !matched;
         });
     }, [categories, activeTab, mySpecialityIds]);
 
@@ -199,7 +200,11 @@ const Service = ({ applicationId }) => {
         }
     };
 
-    const isEmpty = !loading && visibleCategories.length === 0 && visiblePositions.length === 0;
+    const isEmpty = !loading && (
+        activeTab === "my"
+            ? myPositions.length === 0
+            : visibleCategories.length === 0 && visiblePositions.length === 0
+    );
 
     return (
         <div className="svc-folder-page">
@@ -269,26 +274,28 @@ const Service = ({ applicationId }) => {
                             ))}
                         </div>
 
-                        {/* Breadcrumb */}
-                        <div className="svc-drawer-breadcrumb">
-                            <span
-                                className={`sm-breadcrumb-segment${breadcrumb.length === 0 ? " active" : ""}`}
-                                onClick={() => navigateTo(-1)}
-                            >
-                                📁 {t("service.rootFolder", "All Services")}
-                            </span>
-                            {breadcrumb.map((seg, idx) => (
-                                <span key={seg._id} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                    <ChevronRight size={12} style={{ color: "#cbd5e1" }} />
-                                    <span
-                                        className={`sm-breadcrumb-segment${idx === breadcrumb.length - 1 ? " active" : ""}`}
-                                        onClick={() => navigateTo(idx)}
-                                    >
-                                        📁 {seg.name}
-                                    </span>
+                        {/* Breadcrumb — hidden in "my" tab (flat list, no folders) */}
+                        {activeTab !== "my" && (
+                            <div className="svc-drawer-breadcrumb">
+                                <span
+                                    className={`sm-breadcrumb-segment${breadcrumb.length === 0 ? " active" : ""}`}
+                                    onClick={() => navigateTo(-1)}
+                                >
+                                    📁 {t("service.rootFolder", "All Services")}
                                 </span>
-                            ))}
-                        </div>
+                                {breadcrumb.map((seg, idx) => (
+                                    <span key={seg._id} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                        <ChevronRight size={12} style={{ color: "#cbd5e1" }} />
+                                        <span
+                                            className={`sm-breadcrumb-segment${idx === breadcrumb.length - 1 ? " active" : ""}`}
+                                            onClick={() => navigateTo(idx)}
+                                        >
+                                            📁 {seg.name}
+                                        </span>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Folder content */}
                         <div className="svc-drawer-body">
@@ -299,6 +306,41 @@ const Service = ({ applicationId }) => {
                                     <FolderOpen size={32} />
                                     <div>{t("service.emptyFolder", "This folder is empty.")}</div>
                                 </div>
+                            ) : activeTab === "my" ? (
+                                /* Flat list of doctor's own positions */
+                                <table className="sm-table">
+                                    <thead>
+                                        <tr>
+                                            <th>{t("service.name", "Name")}</th>
+                                            <th>{t("service.price", "Price")}</th>
+                                            <th style={{ width: 36 }} />
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {myPositions.map((pos) => {
+                                            const isAdded = selectedIds.has(pos._id);
+                                            return (
+                                                <tr
+                                                    key={pos._id}
+                                                    className={`sm-position-row${isAdded ? " sm-position-row--selected" : ""}`}
+                                                    onClick={() => handleTogglePosition(pos)}
+                                                    style={{ cursor: "pointer" }}
+                                                >
+                                                    <td>
+                                                        <div className="sm-name-cell">
+                                                            <FileText size={14} className="sm-file-icon" />
+                                                            <span className="sm-name-text">{pos.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="sm-price-cell">{formatPrice(pos.price) ?? "—"}</td>
+                                                    <td>
+                                                        {isAdded && <Check size={14} style={{ color: "#1e40af" }} />}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             ) : (
                                 <table className="sm-table">
                                     <thead>

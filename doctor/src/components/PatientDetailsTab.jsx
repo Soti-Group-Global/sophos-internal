@@ -1119,15 +1119,28 @@ function DiseasesSection({ patient, onRefresh }) {
               <div className="adp-doc-row--half">
                 <div className="adp-labeled-input">
                   <span className="adp-input-label">{t("pdtab.diseases.diagnosis")}</span>
-                  <input className="adp-text-input" value={row.diagnosis}
-                    onChange={(e) => updateRow(i, "diagnosis", e.target.value)} />
+                  <DiseaseCodeSearch
+                    displayMode="name"
+                    placeholder={t("pdtab.diseases.diagnosis")}
+                    value={row.diagnosis}
+                    onChange={(val) => updateRow(i, "diagnosis", val)}
+                    onSelect={({ code, name }) => {
+                      updateRow(i, "diagnosis", name);
+                      updateRow(i, "icdCode", code);
+                    }}
+                  />
                 </div>
                 <div className="adp-labeled-input">
                   <span className="adp-input-label">{t("pdtab.diseases.icdCode")}</span>
                   <DiseaseCodeSearch
                     value={row.icdCode}
+                    displayMode="code"
                     placeholder={t("pdtab.diseases.icdCodePh")}
                     onChange={(val) => updateRow(i, "icdCode", val)}
+                    onSelect={({ code, name }) => {
+                      updateRow(i, "icdCode", code);
+                      updateRow(i, "diagnosis", name);
+                    }}
                   />
                 </div>
               </div>
@@ -1416,15 +1429,28 @@ function FinalDiagnosisSection({ patient, onRefresh }) {
                   <span className="adp-input-label">{t("pdtab.finalDiag.icdCode")}</span>
                   <DiseaseCodeSearch
                     value={row.icdCode}
+                    displayMode="code"
                     placeholder={t("pdtab.finalDiag.icdPh")}
                     onChange={(val) => updateRow(i, "icdCode", val)}
+                    onSelect={({ code, name }) => {
+                      updateRow(i, "icdCode", code);
+                      updateRow(i, "diagnosis", name);
+                    }}
                   />
                 </div>
               </div>
               <div className="adp-labeled-input">
                 <span className="adp-input-label">{t("pdtab.finalDiag.finalDiagnosis")}</span>
-                <input className="adp-text-input" value={row.diagnosis}
-                  onChange={(e) => updateRow(i, "diagnosis", e.target.value)} />
+                <DiseaseCodeSearch
+                  displayMode="name"
+                  placeholder={t("pdtab.finalDiag.finalDiagnosis")}
+                  value={row.diagnosis}
+                  onChange={(val) => updateRow(i, "diagnosis", val)}
+                  onSelect={({ code, name }) => {
+                    updateRow(i, "diagnosis", name);
+                    updateRow(i, "icdCode", code);
+                  }}
+                />
               </div>
               <div className="adp-doc-row--half">
                 <div className="adp-labeled-input">

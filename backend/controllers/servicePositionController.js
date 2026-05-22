@@ -129,7 +129,7 @@ exports.movePosition = async (req, res) => {
 // Used for rendering a single folder view (like a file browser).
 exports.getFolderContents = async (req, res) => {
      try {
-    const { parent, branch } = req.query;
+    const { parent, branch, specialities } = req.query;
     const parentVal =
       !parent || parent === "root" ? null : parent;
 
@@ -138,6 +138,19 @@ exports.getFolderContents = async (req, res) => {
     if (branch && branch !== "all") {
       catFilter.branch = branch;
       posFilter.branch = branch;
+    }
+
+    // Filter by specialities when provided (for "My Services" tab)
+    if (specialities) {
+      const specIds = specialities
+        .split(",")
+        .map((id) => id.trim())
+        .filter((id) => mongoose.isValidObjectId(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+      if (specIds.length > 0) {
+        catFilter.specialities = { $in: specIds };
+        posFilter.speciality = { $in: specIds };
+      }
     }
 
     const [categories, positions] = await Promise.all([

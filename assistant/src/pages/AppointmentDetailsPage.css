@@ -1439,7 +1439,7 @@ body.hide-global-sidebar .sidebar-backdrop {
 
 /* Diseases: 5 equal cols + action btns */
 .adp-diag-row--diseases {
-  grid-template-columns: 1fr 1fr 1.6fr 0.8fr 1.2fr 72px;
+  grid-template-columns: 130px 130px 1.6fr 0.8fr 1.2fr 72px;
 }
 
 /* Final diagnosis: 7 cols + action btns */
@@ -1466,6 +1466,16 @@ body.hide-global-sidebar .sidebar-backdrop {
   padding: 7px 10px !important;
   font-size: 12px !important;
   min-width: 0;
+}
+
+/* Calendar wrappers used as grid cells: reset outer padding, fix inner input sizing */
+.adp-diag-row .custom-calendar-wrapper.adp-diag-input {
+  padding: 0 !important;
+}
+.adp-diag-row .custom-calendar-input {
+  padding: 7px 10px;
+  font-size: 12px;
+  box-sizing: border-box;
 }
 
 .adp-diag-cell {

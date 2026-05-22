@@ -8,6 +8,7 @@ const ServicePosition = require("../models/ServicePosition");
 const User = require("../models/User");
 const Assistant = require('../models/Assistant');
 const HeadAssistant = require('../models/HeadAssistant');
+const SpecialtyMaster = require('../models/SpecialtyMaster');
 const Counter = require("../models/Counter");
 const Order = require("../models/Order");
 const multer = require("multer");
@@ -27,6 +28,39 @@ const tls = require("tls");
 // Supports both Mongoose docs and `.lean()` plain objects.
 
 const ALLOWED_APPOINTMENT_STATUSES = ['Confirmed', 'Completed', 'Upcoming'];
+
+// Safely resolve doctors[].specialization for an array of plain objects.
+// Handles three cases: already-resolved {name_en,name_ru} objects (skip),
+// Mongoose ObjectId objects from .lean() (resolve), legacy string names (skip).
+async function resolveSpecializations(applications) {
+  const arr = Array.isArray(applications) ? applications : [applications];
+  const ids = [];
+  for (const app of arr) {
+    for (const doc of (app.doctors || [])) {
+      const s = doc.specialization;
+      if (!s) continue;
+      // Already resolved to a SpecialtyMaster object
+      if (s.name_en || s.name_ru) continue;
+      const key = String(s);
+      if (mongoose.Types.ObjectId.isValid(key) && !ids.includes(key)) {
+        ids.push(key);
+      }
+    }
+  }
+  if (!ids.length) return;
+  const specs = await SpecialtyMaster.find({ _id: { $in: ids } })
+    .select('name_en name_ru')
+    .lean();
+  const specMap = Object.fromEntries(specs.map(s => [String(s._id), s]));
+  for (const app of arr) {
+    for (const doc of (app.doctors || [])) {
+      const s = doc.specialization;
+      if (!s || s.name_en || s.name_ru) continue;
+      const resolved = specMap[String(s)];
+      if (resolved) doc.specialization = resolved;
+    }
+  }
+}
 
 function getPrimaryDoctorEmail(application) {
   if (!application) return null;
@@ -237,11 +271,23 @@ async function buildPopulatedApplication(application) {
   })
     .select("firstName middleName lastName email phoneNumber _id")
     .lean();
-  populatedApplication.doctor = await DoctorsProfile.findOne({
-    email: application.doctorEmail,
-  })
-    .select("firstName middleName lastName specialty email phoneNumber _id")
-    .lean();
+  const _buildDocEmail = application.doctorEmail || application.doctors?.[0]?.doctorEmail;
+  const _buildRawDoc = _buildDocEmail
+    ? await DoctorsProfile.findOne({ email: _buildDocEmail })
+        .select("firstName middleName lastName specialty email phoneNumber _id")
+        .lean()
+    : null;
+  if (_buildRawDoc) {
+    const ml = (v) => (v && typeof v === 'object') ? (v.ru || v.en || '') : (v || '');
+    populatedApplication.doctor = {
+      ..._buildRawDoc,
+      firstName: ml(_buildRawDoc.firstName),
+      middleName: ml(_buildRawDoc.middleName),
+      lastName: ml(_buildRawDoc.lastName),
+    };
+  } else {
+    populatedApplication.doctor = null;
+  }
   populatedApplication.documents = await populateDocuments(
     application.documents,
   );
@@ -464,6 +510,8 @@ async function getApplicationsByPatientId(req, res) {
       .sort({ date: -1 })
       .lean();
 
+    await resolveSpecializations(applications);
+
     for (let app of applications) {
       app.applicationId = app.applicationId || app._id;
       app.patient = await Patient.findOne({ patientId: app.patientId })
@@ -531,6 +579,8 @@ async function getApplicationsByDate(req, res) {
       .sort({ startTime: 1 })
       .lean();
 
+    await resolveSpecializations(applications);
+
     // Populate patient and doctor information
     for (let app of applications) {
       app.applicationId = app.applicationId || app._id;
@@ -543,14 +593,15 @@ async function getApplicationsByDate(req, res) {
         .select("firstName middleName lastName email phoneNumber _id")
         .lean();
 
-      // Return full multilingual name objects (en and ru)
       if (docEmail) {
-        app.doctor = await DoctorsProfile.findOne({ email: docEmail })
-          .select(
-            "firstName middleName lastName specialtyIds email phoneNumber _id",
-          )
+        const _calRawDoc = await DoctorsProfile.findOne({ email: docEmail })
+          .select("firstName middleName lastName specialtyIds email phoneNumber _id")
           .populate("specialtyIds", "name_en name_ru")
           .lean();
+        if (_calRawDoc) {
+          const ml = (v) => (v && typeof v === 'object' && !Array.isArray(v)) ? (v.ru || v.en || '') : (v || '');
+          app.doctor = { ..._calRawDoc, firstName: ml(_calRawDoc.firstName), middleName: ml(_calRawDoc.middleName), lastName: ml(_calRawDoc.lastName) };
+        }
       }
     }
 
@@ -571,6 +622,7 @@ async function getApplicationById(req, res) {
     }
 
     const application = applicationDoc.toObject();
+    await resolveSpecializations([application]);
     application.applicationId = application.applicationId || application._id;
 
     const _patientQuery = application.patientId
@@ -584,11 +636,23 @@ async function getApplicationById(req, res) {
           .lean()
       : null;
 
-    application.doctor = await DoctorsProfile.findOne({
-      email: application.doctorEmail,
-    })
-      .select("firstName middleName lastName specialty email phoneNumber _id")
-      .lean();
+    const _docEmail = application.doctorEmail || application.doctors?.[0]?.doctorEmail;
+    const _rawDoctor = _docEmail
+      ? await DoctorsProfile.findOne({ email: _docEmail })
+          .select("firstName middleName lastName specialty email phoneNumber _id")
+          .lean()
+      : null;
+    if (_rawDoctor) {
+      const ml = (v) => (v && typeof v === 'object') ? (v.ru || v.en || '') : (v || '');
+      application.doctor = {
+        ..._rawDoctor,
+        firstName: ml(_rawDoctor.firstName),
+        middleName: ml(_rawDoctor.middleName),
+        lastName: ml(_rawDoctor.lastName),
+      };
+    } else {
+      application.doctor = null;
+    }
     application.documents = Array.isArray(application.documents)
       ? application.documents
       : [];
@@ -1138,7 +1202,7 @@ async function getAllApplicationsForDoctors(req, res) {
 async function getApplicationByIdForDoctors(req, res) {
   const applicationId = req.params.id;
   try {
-    const appointment = await Application.findOne({ applicationId });
+    const appointment = await Application.findOne({ applicationId }).lean();
 
     if (!appointment) {
       return res.status(404).json({
@@ -1147,6 +1211,24 @@ async function getApplicationByIdForDoctors(req, res) {
       });
     }
 
+    await resolveSpecializations([appointment]);
+
+    // Populate doctor with plain-string names
+    const _docEmail = appointment.doctorEmail || appointment.doctors?.[0]?.doctorEmail;
+    if (_docEmail) {
+      const _rawDoc = await DoctorsProfile.findOne({ email: _docEmail })
+        .select('firstName middleName lastName specialty email phoneNumber _id')
+        .lean();
+      if (_rawDoc) {
+        const ml = (v) => (v && typeof v === 'object') ? (v.ru || v.en || '') : (v || '');
+        appointment.doctor = {
+          ..._rawDoc,
+          firstName: ml(_rawDoc.firstName),
+          middleName: ml(_rawDoc.middleName),
+          lastName: ml(_rawDoc.lastName),
+        };
+      }
+    }
 
     return res.json(appointment);
   } catch (error) {
@@ -1323,11 +1405,15 @@ async function updateVerificationStatusForDoctors(req, res) {
 
 //GET appointments by doctor email and date range for doctors interface
 async function getAppointmentsByDoctorEmail(req, res) {
-  const doctorEmail = req.params.email;
+  // Prefer token email (already validated by auth middleware) over URL param
+  const doctorEmail = req.user?.email || req.params.email;
   const { page = 1, limit = 21, status = 'all', search = '' } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
 
   try {
+    if (!doctorEmail) {
+      return res.status(400).json({ success: false, message: 'Doctor email not found' });
+    }
     const normalizedDoctorEmail = doctorEmail.trim();
     const escapedDoctorEmail = normalizedDoctorEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const query = {
@@ -3548,6 +3634,8 @@ async function getApplicationByAppointmentId(req, res) {
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
     }
+
+    await resolveSpecializations([application]);
 
     application.applicationId = application.applicationId || application._id;
 

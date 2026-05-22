@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, { useRef, useState, useEffect, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Download } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -195,7 +195,7 @@ function ConclusionPages({ items, PageHeader, PageFooter, startPage = 4, doctorN
   );
 }
 
-export default function AppointmentReport({ booking, patient: patientProp = null }) {
+const AppointmentReport = forwardRef(function AppointmentReport({ booking, patient: patientProp = null, hideToolbar = false }, ref) {
   const reportRef = useRef(null);
   const [generating, setGenerating] = useState(false);
 
@@ -221,11 +221,17 @@ export default function AppointmentReport({ booking, patient: patientProp = null
 
   const doctorName = useMemo(() => {
     const d = booking?.doctor;
-    if (d) return [d.lastName, d.firstName, d.middleName].filter(Boolean).join(" ") || null;
+    if (d) {
+      const str = (v) => (v && typeof v === "object") ? (v.ru || v.en || "") : (v || "");
+      return [str(d.lastName), str(d.firstName), str(d.middleName)].filter(Boolean).join(" ") || null;
+    }
     const entry = booking?.doctors?.[0];
     return entry?.doctorName || null;
   }, [booking]);
-  const doctorRole = booking?.doctor?.specialization || booking?.doctors?.[0]?.specialization || null;
+  const _rawSpec = booking?.doctor?.specialization || booking?.doctors?.[0]?.specialization || null;
+  const doctorRole = _rawSpec && typeof _rawSpec === "object"
+    ? (_rawSpec.name_ru || _rawSpec.name_en || null)
+    : _rawSpec || null;
 
   const [page4Entries] = useState([]);
   const [diagnosisText] = useState("");
@@ -289,6 +295,8 @@ export default function AppointmentReport({ booking, patient: patientProp = null
     }
   };
 
+  useImperativeHandle(ref, () => ({ download: handleDownload }), []);
+
   const PageHeader = () => (
     <>
       <div className="ed-page-header">
@@ -323,12 +331,14 @@ export default function AppointmentReport({ booking, patient: patientProp = null
     <div className="ed-report-tab">
 
       {/* ── Toolbar ── */}
-      <div className="ed-report-toolbar">
-        <button className="ed-report-download-btn" onClick={handleDownload} disabled={generating}>
-          <Download size={14} />
-          {generating ? "Генерация..." : "Скачать PDF"}
-        </button>
-      </div>
+      {!hideToolbar && (
+        <div className="ed-report-toolbar">
+          <button className="ed-report-download-btn" onClick={handleDownload} disabled={generating}>
+            <Download size={14} />
+            {generating ? "Генерация..." : "Скачать PDF"}
+          </button>
+        </div>
+      )}
 
       {/* ── PDF preview ── */}
       <div className="ed-report-preview-wrapper">
@@ -446,4 +456,6 @@ export default function AppointmentReport({ booking, patient: patientProp = null
       </div>
     </div>
   );
-}
+});
+
+export default AppointmentReport;

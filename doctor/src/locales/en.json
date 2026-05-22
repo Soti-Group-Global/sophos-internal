@@ -1519,7 +1519,23 @@
       "view": "View",
       "back_to_current": "Back to current",
       "no_other_appointments": "No other appointments found",
-      "failed_loading_appointment": "Failed to load appointment"
+      "failed_loading_appointment": "Failed to load appointment",
+      "failed_loading_other_appointments": "Failed to load other appointments",
+      "saved": "Saved",
+      "save_error": "Failed to save",
+      "manage_entries": "Manage entries",
+      "loading": "Loading...",
+      "add": "Add",
+      "no_tests": "No tests yet",
+      "export_pdf": "Export PDF",
+      "past_appointment": "Past Consultation",
+      "toggle_normal": "Normal",
+      "toggle_report": "Report",
+      "download_pdf": "Download PDF",
+      "no_fields_filled": "The doctor has not filled in any fields yet.",
+      "no_data": "No data for this appointment",
+      "saving": "Saving...",
+      "edit": "Edit"
     }
   },
   "taskBoard": {
