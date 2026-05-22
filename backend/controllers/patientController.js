@@ -54,14 +54,13 @@ const getAllPatients = async (req, res) => {
 
     const patients = await Patient.find().lean();
 
-    // Fetch applications by patient emails and/or by doctorEmail (if provided)
     let applications = [];
+    const patientIds    = patients.map((p) => p.patientId).filter(Boolean);
     const patientEmails = patients.map((p) => p.email).filter(Boolean).map((e) => e.toLowerCase());
 
     const queryClauses = [];
-    if (patientEmails.length) {
-      queryClauses.push({ patientEmail: { $in: patientEmails } });
-    }
+    if (patientIds.length)    queryClauses.push({ patientId:    { $in: patientIds } });
+    if (patientEmails.length) queryClauses.push({ patientEmail: { $in: patientEmails } });
     if (normalizedDoctorEmail) {
       queryClauses.push({ doctorEmail: normalizedDoctorEmail });
       queryClauses.push({ "doctors.doctorEmail": normalizedDoctorEmail });
@@ -70,22 +69,30 @@ const getAllPatients = async (req, res) => {
     if (queryClauses.length) {
       applications = await Application.find({ $or: queryClauses })
         .sort({ date: -1, startTime: -1, createdAt: -1 })
-        .select("patientEmail applicationId date startTime endTime serviceType appointmentStatus")
+        .select("patientId patientEmail applicationId date startTime endTime serviceType appointmentStatus")
         .lean();
     }
 
-    const latestApplicationByPatient = new Map();
-    applications.forEach((application) => {
-      const patientEmail = application.patientEmail?.toLowerCase();
-      if (patientEmail && !latestApplicationByPatient.has(patientEmail)) {
-        latestApplicationByPatient.set(patientEmail, application);
+    // Build lookup maps — patientId (primary) and email (fallback)
+    const byPatientId = new Map();
+    const byEmail     = new Map();
+    applications.forEach((app) => {
+      if (app.patientId && !byPatientId.has(app.patientId)) {
+        byPatientId.set(app.patientId, app);
+      }
+      const email = app.patientEmail?.toLowerCase();
+      if (email && !byEmail.has(email)) {
+        byEmail.set(email, app);
       }
     });
 
     const patientsWithImages = await Promise.all(
       patients.map(async (patient) => {
         const profilePicture = await readProfilePicture(patient.profileFileId);
-        const latestApplication = latestApplicationByPatient.get(patient.email?.toLowerCase());
+        const latestApplication =
+          (patient.patientId && byPatientId.get(patient.patientId)) ||
+          (patient.email && byEmail.get(patient.email.toLowerCase())) ||
+          null;
 
         return {
           ...patient,

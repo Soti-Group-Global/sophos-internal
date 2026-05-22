@@ -22,20 +22,16 @@ const PatientList = ({ patients, loading, error, navigate, setCurrentPatient }) 
 
   const formatDob = (dob) => {
     if (!dob) return "";
-    const d = new Date(dob);
-    const month = t(`months.${d.getMonth()}`);
-    const day = d.getDate();
-    const year = d.getFullYear();
-    return `${month} ${day}, ${year}`;
+    const m = moment(dob);
+    if (!m.isValid()) return "";
+    return m.format("DD-MM-YYYY");
   };
 
   const formatAppointment = (patient) => {
     if (!patient.date) return t("common.notAvailable");
-    const d = new Date(patient.date);
-    const month = t(`months.${d.getMonth()}`);
-    const day = d.getDate();
-    const year = d.getFullYear();
-    return `${month} ${day}, ${year}`;
+    const m = moment(patient.date);
+    if (!m.isValid()) return t("common.notAvailable");
+    return m.format("DD-MM-YYYY");
   };
 
   const initials = (patient) => {
@@ -64,7 +60,6 @@ const PatientList = ({ patients, loading, error, navigate, setCurrentPatient }) 
           <th>{t("patients.table.contact")}</th>
           <th>{t("patients.table.dob")}</th>
           <th>{t("patients.table.lastAppointment")}</th>
-          <th>{t("patients.table.service")}</th>
         </tr>
       </thead>
       <tbody>
@@ -75,9 +70,11 @@ const PatientList = ({ patients, loading, error, navigate, setCurrentPatient }) 
             onClick={() => {
               setCurrentPatient(patient);
               if (patient.applicationId) {
-                navigate(`/appointments/${encodeURIComponent(patient.applicationId)}`, {
-                  state: { appointmentId: patient.applicationId },
-                });
+                window.open(
+                  `/appointments/${encodeURIComponent(patient.applicationId)}`,
+                  "_blank",
+                  "noopener,noreferrer"
+                );
               }
             }}
           >
@@ -96,7 +93,7 @@ const PatientList = ({ patients, loading, error, navigate, setCurrentPatient }) 
             <td className="dob-cell">
               {formatDob(patient.dateOfBirth)}
               {patient.dateOfBirth && (
-                <div className="age-text">{calculateAge(patient.dateOfBirth)} yrs</div>
+                <div className="age-text">{t("patients.years", { count: calculateAge(patient.dateOfBirth) })}</div>
               )}
             </td>
             <td className="appointment-cell">
@@ -104,24 +101,6 @@ const PatientList = ({ patients, loading, error, navigate, setCurrentPatient }) 
               {patient.applicationId && (
                 <div className="app-id">#{patient.applicationId}</div>
               )}
-            </td>
-            <td>
-              {patient.serviceType && (
-                (() => {
-                  const translationKey = `serviceType.${patient.serviceType}`;
-                  const translatedServiceType = t(translationKey);
-                  const label = translatedServiceType === translationKey
-                    ? patient.serviceType
-                    : translatedServiceType;
-
-                  return (
-                    <span className={serviceBadgeClass(patient.serviceType)}>
-                      {label}
-                    </span>
-                  );
-                })()
-              )}
-              {!patient.serviceType && t("common.notAvailable")}
             </td>
           </tr>
         ))}

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { getDoctor, getPatientsByDoctor } from "../utils/api";
 import { usePatient } from "../context/PatientContext";
 import PatientList from "./PatientList";
+import SearchBar from "../components/SearchBar/SearchBar";
 import { useTranslation } from "react-i18next";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -92,7 +93,6 @@ const Patients = () => {
       t("patients.table.contact"),
       t("patients.table.dob"),
       t("patients.table.appointment"),
-      t("patients.table.service"),
     ];
 
     const calculateAge = (dob) => {
@@ -126,7 +126,6 @@ const Patients = () => {
           ? `${formatTimeForCSV(patient.startTime)}-${formatTimeForCSV(patient.endTime)}`
           : ""
       }`.trim(),
-      patient.serviceType || "",
     ]);
 
     // Create CSV content
@@ -174,12 +173,11 @@ const Patients = () => {
           )}
         </div>
         <div className="patients-header-controlers">
-          <input
-            type="text"
+          <SearchBar
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onClear={() => setSearchTerm("")}
             placeholder={t("patients.searchPlaceholder")}
-            className="search-input"
           />
           <button
             className="exportcsv"
