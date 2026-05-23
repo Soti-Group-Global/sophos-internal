@@ -398,7 +398,6 @@ const EarlyDetectionBookingDetails = () => {
   const [edAddDropOpen, setEdAddDropOpen] = useState(false);
   const [edAddSubmitting, setEdAddSubmitting] = useState(false);
   const [activeSpecialistTab, setActiveSpecialistTab] = useState(0);
-  const [specialistAccordionOpen, setSpecialistAccordionOpen] = useState(true);
   const [editedScheduleItems, setEditedScheduleItems] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -1901,7 +1900,7 @@ const EarlyDetectionBookingDetails = () => {
       </div>
 
       <div className="booking-details-content">
-        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}${navExpanded ? " ed-details-body--sidebar-expanded" : ""}`}>
+        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "medicalHistory" && (activeScheduleTab === "specialistConsultation" || managedSectionTabs.includes(activeScheduleTab)) ? " ed-details-body--with-specialist-panel" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}${navExpanded ? " ed-details-body--sidebar-expanded" : ""}`}>
           <aside className={`ed-appointments-sidebar adp-app-sidebar${navExpanded ? " ed-appointments-sidebar--expanded" : ""}`}>
             <div className="ed-appointments-sidebar-tabs">
               <button
@@ -2007,124 +2006,101 @@ const EarlyDetectionBookingDetails = () => {
                   ["proceduresAndManipulations", t("earlyDiagnosis.proceduresAndManipulations", "Procedures and manipulations")],
                   ["conclusion", t("earlyDiagnosis.conclusion", "Conclusion")],
                 ].map(([key, label]) => (
-                  <React.Fragment key={key}>
-                    <button
-                      type="button"
-                      className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
-                      onClick={() => {
-                        if (key === "specialistConsultation") {
-                          if (activeScheduleTab === key) {
-                            setSpecialistAccordionOpen((o) => !o);
-                          } else {
-                            setActiveScheduleTab(key);
-                            setSpecialistAccordionOpen(true);
-                          }
-                          setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
-                        } else if (managedSectionTabs.includes(key)) {
-                          if (activeScheduleTab === key && activeTestId !== null) {
-                            setActiveTestId(null);
-                          } else {
-                            setActiveScheduleTab(key);
-                            const sectionEntries = booking?.schedule?.[key] || [];
-                            const firstWithContent = (managedTests?.[key] || []).find((t) => {
-                              const tid = normalizeId(t?._id);
-                              return sectionEntries.some((e) => normalizeId(e?.item?._id) === tid);
-                            });
-                            setActiveTestId(firstWithContent ? normalizeId(firstWithContent._id) : null);
-                          }
-                          setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
-                        } else {
-                          setActiveScheduleTab(key); setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
-                        }
-                      }}
-                    >
-                      <span>{label}</span>
-                      {key === "specialistConsultation" && (
-                        <ChevronDown
-                          size={13}
-                          className="ed-tab-chevron"
-                          style={{ transform: (activeScheduleTab === key && specialistAccordionOpen) ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
-                        />
-                      )}
-                      {managedSectionTabs.includes(key) && (
-                        <span
-                          className="ed-tab-settings-btn"
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => { e.stopPropagation(); openTestSettingsModal(key); }}
-                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openTestSettingsModal(key); } }}
-                          title={t("earlyDiagnosis.manageTests", "Manage tests")}
-                        >
-                          <Settings size={14} />
-                        </span>
-                      )}
-                    </button>
-
-                    {/* Specialist consultation accordion sub-items */}
-                    {key === "specialistConsultation" && activeScheduleTab === "specialistConsultation" && specialistAccordionOpen &&
-                      Array.isArray(booking?.schedule?.specialistConsultations) &&
-                      booking.schedule.specialistConsultations.length > 0 && (
-                        <div className="ed-subnav-test-list">
-                          {booking.schedule.specialistConsultations.map((s, i) => {
-                            const title = s?.title
-                              ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(s.title)}`, s.title)
-                              : `Specialist ${i + 1}`;
-                            return (
-                              <button
-                                key={i}
-                                type="button"
-                                className={`ed-subnav-test-item${activeSpecialistTab === i ? " ed-subnav-test-item--active" : ""}`}
-                                onClick={() => setActiveSpecialistTab(i)}
-                              >
-                                <span className="ed-subnav-test-name">{title}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                    {/* Lab / test sub-items — only filled tests, only for the active section when expanded */}
-                    {managedSectionTabs.includes(key) && activeScheduleTab === key && activeTestId !== null && (() => {
-                      const filledTests = (managedTests?.[key] || []).filter((test) => {
-                        const testId = normalizeId(test?._id);
-                        const entries = (booking?.schedule?.[key] || []).filter(
-                          (entry) => normalizeId(entry?.item?._id) === testId,
-                        );
-                        return entries.some(
-                          (e) =>
-                            (Array.isArray(e.files) && e.files.length > 0) ||
-                            (Array.isArray(e.notes) && e.notes.length > 0),
-                        );
-                      });
-                      if (filledTests.length === 0) return null;
-                      return (
-                        <div className="ed-subnav-test-list">
-                          {filledTests.map((test) => {
-                            const testId = normalizeId(test?._id);
-                            const isActive = activeTestId === testId;
-                            return (
-                              <button
-                                key={testId}
-                                type="button"
-                                className={`ed-subnav-test-item ed-subnav-test-item--done${isActive ? " ed-subnav-test-item--active" : ""}`}
-                                onClick={() => {
-                                  setActiveTestId(isActive ? null : testId);
-                                  setShowTestNoteEditor(false);
-                                  setTestNoteDraft("");
-                                  setEditingTestNoteId(null);
-                                }}
-                              >
-                                <span className="ed-subnav-test-name">{readLocalizedName(test?.name)}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
-                  </React.Fragment>
+                  <button
+                    key={key}
+                    type="button"
+                    className={`ed-schedule-tab-btn ${activeScheduleTab === key ? "active" : ""}`}
+                    onClick={() => {
+                      if (key === "specialistConsultation") {
+                        setActiveScheduleTab(key);
+                        setActiveSpecialistTab(0);
+                        setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
+                      } else if (managedSectionTabs.includes(key)) {
+                        setActiveScheduleTab(key);
+                        const firstTest = (managedTests?.[key] || [])[0];
+                        setActiveTestId(firstTest ? normalizeId(firstTest._id) : null);
+                        setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
+                      } else {
+                        setActiveScheduleTab(key); setActiveTestId(null); setShowTestNoteEditor(false); setTestNoteDraft(""); setEditingTestNoteId(null);
+                      }
+                    }}
+                  >
+                    <span>{label}</span>
+                    {managedSectionTabs.includes(key) && (
+                      <span
+                        className="ed-tab-settings-btn"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); openTestSettingsModal(key); }}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openTestSettingsModal(key); } }}
+                        title={t("earlyDiagnosis.manageTests", "Manage tests")}
+                      >
+                        <Settings size={14} />
+                      </span>
+                    )}
+                  </button>
                 ))}
               </div>
             </aside>
+          )}
+
+          {/* Secondary sidebar — specialist list or managed test list */}
+          {activeTab === "medicalHistory" && (activeScheduleTab === "specialistConsultation" || managedSectionTabs.includes(activeScheduleTab)) && (
+            <div className="ed-specialist-list-panel">
+              {activeScheduleTab === "specialistConsultation" ? (
+                (booking?.schedule?.specialistConsultations || []).length === 0 ? (
+                  <div className="ed-specialist-list-panel-empty">
+                    {t("earlyDiagnosis.noSpecialistConsultations", "No consultations")}
+                  </div>
+                ) : (
+                  booking.schedule.specialistConsultations.map((s, i) => {
+                    const title = s?.title
+                      ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(s.title)}`, s.title)
+                      : `Specialist ${i + 1}`;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`ed-subnav-specialist-item${activeSpecialistTab === i ? " ed-subnav-specialist-item--active" : ""}`}
+                        onClick={() => setActiveSpecialistTab(i)}
+                      >
+                        <span className="ed-subnav-specialist-name">{title}</span>
+                      </button>
+                    );
+                  })
+                )
+              ) : (
+                (managedTests?.[activeScheduleTab] || []).length === 0 ? (
+                  <div className="ed-specialist-list-panel-empty">
+                    {t("earlyDiagnosis.noTests", "No tests")}
+                  </div>
+                ) : (
+                  (managedTests[activeScheduleTab]).map((test) => {
+                    const testId = normalizeId(test?._id);
+                    const isActive = activeTestId === testId;
+                    const entries = (booking?.schedule?.[activeScheduleTab] || []).filter(
+                      (entry) => normalizeId(entry?.item?._id) === testId,
+                    );
+                    const isDone = entries.some((e) => Array.isArray(e.files) && e.files.length > 0);
+                    return (
+                      <button
+                        key={testId}
+                        type="button"
+                        className={`ed-subnav-test-item${isDone ? " ed-subnav-test-item--done" : ""}${isActive ? " ed-subnav-test-item--active" : ""}`}
+                        onClick={() => {
+                          setActiveTestId(isActive ? null : testId);
+                          setShowTestNoteEditor(false);
+                          setTestNoteDraft("");
+                          setEditingTestNoteId(null);
+                        }}
+                      >
+                        <span className="ed-subnav-test-name">{readLocalizedName(test?.name)}</span>
+                      </button>
+                    );
+                  })
+                )
+              )}
+            </div>
           )}
 
           <div

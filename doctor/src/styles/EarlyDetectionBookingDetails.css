@@ -54,12 +54,37 @@
   grid-template-columns: 68px 200px minmax(0, 1fr);
 }
 
+.ed-details-body--with-subnav.ed-details-body--with-specialist-panel {
+  grid-template-columns: 68px 200px 220px minmax(0, 1fr);
+}
+
 .ed-details-body--sidebar-expanded {
   grid-template-columns: 190px minmax(0, 1fr);
 }
 
 .ed-details-body--with-subnav.ed-details-body--sidebar-expanded {
   grid-template-columns: 190px 200px minmax(0, 1fr);
+}
+
+.ed-details-body--with-subnav.ed-details-body--sidebar-expanded.ed-details-body--with-specialist-panel {
+  grid-template-columns: 190px 200px 220px minmax(0, 1fr);
+}
+
+/* Specialist consultation secondary sidebar */
+.ed-specialist-list-panel {
+  background: #ffffff;
+  border-right: 1px solid #e4e7ec;
+  overflow-y: auto;
+  height: 100%;
+  min-height: 0;
+  padding: 8px 0;
+}
+
+.ed-specialist-list-panel-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 16px 12px;
 }
 
 .ed-details-body>.booking-details-layout {
@@ -897,6 +922,65 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Specialist consultation items — same style as manager ed-subnav-test-item */
+.ed-subnav-specialist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 7px 20px;
+  font-size: 13px;
+  color: #6b7280;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  width: 100%;
+  text-align: left;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  box-sizing: border-box;
+}
+
+.ed-subnav-specialist-item:hover {
+  color: #0c3870;
+  background: #f5f7fa;
+  border-left-color: #bfcfea;
+}
+
+.ed-subnav-specialist-item--active {
+  color: #0c3870;
+  font-weight: 600;
+  border-left-color: #0c3870;
+  background: #f0f4ff;
+}
+
+.ed-subnav-specialist-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ed-subnav-specialist-badge {
+  font-size: 9px;
+  font-weight: 600;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ed-subnav-specialist-meta {
+  font-size: 10px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ed-section-actions-row {

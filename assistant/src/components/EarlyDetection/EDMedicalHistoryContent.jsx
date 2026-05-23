@@ -122,8 +122,9 @@ const EDMedicalHistoryContent = ({
   activeScheduleTab,
   activeSpecialistTab,
   managedSectionTabs,
-  renderManagedTestSection,
   renderFileActionButtons,
+  patientSectionData,
+  renderPatientFileActions,
   sectionEditors,
   updateSectionEditor,
   handleSaveManagedSectionComment,
@@ -146,9 +147,46 @@ const EDMedicalHistoryContent = ({
   return (
     <div className="ed-medical-history-content">
       <div className="detail-section">
-        {/* Managed sections (laboratoryTests, instrumentalAnalysis) */}
-        {managedSectionTabs.includes(activeScheduleTab) &&
-          renderManagedTestSection(activeScheduleTab)}
+        {/* Managed sections (laboratoryTests, instrumentalAnalysis) — patient-level flat entries */}
+        {managedSectionTabs.includes(activeScheduleTab) && (() => {
+          const psSection = activeScheduleTab === "laboratoryTests" ? "laboratoryAnalysis" : "studiesManipulations";
+          const entries = patientSectionData?.[psSection] || [];
+          return (
+            <div className="ed-schedule-section-list">
+              <div className="ed-section-actions-row">
+                <button type="button" className="ed-upload-btn" onClick={() => openUploadSectionModal(activeScheduleTab)}>
+                  {t("earlyDiagnosis.uploadFile")}
+                </button>
+              </div>
+              {entries.length === 0 ? (
+                <div className="ed-schedule-empty">{t("earlyDiagnosis.noFiles")}</div>
+              ) : (
+                <div className="ed-section-card ed-test-card">
+                  <ul className="ed-files-list ed-test-files-list">
+                    {entries.map((entry, i) => (
+                      <li key={entry._id || i} className="ed-file-row ed-test-file-row">
+                        <div className="ed-test-file-left">
+                          <span className={`ed-test-file-badge ${entry.kind === "file" && getFileExtension({ filename: entry.filename }) === "pdf" ? "is-pdf" : "is-doc"}`}>
+                            {entry.kind === "file" ? (getFileExtension({ filename: entry.filename }) || "FILE").toUpperCase() : "TXT"}
+                          </span>
+                          <span className="ed-test-file-meta">
+                            <span className="ed-test-file-name">{entry.label || entry.filename || entry.text || "—"}</span>
+                            {entry.kind === "text" && entry.text && (
+                              <span className="ed-test-file-subtext">{entry.text}</span>
+                            )}
+                          </span>
+                        </div>
+                        <span className="ed-file-actions ed-test-file-actions">
+                          {renderPatientFileActions(psSection, entry)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Morphological Research */}
         {activeScheduleTab === "morphologicalResearch" && (
@@ -163,49 +201,32 @@ const EDMedicalHistoryContent = ({
               </button>
             </div>
 
-            {(booking?.schedule?.morphologicalResearch?.files || []).length ===
-            0 ? (
+            {(patientSectionData?.morphologicalResearch?.files || []).length === 0 ? (
               <div className="ed-schedule-empty">
                 {t("earlyDiagnosis.noFiles")}
               </div>
             ) : (
               <div className="ed-section-card ed-test-card">
                 <ul className="ed-files-list ed-test-files-list">
-                  {(booking?.schedule?.morphologicalResearch?.files || []).map(
+                  {(patientSectionData?.morphologicalResearch?.files || []).map(
                     (file, fileIndex) => (
                       <li
-                        key={
-                          normalizeId(file?.fileId) || file?._id || fileIndex
-                        }
+                        key={normalizeId(file?.fileId) || file?._id || fileIndex}
                         className="ed-file-row ed-test-file-row"
                       >
                         <div className="ed-test-file-left">
-                          <span
-                            className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                          >
+                          <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
                             {getFileExtension(file).toUpperCase()}
                           </span>
                           <span className="ed-test-file-meta">
-                            <span className="ed-test-file-name">
-                              {getFileLabel(file)}
-                            </span>
+                            <span className="ed-test-file-name">{getFileLabel(file)}</span>
                             <span className="ed-test-file-subtext">
-                              {[
-                                formatFileSize(file),
-                                file?.uploadedByName ||
-                                  file?.uploadedBy ||
-                                  file?.uploadedByDoctorName,
-                                formatDateTime
-                                  ? formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)
-                                  : null,
-                              ]
-                                .filter(Boolean)
-                                .join(" • ")}
+                              {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy].filter(Boolean).join(" • ")}
                             </span>
                           </span>
                         </div>
                         <span className="ed-file-actions ed-test-file-actions">
-                          {renderFileActionButtons(file)}
+                          {renderPatientFileActions("morphologicalResearch", file)}
                         </span>
                       </li>
                     ),
@@ -227,7 +248,7 @@ const EDMedicalHistoryContent = ({
                     onClick={() => setEdSectionPdfModal({
                       title: t("earlyDiagnosis.morphologicalResearch", "Morphological research"),
                       commentHtml: sectionEditors?.morphologicalResearch?.value || "",
-                      files: booking?.schedule?.morphologicalResearch?.files || [],
+                      files: patientSectionData?.morphologicalResearch?.files || [],
                     })}
                   >
                     <Download size={14} />
@@ -276,50 +297,31 @@ const EDMedicalHistoryContent = ({
               </button>
             </div>
 
-            {(booking?.schedule?.proceduresAndManipulations?.files || [])
-              .length === 0 ? (
+            {(patientSectionData?.proceduresAndManipulations?.files || []).length === 0 ? (
               <div className="ed-schedule-empty">
                 {t("earlyDiagnosis.noFiles")}
               </div>
             ) : (
               <div className="ed-section-card ed-test-card">
                 <ul className="ed-files-list ed-test-files-list">
-                  {(
-                    booking?.schedule?.proceduresAndManipulations?.files || []
-                  ).map((file, fileIndex) => (
+                  {(patientSectionData?.proceduresAndManipulations?.files || []).map((file, fileIndex) => (
                     <li
-                      key={
-                        normalizeId(file?.fileId) || file?._id || fileIndex
-                      }
+                      key={normalizeId(file?.fileId) || file?._id || fileIndex}
                       className="ed-file-row ed-test-file-row"
                     >
                       <div className="ed-test-file-left">
-                        <span
-                          className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}
-                        >
+                        <span className={`ed-test-file-badge ${getFileExtension(file) === "pdf" ? "is-pdf" : "is-doc"}`}>
                           {getFileExtension(file).toUpperCase()}
                         </span>
                         <span className="ed-test-file-meta">
-                          <span className="ed-test-file-name">
-                            {getFileLabel(file)}
-                          </span>
+                          <span className="ed-test-file-name">{getFileLabel(file)}</span>
                           <span className="ed-test-file-subtext">
-                            {[
-                              formatFileSize(file),
-                              file?.uploadedByName ||
-                                file?.uploadedBy ||
-                                file?.uploadedByDoctorName,
-                              formatDateTime
-                                ? formatDateTime(file?.uploadedAt || file?.createdAt || file?.date)
-                                : null,
-                            ]
-                              .filter(Boolean)
-                              .join(" • ")}
+                            {[formatFileSize(file), file?.uploadedByName || file?.uploadedBy].filter(Boolean).join(" • ")}
                           </span>
                         </span>
                       </div>
                       <span className="ed-file-actions ed-test-file-actions">
-                        {renderFileActionButtons(file)}
+                        {renderPatientFileActions("proceduresAndManipulations", file)}
                       </span>
                     </li>
                   ))}
@@ -340,7 +342,7 @@ const EDMedicalHistoryContent = ({
                     onClick={() => setEdSectionPdfModal({
                       title: t("earlyDiagnosis.proceduresAndManipulations", "Procedures and manipulations"),
                       commentHtml: sectionEditors?.proceduresAndManipulations?.value || "",
-                      files: booking?.schedule?.proceduresAndManipulations?.files || [],
+                      files: patientSectionData?.proceduresAndManipulations?.files || [],
                     })}
                   >
                     <Download size={14} />

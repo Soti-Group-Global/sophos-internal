@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-const PatientFlatSection = require("../models/PatientFlatSection");
-const PatientManagedSection = require("../models/PatientManagedSection");
+const PatientAnalysisSection = require("../models/PatientAnalysisSection");
+const PatientMorphologySection = require("../models/PatientMorphologySection");
 
 // Flat entry sections (doctor/assistant): laboratoryAnalysis, studiesManipulations
 const LAB_SECTIONS = ["laboratoryAnalysis", "studiesManipulations"];
@@ -21,13 +21,13 @@ exports.getSection = async (req, res) => {
     const { patientId, section } = req.params;
 
     if (LAB_SECTIONS.includes(section)) {
-      const doc = await PatientFlatSection.findOne({ patientId }).lean();
+      const doc = await PatientAnalysisSection.findOne({ patientId }).lean();
       const entries = doc ? (doc[section] || []) : [];
       return res.json({ entries });
     }
 
     if (MANAGED_SECTIONS.includes(section)) {
-      const doc = await PatientManagedSection.findOne({ patientId }).lean();
+      const doc = await PatientMorphologySection.findOne({ patientId }).lean();
       const sec = doc ? (doc[section] || { files: [], comment: {} }) : { files: [], comment: {} };
       return res.json(sec);
     }
@@ -51,7 +51,7 @@ exports.addTextEntry = async (req, res) => {
     const { text = "", label = "" } = req.body;
     if (!label.trim() && !text.trim()) return res.status(400).json({ error: "Name is required" });
 
-    const doc = await PatientFlatSection.findOneAndUpdate(
+    const doc = await PatientAnalysisSection.findOneAndUpdate(
       { patientId },
       { $push: { [section]: { kind: "text", label: label.trim(), text: text.trim() } } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
@@ -64,8 +64,8 @@ exports.addTextEntry = async (req, res) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    POST /api/patient-sections/:patientId/:section/upload
-   Managed sections: stores flat file record in PatientManagedSection.
-   Lab sections: stores flat file entry in PatientFlatSection.
+   Managed sections: stores flat file record in PatientMorphologySection.
+   Lab sections: stores flat file entry in PatientAnalysisSection.
 ────────────────────────────────────────────────────────────────────────── */
 exports.uploadFile = async (req, res) => {
   try {
@@ -90,7 +90,7 @@ exports.uploadFile = async (req, res) => {
         fileId: uploadStream.id,
         uploadedAt: new Date(),
       };
-      const doc = await PatientManagedSection.findOneAndUpdate(
+      const doc = await PatientMorphologySection.findOneAndUpdate(
         { patientId },
         { $push: { [`${section}.files`]: fileRecord } },
         { upsert: true, new: true, setDefaultsOnInsert: true },
@@ -100,7 +100,7 @@ exports.uploadFile = async (req, res) => {
 
     if (LAB_SECTIONS.includes(section)) {
       const label = (req.body?.label || "").trim();
-      const doc = await PatientFlatSection.findOneAndUpdate(
+      const doc = await PatientAnalysisSection.findOneAndUpdate(
         { patientId },
         { $push: { [section]: { kind: "file", label, filename: req.file.originalname, fileId: uploadStream.id } } },
         { upsert: true, new: true, setDefaultsOnInsert: true },
@@ -124,13 +124,13 @@ exports.getFile = async (req, res) => {
     let storedFileId;
 
     if (MANAGED_SECTIONS.includes(section)) {
-      const doc = await PatientManagedSection.findOne({ patientId }).lean();
+      const doc = await PatientMorphologySection.findOne({ patientId }).lean();
       const file = (doc?.[section]?.files || []).find(
         (f) => String(f.fileId) === fileId || String(f._id) === fileId,
       );
       storedFileId = file?.fileId;
     } else if (LAB_SECTIONS.includes(section)) {
-      const doc = await PatientFlatSection.findOne({ patientId }).lean();
+      const doc = await PatientAnalysisSection.findOne({ patientId }).lean();
       const entry = (doc?.[section] || []).find(
         (e) => String(e.fileId) === fileId || String(e._id) === fileId,
       );
@@ -166,7 +166,7 @@ exports.removeFile = async (req, res) => {
     const { patientId, section, fileId } = req.params;
 
     if (MANAGED_SECTIONS.includes(section)) {
-      const doc = await PatientManagedSection.findOne({ patientId });
+      const doc = await PatientMorphologySection.findOne({ patientId });
       if (!doc) return res.status(404).json({ error: "Section not found" });
 
       const record = (doc[section]?.files || []).find(
@@ -184,7 +184,7 @@ exports.removeFile = async (req, res) => {
     }
 
     if (LAB_SECTIONS.includes(section)) {
-      const doc = await PatientFlatSection.findOne({ patientId });
+      const doc = await PatientAnalysisSection.findOne({ patientId });
       if (!doc) return res.status(404).json({ error: "Section not found" });
 
       const entry = (doc[section] || []).find(
@@ -216,7 +216,7 @@ exports.removeEntry = async (req, res) => {
     const { patientId, section, entryId } = req.params;
     if (!LAB_SECTIONS.includes(section)) return res.status(400).json({ error: "Invalid section" });
 
-    const doc = await PatientFlatSection.findOne({ patientId });
+    const doc = await PatientAnalysisSection.findOne({ patientId });
     if (!doc) return res.json({ section: { entries: [] } });
 
     const entry = (doc[section] || []).find((e) => String(e._id) === entryId);
@@ -244,7 +244,7 @@ exports.updateComment = async (req, res) => {
       return res.status(400).json({ error: "Invalid section" });
 
     const { value } = req.body;
-    const doc = await PatientManagedSection.findOneAndUpdate(
+    const doc = await PatientMorphologySection.findOneAndUpdate(
       { patientId },
       { $set: { [`${section}.comment.value`]: value ?? "" } },
       { upsert: true, new: true, setDefaultsOnInsert: true },

@@ -918,6 +918,65 @@
   padding-left: 8px;
 }
 
+/* Specialist consultation items — same style as manager ed-subnav-test-item */
+.ed-subnav-specialist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 7px 20px;
+  font-size: 13px;
+  color: #6b7280;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  width: 100%;
+  text-align: left;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  box-sizing: border-box;
+}
+
+.ed-subnav-specialist-item:hover {
+  color: #0c3870;
+  background: #f5f7fa;
+  border-left-color: #bfcfea;
+}
+
+.ed-subnav-specialist-item--active {
+  color: #0c3870;
+  font-weight: 600;
+  border-left-color: #0c3870;
+  background: #f0f4ff;
+}
+
+.ed-subnav-specialist-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ed-subnav-specialist-badge {
+  font-size: 9px;
+  font-weight: 600;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ed-subnav-specialist-meta {
+  font-size: 10px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ed-section-actions-row {
   display: flex;
   justify-content: flex-end;
@@ -5829,6 +5888,41 @@ body.hide-global-sidebar .adp-app-sidebar {
   margin-top: 0;
   padding-left: 200px;
   transition: padding-left 0.2s ease;
+}
+
+/* Specialist consultation secondary panel — fixed, right of medical history sidebar */
+.ed-specialist-list-panel {
+  position: fixed;
+  left: 252px; /* 52px nav + 200px medical sidebar */
+  top: 68px;
+  width: 220px;
+  height: calc(100vh - 68px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+  border-right: 1px solid #e4e7ec;
+  padding: 8px 0;
+  z-index: 20;
+  transition: left 0.2s ease;
+}
+
+.ed-specialist-list-panel--nav-expanded {
+  left: 370px; /* 170px expanded nav + 200px medical sidebar */
+}
+
+.ed-specialist-list-panel ~ .ed-medical-history-content {
+  padding-left: 420px; /* 200px sidebar + 220px specialist panel */
+}
+
+.ed-specialist-list-panel.ed-specialist-list-panel--nav-expanded ~ .ed-medical-history-content {
+  padding-left: calc(420px + 118px);
+}
+
+.ed-specialist-list-panel-empty {
+  padding: 24px 16px;
+  color: #9ca3af;
+  font-size: 13px;
+  text-align: center;
 }
 
 .ed-schedule-tabs--vertical {

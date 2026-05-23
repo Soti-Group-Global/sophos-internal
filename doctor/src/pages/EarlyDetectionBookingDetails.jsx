@@ -42,6 +42,12 @@ import {
   updateEarlyDetectionTestEntryNote,
   deleteEarlyDetectionTestEntryNote,
   saveEarlyDetectionSpecialistHistoryForm,
+  getPatientSection,
+  uploadPatientSectionFile,
+  getPatientSectionFile,
+  removePatientSectionFile,
+  removePatientSectionEntry,
+  updatePatientSectionComment,
 } from "../utils/api";
 import GeneralInformationTab from "../components/GeneralInformationTab";
 import RichTextEditor from "../components/RichTextEditor";
@@ -389,6 +395,12 @@ const EarlyDetectionBookingDetails = () => {
     proceduresAndManipulations: { value: "", isVerified: false, saving: false },
     surgeries: { value: "", isVerified: false, saving: false },
   });
+  const [patientSectionData, setPatientSectionData] = useState({
+    laboratoryAnalysis: [],
+    studiesManipulations: [],
+    morphologicalResearch: { files: [], comment: {} },
+    proceduresAndManipulations: { files: [], comment: {} },
+  });
   const [specialistForms, setSpecialistForms] = useState({});
   const [specialistFormSaving, setSpecialistFormSaving] = useState({});
   const [patientBookings, setPatientBookings] = useState([]);
@@ -449,17 +461,14 @@ const EarlyDetectionBookingDetails = () => {
   useEffect(() => {
     if (!booking) return;
 
-    const readSection = (sectionKey) => ({
-      value: booking?.schedule?.[sectionKey]?.comment?.value || "",
-      isVerified: !!booking?.schedule?.[sectionKey]?.comment?.isVerified,
-      saving: false,
-    });
-
-    setSectionEditors({
-      morphologicalResearch: readSection("morphologicalResearch"),
-      proceduresAndManipulations: readSection("proceduresAndManipulations"),
-      surgeries: readSection("surgeries"),
-    });
+    setSectionEditors((prev) => ({
+      ...prev,
+      surgeries: {
+        value: booking?.schedule?.surgeries?.comment?.value || "",
+        isVerified: !!booking?.schedule?.surgeries?.comment?.isVerified,
+        saving: false,
+      },
+    }));
 
     // Populate specialist consultation history forms
     const consultations = Array.isArray(booking?.schedule?.specialistConsultations)
@@ -471,6 +480,12 @@ const EarlyDetectionBookingDetails = () => {
     });
     setSpecialistForms(formsMap);
   }, [booking]);
+
+  useEffect(() => {
+    if (!booking) return;
+    const patientId = booking?.patient?.patientId;
+    if (patientId) loadPatientSections(patientId);
+  }, [booking?._id]);
 
   useEffect(() => {
     if (activeScheduleTab !== "specialistConsultation") return;
@@ -862,6 +877,41 @@ const EarlyDetectionBookingDetails = () => {
     loadManagedTests("instrumentalAnalysis");
   }, []);
 
+  const loadPatientSections = async (patientId) => {
+    if (!patientId) return;
+    try {
+      const [labRes, studiesRes, morphRes, procRes] = await Promise.all([
+        getPatientSection(patientId, "laboratoryAnalysis"),
+        getPatientSection(patientId, "studiesManipulations"),
+        getPatientSection(patientId, "morphologicalResearch"),
+        getPatientSection(patientId, "proceduresAndManipulations"),
+      ]);
+      const morphData = morphRes?.data || { files: [], comment: {} };
+      const procData = procRes?.data || { files: [], comment: {} };
+      setPatientSectionData({
+        laboratoryAnalysis: labRes?.data?.entries || [],
+        studiesManipulations: studiesRes?.data?.entries || [],
+        morphologicalResearch: morphData,
+        proceduresAndManipulations: procData,
+      });
+      setSectionEditors((prev) => ({
+        ...prev,
+        morphologicalResearch: {
+          value: morphData?.comment?.value || "",
+          isVerified: !!morphData?.comment?.isVerified,
+          saving: false,
+        },
+        proceduresAndManipulations: {
+          value: procData?.comment?.value || "",
+          isVerified: !!procData?.comment?.isVerified,
+          saving: false,
+        },
+      }));
+    } catch {
+      // fail silently — patient sections are optional
+    }
+  };
+
   const openTestSettingsModal = (section) => {
     setSettingsSection(section);
     setEditingManagedTestId("");
@@ -956,7 +1006,53 @@ const EarlyDetectionBookingDetails = () => {
     setShowUploadModal(true);
   };
 
+  const PATIENT_SECTION_KEYS = {
+    laboratoryTests: "laboratoryAnalysis",
+    instrumentalAnalysis: "studiesManipulations",
+    morphologicalResearch: "morphologicalResearch",
+    proceduresAndManipulations: "proceduresAndManipulations",
+  };
+
   const handleUploadSectionFile = async () => {
+    const patientId = booking?.patient?.patientId;
+    const psSection = PATIENT_SECTION_KEYS[uploadSection];
+
+    if (psSection && patientId) {
+      if (sectionsWithTestSelection.includes(uploadSection) && !uploadItemId) {
+        toast.error("Select a test");
+        return;
+      }
+      const filesToUpload = uploadFiles.length > 0 ? uploadFiles : (uploadFile ? [{ file: uploadFile, customName: uploadCustomName }] : []);
+      if (filesToUpload.length === 0) {
+        toast.error("Add at least one file");
+        return;
+      }
+      setIsUploadingSectionFile(true);
+      try {
+        for (const fileItem of filesToUpload) {
+          if (!fileItem.file) continue;
+          let label = "";
+          if (sectionsWithTestSelection.includes(uploadSection)) {
+            const test = (managedTests[uploadSection] || []).find((t) => normalizeId(t?._id) === uploadItemId);
+            label = test ? readLocalizedName(test?.name) : "";
+          } else {
+            label = fileItem.customName || "";
+          }
+          await uploadPatientSectionFile(patientId, psSection, fileItem.file, label);
+        }
+        await loadPatientSections(patientId);
+        setShowUploadModal(false);
+        setUploadFiles([]);
+        toast.success("File(s) uploaded");
+      } catch (error) {
+        toast.error(error?.response?.data?.message || "Failed to upload files");
+      } finally {
+        setIsUploadingSectionFile(false);
+      }
+      return;
+    }
+
+    // Fallback: booking-level upload for other sections
     if (sectionsWithTestSelection.includes(uploadSection) && !uploadItemId) {
       toast.error("Select a test");
       return;
@@ -967,39 +1063,20 @@ const EarlyDetectionBookingDetails = () => {
         toast.error("Add at least one file");
         return;
       }
-
-      if (manualNameRequiredSections.includes(uploadSection)) {
-        const hasEmptyName = uploadFiles.some((fileItem) => !String(fileItem?.customName || "").trim());
-        if (hasEmptyName) {
-          toast.error("Please enter a file name for each file");
-          return;
-        }
-      }
-
       setIsUploadingSectionFile(true);
       try {
-        // Upload all files one by one using FormData so multipart/form-data is sent correctly.
         for (const fileItem of uploadFiles) {
           if (!fileItem.file) continue;
-
           const formData = new FormData();
           formData.append("section", uploadSection);
-          if (sectionsWithTestSelection.includes(uploadSection) && uploadItemId) {
-            formData.append("itemId", uploadItemId);
-          }
-          if (fileItem.customName) {
-            formData.append("customName", fileItem.customName);
-          }
+          if (sectionsWithTestSelection.includes(uploadSection) && uploadItemId) formData.append("itemId", uploadItemId);
+          if (fileItem.customName) formData.append("customName", fileItem.customName);
           formData.append("file", fileItem.file);
-
           const response = await uploadEarlyDetectionScheduleFile(booking._id || id, uploadSection, formData);
           const responseData = response?.data;
           const bookingData = responseData?.success ? responseData.data : responseData;
-          if (bookingData) {
-            setBooking(sanitizeBookingData(bookingData));
-          }
+          if (bookingData) setBooking(sanitizeBookingData(bookingData));
         }
-
         await loadBookingDetails();
         setShowUploadModal(false);
         setUploadFiles([]);
@@ -1010,34 +1087,19 @@ const EarlyDetectionBookingDetails = () => {
         setIsUploadingSectionFile(false);
       }
     } else {
-      // Single file upload fallback
-      if (!uploadFile) {
-        toast.error("Select a file");
-        return;
-      }
-
+      if (!uploadFile) { toast.error("Select a file"); return; }
       setIsUploadingSectionFile(true);
       try {
         const formData = new FormData();
         formData.append("section", uploadSection);
-        if (uploadItemId) {
-          formData.append("itemId", uploadItemId);
-        }
-        if (uploadCustomName) {
-          formData.append("customName", uploadCustomName);
-        }
+        if (uploadItemId) formData.append("itemId", uploadItemId);
+        if (uploadCustomName) formData.append("customName", uploadCustomName);
         formData.append("file", uploadFile);
-
         const response = await uploadEarlyDetectionScheduleFile(booking._id || id, uploadSection, formData);
         const responseData = response?.data;
         const bookingData = responseData?.success ? responseData.data : responseData;
-
-        if (bookingData) {
-          setBooking(sanitizeBookingData(bookingData));
-        } else {
-          await loadBookingDetails();
-        }
-
+        if (bookingData) setBooking(sanitizeBookingData(bookingData));
+        else await loadBookingDetails();
         setShowUploadModal(false);
         toast.success("File uploaded");
       } catch (error) {
@@ -1063,25 +1125,35 @@ const EarlyDetectionBookingDetails = () => {
     updateSectionEditor(section, { saving: true });
 
     try {
-      const existingSection = booking?.schedule?.[section] || {};
-      const response = await updateEarlyDetectionBooking(id, {
-        schedule: {
+      const patientId = booking?.patient?.patientId;
+      const managedPatientSections = ["morphologicalResearch", "proceduresAndManipulations"];
+
+      if (managedPatientSections.includes(section) && patientId) {
+        await updatePatientSectionComment(patientId, section, editor.value || "");
+        setPatientSectionData((prev) => ({
+          ...prev,
           [section]: {
-            ...existingSection,
-            comment: {
-              ...(existingSection?.comment || {}),
-              value: editor.value || "",
-              isVerified: !!editor.isVerified,
-              verifiedAt: editor.isVerified ? new Date().toISOString() : null,
+            ...prev[section],
+            comment: { ...(prev[section]?.comment || {}), value: editor.value || "" },
+          },
+        }));
+      } else {
+        const existingSection = booking?.schedule?.[section] || {};
+        const response = await updateEarlyDetectionBooking(id, {
+          schedule: {
+            [section]: {
+              ...existingSection,
+              comment: {
+                ...(existingSection?.comment || {}),
+                value: editor.value || "",
+                isVerified: !!editor.isVerified,
+                verifiedAt: editor.isVerified ? new Date().toISOString() : null,
+              },
             },
           },
-        },
-      });
-
-      if (response?.success && response?.data) {
-        setBooking(sanitizeBookingData(response.data));
-      } else {
-        await loadBookingDetails();
+        });
+        if (response?.success && response?.data) setBooking(sanitizeBookingData(response.data));
+        else await loadBookingDetails();
       }
       toast.success(`${getSectionLabel(section)} ${t("earlyDiagnosis.saved", "saved")}`);
     } catch (error) {
@@ -1878,6 +1950,92 @@ const EarlyDetectionBookingDetails = () => {
     );
   };
 
+  const renderPatientFileActions = (section, entry) => {
+    const patientId = booking?.patient?.patientId;
+    if (!patientId) return null;
+
+    const isLabSection = ["laboratoryAnalysis", "studiesManipulations"].includes(section);
+    const isTextEntry = isLabSection && entry?.kind === "text";
+    const fileId = normalizeId(entry?.fileId);
+    const entryId = normalizeId(entry?._id);
+
+    const handleView = async () => {
+      if (!fileId) return;
+      try {
+        const response = await getPatientSectionFile(patientId, section, fileId);
+        const blob = new Blob([response.data], { type: response.headers?.["content-type"] || "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank", "noopener,noreferrer");
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      } catch {
+        toast.error(t("earlyDiagnosis.fileOpenFailed", "Could not open file."));
+      }
+    };
+
+    const handleDownload = async () => {
+      if (!fileId) return;
+      try {
+        const response = await getPatientSectionFile(patientId, section, fileId);
+        const blob = new Blob([response.data], { type: response.headers?.["content-type"] || "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = entry?.filename || entry?.label || "download";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      } catch {
+        toast.error("Could not download file.");
+      }
+    };
+
+    const handleDelete = async () => {
+      if (!window.confirm("Delete this entry?")) return;
+      try {
+        if (isLabSection) {
+          await removePatientSectionEntry(patientId, section, entryId);
+          setPatientSectionData((prev) => ({
+            ...prev,
+            [section]: (prev[section] || []).filter((e) => normalizeId(e?._id) !== entryId),
+          }));
+        } else {
+          await removePatientSectionFile(patientId, section, fileId || entryId);
+          setPatientSectionData((prev) => ({
+            ...prev,
+            [section]: {
+              ...prev[section],
+              files: (prev[section]?.files || []).filter(
+                (f) => normalizeId(f?.fileId) !== fileId && normalizeId(f?._id) !== entryId,
+              ),
+            },
+          }));
+        }
+        toast.success(t("earlyDiagnosis.deleted", "Deleted"));
+      } catch {
+        toast.error("Failed to delete.");
+      }
+    };
+
+    return (
+      <>
+        {!isTextEntry && fileId && (
+          <>
+            <button type="button" className="ed-file-link-btn ed-file-link-btn--view" title={t("earlyDiagnosis.view", "View")} onClick={handleView}>
+              <Eye size={15} />
+            </button>
+            <button type="button" className="ed-file-link-btn ed-file-link-btn--download" title={t("earlyDiagnosis.download", "Download")} onClick={handleDownload}>
+              <Download size={15} />
+            </button>
+          </>
+        )}
+        <button type="button" className="ed-file-link-btn ed-file-link-btn--delete" title={t("earlyDiagnosis.delete", "Delete")} onClick={handleDelete}>
+          <Trash2 size={15} />
+        </button>
+      </>
+    );
+  };
+
   const buildScheduleWithoutFile = (section, entryId, fileId) => {
     const nextSchedule = { ...(booking?.schedule || {}) };
     const sectionEntries = Array.isArray(nextSchedule?.[section]) ? [...nextSchedule[section]] : [];
@@ -2372,7 +2530,7 @@ const EarlyDetectionBookingDetails = () => {
       />
 
       <div className="booking-details-content">
-        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}${navExpanded ? " ed-details-body--sidebar-expanded" : ""}`}>
+        <div className={`ed-details-body${activeTab === "medicalHistory" ? " ed-details-body--with-subnav" : ""}${activeTab === "medicalHistory" && (activeScheduleTab === "specialistConsultation" || managedSectionTabs.includes(activeScheduleTab)) ? " ed-details-body--with-specialist-panel" : ""}${activeTab === "patient" ? " ed-details-body--with-footer" : ""}${navExpanded ? " ed-details-body--sidebar-expanded" : ""}`}>
           <EDIconSidebar
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -2394,20 +2552,73 @@ const EarlyDetectionBookingDetails = () => {
               setActiveTestId={setActiveTestId}
               managedTests={managedTests}
               managedSectionTabs={managedSectionTabs}
-              specialistAccordionOpen={specialistAccordionOpen}
-              setSpecialistAccordionOpen={setSpecialistAccordionOpen}
-              activeSpecialistTab={activeSpecialistTab}
               setActiveSpecialistTab={setActiveSpecialistTab}
               openTestSettingsModal={openTestSettingsModal}
               openUploadSectionModal={openUploadSectionModal}
               normalizeId={normalizeId}
-              normalizeSpecialistTitle={normalizeSpecialistTitle}
               readLocalizedName={readLocalizedName}
               getManagedTestEntries={getManagedTestEntries}
               setShowTestNoteEditor={setShowTestNoteEditor}
               setTestNoteDraft={setTestNoteDraft}
               setEditingTestNoteId={setEditingTestNoteId}
             />
+          )}
+
+          {/* Secondary sidebar — specialist list or managed test list */}
+          {activeTab === "medicalHistory" && (activeScheduleTab === "specialistConsultation" || managedSectionTabs.includes(activeScheduleTab)) && (
+            <div className="ed-specialist-list-panel">
+              {activeScheduleTab === "specialistConsultation" ? (
+                (booking?.schedule?.specialistConsultations || []).length === 0 ? (
+                  <div className="ed-specialist-list-panel-empty">
+                    {t("earlyDiagnosis.noSpecialistConsultations", "No consultations")}
+                  </div>
+                ) : (
+                  booking.schedule.specialistConsultations.map((s, i) => {
+                    const title = s?.title
+                      ? t(`earlyDiagnosis.specialist_${normalizeSpecialistTitle(s.title)}`, s.title)
+                      : `Specialist ${i + 1}`;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        className={`ed-subnav-specialist-item${activeSpecialistTab === i ? " ed-subnav-specialist-item--active" : ""}`}
+                        onClick={() => setActiveSpecialistTab(i)}
+                      >
+                        <span className="ed-subnav-specialist-name">{title}</span>
+                      </button>
+                    );
+                  })
+                )
+              ) : (
+                (managedTests?.[activeScheduleTab] || []).length === 0 ? (
+                  <div className="ed-specialist-list-panel-empty">
+                    {t("earlyDiagnosis.noTests", "No tests")}
+                  </div>
+                ) : (
+                  (managedTests[activeScheduleTab]).map((test) => {
+                    const testId = normalizeId(test?._id);
+                    const entries = getManagedTestEntries(activeScheduleTab, testId);
+                    const isDone = entries.some((e) => Array.isArray(e.files) && e.files.length > 0);
+                    const isActive = activeTestId === testId;
+                    return (
+                      <button
+                        key={testId}
+                        type="button"
+                        className={`ed-subnav-test-item${isDone ? " ed-subnav-test-item--done" : ""}${isActive ? " ed-subnav-test-item--active" : ""}`}
+                        onClick={() => {
+                          setActiveTestId(isActive ? null : testId);
+                          setShowTestNoteEditor(false);
+                          setTestNoteDraft("");
+                          setEditingTestNoteId(null);
+                        }}
+                      >
+                        <span className="ed-subnav-test-name">{readLocalizedName(test?.name)}</span>
+                      </button>
+                    );
+                  })
+                )
+              )}
+            </div>
           )}
 
           <div
@@ -2475,8 +2686,8 @@ const EarlyDetectionBookingDetails = () => {
                     activeScheduleTab={activeScheduleTab}
                     activeSpecialistTab={activeSpecialistTab}
                     managedSectionTabs={managedSectionTabs}
-                    renderManagedTestSection={renderManagedTestSection}
-                    renderFileActionButtons={renderFileActionButtons}
+                    patientSectionData={patientSectionData}
+                    renderPatientFileActions={renderPatientFileActions}
                     sectionEditors={sectionEditors}
                     updateSectionEditor={updateSectionEditor}
                     handleSaveManagedSectionComment={handleSaveManagedSectionComment}

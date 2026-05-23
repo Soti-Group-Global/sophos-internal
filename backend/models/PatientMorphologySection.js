@@ -29,7 +29,7 @@ const managedSectionDataSchema = new mongoose.Schema(
   { _id: false },
 );
 
-const patientManagedSectionSchema = new mongoose.Schema(
+const patientMorphologySectionSchema = new mongoose.Schema(
   {
     patientId: { type: String, required: true, unique: true, index: true },
     morphologicalResearch: { type: managedSectionDataSchema, default: () => ({}) },
@@ -38,4 +38,4 @@ const patientManagedSectionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model("PatientManagedSection", patientManagedSectionSchema);
+module.exports = mongoose.model("PatientManagedSection", patientMorphologySectionSchema);

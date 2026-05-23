@@ -11,7 +11,7 @@ const labEntrySchema = new mongoose.Schema(
   { _id: true, timestamps: { createdAt: true, updatedAt: false } },
 );
 
-const patientFlatSectionSchema = new mongoose.Schema(
+const patientAnalysisSectionSchema = new mongoose.Schema(
   {
     patientId: { type: String, required: true, unique: true, index: true },
     laboratoryAnalysis: { type: [labEntrySchema], default: [] },
@@ -20,4 +20,4 @@ const patientFlatSectionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model("PatientFlatSection", patientFlatSectionSchema);
+module.exports = mongoose.model("PatientFlatSection", patientAnalysisSectionSchema);
